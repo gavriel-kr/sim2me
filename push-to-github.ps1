@@ -45,7 +45,10 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 Run-Git branch -M main
+# Don't stop when "origin" doesn't exist yet (get-url exits 1 and writes to stderr)
+$ErrorActionPreference = "Continue"
 $rem = Run-Git remote get-url origin 2>$null
+$ErrorActionPreference = "Stop"
 if (-not $rem) {
     Run-Git remote add origin https://github.com/gavriel-kr/sim2me.git
 } elseif ($rem -ne "https://github.com/gavriel-kr/sim2me.git") {
