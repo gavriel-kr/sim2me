@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
-import { Resend } from 'resend';
 import { contactFormSchema } from '@/lib/validation/schemas';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
   try {
@@ -24,6 +23,10 @@ export async function POST(request: Request) {
       console.log({ name, email, subject, message });
       return NextResponse.json({ success: true, dev: true });
     }
+
+    // Lazy import so the build doesn't fail when env var isn't available yet
+    const { Resend } = await import('resend');
+    const resend = new Resend(process.env.RESEND_API_KEY);
 
     await resend.emails.send({
       from: `Sim2Me Contact <${process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'}>`,
