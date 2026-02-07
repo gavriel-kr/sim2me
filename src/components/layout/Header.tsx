@@ -82,17 +82,15 @@ export function Header() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               {locales.map(({ code, label }) => {
-                // Build the correct locale URL:
-                // - default locale (en) uses no prefix with localePrefix: 'as-needed'
-                // - other locales get /he or /ar prefix
                 const localePath = code === 'en'
                   ? (pathname ?? '/')
                   : `/${code}${pathname === '/' ? '' : pathname}`;
                 return (
-                  <DropdownMenuItem key={code} asChild>
-                    <a href={localePath}>
-                      {label} {currentLocale === code ? '✓' : ''}
-                    </a>
+                  <DropdownMenuItem
+                    key={code}
+                    onSelect={() => { window.location.href = localePath; }}
+                  >
+                    {label} {currentLocale === code ? '✓' : ''}
                   </DropdownMenuItem>
                 );
               })}
