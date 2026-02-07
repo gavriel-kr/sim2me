@@ -82,9 +82,8 @@ export function Header() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               {locales.map(({ code, label }) => {
-                const localePath = code === 'en'
-                  ? (pathname ?? '/')
-                  : `/${code}${pathname === '/' ? '' : pathname}`;
+                // Always use /locale prefix so the middleware sets the NEXT_LOCALE cookie
+                const localePath = `/${code}${pathname === '/' ? '' : pathname}`;
                 return (
                   <DropdownMenuItem
                     key={code}
