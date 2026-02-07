@@ -13,10 +13,10 @@ export const brandConfig = {
   /** Fallback text when logo is not available */
   logoAlt: 'Sim2Me',
 
-  /** Primary brand color (hex). Airalo-style green/teal */
-  primaryColor: '#0d9488',
+  /** Primary brand color (hex). Airalo-style green */
+  primaryColor: '#0d9f6e',
   /** Secondary color for subtle accents */
-  secondaryColor: '#14b8a6',
+  secondaryColor: '#10b981',
 
   /** Support email shown in footer and help */
   supportEmail: 'support@sim2me.com',

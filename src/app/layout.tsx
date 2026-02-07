@@ -1,9 +1,16 @@
 import type { Metadata } from 'next';
+import { DM_Sans } from 'next/font/google';
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages } from 'next-intl/server';
 import { brandConfig } from '@/config/brand';
 import { Providers } from '@/components/providers/Providers';
 import '@/app/globals.css';
+
+const dmSans = DM_Sans({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-dm-sans',
+});
 
 export const metadata: Metadata = {
   title: {
@@ -28,8 +35,8 @@ export default async function RootLayout({
   const messages = await getMessages();
   const dir = locale === 'he' || locale === 'ar' ? 'rtl' : 'ltr';
   return (
-    <html lang={locale} dir={dir} suppressHydrationWarning>
-      <body>
+    <html lang={locale} dir={dir} suppressHydrationWarning className={dmSans.variable}>
+      <body className="font-sans">
         <NextIntlClientProvider locale={locale} messages={messages}>
           <Providers>{children}</Providers>
         </NextIntlClientProvider>

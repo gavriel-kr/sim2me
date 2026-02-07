@@ -8,9 +8,9 @@ export function TrustStrip() {
   const t = useTranslations('home');
 
   return (
-    <section className="border-y border-border/50 bg-muted/20 py-10">
+    <section className="border-y border-border/60 bg-secondary/40 py-12">
       <div className="container px-4">
-        <h2 className="text-center text-base font-semibold text-foreground">
+        <h2 className="text-center text-lg font-bold text-foreground">
           {t('trustTitle')}
         </h2>
         <div className="mt-6 flex flex-wrap items-center justify-center gap-x-10 gap-y-4 sm:gap-x-14">

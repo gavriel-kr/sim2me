@@ -43,13 +43,15 @@ const config: Config = {
         sm: 'calc(var(--radius) - 4px)',
       },
       fontFamily: {
-        sans: ['var(--font-geist-sans)', 'system-ui', 'sans-serif'],
-        mono: ['var(--font-geist-mono)', 'monospace'],
+        sans: ['var(--font-dm-sans)', 'DM Sans', 'system-ui', 'sans-serif'],
+        mono: ['ui-monospace', 'monospace'],
       },
       boxShadow: {
         soft: 'var(--shadow-soft)',
         medium: 'var(--shadow-medium)',
         large: 'var(--shadow-large)',
+        card: 'var(--shadow-card)',
+        'card-hover': 'var(--shadow-card-hover)',
       },
     },
   },

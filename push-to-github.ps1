@@ -36,13 +36,13 @@ Run-Git config user.name "Gabriel Kreskas"
 Run-Git config user.email "gavriel.kr@gmail.com"
 Run-Git add .
 Run-Git status
-# Don't let git stderr stop the script
+$hasCommit = Run-Git rev-parse HEAD 2>$null
+$msg = if ($hasCommit) { "Update: FAQ fix and Airalo design" } else { "Initial commit: Sim2Me eSIM" }
 $ErrorActionPreference = "Continue"
-Run-Git commit -m "Initial commit: Sim2Me eSIM"
+Run-Git commit -m $msg
 $ErrorActionPreference = "Stop"
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "Commit failed (exit code $LASTEXITCODE). Fix the error above and run the script again." -ForegroundColor Red
-    exit 1
+    Write-Host "No new commit (working tree clean or commit failed). Pushing existing commits..." -ForegroundColor Gray
 }
 Run-Git branch -M main
 # Don't stop when "origin" doesn't exist yet (get-url exits 1 and writes to stderr)

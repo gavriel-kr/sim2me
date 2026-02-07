@@ -10,13 +10,13 @@ export function CTASection() {
   const t = useTranslations('home');
 
   return (
-    <section className="bg-primary/8 py-16">
+    <section className="bg-gradient-to-b from-primary/12 to-primary/5 py-20">
       <div className="container mx-auto max-w-2xl px-4 text-center">
-        <h2 className="text-2xl font-bold text-foreground sm:text-3xl">{t('ctaTitle')}</h2>
-        <p className="mt-2 text-muted-foreground">{t('ctaSubtitle')}</p>
+        <h2 className="text-3xl font-bold text-foreground sm:text-4xl">{t('ctaTitle')}</h2>
+        <p className="mt-3 text-muted-foreground text-lg">{t('ctaSubtitle')}</p>
         <IntlLink
           href="/destinations"
-          className="mt-6 inline-flex items-center justify-center rounded-lg bg-primary px-8 py-3.5 text-base font-semibold text-primary-foreground shadow-sm transition hover:opacity-95"
+          className="mt-8 inline-flex items-center justify-center rounded-xl bg-primary px-10 py-4 text-base font-semibold text-primary-foreground shadow-md transition hover:bg-primary/90 hover:shadow-lg"
         >
           {t('ctaButton')}
         </IntlLink>

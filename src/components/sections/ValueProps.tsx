@@ -13,16 +13,16 @@ export function ValueProps() {
   const t = useTranslations('home');
 
   return (
-    <section className="border-y border-border/50 bg-muted/30 py-16">
+    <section className="border-y border-border/60 bg-gradient-to-b from-secondary/50 to-secondary/30 py-20">
       <div className="container px-4">
-        <div className="grid gap-10 sm:grid-cols-3">
+        <div className="grid gap-12 sm:grid-cols-3">
           {items.map(({ key, icon: Icon }) => (
             <div key={key} className="flex flex-col items-center text-center">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                <Icon className="h-7 w-7" />
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-md">
+                <Icon className="h-8 w-8" />
               </div>
-              <h3 className="mt-4 text-lg font-semibold text-foreground">{t(`${key}Title`)}</h3>
-              <p className="mt-2 text-sm text-muted-foreground max-w-xs">{t(`${key}Desc`)}</p>
+              <h3 className="mt-5 text-xl font-bold text-foreground">{t(`${key}Title`)}</h3>
+              <p className="mt-3 text-muted-foreground max-w-xs leading-relaxed">{t(`${key}Desc`)}</p>
             </div>
           ))}
         </div>
