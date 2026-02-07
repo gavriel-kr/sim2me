@@ -1,10 +1,9 @@
 'use client';
 
 import { useTranslations, useLocale } from 'next-intl';
-import { Globe, ShoppingCart, Menu } from 'lucide-react';
+import { Globe, ShoppingCart, Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import { useCartStore } from '@/stores/cartStore';
-import { brandConfig } from '@/config/brand';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,7 +13,7 @@ import {
 import { createSharedPathnamesNavigation } from 'next-intl/navigation';
 import { routing } from '@/i18n/routing';
 
-const { useRouter, usePathname: useIntlPathname, Link: IntlLink } = createSharedPathnamesNavigation(routing);
+const { usePathname: useIntlPathname, Link: IntlLink } = createSharedPathnamesNavigation(routing);
 
 const navLinks = [
   { href: '/', key: 'home' },
@@ -27,19 +26,15 @@ const navLinks = [
 ] as const;
 
 const locales = [
-  { code: 'en', label: 'English' },
-  { code: 'he', label: 'עברית' },
-  { code: 'ar', label: 'العربية' },
+  { code: 'en', label: 'English', flag: '🇬🇧' },
+  { code: 'he', label: 'עברית', flag: '🇮🇱' },
+  { code: 'ar', label: 'العربية', flag: '🇸🇦' },
 ] as const;
-
-const currencies = [{ code: 'USD', label: 'USD' }, { code: 'EUR', label: 'EUR' }];
 
 export function Header() {
   const t = useTranslations('nav');
   const pathname = useIntlPathname();
-  const router = useRouter();
   const count = useCartStore((s) => s.count());
-  const [currency, setCurrency] = useState('USD');
   const [mobileOpen, setMobileOpen] = useState(false);
   const currentLocale = useLocale();
 
@@ -47,27 +42,33 @@ export function Header() {
     pathname === href || (href !== '/' && pathname?.startsWith(href));
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-white/95 backdrop-blur-sm">
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-white/80 backdrop-blur-lg">
       <div className="container flex h-16 items-center justify-between gap-4 px-4">
-        <IntlLink href="/" className="flex items-center gap-2 font-semibold text-foreground">
-          {brandConfig.logoUrl ? (
-            <img
-              src={brandConfig.logoUrl}
-              alt={brandConfig.logoAlt}
-              className="h-8 w-auto"
-            />
-          ) : (
-            <span className="text-xl">{brandConfig.name}</span>
-          )}
+        {/* Logo */}
+        <IntlLink href="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-80">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-sm">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="3" y="1" width="8" height="14" rx="1.5" fill="white" fillOpacity="0.9"/>
+              <circle cx="7" cy="12" r="1" fill="#059669"/>
+              <path d="M12 5c1.5-0.7 3 0 3.5 1.5s0 3-1.5 3.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" fill="none" opacity="0.8"/>
+              <path d="M13 3c2-1 4 0 5 2s0 4-2 5" stroke="white" strokeWidth="1.5" strokeLinecap="round" fill="none" opacity="0.5"/>
+            </svg>
+          </div>
+          <span className="text-lg font-extrabold tracking-tight text-foreground">
+            Sim<span className="text-primary">2</span>Me
+          </span>
         </IntlLink>
 
-        <nav className="hidden md:flex items-center gap-8">
+        {/* Desktop nav */}
+        <nav className="hidden items-center gap-1 lg:flex">
           {navLinks.map(({ href, key }) => (
             <IntlLink
               key={key}
               href={href}
-              className={`text-sm font-medium transition-colors ${
-                isActive(href) ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
+              className={`rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ${
+                isActive(href)
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
               }`}
             >
               {t(key)}
@@ -75,79 +76,80 @@ export function Header() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-1">
+        {/* Right side */}
+        <div className="flex items-center gap-1.5">
+          {/* Language switcher */}
           <DropdownMenu>
-            <DropdownMenuTrigger className="inline-flex h-9 items-center justify-center rounded-lg px-3 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground">
-              <Globe className="h-4 w-4" />
+            <DropdownMenuTrigger className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+              <Globe className="h-[18px] w-[18px]" />
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {locales.map(({ code, label }) => {
-                // Always use /locale prefix so the middleware sets the NEXT_LOCALE cookie
+            <DropdownMenuContent align="end" className="min-w-[160px]">
+              {locales.map(({ code, label, flag }) => {
                 const localePath = `/${code}${pathname === '/' ? '' : pathname}`;
                 return (
                   <DropdownMenuItem
                     key={code}
                     onSelect={() => { window.location.href = localePath; }}
+                    className="gap-2.5"
                   >
-                    {label} {currentLocale === code ? '✓' : ''}
+                    <span className="text-base">{flag}</span>
+                    <span>{label}</span>
+                    {currentLocale === code && (
+                      <span className="ml-auto text-xs text-primary font-semibold">&#10003;</span>
+                    )}
                   </DropdownMenuItem>
                 );
               })}
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger className="hidden sm:inline-flex h-9 items-center justify-center rounded-lg px-3 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground">
-              {currency}
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {currencies.map(({ code, label }) => (
-                <DropdownMenuItem key={code} onClick={() => setCurrency(code)}>
-                  {label}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
+          {/* Cart */}
           <IntlLink
             href="/checkout"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground relative"
+            className="relative inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             aria-label={t('cart')}
           >
-            <ShoppingCart className="h-5 w-5" />
+            <ShoppingCart className="h-[18px] w-[18px]" />
             {count > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground">
+              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground shadow-sm">
                 {count}
               </span>
             )}
           </IntlLink>
 
+          {/* Account button - desktop */}
           <IntlLink
             href="/account"
-            className="hidden sm:inline-flex h-9 items-center justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground hover:opacity-95"
+            className="hidden h-9 items-center justify-center rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:shadow-md hover:brightness-105 sm:inline-flex"
           >
             {t('account')}
           </IntlLink>
 
+          {/* Mobile toggle */}
           <button
             type="button"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted md:hidden"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted lg:hidden"
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-label="Menu"
           >
-            <Menu className="h-5 w-5" />
+            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
       </div>
 
+      {/* Mobile menu */}
       {mobileOpen && (
-        <div className="border-t border-border/60 bg-white md:hidden">
-          <nav className="container flex flex-col gap-1 px-4 py-4">
+        <div className="border-t border-border/40 bg-white lg:hidden animate-fade-up">
+          <nav className="container flex flex-col gap-0.5 px-4 py-3">
             {navLinks.map(({ href, key }) => (
               <IntlLink
                 key={key}
                 href={href}
-                className="py-3 text-sm font-medium text-foreground"
+                className={`rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                  isActive(href)
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-foreground hover:bg-muted'
+                }`}
                 onClick={() => setMobileOpen(false)}
               >
                 {t(key)}
@@ -155,26 +157,27 @@ export function Header() {
             ))}
             <IntlLink
               href="/account"
-              className="py-3 text-sm font-medium"
+              className="mt-1 rounded-lg px-3 py-2.5 text-sm font-medium text-foreground hover:bg-muted"
               onClick={() => setMobileOpen(false)}
             >
               {t('account')}
             </IntlLink>
-            <div className="mt-2 border-t border-border/60 pt-3">
-              <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">Language</p>
-              <div className="flex gap-2">
-                {locales.map(({ code, label }) => {
+            <div className="mt-2 border-t border-border/40 pt-3">
+              <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Language</p>
+              <div className="flex gap-1.5 px-3">
+                {locales.map(({ code, label, flag }) => {
                   const localePath = `/${code}${pathname === '/' ? '' : pathname}`;
                   return (
                     <a
                       key={code}
                       href={localePath}
-                      className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                      className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
                         currentLocale === code
-                          ? 'bg-primary text-primary-foreground'
+                          ? 'bg-primary text-primary-foreground shadow-sm'
                           : 'bg-muted text-muted-foreground hover:bg-muted/80'
                       }`}
                     >
+                      <span>{flag}</span>
                       {label}
                     </a>
                   );

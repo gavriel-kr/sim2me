@@ -17,14 +17,12 @@ export async function POST(request: Request) {
 
     const { name, email, subject, message } = parsed.data;
 
-    // If RESEND_API_KEY is not set, fall back to logging (dev mode)
     if (!process.env.RESEND_API_KEY) {
       console.log('[Contact Form] No RESEND_API_KEY set — logging instead:');
       console.log({ name, email, subject, message });
       return NextResponse.json({ success: true, dev: true });
     }
 
-    // Lazy import so the build doesn't fail when env var isn't available yet
     const { Resend } = await import('resend');
     const resend = new Resend(process.env.RESEND_API_KEY);
 

@@ -24,6 +24,9 @@ export const metadata: Metadata = {
     type: 'website',
     siteName: brandConfig.name,
   },
+  icons: {
+    icon: '/favicon.svg',
+  },
 };
 
 export default async function RootLayout({
