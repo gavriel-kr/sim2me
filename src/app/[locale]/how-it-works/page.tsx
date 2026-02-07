@@ -22,7 +22,7 @@ export default async function HowItWorksPage() {
   return (
     <MainLayout>
       <div className="container px-4 py-12">
-        <h1 className="text-3xl font-bold">{t('title')}</h1>
+        <h1 className="text-2xl font-bold sm:text-3xl">{t('title')}</h1>
         <div className="mt-10 grid gap-8 md:grid-cols-3">
           {steps.map(({ key, icon: Icon }) => (
             <Card key={key}>

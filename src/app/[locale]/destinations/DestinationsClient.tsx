@@ -32,7 +32,7 @@ export function DestinationsClient() {
 
   return (
     <div className="container px-4 py-8">
-      <h1 className="text-3xl font-bold">{t('title')}</h1>
+      <h1 className="text-2xl font-bold sm:text-3xl">{t('title')}</h1>
       <p className="mt-2 text-muted-foreground">{t('subtitle')}</p>
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {destinations.map((d) => (

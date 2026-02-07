@@ -70,7 +70,7 @@ export function CheckoutClient() {
             <p className="text-sm">3. {t('step3')}</p>
             <p className="text-sm">4. {t('step4')}</p>
             <div className="flex justify-center rounded-xl border border-dashed border-muted-foreground/30 bg-muted/30 p-8">
-              <div className="h-48 w-48 rounded-lg bg-muted flex items-center justify-center text-muted-foreground text-sm">
+              <div className="h-32 w-32 rounded-lg bg-muted flex items-center justify-center text-muted-foreground text-sm sm:h-48 sm:w-48">
                 QR code placeholder
               </div>
             </div>
@@ -138,7 +138,7 @@ export function CheckoutClient() {
                       <p className="mt-1 text-sm text-destructive">{errors.email.message}</p>
                     )}
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
                       <Label htmlFor="firstName">{t('firstName')}</Label>
                       <Input id="firstName" className="mt-1" {...register('firstName')} />

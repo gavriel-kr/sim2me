@@ -15,7 +15,7 @@ export default async function CompatibleDevicesPage() {
   return (
     <MainLayout>
       <div className="container mx-auto max-w-2xl px-4 py-12">
-        <h1 className="text-3xl font-bold">{t('title')}</h1>
+        <h1 className="text-2xl font-bold sm:text-3xl">{t('title')}</h1>
         <p className="mt-4 text-muted-foreground">{t('subtitle')}</p>
         <div className="mt-8 space-y-6">
           <section>

@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -8,59 +9,130 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/useToast';
+import { Send, CheckCircle } from 'lucide-react';
 
 export function ContactForm() {
   const t = useTranslations('contact');
   const { toast } = useToast();
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
   const { register, handleSubmit, formState: { errors }, reset } = useForm<ContactFormData>({
     resolver: zodResolver(contactFormSchema),
   });
 
-  function onSubmit(data: ContactFormData) {
-    // Mock: in production send to API
-    toast({
-      title: 'Message sent',
-      description: "We'll get back to you soon.",
-      variant: 'success',
-    });
-    reset();
+  async function onSubmit(data: ContactFormData) {
+    setSending(true);
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error('Failed to send');
+      setSent(true);
+      toast({
+        title: 'Message sent!',
+        description: "We'll get back to you soon.",
+        variant: 'success',
+      });
+      reset();
+    } catch {
+      toast({
+        title: 'Error',
+        description: 'Could not send message. Please try again or email us directly.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSending(false);
+    }
+  }
+
+  if (sent) {
+    return (
+      <div className="mt-8 flex flex-col items-center py-12 text-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+          <CheckCircle className="h-8 w-8 text-primary" />
+        </div>
+        <h3 className="mt-4 text-lg font-semibold text-foreground">Message sent!</h3>
+        <p className="mt-1 text-sm text-muted-foreground">We&apos;ll respond within 1 hour.</p>
+        <Button variant="outline" className="mt-6" onClick={() => setSent(false)}>
+          Send another message
+        </Button>
+      </div>
+    );
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-4">
-      <div>
-        <Label htmlFor="name">{t('name')}</Label>
-        <Input id="name" className="mt-1" {...register('name')} />
-        {errors.name && (
-          <p className="mt-1 text-sm text-destructive">{errors.name.message}</p>
-        )}
+    <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-5">
+      <div className="grid gap-5 sm:grid-cols-2">
+        <div>
+          <Label htmlFor="name" className="text-sm font-medium">{t('name')}</Label>
+          <Input
+            id="name"
+            className="mt-1.5 h-11 rounded-xl"
+            placeholder="John Doe"
+            {...register('name')}
+          />
+          {errors.name && (
+            <p className="mt-1 text-sm text-destructive">{errors.name.message}</p>
+          )}
+        </div>
+        <div>
+          <Label htmlFor="email" className="text-sm font-medium">{t('email')}</Label>
+          <Input
+            id="email"
+            type="email"
+            className="mt-1.5 h-11 rounded-xl"
+            placeholder="john@example.com"
+            {...register('email')}
+          />
+          {errors.email && (
+            <p className="mt-1 text-sm text-destructive">{errors.email.message}</p>
+          )}
+        </div>
       </div>
       <div>
-        <Label htmlFor="email">{t('email')}</Label>
-        <Input id="email" type="email" className="mt-1" {...register('email')} />
-        {errors.email && (
-          <p className="mt-1 text-sm text-destructive">{errors.email.message}</p>
-        )}
-      </div>
-      <div>
-        <Label htmlFor="subject">{t('subject')}</Label>
-        <Input id="subject" className="mt-1" {...register('subject')} />
+        <Label htmlFor="subject" className="text-sm font-medium">{t('subject')}</Label>
+        <Input
+          id="subject"
+          className="mt-1.5 h-11 rounded-xl"
+          placeholder="How can we help?"
+          {...register('subject')}
+        />
         {errors.subject && (
           <p className="mt-1 text-sm text-destructive">{errors.subject.message}</p>
         )}
       </div>
       <div>
-        <Label htmlFor="message">{t('message')}</Label>
+        <Label htmlFor="message" className="text-sm font-medium">{t('message')}</Label>
         <textarea
           id="message"
-          className="mt-1 flex min-h-[120px] w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          rows={5}
+          className="mt-1.5 flex w-full rounded-xl border border-input bg-background px-4 py-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none"
+          placeholder="Tell us more..."
           {...register('message')}
         />
         {errors.message && (
           <p className="mt-1 text-sm text-destructive">{errors.message.message}</p>
         )}
       </div>
-      <Button type="submit">{t('send')}</Button>
+      <Button
+        type="submit"
+        disabled={sending}
+        className="h-12 w-full rounded-xl text-base font-semibold shadow-md"
+      >
+        {sending ? (
+          <span className="flex items-center gap-2">
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+            Sending...
+          </span>
+        ) : (
+          <span className="flex items-center gap-2">
+            <Send className="h-4 w-4" />
+            {t('send')}
+          </span>
+        )}
+      </Button>
     </form>
   );
 }

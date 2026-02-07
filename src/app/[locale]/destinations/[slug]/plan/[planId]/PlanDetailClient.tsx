@@ -87,7 +87,7 @@ export function PlanDetailClient({ destination, plan }: PlanDetailClientProps) {
         <div>
           <Card>
             <CardContent className="p-6">
-              <div className="text-3xl font-bold">
+              <div className="text-2xl font-bold sm:text-3xl">
                 {formatPrice(plan.price, plan.currency)}
               </div>
               {plan.days > 0 && (

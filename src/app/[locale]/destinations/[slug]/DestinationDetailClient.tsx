@@ -62,13 +62,13 @@ export function DestinationDetailClient({
 
       <div className="mt-8 rounded-xl border border-border bg-muted/30 p-4">
         <h2 className="mb-3 font-semibold">Filters</h2>
-        <div className="flex flex-wrap items-end gap-4">
+        <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:items-end sm:gap-4">
           <div>
             <Label className="text-xs">{t('filterData')} (GB min)</Label>
             <Input
               type="number"
               placeholder="e.g. 1"
-              className="mt-1 w-24"
+              className="mt-1 w-full sm:w-24"
               value={dataFilter}
               onChange={(e) => setDataFilter(e.target.value)}
             />
@@ -78,7 +78,7 @@ export function DestinationDetailClient({
             <Input
               type="number"
               placeholder="e.g. 7"
-              className="mt-1 w-24"
+              className="mt-1 w-full sm:w-24"
               value={daysFilter}
               onChange={(e) => setDaysFilter(e.target.value)}
             />
@@ -88,7 +88,7 @@ export function DestinationDetailClient({
             <Input
               type="number"
               placeholder="e.g. 50"
-              className="mt-1 w-24"
+              className="mt-1 w-full sm:w-24"
               value={maxPrice}
               onChange={(e) => setMaxPrice(e.target.value)}
             />

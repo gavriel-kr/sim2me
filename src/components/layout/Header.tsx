@@ -160,6 +160,27 @@ export function Header() {
             >
               {t('account')}
             </IntlLink>
+            <div className="mt-2 border-t border-border/60 pt-3">
+              <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">Language</p>
+              <div className="flex gap-2">
+                {locales.map(({ code, label }) => {
+                  const localePath = `/${code}${pathname === '/' ? '' : pathname}`;
+                  return (
+                    <a
+                      key={code}
+                      href={localePath}
+                      className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                        currentLocale === code
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                      }`}
+                    >
+                      {label}
+                    </a>
+                  );
+                })}
+              </div>
+            </div>
           </nav>
         </div>
       )}
