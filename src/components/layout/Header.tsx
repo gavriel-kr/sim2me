@@ -1,6 +1,5 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { Globe, ShoppingCart, Menu } from 'lucide-react';
 import { useState } from 'react';
@@ -15,7 +14,7 @@ import {
 import { createSharedPathnamesNavigation } from 'next-intl/navigation';
 import { routing } from '@/i18n/routing';
 
-const { useRouter, Link: IntlLink } = createSharedPathnamesNavigation(routing);
+const { useRouter, usePathname: useIntlPathname, Link: IntlLink } = createSharedPathnamesNavigation(routing);
 
 const navLinks = [
   { href: '/', key: 'home' },
@@ -37,7 +36,7 @@ const currencies = [{ code: 'USD', label: 'USD' }, { code: 'EUR', label: 'EUR' }
 
 export function Header() {
   const t = useTranslations('nav');
-  const pathname = usePathname();
+  const pathname = useIntlPathname();
   const router = useRouter();
   const count = useCartStore((s) => s.count());
   const [currency, setCurrency] = useState('USD');
@@ -45,7 +44,7 @@ export function Header() {
   const currentLocale = useLocale();
 
   const isActive = (href: string) =>
-    pathname === href || (href !== '/' && pathname?.endsWith(href));
+    pathname === href || (href !== '/' && pathname?.startsWith(href));
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-white/95 backdrop-blur-sm">
@@ -85,7 +84,7 @@ export function Header() {
               {locales.map(({ code, label }) => (
                 <DropdownMenuItem
                   key={code}
-                  onClick={() => router.replace(pathname || '/', { locale: code })}
+                  onClick={() => router.replace(pathname ?? '/', { locale: code })}
                 >
                   {label} {currentLocale === code ? '✓' : ''}
                 </DropdownMenuItem>
