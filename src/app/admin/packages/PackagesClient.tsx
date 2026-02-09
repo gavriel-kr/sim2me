@@ -46,10 +46,17 @@ export function PackagesClient() {
     p.locationCode?.toLowerCase().includes(search.toLowerCase())
   );
 
-  const formatVolume = (mb: number) => {
-    if (mb < 0) return 'Unlimited';
-    if (mb >= 1024) return `${(mb / 1024).toFixed(mb % 1024 === 0 ? 0 : 1)} GB`;
-    return `${mb} MB`;
+  const formatVolume = (bytes: number) => {
+    if (bytes < 0) return 'Unlimited';
+    const gb = bytes / (1024 * 1024 * 1024);
+    if (gb >= 1) return `${gb % 1 === 0 ? gb.toFixed(0) : gb.toFixed(1)} GB`;
+    const mb = bytes / (1024 * 1024);
+    if (mb >= 1) return `${mb.toFixed(0)} MB`;
+    return `${bytes} B`;
+  };
+
+  const formatPrice = (apiUnits: number) => {
+    return `$${(apiUnits / 10000).toFixed(2)}`;
   };
 
   return (
@@ -122,7 +129,7 @@ export function PackagesClient() {
                   <p className="mt-1 text-xs text-gray-500">{pkg.name}</p>
                 </div>
                 <span className="text-lg font-bold text-emerald-600">
-                  ${pkg.price?.toFixed(2)}
+                  {formatPrice(pkg.price)}
                 </span>
               </div>
               <div className="mt-3 flex flex-wrap gap-2">

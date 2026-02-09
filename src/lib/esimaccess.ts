@@ -1,6 +1,7 @@
 /**
  * eSIMaccess API Client
  * Docs: https://docs.esimaccess.com/
+ * Endpoints discovered from Postman collection.
  */
 
 const BASE_URL = 'https://api.esimaccess.com/api/v1';
@@ -12,23 +13,27 @@ function getHeaders() {
   };
 }
 
+interface ApiResponse<T> {
+  success: boolean;
+  errorCode: string | null;
+  errorMsg: string | null;
+  obj: T;
+}
+
 async function apiCall<T>(endpoint: string, body?: Record<string, unknown>): Promise<T> {
   const res = await fetch(`${BASE_URL}${endpoint}`, {
     method: 'POST',
     headers: getHeaders(),
-    body: JSON.stringify({
-      ...body,
-      accessCode: process.env.ESIMACCESS_ACCESS_CODE,
-      secretKey: process.env.ESIMACCESS_SECRET_KEY,
-    }),
+    body: body ? JSON.stringify(body) : '',
   });
 
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`eSIMaccess API error ${res.status}: ${text}`);
+  const json = await res.json() as ApiResponse<T>;
+
+  if (!res.ok || !json.success) {
+    throw new Error(`eSIMaccess API error: ${json.errorMsg || res.statusText}`);
   }
 
-  return res.json();
+  return json.obj;
 }
 
 // ─── Types ───────────────────────────────────────────────────
@@ -37,22 +42,24 @@ export interface EsimPackage {
   packageCode: string;
   slug: string;
   name: string;
-  price: number;
+  price: number;          // in cents (USD)
   currencyCode: string;
-  volume: number;        // MB
-  duration: number;      // days
+  volume: number;          // in bytes
+  duration: number;        // days
+  durationUnit: string;
   location: string;
   locationCode: string;
   description: string;
   speed: string;
-  supportTopUp: boolean;
-  retailPrice?: number;
+  supportTopUpType: number;
+  retailPrice?: number;    // in cents (USD)
+  favorite: boolean;
+  activeType: number;
+  locationNetworkList?: { locationCode: string; locationName: string; operatorList: { operatorName: string }[] }[];
 }
 
 export interface EsimBalance {
-  success: boolean;
-  balance: number;
-  currencyCode: string;
+  balance: number;         // in cents (USD)
 }
 
 export interface EsimOrderResult {
@@ -74,7 +81,7 @@ export interface EsimProfile {
 
 /** Check merchant balance */
 export async function getBalance(): Promise<EsimBalance> {
-  return apiCall<EsimBalance>('/open/balance');
+  return apiCall<EsimBalance>('/open/balance/query');
 }
 
 /** List all available packages (optionally filter by location) */
@@ -115,11 +122,19 @@ export async function cancelOrder(orderNo: string): Promise<{ success: boolean; 
 
 // ─── Helpers ─────────────────────────────────────────────────
 
-/** Convert MB to human-readable */
-export function formatDataVolume(mb: number): string {
-  if (mb < 0) return 'Unlimited';
-  if (mb >= 1024) return `${(mb / 1024).toFixed(mb % 1024 === 0 ? 0 : 1)} GB`;
-  return `${mb} MB`;
+/** Convert bytes to human-readable */
+export function formatDataVolume(bytes: number): string {
+  if (bytes < 0) return 'Unlimited';
+  const gb = bytes / (1024 * 1024 * 1024);
+  if (gb >= 1) return `${gb % 1 === 0 ? gb.toFixed(0) : gb.toFixed(1)} GB`;
+  const mb = bytes / (1024 * 1024);
+  if (mb >= 1) return `${mb.toFixed(0)} MB`;
+  return `${bytes} B`;
+}
+
+/** Convert price from cents to dollars */
+export function formatPrice(cents: number): string {
+  return `$${(cents / 10000).toFixed(2)}`;
 }
 
 /** Group packages by location for the destinations page */

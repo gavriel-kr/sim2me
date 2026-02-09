@@ -19,7 +19,7 @@ export async function GET() {
 
     return NextResponse.json({
       packageList: packagesData.packageList || [],
-      balance: balanceData.balance ?? null,
+      balance: (balanceData.balance ?? 0) / 10000, // convert from API units to USD
     });
   } catch (error) {
     console.error('[eSIMaccess packages error]', error);
