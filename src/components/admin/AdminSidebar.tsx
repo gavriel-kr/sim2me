@@ -27,6 +27,10 @@ export function AdminSidebar({ user }: Props) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
+  // #region agent log
+  console.log('[DEBUG-SIDEBAR] AdminSidebar mounted', { user, pathname });
+  // #endregion
+
   const isActive = (href: string) =>
     href === '/admin' ? pathname === '/admin' : pathname?.startsWith(href);
 

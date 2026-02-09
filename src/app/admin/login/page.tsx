@@ -26,7 +26,8 @@ export default function AdminLoginPage() {
       setError('Invalid email or password');
       setLoading(false);
     } else {
-      router.push('/admin');
+      // Force full page reload so the server layout re-renders with the new session
+      window.location.href = '/admin';
     }
   }
 
