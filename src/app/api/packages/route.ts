@@ -4,10 +4,61 @@ import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
+// ─── Regional code → friendly name & flag ────────────────────
+const REGION_NAMES: Record<string, { name: string; flag: string }> = {
+  'EU-42': { name: 'Europe (42 countries)', flag: 'eu' },
+  'EU-43': { name: 'Europe (43 countries)', flag: 'eu' },
+  'EU-30': { name: 'Europe (30+ countries)', flag: 'eu' },
+  'EU-7':  { name: 'Western Europe', flag: 'eu' },
+  'NA-3':  { name: 'North America', flag: 'us' },
+  'USCA-2':{ name: 'USA & Canada', flag: 'us' },
+  'SA-18': { name: 'South America', flag: 'br' },
+  'AF-29': { name: 'Africa', flag: 'za' },
+  'AS-7':  { name: 'Asia (7 countries)', flag: 'sg' },
+  'AS-20': { name: 'Asia (20 countries)', flag: 'sg' },
+  'AS-21': { name: 'Asia (21 countries)', flag: 'sg' },
+  'AS-12': { name: 'Southeast Asia', flag: 'sg' },
+  'AS-5':  { name: 'East Asia', flag: 'jp' },
+  'ME-13': { name: 'Middle East', flag: 'ae' },
+  'ME-6':  { name: 'Middle East (6 countries)', flag: 'ae' },
+  'ME-12': { name: 'Middle East (12 countries)', flag: 'ae' },
+  'GL-139':{ name: 'Global (139 countries)', flag: 'un' },
+  'GL-120':{ name: 'Global (120 countries)', flag: 'un' },
+  'CB-25': { name: 'Caribbean', flag: 'jm' },
+  'CN-3':  { name: 'Greater China', flag: 'cn' },
+  'CNHK-2':{ name: 'China & Hong Kong', flag: 'cn' },
+  'CNJPKR-3':{ name: 'China, Japan & Korea', flag: 'jp' },
+  'SGMYTH-3':{ name: 'Singapore, Malaysia & Thailand', flag: 'sg' },
+  'SGMY-2':{ name: 'Singapore & Malaysia', flag: 'sg' },
+  'SGMYVNTHID-5':{ name: 'Southeast Asia (5 countries)', flag: 'sg' },
+  'AUNZ-2':{ name: 'Australia & New Zealand', flag: 'au' },
+  'SAAEQAKWOMBH-6':{ name: 'Gulf States', flag: 'ae' },
+};
+
+function isRegionalCode(code: string): boolean {
+  return code.length > 2;
+}
+
+function getDestinationName(locationCode: string, location: string): string {
+  if (isRegionalCode(locationCode)) {
+    return REGION_NAMES[locationCode]?.name || `Region (${locationCode})`;
+  }
+  // Single-country codes: location field is already the name
+  return location;
+}
+
+function getFlagCode(locationCode: string): string {
+  if (isRegionalCode(locationCode)) {
+    return REGION_NAMES[locationCode]?.flag || 'un';
+  }
+  return locationCode.toLowerCase();
+}
+
 /**
  * Public API: returns eSIMaccess packages merged with admin overrides.
  * - Only visible packages are returned
  * - Custom prices/titles/badges are applied
+ * - Regional packages get proper names
  * - Optional ?location=XX filter
  */
 export async function GET(req: NextRequest) {
@@ -39,8 +90,10 @@ export async function GET(req: NextRequest) {
           volume: pkg.volume,
           duration: pkg.duration,
           durationUnit: pkg.durationUnit || 'DAY',
-          location: pkg.location,
+          location: getDestinationName(pkg.locationCode, pkg.location),
           locationCode: pkg.locationCode,
+          flagCode: getFlagCode(pkg.locationCode),
+          isRegional: isRegionalCode(pkg.locationCode),
           description: pkg.description,
           speed: pkg.speed,
           topUp: pkg.supportTopUpType > 0,
@@ -52,7 +105,6 @@ export async function GET(req: NextRequest) {
       })
       .filter((p) => p.visible)
       .sort((a, b) => {
-        // Featured first, then by sortOrder, then by price
         if (a.featured !== b.featured) return a.featured ? -1 : 1;
         if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder;
         return a.price - b.price;
@@ -61,7 +113,9 @@ export async function GET(req: NextRequest) {
     // Group by locationCode for destinations list
     const destinationsMap = new Map<string, {
       locationCode: string;
-      location: string;
+      name: string;
+      flagCode: string;
+      isRegional: boolean;
       planCount: number;
       minPrice: number;
       featured: boolean;
@@ -76,7 +130,9 @@ export async function GET(req: NextRequest) {
       } else {
         destinationsMap.set(pkg.locationCode, {
           locationCode: pkg.locationCode,
-          location: pkg.location,
+          name: pkg.location,
+          flagCode: pkg.flagCode,
+          isRegional: pkg.isRegional,
           planCount: 1,
           minPrice: pkg.price,
           featured: pkg.featured,
@@ -84,10 +140,12 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // Sort: featured first, then regions first, then alphabetical
     const destinations = Array.from(destinationsMap.values())
       .sort((a, b) => {
         if (a.featured !== b.featured) return a.featured ? -1 : 1;
-        return a.location.localeCompare(b.location);
+        if (a.isRegional !== b.isRegional) return a.isRegional ? -1 : 1;
+        return a.name.localeCompare(b.name);
       });
 
     return NextResponse.json({

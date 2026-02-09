@@ -24,13 +24,15 @@ async function getDestinationData(slug: string) {
 
     // Build destination info from first package
     const firstPkg = packages[0];
+    const flagCode = firstPkg.flagCode || slug;
     const destination = {
       id: slug,
       name: firstPkg.location || slug.toUpperCase(),
       slug,
       region: '',
       isoCode: firstPkg.locationCode || slug.toUpperCase(),
-      flagUrl: `https://flagcdn.com/w80/${slug}.png`,
+      flagUrl: `https://flagcdn.com/w80/${flagCode}.png`,
+      isRegional: firstPkg.isRegional || false,
       popular: packages.some((p: { featured: boolean }) => p.featured),
       operatorCount: 1,
       planCount: packages.length,
