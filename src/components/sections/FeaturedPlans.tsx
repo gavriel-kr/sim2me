@@ -19,11 +19,6 @@ export function FeaturedPlans() {
   });
   const popular = destinations.filter((d) => d.popular).slice(0, 8);
 
-  // #region agent log
-  if (typeof window !== 'undefined') {
-    fetch('http://127.0.0.1:7242/ingest/31d3162a-817c-4d6a-9841-464cdcbf3b94',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'FeaturedPlans.tsx:render',message:'FeaturedPlans data',data:{totalDest:destinations.length,popularCount:popular.length,firstDest:destinations[0]?{name:destinations[0].name,slug:destinations[0].slug,popular:destinations[0].popular}:null,firstPopular:popular[0]?{name:popular[0].name,slug:popular[0].slug}:null},timestamp:Date.now(),hypothesisId:'H_RENDER'})}).catch(()=>{});
-  }
-  // #endregion
 
   return (
     <section className="relative bg-gradient-to-b from-muted/30 to-white py-20 sm:py-24">

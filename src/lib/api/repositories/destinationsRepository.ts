@@ -16,10 +16,6 @@ export async function getDestinations(): Promise<Destination[]> {
     if (!res.ok) throw new Error('Failed to fetch destinations');
     const data = await res.json();
 
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/31d3162a-817c-4d6a-9841-464cdcbf3b94',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'destinationsRepository.ts:getDestinations',message:'API response sample',data:{destCount:(data.destinations||[]).length,first:data.destinations?.[0]},timestamp:Date.now(),hypothesisId:'H_FIELD_NAME'})}).catch(()=>{});
-    // #endregion
-
     return (data.destinations || []).map((d: {
       locationCode: string;
       name: string;
@@ -61,10 +57,6 @@ export async function searchDestinations(query: string): Promise<Destination[]> 
   const destinations = await getDestinations();
   if (!query.trim()) return destinations;
   const q = query.toLowerCase().trim();
-
-  // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/31d3162a-817c-4d6a-9841-464cdcbf3b94',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'destinationsRepository.ts:searchDestinations',message:'Filtering with query',data:{query,destCount:destinations.length,sampleName:destinations[0]?.name},timestamp:Date.now(),hypothesisId:'H_SEARCH_CRASH'})}).catch(()=>{});
-  // #endregion
 
   return destinations.filter(
     (d) =>
