@@ -105,10 +105,67 @@ function Chip({ label, onRemove }: { label: string; onRemove: () => void }) {
   );
 }
 
+/* ─── Region name translations ─────────────────────────────── */
+const REGION_TRANSLATIONS: Record<string, Record<string, string>> = {
+  he: {
+    'Africa': 'אפריקה', 'Europe': 'אירופה', 'Asia': 'אסיה',
+    'North America': 'צפון אמריקה', 'South America': 'דרום אמריקה',
+    'Oceania': 'אוקיאניה', 'Middle East': 'המזרח התיכון', 'Caribbean': 'הקריביים',
+    'Global': 'עולמי', 'N. America': 'צפון אמריקה', 'S. America': 'דרום אמריקה',
+  },
+  ar: {
+    'Africa': 'أفريقيا', 'Europe': 'أوروبا', 'Asia': 'آسيا',
+    'North America': 'أمريكا الشمالية', 'South America': 'أمريكا الجنوبية',
+    'Oceania': 'أوقيانوسيا', 'Middle East': 'الشرق الأوسط', 'Caribbean': 'الكاريبي',
+    'Global': 'عالمي', 'N. America': 'أمريكا الشمالية', 'S. America': 'أمريكا الجنوبية',
+  },
+};
+
+/**
+ * Translate a country code to the given locale using Intl.DisplayNames.
+ * For regional destination names, use the manually translated REGION_TRANSLATIONS.
+ */
+function translateName(
+  name: string,
+  locationCode: string,
+  isRegional: boolean,
+  locale: string,
+): string {
+  if (locale === 'en') return name;
+
+  if (!isRegional && locationCode.length === 2) {
+    // Use Intl.DisplayNames for single countries
+    try {
+      const displayName = new Intl.DisplayNames([locale], { type: 'region' }).of(locationCode.toUpperCase());
+      if (displayName) return displayName;
+    } catch { /* fallback */ }
+  }
+
+  // For regions, try partial translation of known terms
+  if (isRegional) {
+    const translations = REGION_TRANSLATIONS[locale];
+    if (translations) {
+      // Try direct match first
+      for (const [en, local] of Object.entries(translations)) {
+        if (name.includes(en)) {
+          return name.replace(en, local);
+        }
+      }
+    }
+  }
+
+  return name;
+}
+
+function translateContinent(continent: string, locale: string): string {
+  if (locale === 'en') return continent;
+  return REGION_TRANSLATIONS[locale]?.[continent] || continent;
+}
+
 /* ═══════════════════════════════════════════════════════════════
    Main component
    ═══════════════════════════════════════════════════════════════ */
-export function DestinationsClient() {
+export function DestinationsClient({ locale = 'en' }: { locale?: string }) {
   const t = useTranslations('destinations');
   const searchRef = useRef<HTMLInputElement>(null);
 
@@ -123,7 +180,7 @@ export function DestinationsClient() {
 
   /* ── Data fetching ─────────────────────────────────────────── */
   const { data: destinations = [], isLoading } = useQuery<DestItem[]>({
-    queryKey: ['destinations'],
+    queryKey: ['destinations', locale],
     queryFn: () =>
       fetch('/api/packages')
         .then((r) => r.json())
@@ -142,11 +199,11 @@ export function DestinationsClient() {
               featured: boolean;
             }) => ({
               id: d.locationCode.toLowerCase(),
-              name: d.name,
+              name: translateName(d.name, d.locationCode, d.isRegional, locale),
               slug: d.locationCode.toLowerCase(),
               flagCode: d.flagCode,
               isRegional: d.isRegional,
-              continent: d.continent || 'Other',
+              continent: translateContinent(d.continent || 'Other', locale),
               planCount: d.planCount,
               fromPrice: d.minPrice,
               maxDataMB: d.maxDataMB || 0,
