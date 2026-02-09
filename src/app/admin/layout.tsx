@@ -9,11 +9,6 @@ export const dynamic = 'force-dynamic';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession(authOptions);
-
-  // #region agent log
-  console.log('[DEBUG-LAYOUT] session?.user:', session?.user ? 'EXISTS' : 'NULL', session?.user?.email);
-  // #endregion
-
   // Allow login page without auth
   return (
     <div className="flex min-h-screen bg-gray-50">
