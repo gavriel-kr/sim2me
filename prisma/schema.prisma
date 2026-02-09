@@ -1,0 +1,126 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── Admin Users ─────────────────────────────────────────────
+model AdminUser {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String
+  role      Role     @default(EDITOR)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("admin_users")
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  EDITOR
+  VIEWER
+}
+
+// ─── CMS Pages ───────────────────────────────────────────────
+model Page {
+  id          String   @id @default(cuid())
+  slug        String   @unique // e.g. "home", "about", "contact"
+  titleEn     String   @default("")
+  titleHe     String   @default("")
+  titleAr     String   @default("")
+  contentEn   String   @default("") @db.Text
+  contentHe   String   @default("") @db.Text
+  contentAr   String   @default("") @db.Text
+  published   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  seo         SeoMeta?
+
+  @@map("pages")
+}
+
+// ─── SEO Meta ────────────────────────────────────────────────
+model SeoMeta {
+  id              String  @id @default(cuid())
+  pageId          String  @unique
+  page            Page    @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  metaTitleEn     String  @default("")
+  metaTitleHe     String  @default("")
+  metaTitleAr     String  @default("")
+  metaDescEn      String  @default("") @db.Text
+  metaDescHe      String  @default("") @db.Text
+  metaDescAr      String  @default("") @db.Text
+  ogImage         String  @default("")
+  keywords        String  @default("")
+
+  @@map("seo_meta")
+}
+
+// ─── Site Settings ───────────────────────────────────────────
+model SiteSetting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String @db.Text
+
+  @@map("site_settings")
+}
+
+// ─── Orders ──────────────────────────────────────────────────
+model Order {
+  id                String      @id @default(cuid())
+  orderNo           String      @unique @default(cuid())
+  customerEmail     String
+  customerName      String      @default("")
+  status            OrderStatus @default(PENDING)
+  totalAmount       Decimal     @db.Decimal(10, 2)
+  currency          String      @default("USD")
+  // eSIMaccess reference
+  esimOrderId       String?
+  esimTransactionId String?
+  // Product details
+  packageCode       String
+  packageName       String
+  destination       String
+  dataAmount        String
+  validity          String
+  // Delivery
+  iccid             String?
+  qrCodeUrl         String?
+  smdpAddress       String?
+  activationCode    String?
+  // Timestamps
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  paidAt            DateTime?
+
+  @@map("orders")
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  PROCESSING
+  COMPLETED
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+// ─── Customers (site users) ─────────────────────────────────
+model Customer {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String   @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("customers")
+}

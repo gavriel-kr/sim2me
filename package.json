@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "postinstall": "prisma generate",
+    "db:push": "prisma db push",
+    "db:seed": "npx tsx prisma/seed.ts",
+    "db:studio": "prisma studio"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",
@@ -34,6 +38,7 @@
     "zustand": "^4.5.0"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20.11.0",
     "@types/react": "^18.2.48",
     "@types/react-dom": "^18.2.18",
@@ -41,6 +46,7 @@
     "eslint": "^8.56.0",
     "eslint-config-next": "14.2.3",
     "postcss": "^8.4.33",
+    "prisma": "^7.3.0",
     "tailwindcss": "^3.4.1",
     "typescript": "^5.3.3"
   }
