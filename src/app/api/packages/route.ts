@@ -1,6 +1,7 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { getPackages } from '@/lib/esimaccess';
 import { prisma } from '@/lib/prisma';
+import { getContinent } from '@/lib/continents';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,11 +40,38 @@ function isRegionalCode(code: string): boolean {
   return code.length > 2;
 }
 
-function getDestinationName(locationCode: string, location: string): string {
+/**
+ * Extract country name from package name by removing data/duration suffix.
+ * e.g. "United States 20GB 30Days" -> "United States"
+ * e.g. "Hong Kong (China) 500MB/Day" -> "Hong Kong (China)"
+ */
+function extractCountryName(packageName: string): string {
+  // Remove common suffixes: "1GB 7Days", "500MB/Day", "100MB 7Days", "20GB 30Days", etc.
+  return packageName
+    .replace(/\s+\d+(\.\d+)?\s*(GB|MB|TB|KB)(\/Day)?\s*.*$/i, '')
+    .replace(/\s+Unlimited.*$/i, '')
+    .trim();
+}
+
+// Cache: locationCode -> country name (built from first package seen)
+const countryNameCache = new Map<string, string>();
+
+function getDestinationName(locationCode: string, location: string, packageName?: string): string {
   if (isRegionalCode(locationCode)) {
     return REGION_NAMES[locationCode]?.name || `Region (${locationCode})`;
   }
-  // Single-country codes: location field is already the name
+  // Check cache first
+  if (countryNameCache.has(locationCode)) {
+    return countryNameCache.get(locationCode)!;
+  }
+  // Extract from package name (most reliable)
+  if (packageName) {
+    const extracted = extractCountryName(packageName);
+    if (extracted && extracted.length > 2) {
+      countryNameCache.set(locationCode, extracted);
+      return extracted;
+    }
+  }
   return location;
 }
 
@@ -90,7 +118,7 @@ export async function GET(req: NextRequest) {
           volume: pkg.volume,
           duration: pkg.duration,
           durationUnit: pkg.durationUnit || 'DAY',
-          location: getDestinationName(pkg.locationCode, pkg.location),
+          location: getDestinationName(pkg.locationCode, pkg.location, pkg.name),
           locationCode: pkg.locationCode,
           flagCode: getFlagCode(pkg.locationCode),
           isRegional: isRegionalCode(pkg.locationCode),
@@ -116,16 +144,22 @@ export async function GET(req: NextRequest) {
       name: string;
       flagCode: string;
       isRegional: boolean;
+      continent: string;
       planCount: number;
       minPrice: number;
+      maxDataMB: number;
+      speeds: string[];
       featured: boolean;
     }>();
 
     for (const pkg of packages) {
+      const dataMB = pkg.volume > 0 ? Math.round(pkg.volume / (1024 * 1024)) : 0;
       const existing = destinationsMap.get(pkg.locationCode);
       if (existing) {
         existing.planCount++;
         existing.minPrice = Math.min(existing.minPrice, pkg.price);
+        if (dataMB > existing.maxDataMB) existing.maxDataMB = dataMB;
+        if (pkg.speed && !existing.speeds.includes(pkg.speed)) existing.speeds.push(pkg.speed);
         if (pkg.featured) existing.featured = true;
       } else {
         destinationsMap.set(pkg.locationCode, {
@@ -133,8 +167,11 @@ export async function GET(req: NextRequest) {
           name: pkg.location,
           flagCode: pkg.flagCode,
           isRegional: pkg.isRegional,
+          continent: getContinent(pkg.locationCode),
           planCount: 1,
           minPrice: pkg.price,
+          maxDataMB: dataMB,
+          speeds: pkg.speed ? [pkg.speed] : [],
           featured: pkg.featured,
         });
       }
