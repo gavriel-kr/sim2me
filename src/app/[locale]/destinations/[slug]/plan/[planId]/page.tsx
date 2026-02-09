@@ -4,6 +4,8 @@ import { getPlanById } from '@/lib/api/repositories/plansRepository';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { PlanDetailClient } from './PlanDetailClient';
 
+export const dynamic = 'force-dynamic';
+
 interface PageProps {
   params: Promise<{ slug: string; planId: string }>;
 }
