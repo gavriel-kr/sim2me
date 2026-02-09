@@ -1,18 +1,29 @@
 import { getTranslations } from 'next-intl/server';
 import { MainLayout } from '@/components/layout/MainLayout';
+import { getCmsPage } from '@/lib/cms';
 
-export async function generateMetadata() {
+export const dynamic = 'force-dynamic';
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  const cms = await getCmsPage('refund', locale as 'en' | 'he' | 'ar');
   const t = await getTranslations('footer');
-  return { title: t('refund'), description: 'Refund Policy.' };
+  return {
+    title: cms?.seoTitle || cms?.title || t('refund'),
+    description: cms?.seoDesc || 'Refund Policy.',
+  };
 }
 
-export default async function RefundPage() {
+export default async function RefundPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  const cms = await getCmsPage('refund', locale as 'en' | 'he' | 'ar');
+
   return (
     <MainLayout>
       <div className="container mx-auto max-w-2xl px-4 py-12">
-        <h1 className="text-2xl font-bold sm:text-3xl">Refund Policy</h1>
-        <div className="prose prose-sm mt-6 text-muted-foreground">
-          <p>Unused eSIMs can be refunded within 14 days of purchase. Once the eSIM is installed or activated, the plan is non-refundable. Contact support with your order ID to request a refund.</p>
+        <h1 className="text-2xl font-bold sm:text-3xl">{cms?.title || 'Refund Policy'}</h1>
+        <div className="prose prose-sm mt-6 text-muted-foreground whitespace-pre-line">
+          {cms?.content || 'Unused eSIMs can be refunded within 14 days of purchase. Once the eSIM is installed or activated, the plan is non-refundable. Contact support with your order ID to request a refund.'}
         </div>
       </div>
     </MainLayout>
