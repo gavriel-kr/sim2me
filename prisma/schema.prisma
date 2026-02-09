@@ -5,7 +5,6 @@ generator client {
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
 }
 
 // ─── Admin Users ─────────────────────────────────────────────
@@ -32,7 +31,7 @@ enum Role {
 // ─── CMS Pages ───────────────────────────────────────────────
 model Page {
   id          String   @id @default(cuid())
-  slug        String   @unique // e.g. "home", "about", "contact"
+  slug        String   @unique
   titleEn     String   @default("")
   titleHe     String   @default("")
   titleAr     String   @default("")
@@ -82,21 +81,17 @@ model Order {
   status            OrderStatus @default(PENDING)
   totalAmount       Decimal     @db.Decimal(10, 2)
   currency          String      @default("USD")
-  // eSIMaccess reference
   esimOrderId       String?
   esimTransactionId String?
-  // Product details
   packageCode       String
   packageName       String
   destination       String
   dataAmount        String
   validity          String
-  // Delivery
   iccid             String?
   qrCodeUrl         String?
   smdpAddress       String?
   activationCode    String?
-  // Timestamps
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
   paidAt            DateTime?

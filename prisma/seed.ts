@@ -1,3 +1,10 @@
+import path from 'node:path';
+import dotenv from 'dotenv';
+
+// Load env vars before Prisma
+dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+
 import { PrismaClient } from '@prisma/client';
 import { hash } from 'bcryptjs';
 
