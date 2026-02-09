@@ -29,31 +29,26 @@ interface DestItem {
   featured: boolean;
 }
 
-/* ─── Filter presets ───────────────────────────────────────── */
-const PRICE_RANGES = [
-  { label: 'Any price', min: 0, max: Infinity },
-  { label: 'Under $5', min: 0, max: 5 },
-  { label: '$5 – $15', min: 5, max: 15 },
-  { label: '$15 – $30', min: 15, max: 30 },
-  { label: '$30+', min: 30, max: Infinity },
+/* ─── Filter preset definitions (labels added dynamically with i18n) ─── */
+const PRICE_DEFS = [
+  { key: 'anyPrice', min: 0, max: Infinity },
+  { key: 'under5', min: 0, max: 5, tpl: (under: string) => `${under} $5` },
+  { key: 'range5_15', min: 5, max: 15, fixed: '$5 – $15' },
+  { key: 'range15_30', min: 15, max: 30, fixed: '$15 – $30' },
+  { key: 'range30', min: 30, max: Infinity, fixed: '$30+' },
 ];
 
-const DATA_RANGES = [
-  { label: 'Any data', min: 0 },
-  { label: '500 MB+', min: 500 },
-  { label: '1 GB+', min: 1024 },
-  { label: '3 GB+', min: 3072 },
-  { label: '5 GB+', min: 5120 },
-  { label: '10 GB+', min: 10240 },
-  { label: '20 GB+', min: 20480 },
+const DATA_DEFS = [
+  { key: 'anyData', min: 0 },
+  { key: '500mb', min: 500, fixed: '500 MB+' },
+  { key: '1gb', min: 1024, fixed: '1 GB+' },
+  { key: '3gb', min: 3072, fixed: '3 GB+' },
+  { key: '5gb', min: 5120, fixed: '5 GB+' },
+  { key: '10gb', min: 10240, fixed: '10 GB+' },
+  { key: '20gb', min: 20480, fixed: '20 GB+' },
 ];
 
-const SORT_OPTIONS = [
-  { value: 'name', label: 'Name (A–Z)' },
-  { value: 'price', label: 'Lowest price' },
-  { value: 'plans', label: 'Most plans' },
-  { value: 'data', label: 'Most data' },
-] as const;
+const SORT_KEYS = ['name', 'price', 'plans', 'data'] as const;
 
 /* ─── Select component (tiny) ──────────────────────────────── */
 function MiniSelect({
@@ -70,7 +65,7 @@ function MiniSelect({
   return (
     <div className="relative">
       {icon && (
-        <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400">
+        <span className="pointer-events-none absolute start-2.5 top-1/2 -translate-y-1/2 text-gray-400">
           {icon}
         </span>
       )}
@@ -79,13 +74,13 @@ function MiniSelect({
         onChange={(e) => onChange(e.target.value)}
         className={`appearance-none rounded-lg border border-gray-200 bg-white text-sm font-medium transition-colors
           hover:border-emerald-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20
-          ${icon ? 'pl-8 pr-7 py-2' : 'pl-3 pr-7 py-2'}`}
+          ${icon ? 'ps-8 pe-7 py-2' : 'ps-3 pe-7 py-2'}`}
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>{o.label}</option>
         ))}
       </select>
-      <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+      <ChevronDown className="pointer-events-none absolute end-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
     </div>
   );
 }
@@ -93,11 +88,11 @@ function MiniSelect({
 /* ─── Active filter chip ───────────────────────────────────── */
 function Chip({ label, onRemove }: { label: string; onRemove: () => void }) {
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 pl-2.5 pr-1 py-0.5 text-xs font-medium text-emerald-800 animate-in fade-in-0 zoom-in-95">
+    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 ps-2.5 pe-1 py-0.5 text-xs font-medium text-emerald-800 animate-in fade-in-0 zoom-in-95">
       {label}
       <button
         onClick={onRemove}
-        className="ml-0.5 flex h-4 w-4 items-center justify-center rounded-full hover:bg-emerald-200 transition-colors"
+        className="ms-0.5 flex h-4 w-4 items-center justify-center rounded-full hover:bg-emerald-200 transition-colors"
       >
         <X className="h-2.5 w-2.5" />
       </button>
@@ -168,6 +163,25 @@ function translateContinent(continent: string, locale: string): string {
 export function DestinationsClient({ locale = 'en' }: { locale?: string }) {
   const t = useTranslations('destinations');
   const searchRef = useRef<HTMLInputElement>(null);
+
+  /* ── Localized filter labels ────────────────────────────────── */
+  const PRICE_RANGES = useMemo(() => PRICE_DEFS.map((d) => ({
+    label: d.key === 'anyPrice' ? t('anyPrice') : d.key === 'under5' ? (d.tpl?.(t('under')) ?? '') : (d.fixed ?? ''),
+    min: d.min,
+    max: d.max ?? Infinity,
+  })), [t]);
+
+  const DATA_RANGES = useMemo(() => DATA_DEFS.map((d) => ({
+    label: d.key === 'anyData' ? t('anyData') : (d.fixed ?? ''),
+    min: d.min,
+  })), [t]);
+
+  const SORT_OPTIONS = useMemo(() => [
+    { value: 'name', label: t('sortName') },
+    { value: 'price', label: t('sortPrice') },
+    { value: 'plans', label: t('sortPlans') },
+    { value: 'data', label: t('sortData') },
+  ], [t]);
 
   /* ── State ─────────────────────────────────────────────────── */
   const [search, setSearch] = useState('');
@@ -345,9 +359,11 @@ export function DestinationsClient({ locale = 'en' }: { locale?: string }) {
     );
   }
 
+  const isRTL = locale === 'he' || locale === 'ar';
+
   /* ═══ Render ═══════════════════════════════════════════════════ */
   return (
-    <div className="container px-4 py-8">
+    <div className="container px-4 py-8" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* ─── Title ────────────────────────────────────────────── */}
       <div className="flex items-center gap-2">
         <Globe className="h-6 w-6 text-emerald-600" />
@@ -361,21 +377,21 @@ export function DestinationsClient({ locale = 'en' }: { locale?: string }) {
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 sm:p-4">
           {/* Search input */}
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <input
               ref={searchRef}
               type="text"
-              placeholder="Search by country, region, or continent..."
+              placeholder={t('searchPlaceholder')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-10 pr-10 text-sm
+              className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 ps-10 pe-10 text-sm
                 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20
                 transition-colors"
             />
             {search && (
               <button
                 onClick={() => setSearch('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute end-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -387,7 +403,7 @@ export function DestinationsClient({ locale = 'en' }: { locale?: string }) {
             value={sortBy}
             onChange={setSortBy}
             icon={<ArrowUpDown className="h-3.5 w-3.5" />}
-            options={SORT_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
+            options={SORT_OPTIONS}
           />
         </div>
 
@@ -404,7 +420,7 @@ export function DestinationsClient({ locale = 'en' }: { locale?: string }) {
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
             >
-              {v === 'countries' ? `Countries (${countryCount})` : `Regions (${regionCount})`}
+              {v === 'countries' ? `${t('countries')} (${countryCount})` : `${t('regions')} (${regionCount})`}
             </button>
           ))}
 
@@ -416,7 +432,7 @@ export function DestinationsClient({ locale = 'en' }: { locale?: string }) {
             value={continent}
             onChange={setContinent}
             options={[
-              { value: 'all', label: 'All continents' },
+              { value: 'all', label: t('allContinents') },
               ...continents.map((c) => ({ value: c, label: c })),
             ]}
           />
@@ -441,7 +457,7 @@ export function DestinationsClient({ locale = 'en' }: { locale?: string }) {
               value={speedFilter}
               onChange={setSpeedFilter}
               options={[
-                { value: 'all', label: 'Any speed' },
+                { value: 'all', label: t('anySpeed') },
                 ...allSpeeds.map((s) => ({ value: s, label: s })),
               ]}
             />
@@ -457,9 +473,9 @@ export function DestinationsClient({ locale = 'en' }: { locale?: string }) {
             ))}
             <button
               onClick={clearAll}
-              className="ml-1 text-xs font-medium text-red-500 hover:text-red-700 transition-colors"
+              className="ms-1 text-xs font-medium text-red-500 hover:text-red-700 transition-colors"
             >
-              Clear all
+              {t('clearAll')}
             </button>
           </div>
         )}
@@ -468,16 +484,16 @@ export function DestinationsClient({ locale = 'en' }: { locale?: string }) {
       {/* ─── Result count ─────────────────────────────────────── */}
       <div className="mt-4 flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          <LayoutGrid className="inline h-4 w-4 mr-1" />
-          <strong>{filtered.length}</strong> {filtered.length === 1 ? 'destination' : 'destinations'}
-          {activeFilters.length > 0 && <span className="text-gray-400"> (filtered)</span>}
+          <LayoutGrid className="inline h-4 w-4 me-1" />
+          <strong>{filtered.length}</strong> {filtered.length === 1 ? t('destination') : t('destinationsCount')}
+          {activeFilters.length > 0 && <span className="text-gray-400"> ({t('filtered')})</span>}
         </p>
         {activeFilters.length > 0 && filtered.length === 0 && (
           <button
             onClick={clearAll}
             className="text-xs font-medium text-emerald-600 hover:text-emerald-700"
           >
-            Reset filters
+            {t('resetFilters')}
           </button>
         )}
       </div>
@@ -512,7 +528,7 @@ export function DestinationsClient({ locale = 'en' }: { locale?: string }) {
                       <>
                         <span className="text-gray-300">·</span>
                         <span className="text-xs font-bold text-emerald-600">
-                          from ${d.fromPrice.toFixed(2)}
+                          {t('from')} ${d.fromPrice.toFixed(2)}
                         </span>
                       </>
                     )}
@@ -547,13 +563,13 @@ export function DestinationsClient({ locale = 'en' }: { locale?: string }) {
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
             <Search className="h-7 w-7 text-gray-400" />
           </div>
-          <p className="mt-5 text-lg font-semibold text-gray-700">No destinations found</p>
-          <p className="mt-1 text-sm text-gray-400">Try different keywords or adjust your filters</p>
+          <p className="mt-5 text-lg font-semibold text-gray-700">{t('noResults')}</p>
+          <p className="mt-1 text-sm text-gray-400">{t('noResultsHint')}</p>
           <button
             onClick={clearAll}
             className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 transition-colors"
           >
-            <X className="h-3.5 w-3.5" /> Clear all filters
+            <X className="h-3.5 w-3.5" /> {t('clearAllFilters')}
           </button>
         </div>
       )}
