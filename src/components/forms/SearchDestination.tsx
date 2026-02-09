@@ -36,6 +36,12 @@ export function SearchDestination() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // #region agent log
+  if (typeof window !== 'undefined') {
+    fetch('http://127.0.0.1:7242/ingest/31d3162a-817c-4d6a-9841-464cdcbf3b94',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'SearchDestination.tsx:render',message:'SearchDestination data',data:{query,destCount:destinations.length,firstDest:destinations[0]?{name:destinations[0].name,slug:destinations[0].slug}:null,isFetching},timestamp:Date.now(),hypothesisId:'H_SEARCH'})}).catch(()=>{});
+  }
+  // #endregion
+
   const showList = open && (query.length >= 1 || destinations.length > 0);
   const displayList = query.length >= 1 ? destinations : destinations.slice(0, 6);
 
