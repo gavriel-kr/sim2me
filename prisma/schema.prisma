@@ -109,6 +109,23 @@ enum OrderStatus {
   CANCELLED
 }
 
+// ─── Package Overrides (admin control over eSIMaccess packages) ────
+model PackageOverride {
+  id            String   @id @default(cuid())
+  packageCode   String   @unique        // eSIMaccess packageCode
+  visible       Boolean  @default(true) // show on public website
+  customTitle   String?                 // override package name
+  customPrice   Decimal? @db.Decimal(10, 2)  // override retail price (USD)
+  saleBadge     String?                 // e.g. "20% OFF", "HOT", "SALE"
+  featured      Boolean  @default(false)
+  sortOrder     Int      @default(0)
+  notes         String?  @db.Text       // internal admin notes
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("package_overrides")
+}
+
 // ─── Customers (site users) ─────────────────────────────────
 model Customer {
   id        String   @id @default(cuid())

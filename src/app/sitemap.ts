@@ -1,12 +1,26 @@
 import { MetadataRoute } from 'next';
-import { brandConfig } from '@/config/brand';
-import { getDestinations } from '@/lib/api/repositories/destinationsRepository';
 import { routing } from '@/i18n/routing';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 3600; // regenerate every hour
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://sim2me.com';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const destinations = await getDestinations();
+  // Fetch destinations at runtime (not build time)
+  let destinations: { slug: string }[] = [];
+  try {
+    const apiBase = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    const res = await fetch(`${apiBase}/api/packages`, { next: { revalidate: 3600 } });
+    if (res.ok) {
+      const data = await res.json();
+      destinations = (data.destinations || []).map((d: { locationCode: string }) => ({
+        slug: d.locationCode.toLowerCase(),
+      }));
+    }
+  } catch {
+    // Gracefully handle - sitemap will just have static pages
+  }
   const staticPaths = [
     '',
     '/destinations',

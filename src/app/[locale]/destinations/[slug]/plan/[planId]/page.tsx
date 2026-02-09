@@ -23,7 +23,7 @@ export default async function PlanDetailPage({ params }: PageProps) {
   const { slug, planId } = await params;
   const destination = await getDestinationBySlug(slug);
   const plan = await getPlanById(planId);
-  if (!destination || !plan || plan.destinationId !== destination.id) notFound();
+  if (!destination || !plan) notFound();
 
   return (
     <MainLayout>

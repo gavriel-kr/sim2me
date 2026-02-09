@@ -1,6 +1,4 @@
 import { notFound } from 'next/navigation';
-import { getDestinationBySlug } from '@/lib/api/repositories/destinationsRepository';
-import { getPlansByDestination } from '@/lib/api/repositories/plansRepository';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { DestinationDetailClient } from './DestinationDetailClient';
 
@@ -8,25 +6,112 @@ interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
+async function getDestinationData(slug: string) {
+  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+  const locationCode = slug.toUpperCase();
+
+  try {
+    const res = await fetch(`${baseUrl}/api/packages?location=${locationCode}`, {
+      next: { revalidate: 300 },
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+
+    const packages = data.packages || [];
+    if (packages.length === 0) return null;
+
+    // Build destination info from first package
+    const firstPkg = packages[0];
+    const destination = {
+      id: slug,
+      name: firstPkg.location || slug.toUpperCase(),
+      slug,
+      region: '',
+      isoCode: firstPkg.locationCode || slug.toUpperCase(),
+      flagUrl: `https://flagcdn.com/w80/${slug}.png`,
+      popular: packages.some((p: { featured: boolean }) => p.featured),
+      operatorCount: 1,
+      planCount: packages.length,
+      fromPrice: Math.min(...packages.map((p: { price: number }) => p.price)),
+      fromCurrency: 'USD',
+    };
+
+    // Convert packages to Plan type
+    const plans = packages.map((pkg: {
+      packageCode: string;
+      name: string;
+      price: number;
+      currency: string;
+      volume: number;
+      duration: number;
+      speed: string;
+      topUp: boolean;
+      featured: boolean;
+      saleBadge: string | null;
+      locationCode: string;
+    }) => {
+      let networkType: '4G' | '5G' | '3G' = '4G';
+      if (pkg.speed?.includes('5G')) networkType = '5G';
+      else if (pkg.speed?.includes('3G')) networkType = '3G';
+
+      const volumeBytes = pkg.volume;
+      let dataDisplay: string;
+      let dataAmountMb: number;
+      if (volumeBytes < 0) {
+        dataDisplay = 'Unlimited';
+        dataAmountMb = -1;
+      } else {
+        const gb = volumeBytes / (1024 * 1024 * 1024);
+        const mb = volumeBytes / (1024 * 1024);
+        dataAmountMb = mb;
+        dataDisplay = gb >= 1
+          ? `${gb % 1 === 0 ? gb.toFixed(0) : gb.toFixed(1)} GB`
+          : `${mb.toFixed(0)} MB`;
+      }
+
+      return {
+        id: pkg.packageCode,
+        destinationId: slug,
+        name: pkg.name,
+        dataAmount: dataAmountMb,
+        dataDisplay,
+        days: pkg.duration,
+        price: pkg.price,
+        currency: pkg.currency || 'USD',
+        networkType,
+        speed: pkg.speed,
+        tethering: true,
+        topUps: pkg.topUp,
+        operatorName: pkg.speed || 'eSIMaccess',
+        popular: pkg.featured,
+        saleBadge: pkg.saleBadge,
+      };
+    });
+
+    return { destination, plans };
+  } catch {
+    return null;
+  }
+}
+
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
-  const destination = await getDestinationBySlug(slug);
-  if (!destination) return { title: 'Destination' };
+  const data = await getDestinationData(slug);
+  if (!data) return { title: 'Destination' };
   return {
-    title: `eSIM ${destination.name} – Data plans`,
-    description: `Buy eSIM for ${destination.name}. Instant delivery, best prices. ${destination.planCount} plans available.`,
+    title: `eSIM ${data.destination.name} – Data plans`,
+    description: `Buy eSIM for ${data.destination.name}. Instant delivery, best prices. ${data.destination.planCount} plans available.`,
   };
 }
 
 export default async function DestinationDetailPage({ params }: PageProps) {
   const { slug } = await params;
-  const destination = await getDestinationBySlug(slug);
-  if (!destination) notFound();
-  const plans = await getPlansByDestination(destination.id);
+  const data = await getDestinationData(slug);
+  if (!data) notFound();
 
   return (
     <MainLayout>
-      <DestinationDetailClient destination={destination} initialPlans={plans} />
+      <DestinationDetailClient destination={data.destination} initialPlans={data.plans} />
     </MainLayout>
   );
 }
