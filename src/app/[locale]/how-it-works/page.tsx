@@ -31,7 +31,6 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 
 export default async function HowItWorksPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  const cms = await getCmsPage('how-it-works', locale as 'en' | 'he' | 'ar');
   const t = await getTranslations('howItWorks');
   const isRTL = locale === 'he' || locale === 'ar';
 
@@ -47,19 +46,6 @@ export default async function HowItWorksPage({ params }: { params: Promise<{ loc
       { '@type': 'HowToStep', name: 'Scan, Install & Connect', text: 'Scan the QR code with your phone camera. Follow the on-screen prompts and enable Data Roaming.' },
     ],
   };
-
-  if (cms?.content) {
-    return (
-      <MainLayout>
-        <div className="container px-4 py-12" dir={isRTL ? 'rtl' : 'ltr'}>
-          <h1 className="text-2xl font-bold sm:text-3xl">{cms.title}</h1>
-          <div className="prose prose-sm mt-6 text-muted-foreground whitespace-pre-line max-w-none">
-            {cms.content}
-          </div>
-        </div>
-      </MainLayout>
-    );
-  }
 
   const steps = [
     { key: 'step1', icon: MapPin, color: 'bg-blue-100 text-blue-600' },

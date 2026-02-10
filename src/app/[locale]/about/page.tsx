@@ -27,20 +27,8 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 
 export default async function AboutPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  const cms = await getCmsPage('about', locale as 'en' | 'he' | 'ar');
   const t = await getTranslations('about');
   const isRTL = locale === 'he' || locale === 'ar';
-
-  if (cms?.content) {
-    return (
-      <MainLayout>
-        <div className="container mx-auto max-w-3xl px-4 py-12" dir={isRTL ? 'rtl' : 'ltr'}>
-          <h1 className="text-2xl font-bold sm:text-3xl">{cms.title}</h1>
-          <div className="prose prose-sm mt-6 text-muted-foreground whitespace-pre-line max-w-none">{cms.content}</div>
-        </div>
-      </MainLayout>
-    );
-  }
 
   const whyItems = [
     { key: 'why1', icon: Zap, color: 'bg-yellow-100 text-yellow-600' },

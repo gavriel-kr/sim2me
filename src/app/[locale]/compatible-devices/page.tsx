@@ -27,20 +27,8 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 
 export default async function CompatibleDevicesPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  const cms = await getCmsPage('compatible-devices', locale as 'en' | 'he' | 'ar');
   const t = await getTranslations('devices');
   const isRTL = locale === 'he' || locale === 'ar';
-
-  if (cms?.content) {
-    return (
-      <MainLayout>
-        <div className="container mx-auto max-w-4xl px-4 py-12" dir={isRTL ? 'rtl' : 'ltr'}>
-          <h1 className="text-2xl font-bold sm:text-3xl">{cms.title}</h1>
-          <div className="prose prose-sm mt-6 text-muted-foreground whitespace-pre-line max-w-none">{cms.content}</div>
-        </div>
-      </MainLayout>
-    );
-  }
 
   const deviceSections = [
     { titleKey: 'iphoneTitle', listKey: 'iphoneList', icon: Apple, color: 'bg-gray-100 text-gray-800' },
