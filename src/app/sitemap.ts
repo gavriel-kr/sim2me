@@ -10,8 +10,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Fetch destinations at runtime (not build time)
   let destinations: { slug: string }[] = [];
   try {
-    const apiBase = process.env.NEXTAUTH_URL || 'http://localhost:3000';
-    const res = await fetch(`${apiBase}/api/packages`, { next: { revalidate: 3600 } });
+    const apiBase = process.env.NEXTAUTH_URL || 'https://www.sim2me.net';
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 6000);
+    const res = await fetch(`${apiBase}/api/packages`, { signal: controller.signal, next: { revalidate: 3600 } });
+    clearTimeout(timeout);
     if (res.ok) {
       const data = await res.json();
       destinations = (data.destinations || []).map((d: { locationCode: string }) => ({

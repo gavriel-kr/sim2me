@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { DM_Sans } from 'next/font/google';
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages } from 'next-intl/server';
@@ -84,6 +84,10 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport: Viewport = {
+  themeColor: '#0d9f6e',
+};
+
 export default async function RootLayout({
   children,
 }: {
@@ -94,12 +98,6 @@ export default async function RootLayout({
   const dir = locale === 'he' || locale === 'ar' ? 'rtl' : 'ltr';
   return (
     <html lang={locale} dir={dir} suppressHydrationWarning className={dmSans.variable}>
-      <head>
-        <meta name="theme-color" content="#0d9f6e" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
-      </head>
       <body className="font-sans">
         <NextIntlClientProvider locale={locale} messages={messages}>
           <Providers>{children}</Providers>
