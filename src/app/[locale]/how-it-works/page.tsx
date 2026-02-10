@@ -34,6 +34,7 @@ export default async function HowItWorksPage({ params }: { params: Promise<{ loc
   const t = await getTranslations('howItWorks');
   const isRTL = locale === 'he' || locale === 'ar';
 
+
   /* HowTo JSON-LD structured data for Google rich snippets */
   const howToJsonLd = {
     '@context': 'https://schema.org',

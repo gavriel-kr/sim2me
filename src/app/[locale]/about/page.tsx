@@ -30,6 +30,7 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
   const t = await getTranslations('about');
   const isRTL = locale === 'he' || locale === 'ar';
 
+
   const whyItems = [
     { key: 'why1', icon: Zap, color: 'bg-yellow-100 text-yellow-600' },
     { key: 'why2', icon: Globe, color: 'bg-blue-100 text-blue-600' },

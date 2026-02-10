@@ -1,0 +1,39 @@
+{
+  "expo": {
+    "name": "Sim2Me",
+    "slug": "sim2me",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "scheme": "sim2me",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0d9f6e"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "net.sim2me.app",
+      "infoPlist": {
+        "CFBundleDisplayName": "Sim2Me"
+      }
+    },
+    "android": {
+      "package": "net.sim2me.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0d9f6e"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "apiBaseUrl": "https://www.sim2me.net"
+    }
+  }
+}
