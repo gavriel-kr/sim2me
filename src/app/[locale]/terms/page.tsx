@@ -4,13 +4,17 @@ import { getCmsPage } from '@/lib/cms';
 
 export const dynamic = 'force-dynamic';
 
+const siteUrl = 'https://www.sim2me.net';
+
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const cms = await getCmsPage('terms', locale as 'en' | 'he' | 'ar');
   const t = await getTranslations('footer');
+  const prefix = locale === 'en' ? '' : `/${locale}`;
   return {
-    title: cms?.seoTitle || cms?.title || t('terms'),
-    description: cms?.seoDesc || 'Terms of Service.',
+    title: cms?.seoTitle || `${t('terms')} – Sim2Me`,
+    description: cms?.seoDesc || 'Read the Sim2Me Terms of Service. Learn about our eSIM purchase terms, usage policies, device compatibility requirements and service conditions.',
+    alternates: { canonical: `${siteUrl}${prefix}/terms` },
   };
 }
 

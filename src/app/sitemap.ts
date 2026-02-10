@@ -4,7 +4,7 @@ import { routing } from '@/i18n/routing';
 export const dynamic = 'force-dynamic';
 export const revalidate = 3600; // regenerate every hour
 
-const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://sim2me.com';
+const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.sim2me.net';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Fetch destinations at runtime (not build time)

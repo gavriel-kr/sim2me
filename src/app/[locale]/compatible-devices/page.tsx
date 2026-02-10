@@ -6,13 +6,22 @@ import { getCmsPage } from '@/lib/cms';
 
 export const dynamic = 'force-dynamic';
 
+const siteUrl = 'https://www.sim2me.net';
+const seoByLocale: Record<string, { title: string; desc: string }> = {
+  en: { title: 'eSIM Compatible Devices – Full List of Supported Phones & Tablets', desc: 'Check if your phone supports eSIM. Full list: iPhone 16–XS, Samsung Galaxy S25–S20, Google Pixel, iPad, Huawei, Xiaomi and more. How to check compatibility.' },
+  he: { title: 'מכשירים תואמי eSIM – רשימה מלאה של טלפונים וטאבלטים', desc: 'בדוק אם הטלפון שלך תומך ב-eSIM. רשימה מלאה: אייפון, סמסונג, גוגל פיקסל, אייפד ועוד. איך לבדוק תאימות.' },
+  ar: { title: 'الأجهزة المتوافقة مع eSIM – القائمة الكاملة للهواتف والأجهزة اللوحية', desc: 'تحقق من دعم هاتفك لـ eSIM. القائمة الكاملة: iPhone وSamsung Galaxy وGoogle Pixel وiPad والمزيد.' },
+};
+
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const cms = await getCmsPage('compatible-devices', locale as 'en' | 'he' | 'ar');
-  const t = await getTranslations('devices');
+  const seo = seoByLocale[locale] || seoByLocale.en;
+  const prefix = locale === 'en' ? '' : `/${locale}`;
   return {
-    title: cms?.seoTitle || cms?.title || t('title'),
-    description: cms?.seoDesc || t('subtitle'),
+    title: cms?.seoTitle || seo.title,
+    description: cms?.seoDesc || seo.desc,
+    alternates: { canonical: `${siteUrl}${prefix}/compatible-devices` },
   };
 }
 

@@ -10,13 +10,22 @@ import { getCmsPage } from '@/lib/cms';
 
 export const dynamic = 'force-dynamic';
 
+const siteUrl = 'https://www.sim2me.net';
+const seoByLocale: Record<string, { title: string; desc: string }> = {
+  en: { title: 'How to Install & Use eSIM – Step-by-Step Guide', desc: 'Learn how to buy, install and activate your eSIM in 3 easy steps. iPhone & Android installation guide, troubleshooting tips, and activation methods.' },
+  he: { title: 'איך להתקין ולהשתמש ב-eSIM – מדריך שלב אחר שלב', desc: 'למד איך לקנות, להתקין ולהפעיל eSIM ב-3 צעדים פשוטים. מדריך התקנה לאייפון ואנדרואיד, טיפים ופתרון בעיות.' },
+  ar: { title: 'كيفية تثبيت واستخدام eSIM – دليل خطوة بخطوة', desc: 'تعلم كيفية شراء وتثبيت وتفعيل eSIM في 3 خطوات سهلة. دليل التثبيت لـ iPhone و Android ونصائح استكشاف الأخطاء.' },
+};
+
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const cms = await getCmsPage('how-it-works', locale as 'en' | 'he' | 'ar');
-  const t = await getTranslations('howItWorks');
+  const seo = seoByLocale[locale] || seoByLocale.en;
+  const prefix = locale === 'en' ? '' : `/${locale}`;
   return {
-    title: cms?.seoTitle || cms?.title || t('title'),
-    description: cms?.seoDesc || t('subtitle'),
+    title: cms?.seoTitle || seo.title,
+    description: cms?.seoDesc || seo.desc,
+    alternates: { canonical: `${siteUrl}${prefix}/how-it-works` },
   };
 }
 
@@ -25,6 +34,19 @@ export default async function HowItWorksPage({ params }: { params: Promise<{ loc
   const cms = await getCmsPage('how-it-works', locale as 'en' | 'he' | 'ar');
   const t = await getTranslations('howItWorks');
   const isRTL = locale === 'he' || locale === 'ar';
+
+  /* HowTo JSON-LD structured data for Google rich snippets */
+  const howToJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'HowTo',
+    name: 'How to Install and Use an eSIM',
+    description: 'Learn how to buy, install and activate your travel eSIM in 3 easy steps.',
+    step: [
+      { '@type': 'HowToStep', name: 'Choose Your Plan', text: 'Browse 200+ destinations. Pick the country or region and select a data plan.' },
+      { '@type': 'HowToStep', name: 'Buy & Receive Instantly', text: 'Pay securely online. Your eSIM is delivered instantly to your email with a QR code.' },
+      { '@type': 'HowToStep', name: 'Scan, Install & Connect', text: 'Scan the QR code with your phone camera. Follow the on-screen prompts and enable Data Roaming.' },
+    ],
+  };
 
   if (cms?.content) {
     return (
@@ -51,6 +73,10 @@ export default async function HowItWorksPage({ params }: { params: Promise<{ loc
 
   return (
     <MainLayout>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(howToJsonLd) }}
+      />
       <div className="container px-4 py-12 space-y-16" dir={isRTL ? 'rtl' : 'ltr'}>
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto">

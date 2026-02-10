@@ -102,9 +102,12 @@ export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
   const data = await getDestinationData(slug);
   if (!data) return { title: 'Destination' };
+  const { destination } = data;
+  const minPrice = destination.fromPrice > 0 ? ` from $${destination.fromPrice.toFixed(2)}` : '';
   return {
-    title: `eSIM ${data.destination.name} – Data plans`,
-    description: `Buy eSIM for ${data.destination.name}. Instant delivery, best prices. ${data.destination.planCount} plans available.`,
+    title: `Buy eSIM for ${destination.name} – ${destination.planCount} Plans${minPrice}`,
+    description: `Buy prepaid eSIM for ${destination.name}. ${destination.planCount} data plans available${minPrice}. Instant delivery, no physical SIM needed. Compare plans and connect in minutes.`,
+    alternates: { canonical: `https://www.sim2me.net/destinations/${slug}` },
   };
 }
 

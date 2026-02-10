@@ -6,13 +6,22 @@ import { getCmsPage } from '@/lib/cms';
 
 export const dynamic = 'force-dynamic';
 
+const siteUrl = 'https://www.sim2me.net';
+const seoByLocale: Record<string, { title: string; desc: string }> = {
+  en: { title: 'About Sim2Me – Affordable Travel eSIM for 200+ Countries', desc: 'Sim2Me makes staying connected abroad simple and affordable. Instant digital delivery, 200+ destinations, best prices, GSMA-certified technology. Built by travelers, for travelers.' },
+  he: { title: 'אודות Sim2Me – eSIM לנסיעות במחירים משתלמים ל-200+ מדינות', desc: 'Sim2Me הופך חיבור בחו"ל לפשוט ומשתלם. משלוח דיגיטלי מיידי, 200+ יעדים, מחירים אטרקטיביים. נבנה ע"י מטיילים, למען מטיילים.' },
+  ar: { title: 'عن Sim2Me – eSIM سفر بأسعار معقولة لأكثر من 200 دولة', desc: 'Sim2Me يجعل البقاء متصلاً في الخارج بسيطاً وبأسعار معقولة. توصيل رقمي فوري، أكثر من 200 وجهة، أفضل الأسعار.' },
+};
+
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const cms = await getCmsPage('about', locale as 'en' | 'he' | 'ar');
-  const t = await getTranslations('about');
+  const seo = seoByLocale[locale] || seoByLocale.en;
+  const prefix = locale === 'en' ? '' : `/${locale}`;
   return {
-    title: cms?.seoTitle || cms?.title || t('title'),
-    description: cms?.seoDesc || t('mission'),
+    title: cms?.seoTitle || seo.title,
+    description: cms?.seoDesc || seo.desc,
+    alternates: { canonical: `${siteUrl}${prefix}/about` },
   };
 }
 

@@ -4,13 +4,17 @@ import { getCmsPage } from '@/lib/cms';
 
 export const dynamic = 'force-dynamic';
 
+const siteUrl = 'https://www.sim2me.net';
+
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const cms = await getCmsPage('refund', locale as 'en' | 'he' | 'ar');
   const t = await getTranslations('footer');
+  const prefix = locale === 'en' ? '' : `/${locale}`;
   return {
-    title: cms?.seoTitle || cms?.title || t('refund'),
-    description: cms?.seoDesc || 'Refund Policy.',
+    title: cms?.seoTitle || `${t('refund')} – Sim2Me`,
+    description: cms?.seoDesc || 'Sim2Me refund policy. Unused eSIMs can be refunded within 14 days. Learn about eligibility, the refund process, and how to request a refund.',
+    alternates: { canonical: `${siteUrl}${prefix}/refund` },
   };
 }
 
