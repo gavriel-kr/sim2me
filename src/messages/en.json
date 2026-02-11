@@ -7,6 +7,7 @@
     "help": "Help",
     "about": "About",
     "contact": "Contact",
+    "app": "App",
     "account": "Account",
     "cart": "Cart",
     "searchPlaceholder": "Search destination..."
@@ -194,6 +195,18 @@
     "why5Desc": "Powered by GSMA-certified eSIM technology with data centers in the EU. Your data and privacy are protected.",
     "why6Title": "Dedicated Support",
     "why6Desc": "Our support team is here to help before, during, and after your trip. Reach out anytime."
+  },
+  "app": {
+    "title": "Sim2Me App",
+    "subtitle": "Get the best experience on your phone.",
+    "webNow": "Use the website on your phone",
+    "webDesc": "Sim2me.net works great on mobile. Open it in your browser to browse destinations, compare plans, and buy eSIMs.",
+    "pwaSoon": "Add to Home Screen (coming soon)",
+    "pwaDesc": "We're adding the option to install Sim2Me like an app — one tap from your home screen, no app store needed.",
+    "nativeSoon": "App Store & Google Play (coming soon)",
+    "nativeDesc": "Our native app is in development. You'll be able to download Sim2Me from the App Store and Google Play for the full experience.",
+    "notifyCta": "Get notified when the app is ready",
+    "contactUs": "Contact us"
   },
   "contact": {
     "title": "Contact Us",

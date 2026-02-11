@@ -10,6 +10,7 @@ const { Link: IntlLink } = createSharedPathnamesNavigation(routing);
 
 const productLinks = [
   { href: '/destinations', key: 'destinations' },
+  { href: '/app', key: 'app' },
   { href: '/how-it-works', key: 'howItWorks' },
   { href: '/compatible-devices', key: 'devices' },
 ];
