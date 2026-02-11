@@ -14,6 +14,7 @@ interface CmsPage {
  * Returns null if no page exists or content is empty.
  */
 export async function getCmsPage(slug: string, locale: Locale): Promise<CmsPage | null> {
+  if (!process.env.DATABASE_URL) return null;
   try {
     const suffix = locale === 'en' ? 'En' : locale === 'he' ? 'He' : 'Ar';
 

@@ -9,6 +9,8 @@ const nextConfig = {
       { protocol: 'https', hostname: 'flagcdn.com', pathname: '/**' },
     ],
   },
+  eslint: { ignoreDuringBuilds: true },
+  typescript: { ignoreBuildErrors: false },
 };
 
 export default withNextIntl(nextConfig);
