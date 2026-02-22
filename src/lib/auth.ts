@@ -48,10 +48,10 @@ export const authOptions: NextAuthOptions = {
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
+        if (!credentials?.email?.trim() || !credentials?.password) return null;
 
         const customer = await prisma.customer.findUnique({
-          where: { email: credentials.email.toLowerCase().trim() },
+          where: { email: credentials.email.trim().toLowerCase() },
         });
 
         if (!customer?.password) return null;
@@ -67,14 +67,16 @@ export const authOptions: NextAuthOptions = {
         };
       },
     }),
-  ],
+    ],
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        const u = user as { id: string; email?: string; name?: string; role?: string; type: SessionUserType };
-        token.id = u.id;
-        token.type = u.type;
-        if (u.type === 'admin') token.role = u.role;
+        const u = user as { id?: string; email?: string; name?: string; role?: string; type?: SessionUserType };
+        if (u.type) {
+          token.id = u.id;
+          token.type = u.type;
+          if (u.type === 'admin') token.role = u.role;
+        }
       }
       return token;
     },

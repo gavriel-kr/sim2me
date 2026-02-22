@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { UserCircle, Mail, Phone, Calendar, Check, X } from 'lucide-react';
+import { UserCircle, Mail, Phone, Calendar } from 'lucide-react';
 
 type Account = {
   id: string;
@@ -9,7 +9,7 @@ type Account = {
   name: string;
   lastName: string | null;
   phone: string | null;
-  emailVerified: boolean;
+  googleId: string | null;
   newsletter: boolean;
   createdAt: string;
 };
@@ -70,13 +70,9 @@ export function AccountsClient({ accounts }: Props) {
                   </td>
                   <td className="px-5 py-4">
                     <div className="flex flex-wrap gap-2">
-                      {a.emailVerified ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
-                          <Check className="h-3 w-3" /> Verified
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
-                          <X className="h-3 w-3" /> Unverified
+                      {a.googleId && (
+                        <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
+                          Google
                         </span>
                       )}
                       {a.newsletter && (

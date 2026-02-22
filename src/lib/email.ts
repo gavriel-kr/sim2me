@@ -1,6 +1,7 @@
 /**
- * Account emails: verification, password reset, etc.
+ * Account emails: password reset, etc.
  * Uses Resend when RESEND_API_KEY is set.
+ * (Email verification removed — sign up works without it.)
  */
 
 const FROM = `Sim2Me <${process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'}>`;
@@ -9,22 +10,6 @@ const SITE_NAME = 'Sim2Me';
 function baseUrl(): string {
   if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, '');
   return 'https://www.sim2me.net';
-}
-
-export async function sendVerificationEmail(to: string, token: string): Promise<boolean> {
-  const verifyUrl = `${baseUrl()}/account/verify-email?token=${encodeURIComponent(token)}`;
-  const html = `
-    <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto;">
-      <h2 style="color: #059669;">Verify your email</h2>
-      <p>Thanks for signing up for ${SITE_NAME}. Please verify your email by clicking the link below:</p>
-      <p style="margin: 24px 0;">
-        <a href="${verifyUrl}" style="display: inline-block; background: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600;">Verify email</a>
-      </p>
-      <p style="font-size: 13px; color: #64748b;">Or copy this link: ${verifyUrl}</p>
-      <p style="font-size: 12px; color: #94a3b8; margin-top: 32px;">If you didn't create an account, you can ignore this email.</p>
-    </div>
-  `;
-  return sendEmail(to, 'Verify your email – Sim2Me', html);
 }
 
 export async function sendPasswordResetEmail(to: string, token: string): Promise<boolean> {

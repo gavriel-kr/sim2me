@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { PhoneInput } from '@/components/PhoneInput';
 
 const { Link: IntlLink } = createSharedPathnamesNavigation(routing);
 
@@ -40,7 +41,7 @@ export function AccountRegisterClient() {
           password: form.password,
           name: form.name.trim(),
           lastName: form.lastName.trim() || undefined,
-          phone: form.phone.trim() || undefined,
+          phone: form.phone || undefined,
           newsletter: form.newsletter,
         }),
       });
@@ -61,15 +62,13 @@ export function AccountRegisterClient() {
     return (
       <Card className="border-0 shadow-lg">
         <CardHeader>
-          <CardTitle className="text-xl text-primary">Check your email</CardTitle>
-          <CardDescription>
-            We sent a verification link to <strong>{form.email}</strong>. Click the link to verify your email, then sign in.
-          </CardDescription>
+          <CardTitle className="text-xl text-primary">Account created</CardTitle>
+          <CardDescription>You can sign in now with your email or phone and password.</CardDescription>
         </CardHeader>
         <CardContent>
-          <IntlLink href="/account/login">
-            <Button className="w-full">Go to sign in</Button>
-          </IntlLink>
+          <Button className="w-full" onClick={() => router.push('/account/login')}>
+            Go to sign in
+          </Button>
         </CardContent>
       </Card>
     );
@@ -79,7 +78,7 @@ export function AccountRegisterClient() {
     <Card className="border-0 shadow-lg">
       <CardHeader className="space-y-1 text-center">
         <CardTitle className="text-2xl font-bold">{t('register')}</CardTitle>
-        <CardDescription>Create an account to manage your eSIMs and orders</CardDescription>
+        <CardDescription>Create an account — phone required for all countries</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -143,15 +142,13 @@ export function AccountRegisterClient() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="phone">{t('phone')}</Label>
-            <Input
+            <PhoneInput
               id="phone"
-              type="tel"
-              autoComplete="tel"
-              placeholder="Optional — one number only"
               value={form.phone}
-              onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              className="h-11"
+              onChange={(v) => setForm({ ...form, phone: v || '' })}
+              placeholder={t('phonePlaceholder')}
             />
+            <p className="text-xs text-muted-foreground">Select country and enter number. Required.</p>
           </div>
           <div className="flex items-center gap-2">
             <input
@@ -165,7 +162,7 @@ export function AccountRegisterClient() {
               {t('newsletter')}
             </Label>
           </div>
-          <Button type="submit" className="w-full h-11" size="lg" disabled={loading}>
+          <Button type="submit" className="w-full h-11" size="lg" disabled={loading || !form.phone}>
             {loading ? 'Creating account…' : t('createAccount')}
           </Button>
         </form>

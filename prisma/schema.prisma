@@ -130,20 +130,14 @@ model PackageOverride {
 model Customer {
   id        String   @id @default(cuid())
   email     String   @unique
-  password  String?  // hashed; null for legacy records
+  password  String?  // hashed; null for Google-only users
   name      String   @default("")
   lastName  String?  // optional
-  phone     String?  // single phone number only
-  emailVerified Boolean @default(false)
-  emailVerifyToken   String?
-  emailVerifyExpires DateTime?
-  newsletter Boolean @default(false)  // opt-in for updates and news
+  phone     String?  @unique // E.164; single number, required for credentials login
+  googleId  String?  @unique // Google OAuth sub
+  newsletter Boolean @default(false)
   resetToken         String?
   resetExpires       DateTime?
-  // Change email flow
-  pendingEmail       String?
-  pendingEmailToken  String?
-  pendingEmailExpires DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

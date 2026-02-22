@@ -17,18 +17,21 @@ export const newsletterSchema = z.object({
   email: z.string().email(),
 });
 
+// E.164: + and 7–15 digits
+const e164Regex = /^\+[1-9]\d{6,14}$/;
+
 // ─── Account ─────────────────────────────────────────────────
 export const registerSchema = z.object({
   email: z.string().email('Valid email is required'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   name: z.string().min(1, 'First name is required').max(100),
   lastName: z.string().max(100).optional(),
-  phone: z.string().max(30).optional(),
+  phone: z.string().min(1, 'Phone is required').regex(e164Regex, 'Invalid phone number'),
   newsletter: z.boolean().optional(),
 });
 
 export const loginSchema = z.object({
-  email: z.string().email(),
+  email: z.string().email('Valid email is required'),
   password: z.string().min(1, 'Password is required'),
 });
 
@@ -44,7 +47,7 @@ export const resetPasswordSchema = z.object({
 export const profileSchema = z.object({
   name: z.string().min(1).max(100),
   lastName: z.string().max(100).optional(),
-  phone: z.string().max(30).optional(),
+  phone: z.string().min(1, 'Phone is required').regex(e164Regex, 'Invalid phone number'),
   newsletter: z.boolean().optional(),
 });
 

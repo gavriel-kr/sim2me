@@ -13,7 +13,7 @@ type Account = {
   name: string;
   lastName: string | null;
   phone: string | null;
-  emailVerified: boolean;
+  googleId?: string | null;
   newsletter: boolean;
   createdAt: string;
   updatedAt: string;
@@ -30,7 +30,6 @@ export function AccountEditClient({ account: initial }: Props) {
     name: initial.name || '',
     lastName: initial.lastName || '',
     phone: initial.phone || '',
-    emailVerified: initial.emailVerified,
     newsletter: initial.newsletter,
     newPassword: '',
   });
@@ -44,7 +43,6 @@ export function AccountEditClient({ account: initial }: Props) {
       name: initial.name || '',
       lastName: initial.lastName || '',
       phone: initial.phone || '',
-      emailVerified: initial.emailVerified,
       newsletter: initial.newsletter,
       newPassword: '',
     });
@@ -61,7 +59,6 @@ export function AccountEditClient({ account: initial }: Props) {
         name: form.name.trim(),
         lastName: form.lastName.trim() || null,
         phone: form.phone.trim() || null,
-        emailVerified: form.emailVerified,
         newsletter: form.newsletter,
       };
       if (form.newPassword.length >= 8) body.password = form.newPassword;
@@ -160,15 +157,9 @@ export function AccountEditClient({ account: initial }: Props) {
           </div>
 
           <div className="flex flex-wrap gap-6">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={form.emailVerified}
-                onChange={(e) => setForm({ ...form, emailVerified: e.target.checked })}
-                className="h-4 w-4 rounded border-gray-300"
-              />
-              <span className="text-sm font-medium">Email verified</span>
-            </label>
+            {initial.googleId && (
+              <span className="text-sm text-gray-500">Signed up with Google</span>
+            )}
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"

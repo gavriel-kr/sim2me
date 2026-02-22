@@ -24,7 +24,6 @@ export async function GET() {
       lastName: true,
       phone: true,
       newsletter: true,
-      emailVerified: true,
       createdAt: true,
     },
   });
@@ -61,7 +60,7 @@ export async function PATCH(request: Request) {
     data: {
       name,
       lastName: lastName ?? null,
-      phone: phone || null,
+      phone,
       newsletter: newsletter ?? false,
     },
   });

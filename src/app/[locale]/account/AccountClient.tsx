@@ -5,11 +5,16 @@ import { signOut } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import { createSharedPathnamesNavigation } from 'next-intl/navigation';
 import { routing } from '@/i18n/routing';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { PhoneInput } from '@/components/PhoneInput';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  User, ShoppingBag, Wifi, Settings, LogOut, Phone, Mail,
+  Calendar, Shield, CheckCircle, AlertCircle, ChevronRight,
+} from 'lucide-react';
 
 const { Link: IntlLink } = createSharedPathnamesNavigation(routing);
 
@@ -20,9 +25,18 @@ type Profile = {
   lastName: string | null;
   phone: string | null;
   newsletter: boolean;
-  emailVerified: boolean;
   createdAt: string;
 };
+
+function getInitials(name: string, lastName?: string | null) {
+  const first = name?.[0]?.toUpperCase() || '';
+  const last = lastName?.[0]?.toUpperCase() || '';
+  return first + last || '?';
+}
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' });
+}
 
 export function AccountClient() {
   const t = useTranslations('account');
@@ -31,6 +45,12 @@ export function AccountClient() {
   const [profileForm, setProfileForm] = useState({ name: '', lastName: '', phone: '', newsletter: false });
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileError, setProfileError] = useState('');
+  const [profileSuccess, setProfileSuccess] = useState(false);
+
+  const [pwForm, setPwForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [pwSaving, setPwSaving] = useState(false);
+  const [pwError, setPwError] = useState('');
+  const [pwSuccess, setPwSuccess] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -54,6 +74,7 @@ export function AccountClient() {
   async function handleSaveProfile(e: React.FormEvent) {
     e.preventDefault();
     setProfileError('');
+    setProfileSuccess(false);
     setProfileSaving(true);
     try {
       const res = await fetch('/api/account/profile', {
@@ -80,6 +101,8 @@ export function AccountClient() {
           newsletter: profileForm.newsletter,
         });
       }
+      setProfileSuccess(true);
+      setTimeout(() => setProfileSuccess(false), 3000);
     } catch {
       setProfileError('Something went wrong');
     } finally {
@@ -87,130 +110,424 @@ export function AccountClient() {
     }
   }
 
+  async function handleChangePassword(e: React.FormEvent) {
+    e.preventDefault();
+    setPwError('');
+    setPwSuccess(false);
+    if (pwForm.newPassword !== pwForm.confirmPassword) {
+      setPwError('New passwords do not match');
+      return;
+    }
+    if (pwForm.newPassword.length < 8) {
+      setPwError('Password must be at least 8 characters');
+      return;
+    }
+    setPwSaving(true);
+    try {
+      const res = await fetch('/api/account/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          currentPassword: pwForm.currentPassword,
+          newPassword: pwForm.newPassword,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setPwError(data.error || 'Failed to change password');
+        return;
+      }
+      setPwSuccess(true);
+      setPwForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setTimeout(() => setPwSuccess(false), 4000);
+    } catch {
+      setPwError('Something went wrong');
+    } finally {
+      setPwSaving(false);
+    }
+  }
+
   if (loading || !profile) {
     return (
-      <div className="container mx-auto max-w-4xl px-4 py-12">
-        <p className="text-muted-foreground">Loading account…</p>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-muted-foreground text-sm">Loading your account…</p>
+        </div>
       </div>
     );
   }
 
+  const displayName = [profile.name, profile.lastName].filter(Boolean).join(' ') || profile.email;
+
   return (
-    <div className="container mx-auto max-w-4xl px-4 py-8">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">{t('title')}</h1>
-          <p className="text-sm text-muted-foreground">{profile.email}</p>
+    <div className="min-h-screen bg-gray-50/50">
+      {/* Header */}
+      <div className="bg-white border-b">
+        <div className="container mx-auto max-w-5xl px-4 py-6">
+          <div className="flex items-center gap-4">
+            {/* Avatar */}
+            <div className="w-14 h-14 rounded-full bg-primary flex items-center justify-center text-white text-xl font-bold flex-shrink-0">
+              {getInitials(profile.name, profile.lastName)}
+            </div>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-xl font-bold truncate">{displayName}</h1>
+              <p className="text-sm text-muted-foreground truncate">{profile.email}</p>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground hover:text-destructive hidden sm:flex"
+              onClick={() => signOut({ callbackUrl: '/account/login' })}
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              {t('signOut')}
+            </Button>
+          </div>
         </div>
-        <Button
-          variant="outline"
-          onClick={() => signOut({ callbackUrl: '/account/login' })}
-        >
-          {t('signOut')}
-        </Button>
       </div>
 
-      <Tabs defaultValue="orders" className="mt-8">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="orders">{t('orders')}</TabsTrigger>
-          <TabsTrigger value="esims">{t('esims')}</TabsTrigger>
-          <TabsTrigger value="profile">{t('profile')}</TabsTrigger>
-        </TabsList>
-        <TabsContent value="orders" className="mt-6">
-          <Card>
-            <CardHeader>
-              <h2 className="font-semibold">{t('orders')}</h2>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">{t('noOrders')}</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="esims" className="mt-6">
-          <Card>
-            <CardHeader>
-              <h2 className="font-semibold">{t('esims')}</h2>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">{t('noEsims')}</p>
-              <p className="mt-2 text-sm text-muted-foreground">
-                After purchase, your eSIMs will appear here with QR code and install instructions.
-              </p>
-              <IntlLink href="/destinations">
-                <Button variant="outline" className="mt-4">Browse destinations</Button>
-              </IntlLink>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="profile" className="mt-6">
-          <Card>
-            <CardHeader>
-              <h2 className="font-semibold">{t('editProfile')}</h2>
-              {profile.emailVerified && (
-                <p className="text-xs text-primary font-medium mt-1">{t('emailVerified')}</p>
-              )}
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSaveProfile} className="space-y-4 max-w-md">
-                {profileError && (
-                  <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive" role="alert">
-                    {profileError}
+      <div className="container mx-auto max-w-5xl px-4 py-6">
+        {/* Quick info cards */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          <div className="bg-white rounded-xl p-4 border flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center">
+              <ShoppingBag className="w-4 h-4 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Orders</p>
+              <p className="font-semibold text-sm">0</p>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl p-4 border flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-green-50 flex items-center justify-center">
+              <Wifi className="w-4 h-4 text-green-600" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">eSIMs</p>
+              <p className="font-semibold text-sm">0</p>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl p-4 border flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-purple-50 flex items-center justify-center">
+              <Phone className="w-4 h-4 text-purple-600" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Phone</p>
+              <p className="font-semibold text-sm truncate max-w-[80px]">{profile.phone ? '✓' : 'Missing'}</p>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl p-4 border flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-orange-50 flex items-center justify-center">
+              <Calendar className="w-4 h-4 text-orange-600" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Member since</p>
+              <p className="font-semibold text-sm">{new Date(profile.createdAt).getFullYear()}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Missing phone alert */}
+        {!profile.phone && (
+          <div className="mb-4 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
+            <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-amber-800">Phone number required</p>
+              <p className="text-xs text-amber-600 mt-0.5">Please add your phone number in Profile settings.</p>
+            </div>
+          </div>
+        )}
+
+        <Tabs defaultValue="orders" className="space-y-4">
+          <TabsList className="bg-white border grid w-full grid-cols-4 h-auto p-1 gap-1">
+            <TabsTrigger value="orders" className="flex items-center gap-1.5 text-xs sm:text-sm py-2">
+              <ShoppingBag className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{t('orders')}</span>
+              <span className="sm:hidden">Orders</span>
+            </TabsTrigger>
+            <TabsTrigger value="esims" className="flex items-center gap-1.5 text-xs sm:text-sm py-2">
+              <Wifi className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{t('esims')}</span>
+              <span className="sm:hidden">eSIMs</span>
+            </TabsTrigger>
+            <TabsTrigger value="profile" className="flex items-center gap-1.5 text-xs sm:text-sm py-2">
+              <User className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{t('profile')}</span>
+              <span className="sm:hidden">Profile</span>
+            </TabsTrigger>
+            <TabsTrigger value="security" className="flex items-center gap-1.5 text-xs sm:text-sm py-2">
+              <Shield className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Security</span>
+              <span className="sm:hidden">Security</span>
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Orders */}
+          <TabsContent value="orders">
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <ShoppingBag className="w-4 h-4 text-primary" />
+                  Order History
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-12">
+                  <ShoppingBag className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
+                  <p className="font-medium text-muted-foreground">{t('noOrders')}</p>
+                  <p className="text-sm text-muted-foreground mt-1">Your orders will appear here after purchase.</p>
+                  <IntlLink href="/destinations">
+                    <Button className="mt-6" size="sm">
+                      Browse destinations
+                      <ChevronRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  </IntlLink>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* eSIMs */}
+          <TabsContent value="esims">
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Wifi className="w-4 h-4 text-primary" />
+                  My eSIMs
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-12">
+                  <Wifi className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
+                  <p className="font-medium text-muted-foreground">{t('noEsims')}</p>
+                  <p className="text-sm text-muted-foreground mt-1 max-w-xs mx-auto">
+                    After purchase, your eSIMs will appear here with QR code and install instructions.
                   </p>
-                )}
-                <div className="space-y-2">
-                  <Label htmlFor="email">{t('email')}</Label>
-                  <Input id="email" type="email" value={profile.email} disabled className="bg-muted" />
-                  <p className="text-xs text-muted-foreground">Email cannot be changed here. Contact support if needed.</p>
+                  <IntlLink href="/destinations">
+                    <Button className="mt-6" size="sm">
+                      Browse destinations
+                      <ChevronRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  </IntlLink>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">{t('name')}</Label>
-                    <Input
-                      id="name"
-                      value={profileForm.name}
-                      onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
-                      required
-                    />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Profile */}
+          <TabsContent value="profile">
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <User className="w-4 h-4 text-primary" />
+                  Personal Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSaveProfile} className="space-y-5 max-w-lg">
+                  {profileError && (
+                    <div className="flex items-center gap-2 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                      <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                      {profileError}
+                    </div>
+                  )}
+                  {profileSuccess && (
+                    <div className="flex items-center gap-2 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">
+                      <CheckCircle className="w-4 h-4 flex-shrink-0" />
+                      Profile updated successfully
+                    </div>
+                  )}
+
+                  {/* Email (read-only) */}
+                  <div className="space-y-1.5">
+                    <Label className="text-sm font-medium flex items-center gap-1.5">
+                      <Mail className="w-3.5 h-3.5 text-muted-foreground" />
+                      {t('email')}
+                    </Label>
+                    <Input value={profile.email} disabled className="bg-muted h-10" />
+                    <p className="text-xs text-muted-foreground">To change your email, contact support.</p>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName">{t('lastName')}</Label>
-                    <Input
-                      id="lastName"
-                      value={profileForm.lastName}
-                      onChange={(e) => setProfileForm({ ...profileForm, lastName: e.target.value })}
-                    />
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="name" className="text-sm font-medium">{t('name')}</Label>
+                      <Input
+                        id="name"
+                        value={profileForm.name}
+                        onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
+                        required
+                        className="h-10"
+                        placeholder="First name"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="lastName" className="text-sm font-medium">{t('lastName')}</Label>
+                      <Input
+                        id="lastName"
+                        value={profileForm.lastName}
+                        onChange={(e) => setProfileForm({ ...profileForm, lastName: e.target.value })}
+                        className="h-10"
+                        placeholder="Last name (optional)"
+                      />
+                    </div>
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">{t('phone')}</Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    value={profileForm.phone}
-                    onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
-                    placeholder="One number only"
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="newsletter"
-                    checked={profileForm.newsletter}
-                    onChange={(e) => setProfileForm({ ...profileForm, newsletter: e.target.checked })}
-                    className="h-4 w-4 rounded border-input"
-                  />
-                  <Label htmlFor="newsletter" className="font-normal text-muted-foreground cursor-pointer">
-                    {t('newsletter')}
-                  </Label>
-                </div>
-                <Button type="submit" disabled={profileSaving}>
-                  {profileSaving ? 'Saving…' : 'Save changes'}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="phone" className="text-sm font-medium flex items-center gap-1.5">
+                      <Phone className="w-3.5 h-3.5 text-muted-foreground" />
+                      {t('phone')}
+                      <span className="text-destructive">*</span>
+                    </Label>
+                    <PhoneInput
+                      id="phone"
+                      value={profileForm.phone}
+                      onChange={(v) => setProfileForm({ ...profileForm, phone: v || '' })}
+                      placeholder={t('phonePlaceholder')}
+                    />
+                    <p className="text-xs text-muted-foreground">Required for eSIM support and account recovery.</p>
+                  </div>
+
+                  <div className="flex items-center gap-3 rounded-lg bg-muted/50 px-3 py-3">
+                    <input
+                      type="checkbox"
+                      id="newsletter"
+                      checked={profileForm.newsletter}
+                      onChange={(e) => setProfileForm({ ...profileForm, newsletter: e.target.checked })}
+                      className="h-4 w-4 rounded border-input accent-primary"
+                    />
+                    <Label htmlFor="newsletter" className="font-normal text-sm cursor-pointer">
+                      {t('newsletter')}
+                    </Label>
+                  </div>
+
+                  <div className="flex items-center gap-3 pt-2">
+                    <Button type="submit" disabled={profileSaving} className="min-w-[120px]">
+                      {profileSaving ? 'Saving…' : 'Save changes'}
+                    </Button>
+                    <p className="text-xs text-muted-foreground">
+                      Member since {formatDate(profile.createdAt)}
+                    </p>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Security */}
+          <TabsContent value="security">
+            <div className="space-y-4">
+              {/* Change password */}
+              <Card className="border-0 shadow-sm">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Shield className="w-4 h-4 text-primary" />
+                    Change Password
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleChangePassword} className="space-y-4 max-w-lg">
+                    {pwError && (
+                      <div className="flex items-center gap-2 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                        <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                        {pwError}
+                      </div>
+                    )}
+                    {pwSuccess && (
+                      <div className="flex items-center gap-2 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">
+                        <CheckCircle className="w-4 h-4 flex-shrink-0" />
+                        Password changed successfully
+                      </div>
+                    )}
+                    <div className="space-y-1.5">
+                      <Label htmlFor="currentPassword" className="text-sm font-medium">Current password</Label>
+                      <Input
+                        id="currentPassword"
+                        type="password"
+                        autoComplete="current-password"
+                        value={pwForm.currentPassword}
+                        onChange={(e) => setPwForm({ ...pwForm, currentPassword: e.target.value })}
+                        required
+                        className="h-10"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="newPassword" className="text-sm font-medium">New password</Label>
+                      <Input
+                        id="newPassword"
+                        type="password"
+                        autoComplete="new-password"
+                        value={pwForm.newPassword}
+                        onChange={(e) => setPwForm({ ...pwForm, newPassword: e.target.value })}
+                        required
+                        className="h-10"
+                        placeholder="Minimum 8 characters"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="confirmPassword" className="text-sm font-medium">Confirm new password</Label>
+                      <Input
+                        id="confirmPassword"
+                        type="password"
+                        autoComplete="new-password"
+                        value={pwForm.confirmPassword}
+                        onChange={(e) => setPwForm({ ...pwForm, confirmPassword: e.target.value })}
+                        required
+                        className="h-10"
+                      />
+                    </div>
+                    <Button type="submit" disabled={pwSaving} className="min-w-[140px]">
+                      {pwSaving ? 'Changing…' : 'Change password'}
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+
+              {/* Account info */}
+              <Card className="border-0 shadow-sm">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Settings className="w-4 h-4 text-primary" />
+                    Account Details
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3 text-sm">
+                    <div className="flex items-center justify-between py-2 border-b">
+                      <span className="text-muted-foreground">Account ID</span>
+                      <span className="font-mono text-xs bg-muted px-2 py-1 rounded">{profile.id.slice(0, 12)}…</span>
+                    </div>
+                    <div className="flex items-center justify-between py-2 border-b">
+                      <span className="text-muted-foreground">Email</span>
+                      <span>{profile.email}</span>
+                    </div>
+                    <div className="flex items-center justify-between py-2 border-b">
+                      <span className="text-muted-foreground">Member since</span>
+                      <span>{formatDate(profile.createdAt)}</span>
+                    </div>
+                    <div className="flex items-center justify-between py-2">
+                      <span className="text-muted-foreground">Newsletter</span>
+                      <span className={profile.newsletter ? 'text-green-600 font-medium' : 'text-muted-foreground'}>
+                        {profile.newsletter ? 'Subscribed' : 'Not subscribed'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="mt-6 pt-4 border-t">
+                    <Button
+                      variant="outline"
+                      className="text-destructive border-destructive/30 hover:bg-destructive/5 w-full sm:w-auto"
+                      onClick={() => signOut({ callbackUrl: '/account/login' })}
+                    >
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Sign out of all devices
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 }

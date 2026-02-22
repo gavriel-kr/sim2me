@@ -24,7 +24,7 @@ export default async function AdminAccountsPage() {
       name: true,
       lastName: true,
       phone: true,
-      emailVerified: true,
+      googleId: true,
       newsletter: true,
       createdAt: true,
     },

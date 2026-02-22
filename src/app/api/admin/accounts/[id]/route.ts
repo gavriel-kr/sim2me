@@ -51,7 +51,6 @@ export async function PATCH(
     lastName?: string | null;
     phone?: string | null;
     newsletter?: boolean;
-    emailVerified?: boolean;
     password?: string;
   } = {};
 
@@ -65,7 +64,6 @@ export async function PATCH(
   if (body.lastName !== undefined) data.lastName = body.lastName === '' || body.lastName === null ? null : String(body.lastName).trim();
   if (body.phone !== undefined) data.phone = body.phone === '' || body.phone === null ? null : String(body.phone).trim();
   if (typeof body.newsletter === 'boolean') data.newsletter = body.newsletter;
-  if (typeof body.emailVerified === 'boolean') data.emailVerified = body.emailVerified;
   if (typeof body.password === 'string' && body.password.length >= 8) {
     data.password = await hash(body.password, 12);
   }

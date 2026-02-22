@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { createSharedPathnamesNavigation } from 'next-intl/navigation';
 import { routing } from '@/i18n/routing';
@@ -15,7 +14,6 @@ const { Link: IntlLink } = createSharedPathnamesNavigation(routing);
 
 export function AccountLoginClient() {
   const t = useTranslations('account');
-  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -36,8 +34,8 @@ export function AccountLoginClient() {
         return;
       }
       if (res?.ok) {
-        router.push('/account');
-        router.refresh();
+        // Full page reload ensures session cookie is read correctly
+        window.location.href = '/account';
         return;
       }
       setError('Something went wrong. Please try again.');
@@ -52,7 +50,7 @@ export function AccountLoginClient() {
     <Card className="border-0 shadow-lg">
       <CardHeader className="space-y-1 text-center">
         <CardTitle className="text-2xl font-bold">{t('login')}</CardTitle>
-        <CardDescription>Sign in to manage your eSIMs and orders</CardDescription>
+        <CardDescription>Sign in with your email and password</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
