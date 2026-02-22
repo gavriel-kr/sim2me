@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import {
-  LayoutDashboard, FileText, Settings, Users, ShoppingCart,
+  LayoutDashboard, FileText, Settings, Users, UserCircle, ShoppingCart,
   Globe, Search, LogOut, Package, BarChart3, Menu, X,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -16,6 +16,7 @@ interface Props {
 const navItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/orders', label: 'Orders', icon: ShoppingCart },
+  { href: '/admin/accounts', label: 'Accounts', icon: UserCircle },
   { href: '/admin/packages', label: 'eSIM Packages', icon: Package },
   { href: '/admin/pages', label: 'Pages (CMS)', icon: FileText },
   { href: '/admin/seo', label: 'SEO Settings', icon: Search },

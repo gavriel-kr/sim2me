@@ -126,11 +126,24 @@ model PackageOverride {
   @@map("package_overrides")
 }
 
-// ─── Customers (site users) ─────────────────────────────────
+// ─── Customers (site users / account holders) ───────────────
 model Customer {
   id        String   @id @default(cuid())
   email     String   @unique
+  password  String?  // hashed; null for legacy records
   name      String   @default("")
+  lastName  String?  // optional
+  phone     String?  // single phone number only
+  emailVerified Boolean @default(false)
+  emailVerifyToken   String?
+  emailVerifyExpires DateTime?
+  newsletter Boolean @default(false)  // opt-in for updates and news
+  resetToken         String?
+  resetExpires       DateTime?
+  // Change email flow
+  pendingEmail       String?
+  pendingEmailToken  String?
+  pendingEmailExpires DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

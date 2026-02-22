@@ -22,5 +22,10 @@ export const routing = defineRouting({
     '/account/orders': '/account/orders',
     '/account/esims': '/account/esims',
     '/account/profile': '/account/profile',
+    '/account/login': '/account/login',
+    '/account/register': '/account/register',
+    '/account/forgot-password': '/account/forgot-password',
+    '/account/reset-password': '/account/reset-password',
+    '/account/verify-email': '/account/verify-email',
   },
 });
