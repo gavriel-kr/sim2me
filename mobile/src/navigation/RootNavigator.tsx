@@ -6,6 +6,7 @@ import type { RootStackParamList } from '../types';
 import { TabNavigator } from './TabNavigator';
 import { DestinationDetailScreen } from '../screens/DestinationDetailScreen';
 import { PlanDetailScreen } from '../screens/PlanDetailScreen';
+import { ESimDetailScreen } from '../screens/ESimDetailScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -29,6 +30,11 @@ export function RootNavigator() {
         name="PlanDetail"
         component={PlanDetailScreen}
         options={{ title: 'Plan Details' }}
+      />
+      <Stack.Screen
+        name="ESimDetail"
+        component={ESimDetailScreen}
+        options={{ title: 'eSIM Details' }}
       />
     </Stack.Navigator>
   );

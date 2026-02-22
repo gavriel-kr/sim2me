@@ -12,6 +12,15 @@ npx expo start
 
 Scan the QR code with **Expo Go** app on your phone to preview.
 
+### How to see the app (easiest)
+
+1. On your computer: `cd mobile` then `npx expo start`.
+2. On your phone: Install **Expo Go** from the App Store (iOS) or Google Play (Android).
+3. Scan the QR code shown in the terminal (iOS: Camera app; Android: Expo Go app).
+4. The app opens in Expo Go. Try:
+   - **My eSIMs** tab — you’ll see a demo eSIM; tap it for details, QR placeholder, and **Copy** activation code.
+   - **Profile** tab — **Sign In / Create Account** opens the website to connect your account; support and legal links work.
+
 ## Build for App Stores
 
 ```bash

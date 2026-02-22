@@ -40,17 +40,23 @@ export function ProfileScreen() {
             <Ionicons name="person" size={32} color={colors.white} />
           </View>
           <Text style={styles.name}>Welcome to Sim2Me</Text>
-          <Text style={styles.email}>Sign in to manage your eSIMs</Text>
+          <Text style={styles.email}>Sign in to sync eSIMs and view status</Text>
         </View>
 
-        {/* CTA */}
+        {/* Connect CTA */}
         <TouchableOpacity
           style={styles.signInButton}
           onPress={() => openLink('https://www.sim2me.net/account')}
           activeOpacity={0.85}
         >
-          <Text style={styles.signInText}>Sign In / Create Account</Text>
+          <View style={styles.signInButtonContent}>
+            <Ionicons name="log-in-outline" size={20} color={colors.white} />
+            <Text style={styles.signInText}>Sign In / Create Account</Text>
+          </View>
         </TouchableOpacity>
+        <Text style={styles.connectHint}>
+          Connect your account on the website to see your eSIMs and orders in the app.
+        </Text>
 
         {/* Menu Sections */}
         {MENU_SECTIONS.map((section) => (
@@ -115,7 +121,19 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     paddingVertical: spacing.base,
     alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  signInButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  connectHint: {
+    fontSize: fontSize.xs,
+    color: colors.textTertiary,
+    textAlign: 'center',
     marginBottom: spacing.xl,
+    lineHeight: 18,
   },
   signInText: {
     fontSize: fontSize.base,

@@ -42,4 +42,29 @@ export async function getPackages(location?: string) {
   }>(`/api/packages${q}`);
 }
 
+/** Mock: user's eSIMs. Replace with real API (e.g. GET /api/account/esims) when backend is ready. */
+export async function getMyEsims(): Promise<Array<{
+  id: string;
+  orderId: string;
+  destinationName: string;
+  planName: string;
+  status: 'pending' | 'activated';
+  activationCode: string;
+  qrPlaceholder?: boolean;
+}>> {
+  // Simulate network delay
+  await new Promise((r) => setTimeout(r, 300));
+  return [
+    {
+      id: 'esim_1',
+      orderId: 'ord_demo',
+      destinationName: 'United States',
+      planName: '3 GB / 15 days',
+      status: 'pending',
+      activationCode: 'DEMO-CODE-123',
+      qrPlaceholder: true,
+    },
+  ];
+}
+
 export { API_BASE };
