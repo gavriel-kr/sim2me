@@ -64,7 +64,8 @@
     "resetFilters": "אפס מסננים",
     "noResults": "לא נמצאו יעדים",
     "noResultsHint": "נסה מילות חיפוש אחרות או שנה את המסננים",
-    "clearAllFilters": "נקה את כל המסננים"
+    "clearAllFilters": "נקה את כל המסננים",
+    "filterData": "נפח מינימום"
   },
   "plan": {
     "data": "נתונים",

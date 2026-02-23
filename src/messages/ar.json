@@ -64,7 +64,8 @@
     "resetFilters": "إعادة تعيين",
     "noResults": "لم يتم العثور على وجهات",
     "noResultsHint": "جرّب كلمات بحث أخرى أو عدّل الفلاتر",
-    "clearAllFilters": "مسح كل الفلاتر"
+    "clearAllFilters": "مسح كل الفلاتر",
+    "filterData": "الحد الأدنى للبيانات"
   },
   "plan": {
     "data": "البيانات",

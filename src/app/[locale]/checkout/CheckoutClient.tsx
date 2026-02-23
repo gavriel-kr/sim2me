@@ -49,10 +49,6 @@ export function CheckoutClient() {
   const onPayWithPaddle = async () => {
     const travelerData = useCartStore.getState().travelerInfo;
 
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/31d3162a-817c-4d6a-9841-464cdcbf3b94',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CheckoutClient.tsx:onPayWithPaddle-entry',message:'Pay now clicked',data:{hasTravelerInfo:!!travelerData,travelerEmail:travelerData?.email||null,itemsCount:items.length,paddleReady,firstItemPlanId:items[0]?.planId||null,firstItemPrice:items[0]?.plan?.price||null},timestamp:Date.now(),hypothesisId:'A+B+E'})}).catch(()=>{});
-    // #endregion
-
     if (!travelerData?.email || !items.length) {
       setPaymentError(t('emailRequired') || 'Please enter your details first.');
       return;
@@ -80,10 +76,6 @@ export function CheckoutClient() {
       });
       const data = await res.json();
 
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/31d3162a-817c-4d6a-9841-464cdcbf3b94',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CheckoutClient.tsx:after-create-transaction',message:'API response',data:{status:res.status,ok:res.ok,mode:data?.mode,transactionId:data?.transactionId||null,error:data?.error||null,hasItems:!!data?.items},timestamp:Date.now(),hypothesisId:'C'})}).catch(()=>{});
-      // #endregion
-
       if (!res.ok) {
         setPaymentError(data.error || 'Checkout unavailable');
         return;
@@ -93,15 +85,9 @@ export function CheckoutClient() {
         return;
       }
       if (data.mode === 'transaction' && data.transactionId) {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/31d3162a-817c-4d6a-9841-464cdcbf3b94',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CheckoutClient.tsx:opening-paddle-transactionId',message:'Opening Paddle with transactionId',data:{transactionId:data.transactionId},timestamp:Date.now(),hypothesisId:'D'})}).catch(()=>{});
-        // #endregion
         openCheckout({
           transactionId: data.transactionId,
           onCompleted: (transactionId: string) => {
-            // #region agent log
-            fetch('http://127.0.0.1:7242/ingest/31d3162a-817c-4d6a-9841-464cdcbf3b94',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CheckoutClient.tsx:onCompleted',message:'Checkout completed callback fired',data:{transactionId},timestamp:Date.now(),hypothesisId:'D'})}).catch(()=>{});
-            // #endregion
             clearCart();
             const localePrefix = locale === routing.defaultLocale ? '' : `/${locale}`;
             router.push(`${localePrefix}/success?transaction_id=${encodeURIComponent(transactionId)}`);
@@ -120,9 +106,7 @@ export function CheckoutClient() {
         });
       }
     } catch (e) {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/31d3162a-817c-4d6a-9841-464cdcbf3b94',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CheckoutClient.tsx:catch',message:'Exception in onPayWithPaddle',data:{error:String(e)},timestamp:Date.now(),hypothesisId:'C'})}).catch(()=>{});
-      // #endregion
+      console.error('[Checkout] error:', e);
       setPaymentError(t('paymentError') || 'Something went wrong. Please try again.');
     } finally {
       setPaymentLoading(false);

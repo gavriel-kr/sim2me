@@ -64,7 +64,8 @@
     "resetFilters": "Reset filters",
     "noResults": "No destinations found",
     "noResultsHint": "Try different keywords or adjust your filters",
-    "clearAllFilters": "Clear all filters"
+    "clearAllFilters": "Clear all filters",
+    "filterData": "Min data"
   },
   "plan": {
     "data": "Data",
