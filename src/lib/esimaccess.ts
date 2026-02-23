@@ -75,6 +75,11 @@ export interface EsimProfile {
   activationCode: string;
   qrCodeUrl: string;
   status: string;
+  // Usage data (returned by esim/query when available)
+  orderVolume?: number;    // bytes ordered
+  usedVolume?: number;     // bytes used
+  remainingVolume?: number; // bytes remaining
+  expiredTime?: number;    // unix timestamp ms
 }
 
 // ─── API Methods ─────────────────────────────────────────────
@@ -113,6 +118,19 @@ export async function getEsimProfile(orderNo: string): Promise<{ esimList: EsimP
     orderNo,
     pager: { pageNum: 1, pageSize: 10 },
   });
+}
+
+/** Query eSIM usage by ICCID */
+export async function getEsimUsage(iccid: string): Promise<EsimProfile | null> {
+  try {
+    const result = await apiCall<{ esimList: EsimProfile[] }>('/open/esim/query', {
+      iccid,
+      pager: { pageNum: 1, pageSize: 1 },
+    });
+    return result?.esimList?.[0] ?? null;
+  } catch {
+    return null;
+  }
 }
 
 /** Cancel/refund an unused eSIM order */

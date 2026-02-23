@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   User, ShoppingBag, Wifi, Settings, LogOut, Phone, Mail,
   Calendar, Shield, CheckCircle, AlertCircle, ChevronRight, QrCode,
+  RotateCcw, ChevronDown, ChevronUp, HelpCircle, Download,
 } from 'lucide-react';
 
 const { Link: IntlLink } = createSharedPathnamesNavigation(routing);
@@ -62,11 +63,76 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
+function UsageBar({ orderId, iccid }: { orderId: string; iccid: string }) {
+  const [usage, setUsage] = useState<{
+    orderVolume: number | null;
+    usedVolume: number | null;
+    remainingVolume: number | null;
+    expiredTime: number | null;
+    status: string;
+  } | null | 'loading' | 'unavailable'>('loading');
+
+  useEffect(() => {
+    fetch(`/api/account/esims/usage?iccid=${encodeURIComponent(iccid)}&orderId=${encodeURIComponent(orderId)}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (data?.usage) setUsage(data.usage);
+        else setUsage('unavailable');
+      })
+      .catch(() => setUsage('unavailable'));
+  }, [iccid, orderId]);
+
+  if (usage === 'loading') return <p className="text-xs text-muted-foreground animate-pulse">Loading usage data…</p>;
+  if (usage === 'unavailable' || !usage) return null;
+
+  const total = usage.orderVolume;
+  const used = usage.usedVolume;
+  const remaining = usage.remainingVolume;
+
+  if (!total || total <= 0) return null;
+
+  const usedPct = Math.min(100, Math.round(((used ?? 0) / total) * 100));
+  const fmt = (bytes: number) => {
+    const mb = bytes / (1024 * 1024);
+    return mb >= 1024 ? `${(mb / 1024).toFixed(1)} GB` : `${Math.round(mb)} MB`;
+  };
+
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between text-xs">
+        <span className="font-medium text-muted-foreground">Data usage</span>
+        <span className="font-mono">
+          {used != null ? fmt(used) : '—'} / {fmt(total)}
+        </span>
+      </div>
+      <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
+        <div
+          className={`h-2 rounded-full transition-all ${usedPct > 80 ? 'bg-red-500' : usedPct > 50 ? 'bg-amber-500' : 'bg-emerald-500'}`}
+          style={{ width: `${usedPct}%` }}
+        />
+      </div>
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <span>{usedPct}% used</span>
+        {remaining != null && <span>{fmt(remaining)} remaining</span>}
+      </div>
+      {usage.expiredTime && (
+        <p className="text-xs text-muted-foreground">
+          Expires: {new Date(usage.expiredTime).toLocaleDateString()}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export function AccountClient() {
   const t = useTranslations('account');
   const [profile, setProfile] = useState<Profile | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
+  const [retrying, setRetrying] = useState<string | null>(null);
+  const [retryMsg, setRetryMsg] = useState<{ id: string; ok: boolean; text: string } | null>(null);
+  const [showTroubleshooting, setShowTroubleshooting] = useState<string | null>(null);
   const [profileForm, setProfileForm] = useState({ name: '', lastName: '', phone: '', newsletter: false });
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileError, setProfileError] = useState('');
@@ -97,6 +163,25 @@ export function AccountClient() {
     }).finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, []);
+
+  async function handleRetryOrder(orderId: string) {
+    setRetrying(orderId);
+    setRetryMsg(null);
+    try {
+      const res = await fetch(`/api/account/orders/${orderId}/retry`, { method: 'POST' });
+      if (res.ok) {
+        setOrders((prev) => prev.map((o) => o.id === orderId ? { ...o, status: 'COMPLETED' } : o));
+        setRetryMsg({ id: orderId, ok: true, text: '✓ eSIM activated successfully! Check your email.' });
+      } else {
+        const data = await res.json();
+        setRetryMsg({ id: orderId, ok: false, text: data.error || 'Retry failed. Please contact support.' });
+      }
+    } catch {
+      setRetryMsg({ id: orderId, ok: false, text: 'Network error. Please try again.' });
+    } finally {
+      setRetrying(null);
+    }
+  }
 
   async function handleSaveProfile(e: React.FormEvent) {
     e.preventDefault();
@@ -314,25 +399,119 @@ export function AccountClient() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {orders.map((order) => (
-                      <div key={order.id} className="rounded-xl border p-4 flex flex-col sm:flex-row sm:items-center gap-3">
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-sm truncate">
-                            {order.destination ? `${order.destination} — ` : ''}{order.packageName}
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            {[order.dataAmount, order.validity].filter(Boolean).join(' / ')}
-                            {' · '}{new Date(order.createdAt).toLocaleDateString()}
-                          </p>
+                    {orders.map((order) => {
+                      const isExpanded = expandedOrder === order.id;
+                      const isFailed = order.status === 'FAILED';
+                      const isCompleted = order.status === 'COMPLETED';
+                      return (
+                        <div key={order.id} className="rounded-xl border overflow-hidden">
+                          {/* Row */}
+                          <button
+                            className="w-full text-left p-4 flex flex-col sm:flex-row sm:items-center gap-3 hover:bg-gray-50 transition-colors"
+                            onClick={() => setExpandedOrder(isExpanded ? null : order.id)}
+                          >
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold text-sm truncate">
+                                {order.destination ? `${order.destination} — ` : ''}{order.packageName}
+                              </p>
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                {[order.dataAmount, order.validity].filter(Boolean).join(' / ')}
+                                {' · '}{new Date(order.createdAt).toLocaleDateString()}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              <span className="text-sm font-medium">${Number(order.totalAmount).toFixed(2)}</span>
+                              <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${STATUS_COLORS[order.status] ?? 'bg-gray-100 text-gray-700'}`}>
+                                {order.status}
+                              </span>
+                              {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+                            </div>
+                          </button>
+
+                          {/* Expanded panel */}
+                          {isExpanded && (
+                            <div className="border-t bg-gray-50/50 p-4 space-y-4">
+                              {/* Retry message */}
+                              {retryMsg?.id === order.id && (
+                                <div className={`rounded-lg px-3 py-2 text-sm ${retryMsg.ok ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                                  {retryMsg.text}
+                                </div>
+                              )}
+
+                              {/* FAILED: retry + support */}
+                              {isFailed && (
+                                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 space-y-2">
+                                  <p className="text-sm font-medium text-amber-800 flex items-center gap-1.5">
+                                    <AlertCircle className="w-4 h-4" />
+                                    There was an issue activating your eSIM
+                                  </p>
+                                  <p className="text-xs text-amber-700">
+                                    You can try activating again or contact support for assistance.
+                                  </p>
+                                  <div className="flex gap-2 pt-1">
+                                    <Button
+                                      size="sm"
+                                      onClick={() => handleRetryOrder(order.id)}
+                                      disabled={retrying === order.id}
+                                      className="bg-amber-600 hover:bg-amber-700 text-white h-8 text-xs"
+                                    >
+                                      <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
+                                      {retrying === order.id ? 'Retrying…' : 'Retry Activation'}
+                                    </Button>
+                                    <a
+                                      href="mailto:support@sim2me.net?subject=Order%20Issue"
+                                      className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 px-3 py-1.5 text-xs font-medium text-amber-800 hover:bg-amber-100 transition-colors"
+                                    >
+                                      Contact Support
+                                    </a>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* COMPLETED: QR + install details */}
+                              {isCompleted && (
+                                <div className="flex flex-col sm:flex-row gap-4">
+                                  {order.qrCodeUrl ? (
+                                    <div className="flex-shrink-0">
+                                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">QR Code</p>
+                                      <img
+                                        src={order.qrCodeUrl}
+                                        alt="eSIM QR"
+                                        className="h-40 w-40 rounded-xl border object-contain bg-white"
+                                      />
+                                    </div>
+                                  ) : (
+                                    <div className="h-40 w-40 rounded-xl border border-dashed flex items-center justify-center bg-white flex-shrink-0">
+                                      <QrCode className="w-10 h-10 text-muted-foreground/30" />
+                                    </div>
+                                  )}
+                                  <div className="space-y-3 text-sm min-w-0">
+                                    {order.smdpAddress && (
+                                      <div>
+                                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">SM-DP+ Address</p>
+                                        <p className="font-mono text-xs break-all mt-1 select-all">{order.smdpAddress}</p>
+                                      </div>
+                                    )}
+                                    {order.activationCode && (
+                                      <div>
+                                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Activation Code</p>
+                                        <p className="font-mono text-sm mt-1 select-all">{order.activationCode}</p>
+                                      </div>
+                                    )}
+                                    {order.iccid && (
+                                      <div>
+                                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">ICCID</p>
+                                        <p className="font-mono text-xs mt-1 select-all">{order.iccid}</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          <span className="text-sm font-medium">${Number(order.totalAmount).toFixed(2)}</span>
-                          <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${STATUS_COLORS[order.status] ?? 'bg-gray-100 text-gray-700'}`}>
-                            {order.status}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </CardContent>
@@ -369,6 +548,7 @@ export function AccountClient() {
                       .filter((o) => o.status === 'COMPLETED')
                       .map((order) => (
                         <div key={order.id} className="rounded-xl border p-4 space-y-4">
+                          {/* Header */}
                           <div className="flex items-start justify-between gap-2">
                             <div>
                               <p className="font-semibold">
@@ -379,44 +559,105 @@ export function AccountClient() {
                                 {' · '}{new Date(order.createdAt).toLocaleDateString()}
                               </p>
                             </div>
-                            <span className={`rounded-full px-2 py-0.5 text-xs font-semibold flex-shrink-0 ${STATUS_COLORS[order.status]}`}>
+                            <span className="rounded-full px-2 py-0.5 text-xs font-semibold flex-shrink-0 bg-green-100 text-green-700">
                               Active
                             </span>
                           </div>
+
+                          {/* Usage bar — live from eSIMaccess */}
+                          {order.iccid && (
+                            <UsageBar orderId={order.id} iccid={order.iccid} />
+                          )}
+
+                          {/* QR + credentials */}
                           <div className="flex flex-col sm:flex-row gap-4">
                             {order.qrCodeUrl ? (
-                              <img src={order.qrCodeUrl} alt="QR Code" className="h-36 w-36 rounded-lg border object-contain flex-shrink-0" />
+                              <div className="flex-shrink-0">
+                                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5">QR Code</p>
+                                <img
+                                  src={order.qrCodeUrl}
+                                  alt="eSIM QR Code"
+                                  className="h-40 w-40 rounded-xl border object-contain bg-white"
+                                />
+                                <a
+                                  href={order.qrCodeUrl}
+                                  download="esim-qr.png"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="mt-2 flex items-center gap-1 text-xs text-primary hover:underline"
+                                >
+                                  <Download className="w-3.5 h-3.5" />
+                                  Download QR
+                                </a>
+                              </div>
                             ) : (
-                              <div className="h-36 w-36 rounded-lg border border-dashed flex items-center justify-center text-xs text-muted-foreground bg-muted flex-shrink-0">
-                                <QrCode className="w-8 h-8 opacity-30" />
+                              <div className="h-40 w-40 rounded-xl border border-dashed flex items-center justify-center bg-muted flex-shrink-0">
+                                <QrCode className="w-10 h-10 text-muted-foreground/30" />
                               </div>
                             )}
-                            <div className="space-y-2 text-sm">
+                            <div className="space-y-3 text-sm min-w-0">
                               {order.smdpAddress && (
                                 <div>
                                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">SM-DP+ Address</p>
-                                  <p className="font-mono text-xs break-all mt-0.5">{order.smdpAddress}</p>
+                                  <p className="font-mono text-xs break-all mt-1 select-all bg-muted/50 rounded px-2 py-1">{order.smdpAddress}</p>
                                 </div>
                               )}
                               {order.activationCode && (
                                 <div>
                                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Activation Code</p>
-                                  <p className="font-mono text-sm mt-0.5">{order.activationCode}</p>
+                                  <p className="font-mono text-sm mt-1 select-all bg-muted/50 rounded px-2 py-1">{order.activationCode}</p>
                                 </div>
                               )}
                               {order.iccid && (
                                 <div>
                                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">ICCID</p>
-                                  <p className="font-mono text-xs mt-0.5">{order.iccid}</p>
+                                  <p className="font-mono text-xs mt-1 select-all bg-muted/50 rounded px-2 py-1">{order.iccid}</p>
                                 </div>
                               )}
                             </div>
                           </div>
-                          <div className="border-t pt-3 text-xs text-muted-foreground space-y-1">
-                            <p>1. Open Settings → Cellular → Add Cellular Plan</p>
-                            <p>2. Scan the QR code above or enter the code manually</p>
-                            <p>3. Enable Data Roaming when you land abroad</p>
+
+                          {/* Installation instructions */}
+                          <div className="rounded-lg bg-blue-50 border border-blue-100 p-3 space-y-1.5">
+                            <p className="text-xs font-semibold text-blue-800">Installation steps</p>
+                            <ol className="text-xs text-blue-700 space-y-0.5 list-decimal list-inside">
+                              <li>Go to Settings → Cellular → Add Cellular Plan</li>
+                              <li>Scan QR code above, or tap &ldquo;Enter Details Manually&rdquo;</li>
+                              <li>For manual: enter SM-DP+ Address and Activation Code</li>
+                              <li>Label the plan (e.g. &ldquo;Travel eSIM&rdquo;) and save</li>
+                              <li>Enable Data Roaming when you land abroad</li>
+                            </ol>
                           </div>
+
+                          {/* Troubleshooting */}
+                          <button
+                            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                            onClick={() => setShowTroubleshooting(showTroubleshooting === order.id ? null : order.id)}
+                          >
+                            <HelpCircle className="w-3.5 h-3.5" />
+                            Troubleshooting & FAQ
+                            {showTroubleshooting === order.id ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                          </button>
+                          {showTroubleshooting === order.id && (
+                            <div className="rounded-lg bg-gray-50 border p-3 space-y-2.5 text-xs text-gray-700">
+                              <div>
+                                <p className="font-semibold">QR code won&apos;t scan?</p>
+                                <p>Use the manual installation: go to Settings → Cellular → Add Cellular Plan → Enter Manually, then enter the SM-DP+ Address and Activation Code above.</p>
+                              </div>
+                              <div>
+                                <p className="font-semibold">No internet abroad?</p>
+                                <p>Make sure Data Roaming is enabled in Settings → Cellular → (your eSIM) → Data Roaming. Also check the correct SIM is selected for data.</p>
+                              </div>
+                              <div>
+                                <p className="font-semibold">eSIM not showing after scan?</p>
+                                <p>Restart your device. The eSIM may take a few minutes to provision after scanning.</p>
+                              </div>
+                              <div>
+                                <p className="font-semibold">Still need help?</p>
+                                <a href="mailto:support@sim2me.net" className="text-primary underline">Contact support</a>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       ))}
                   </div>
