@@ -111,6 +111,7 @@ export async function purchasePackage(packageCode: string, quantity: number = 1)
 export async function getEsimProfile(orderNo: string): Promise<{ esimList: EsimProfile[] }> {
   return apiCall<{ esimList: EsimProfile[] }>('/open/esim/query', {
     orderNo,
+    pager: { pageNum: 1, pageSize: 10 },
   });
 }
 
