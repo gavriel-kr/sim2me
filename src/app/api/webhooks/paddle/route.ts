@@ -185,10 +185,11 @@ export async function POST(request: Request) {
       }).catch((e) => console.error('[Paddle webhook] Email send failed (non-fatal)', e));
     }
   } catch (e) {
-    console.error('[Paddle webhook] Fulfillment failed', order.id, e);
+    const errMsg = e instanceof Error ? e.message : String(e);
+    console.error('[Paddle webhook] Fulfillment failed', order.id, errMsg);
     await prisma.order.update({
       where: { id: order.id },
-      data: { status: 'FAILED' },
+      data: { status: 'FAILED', errorMessage: errMsg.slice(0, 1000) },
     });
   }
 

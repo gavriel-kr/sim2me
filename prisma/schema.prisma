@@ -96,6 +96,7 @@ model Order {
   smdpAddress          String?
   activationCode       String?
   deviceType           String?    // from checkout passthrough
+  errorMessage         String?    @db.Text // last fulfillment error for debugging
   createdAt            DateTime    @default(now())
   updatedAt            DateTime    @updatedAt
   paidAt               DateTime?
