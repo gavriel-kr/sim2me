@@ -100,9 +100,10 @@ export async function getPackagesByLocation(locationCode: string): Promise<EsimP
 
 /** Purchase an eSIM package */
 export async function purchasePackage(packageCode: string, quantity: number = 1): Promise<EsimOrderResult> {
+  const transactionId = `sim2me-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   return apiCall<EsimOrderResult>('/open/esim/order', {
-    packageCode,
-    quantity,
+    transactionId,
+    packageInfoList: [{ packageCode, count: quantity }],
   });
 }
 
