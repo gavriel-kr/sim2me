@@ -27,5 +27,7 @@ export const routing = defineRouting({
     '/account/forgot-password': '/account/forgot-password',
     '/account/reset-password': '/account/reset-password',
     '/account/verify-email': '/account/verify-email',
+    '/success': '/success',
+    '/installation-guide': '/installation-guide',
   },
 });

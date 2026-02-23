@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const body = await req.json();
-  const { packageCode, visible, customTitle, customPrice, saleBadge, featured, sortOrder, notes } = body;
+  const { packageCode, visible, customTitle, customPrice, paddlePriceId, saleBadge, featured, sortOrder, notes } = body;
 
   if (!packageCode) {
     return NextResponse.json({ error: 'packageCode is required' }, { status: 400 });
@@ -33,6 +33,7 @@ export async function POST(req: NextRequest) {
       visible: visible ?? true,
       customTitle: customTitle || null,
       customPrice: customPrice != null ? customPrice : null,
+      paddlePriceId: typeof paddlePriceId === 'string' && paddlePriceId.trim() ? paddlePriceId.trim() : null,
       saleBadge: saleBadge || null,
       featured: featured ?? false,
       sortOrder: sortOrder ?? 0,
@@ -42,6 +43,7 @@ export async function POST(req: NextRequest) {
       visible: visible ?? true,
       customTitle: customTitle || null,
       customPrice: customPrice != null ? customPrice : null,
+      ...(paddlePriceId !== undefined && { paddlePriceId: typeof paddlePriceId === 'string' && paddlePriceId.trim() ? paddlePriceId.trim() : null }),
       saleBadge: saleBadge || null,
       featured: featured ?? false,
       sortOrder: sortOrder ?? 0,

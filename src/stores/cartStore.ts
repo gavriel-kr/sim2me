@@ -2,8 +2,16 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { CartItem } from '@/types';
 
+export interface TravelerInfo {
+  email: string;
+  firstName: string;
+  lastName: string;
+}
+
 interface CartState {
   items: CartItem[];
+  travelerInfo: TravelerInfo | null;
+  setTravelerInfo: (info: TravelerInfo | null) => void;
   addItem: (item: Omit<CartItem, 'quantity'>) => void;
   removeItem: (planId: string) => void;
   updateQuantity: (planId: string, quantity: number) => void;
@@ -16,6 +24,8 @@ export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
       items: [],
+      travelerInfo: null,
+      setTravelerInfo: (info) => set({ travelerInfo: info }),
       addItem: (item) => {
         set((state) => {
           const existing = state.items.find((i) => i.planId === item.planId);
@@ -42,10 +52,13 @@ export const useCartStore = create<CartState>()(
           ),
         }));
       },
-      clearCart: () => set({ items: [] }),
+      clearCart: () => set({ items: [], travelerInfo: null }),
       total: () => get().items.reduce((sum, i) => sum + i.plan.price * i.quantity, 0),
       count: () => get().items.reduce((c, i) => c + i.quantity, 0),
     }),
-    { name: 'sim2me-cart' }
+    {
+      name: 'sim2me-cart',
+      partialize: (state) => ({ items: state.items }),
+    }
   )
 );

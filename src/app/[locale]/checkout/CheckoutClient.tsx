@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useRouter } from 'next/navigation';
+import { useTranslations, useLocale } from 'next-intl';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { travelerInfoSchema, type TravelerInfoForm } from '@/lib/validation/schemas';
@@ -13,71 +14,128 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { createSharedPathnamesNavigation } from 'next-intl/navigation';
 import { routing } from '@/i18n/routing';
+import { usePaddle } from '@/components/paddle/PaddleScript';
+import { useToast } from '@/hooks/useToast';
 
 const { Link: IntlLink } = createSharedPathnamesNavigation(routing);
 
-type Step = 'cart' | 'traveler' | 'payment' | 'confirmation';
+type Step = 'cart' | 'traveler' | 'payment';
 
 export function CheckoutClient() {
   const t = useTranslations('checkout');
+  const router = useRouter();
+  const locale = useLocale();
+  const { toast } = useToast();
   const items = useCartStore((s) => s.items);
   const total = useCartStore((s) => s.total());
   const clearCart = useCartStore((s) => s.clearCart);
   const removeItem = useCartStore((s) => s.removeItem);
+  const setTravelerInfo = useCartStore((s) => s.setTravelerInfo);
+  const { ready: paddleReady, openCheckout } = usePaddle();
 
   const [step, setStep] = useState<Step>('cart');
-  const [orderId, setOrderId] = useState<string | null>(null);
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
 
   const { register, handleSubmit, formState: { errors } } = useForm<TravelerInfoForm>({
     resolver: zodResolver(travelerInfoSchema),
   });
 
   const onTravelerSubmit = (data: TravelerInfoForm) => {
+    setTravelerInfo({ email: data.email, firstName: data.firstName, lastName: data.lastName });
     setStep('payment');
   };
 
-  const onPayMock = () => {
-    const id = `ord_${Date.now()}`;
-    setOrderId(id);
-    clearCart();
-    setStep('confirmation');
+  const onPayWithPaddle = async () => {
+    const travelerData = useCartStore.getState().travelerInfo;
+
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/31d3162a-817c-4d6a-9841-464cdcbf3b94',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CheckoutClient.tsx:onPayWithPaddle-entry',message:'Pay now clicked',data:{hasTravelerInfo:!!travelerData,travelerEmail:travelerData?.email||null,itemsCount:items.length,paddleReady,firstItemPlanId:items[0]?.planId||null,firstItemPrice:items[0]?.plan?.price||null},timestamp:Date.now(),hypothesisId:'A+B+E'})}).catch(()=>{});
+    // #endregion
+
+    if (!travelerData?.email || !items.length) {
+      setPaymentError(t('emailRequired') || 'Please enter your details first.');
+      return;
+    }
+    if (items.length > 1) {
+      setPaymentError(t('singlePlanOnly') || 'Please purchase one plan at a time.');
+      return;
+    }
+    setPaymentError(null);
+    setPaymentLoading(true);
+    try {
+      const res = await fetch('/api/checkout/create-transaction', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: items.map((i) => ({
+            planId: i.planId,
+            quantity: i.quantity,
+            unitPrice: i.plan.price,
+            planName: i.plan.name || `${i.destinationName} eSIM`,
+          })),
+          customerEmail: travelerData.email,
+          customerName: [travelerData.firstName, travelerData.lastName].filter(Boolean).join(' ').trim() || undefined,
+        }),
+      });
+      const data = await res.json();
+
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/31d3162a-817c-4d6a-9841-464cdcbf3b94',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CheckoutClient.tsx:after-create-transaction',message:'API response',data:{status:res.status,ok:res.ok,mode:data?.mode,transactionId:data?.transactionId||null,error:data?.error||null,hasItems:!!data?.items},timestamp:Date.now(),hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
+
+      if (!res.ok) {
+        setPaymentError(data.error || 'Checkout unavailable');
+        return;
+      }
+      if (!paddleReady || !openCheckout) {
+        setPaymentError('Payment is loading. Please try again in a moment.');
+        return;
+      }
+      if (data.mode === 'transaction' && data.transactionId) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/31d3162a-817c-4d6a-9841-464cdcbf3b94',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CheckoutClient.tsx:opening-paddle-transactionId',message:'Opening Paddle with transactionId',data:{transactionId:data.transactionId},timestamp:Date.now(),hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
+        openCheckout({
+          transactionId: data.transactionId,
+          onCompleted: (transactionId: string) => {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/31d3162a-817c-4d6a-9841-464cdcbf3b94',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CheckoutClient.tsx:onCompleted',message:'Checkout completed callback fired',data:{transactionId},timestamp:Date.now(),hypothesisId:'D'})}).catch(()=>{});
+            // #endregion
+            clearCart();
+            const localePrefix = locale === routing.defaultLocale ? '' : `/${locale}`;
+            router.push(`${localePrefix}/success?transaction_id=${encodeURIComponent(transactionId)}`);
+          },
+        });
+      } else {
+        openCheckout({
+          items: data.items,
+          customData: data.customData,
+          customerEmail: travelerData.email,
+          onCompleted: (transactionId: string) => {
+            clearCart();
+            const localePrefix = locale === routing.defaultLocale ? '' : `/${locale}`;
+            router.push(`${localePrefix}/success?transaction_id=${encodeURIComponent(transactionId)}`);
+          },
+        });
+      }
+    } catch (e) {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/31d3162a-817c-4d6a-9841-464cdcbf3b94',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CheckoutClient.tsx:catch',message:'Exception in onPayWithPaddle',data:{error:String(e)},timestamp:Date.now(),hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
+      setPaymentError(t('paymentError') || 'Something went wrong. Please try again.');
+    } finally {
+      setPaymentLoading(false);
+    }
   };
 
-  if (items.length === 0 && step !== 'confirmation') {
+  if (items.length === 0) {
     return (
       <div className="container mx-auto max-w-2xl px-4 py-12 text-center">
         <h1 className="text-2xl font-bold">{t('cart')}</h1>
         <p className="mt-4 text-muted-foreground">Your cart is empty.</p>
         <IntlLink href="/destinations">
           <Button className="mt-4">Browse destinations</Button>
-        </IntlLink>
-      </div>
-    );
-  }
-
-  if (step === 'confirmation' && orderId) {
-    return (
-      <div className="container mx-auto max-w-2xl px-4 py-12">
-        <h1 className="text-2xl font-bold text-primary">{t('orderComplete')}</h1>
-        <p className="mt-2 text-muted-foreground">Order {orderId}</p>
-        <Card className="mt-8">
-          <CardHeader>
-            <h2 className="text-lg font-semibold">{t('installSteps')}</h2>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm">1. {t('step1')}</p>
-            <p className="text-sm">2. {t('step2')}</p>
-            <p className="text-sm">3. {t('step3')}</p>
-            <p className="text-sm">4. {t('step4')}</p>
-            <div className="flex justify-center rounded-xl border border-dashed border-muted-foreground/30 bg-muted/30 p-8">
-              <div className="h-32 w-32 rounded-lg bg-muted flex items-center justify-center text-muted-foreground text-sm sm:h-48 sm:w-48">
-                QR code placeholder
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <IntlLink href="/">
-          <Button className="mt-8">{t('backToHome')}</Button>
         </IntlLink>
       </div>
     );
@@ -166,9 +224,15 @@ export function CheckoutClient() {
                 <h2 className="font-semibold">{t('payment')}</h2>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">{t('mockPayment')}</p>
-                <Button className="mt-4 w-full" onClick={onPayMock}>
-                  {t('payNow')}
+                {paymentError && (
+                  <p className="mb-4 text-sm text-destructive" role="alert">{paymentError}</p>
+                )}
+                <Button
+                  className="mt-4 w-full"
+                  onClick={onPayWithPaddle}
+                  disabled={paymentLoading || !paddleReady}
+                >
+                  {paymentLoading ? (t('processing') || 'Processing…') : (t('payNow') || 'Pay now')}
                 </Button>
               </CardContent>
             </Card>

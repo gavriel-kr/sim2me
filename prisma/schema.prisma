@@ -74,27 +74,31 @@ model SiteSetting {
 
 // ─── Orders ──────────────────────────────────────────────────
 model Order {
-  id                String      @id @default(cuid())
-  orderNo           String      @unique @default(cuid())
-  customerEmail     String
-  customerName      String      @default("")
-  status            OrderStatus @default(PENDING)
-  totalAmount       Decimal     @db.Decimal(10, 2)
-  currency          String      @default("USD")
-  esimOrderId       String?
-  esimTransactionId String?
-  packageCode       String
-  packageName       String
-  destination       String
-  dataAmount        String
-  validity          String
-  iccid             String?
-  qrCodeUrl         String?
-  smdpAddress       String?
-  activationCode    String?
-  createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
-  paidAt            DateTime?
+  id                   String      @id @default(cuid())
+  orderNo              String      @unique @default(cuid())
+  customerId           String?     // optional FK when user is logged in
+  customer             Customer?   @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  customerEmail        String
+  customerName         String      @default("")
+  status               OrderStatus @default(PENDING)
+  totalAmount          Decimal     @db.Decimal(10, 2)
+  currency             String      @default("USD")
+  paddleTransactionId  String?     @unique // Paddle txn_ id for webhook idempotency
+  esimOrderId          String?
+  esimTransactionId    String?
+  packageCode          String
+  packageName          String
+  destination          String
+  dataAmount           String
+  validity             String
+  iccid                String?
+  qrCodeUrl            String?
+  smdpAddress          String?
+  activationCode       String?
+  deviceType           String?    // from checkout passthrough
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+  paidAt               DateTime?
 
   @@map("orders")
 }
@@ -111,17 +115,18 @@ enum OrderStatus {
 
 // ─── Package Overrides (admin control over eSIMaccess packages) ────
 model PackageOverride {
-  id            String   @id @default(cuid())
-  packageCode   String   @unique        // eSIMaccess packageCode
-  visible       Boolean  @default(true) // show on public website
-  customTitle   String?                 // override package name
-  customPrice   Decimal? @db.Decimal(10, 2)  // override retail price (USD)
-  saleBadge     String?                 // e.g. "20% OFF", "HOT", "SALE"
-  featured      Boolean  @default(false)
-  sortOrder     Int      @default(0)
-  notes         String?  @db.Text       // internal admin notes
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id             String   @id @default(cuid())
+  packageCode    String   @unique        // eSIMaccess packageCode
+  visible        Boolean  @default(true) // show on public website
+  customTitle    String?                 // override package name
+  customPrice    Decimal? @db.Decimal(10, 2)  // override retail price (USD)
+  paddlePriceId  String?                 // Paddle price_id (pri_xxx) for checkout
+  saleBadge      String?                 // e.g. "20% OFF", "HOT", "SALE"
+  featured       Boolean  @default(false)
+  sortOrder      Int      @default(0)
+  notes          String?  @db.Text       // internal admin notes
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   @@map("package_overrides")
 }
@@ -140,6 +145,7 @@ model Customer {
   resetExpires       DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  orders    Order[]
 
   @@map("customers")
 }

@@ -23,6 +23,7 @@ interface Override {
   visible: boolean;
   customTitle: string | null;
   customPrice: number | null;
+  paddlePriceId: string | null;
   saleBadge: string | null;
   featured: boolean;
   sortOrder: number;
@@ -33,6 +34,7 @@ interface EditState {
   visible: boolean;
   customTitle: string;
   customPrice: string;
+  paddlePriceId: string;
   saleBadge: string;
   featured: boolean;
   notes: string;
@@ -57,7 +59,7 @@ export function PackagesClient() {
   // Editing
   const [editingPkg, setEditingPkg] = useState<string | null>(null);
   const [editState, setEditState] = useState<EditState>({
-    visible: true, customTitle: '', customPrice: '', saleBadge: '', featured: false, notes: '',
+    visible: true, customTitle: '', customPrice: '', paddlePriceId: '', saleBadge: '', featured: false, notes: '',
   });
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState('');
@@ -150,6 +152,7 @@ export function PackagesClient() {
       visible: override?.visible ?? true,
       customTitle: override?.customTitle || '',
       customPrice: override?.customPrice != null ? String(override.customPrice) : '',
+      paddlePriceId: override?.paddlePriceId || '',
       saleBadge: override?.saleBadge || '',
       featured: override?.featured ?? false,
       notes: override?.notes || '',
@@ -167,6 +170,7 @@ export function PackagesClient() {
           visible: editState.visible,
           customTitle: editState.customTitle || null,
           customPrice: editState.customPrice ? parseFloat(editState.customPrice) : null,
+          paddlePriceId: editState.paddlePriceId.trim() || null,
           saleBadge: editState.saleBadge || null,
           featured: editState.featured,
           notes: editState.notes || null,
@@ -495,6 +499,17 @@ export function PackagesClient() {
                           <Eye className="h-3 w-3" /> Visible
                         </label>
                       </div>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-medium text-gray-500 uppercase">Paddle Price ID (pri_xxx)</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. pri_01h2..."
+                        value={editState.paddlePriceId}
+                        onChange={(e) => setEditState({ ...editState, paddlePriceId: e.target.value })}
+                        className="mt-0.5 w-full rounded-lg border border-gray-300 px-2 py-1.5 text-xs font-mono"
+                      />
+                      <p className="mt-0.5 text-[10px] text-gray-400">Required for checkout. From Paddle → Products → Price ID.</p>
                     </div>
                     <div>
                       <label className="block text-[10px] font-medium text-gray-500 uppercase">Notes (internal)</label>
