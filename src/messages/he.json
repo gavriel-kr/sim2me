@@ -67,7 +67,8 @@
     "clearAllFilters": "נקה את כל המסננים",
     "filterData": "נפח מינימום",
     "filterDays": "ימים מינימום",
-    "filterPrice": "מחיר מקסימום"
+    "filterPrice": "מחיר מקסימום",
+    "filter5G": "5G בלבד"
   },
   "plan": {
     "data": "נתונים",

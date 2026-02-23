@@ -67,7 +67,8 @@
     "clearAllFilters": "Clear all filters",
     "filterData": "Min data",
     "filterDays": "Min days",
-    "filterPrice": "Max price"
+    "filterPrice": "Max price",
+    "filter5G": "5G only"
   },
   "plan": {
     "data": "Data",

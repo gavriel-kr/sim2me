@@ -67,7 +67,8 @@
     "clearAllFilters": "مسح كل الفلاتر",
     "filterData": "الحد الأدنى للبيانات",
     "filterDays": "الحد الأدنى للأيام",
-    "filterPrice": "الحد الأقصى للسعر"
+    "filterPrice": "الحد الأقصى للسعر",
+    "filter5G": "5G فقط"
   },
   "plan": {
     "data": "البيانات",

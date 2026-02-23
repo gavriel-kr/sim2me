@@ -56,7 +56,8 @@ export async function POST(request: Request) {
     if (apiKey) {
       const item = items[0];
       const amountCents = Math.round(item.unitPrice * 100);
-      const amountStr = String(Math.max(1, amountCents));
+      // Paddle minimum is 70 cents
+      const amountStr = String(Math.max(70, amountCents));
       const name = item.planName.slice(0, 250) || 'eSIM';
 
       const res = await fetch(`${PADDLE_API}/transactions`, {
