@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { purchasePackage, getEsimProfile } from '@/lib/esimaccess';
 import { sendPostPurchaseEmail } from '@/lib/email';
+import { hash } from 'bcryptjs';
 
 function baseUrl(): string {
   const u = process.env.NEXT_PUBLIC_SITE_URL;
@@ -51,6 +52,28 @@ export async function POST(
       },
     });
 
+    // Auto-create or link customer account
+    let tempPassword: string | null = null;
+    try {
+      let customer = await prisma.customer.findUnique({ where: { email: order.customerEmail } });
+      if (!customer) {
+        tempPassword = Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 10);
+        const hashed = await hash(tempPassword, 10);
+        const nameParts = (order.customerName || '').trim().split(' ');
+        customer = await prisma.customer.create({
+          data: {
+            email: order.customerEmail,
+            name: nameParts[0] || order.customerName || '',
+            lastName: nameParts.slice(1).join(' ') || null,
+            password: hashed,
+          },
+        });
+      }
+      await prisma.order.update({ where: { id: order.id }, data: { customerId: customer.id } });
+    } catch (e) {
+      console.warn('[Retry] Customer upsert failed (non-fatal)', e);
+    }
+
     if (firstProfile) {
       sendPostPurchaseEmail(order.customerEmail, {
         customerName: order.customerName || 'Customer',
@@ -62,6 +85,7 @@ export async function POST(
         activationCode: firstProfile.activationCode,
         loginLink: `${baseUrl()}/account`,
         email: order.customerEmail,
+        tempPassword,
       }).catch((e) => console.error('[Retry] Email failed (non-fatal)', e));
     }
 

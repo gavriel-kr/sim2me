@@ -19,11 +19,37 @@ type Account = {
   updatedAt: string;
 };
 
+type OrderRow = {
+  id: string;
+  packageName: string;
+  destination: string | null;
+  dataAmount: string | null;
+  validity: string | null;
+  totalAmount: number;
+  currency: string;
+  status: string;
+  iccid: string | null;
+  qrCodeUrl: string | null;
+  smdpAddress: string | null;
+  activationCode: string | null;
+  errorMessage: string | null;
+  paddleTransactionId: string | null;
+  createdAt: Date | string;
+};
+
 interface Props {
   account: Account;
+  orders: OrderRow[];
 }
 
-export function AccountEditClient({ account: initial }: Props) {
+const STATUS_COLORS: Record<string, string> = {
+  COMPLETED: 'bg-green-100 text-green-800',
+  PROCESSING: 'bg-blue-100 text-blue-800',
+  FAILED: 'bg-red-100 text-red-800',
+  PENDING: 'bg-yellow-100 text-yellow-800',
+};
+
+export function AccountEditClient({ account: initial, orders }: Props) {
   const router = useRouter();
   const [form, setForm] = useState({
     email: initial.email,
@@ -84,6 +110,7 @@ export function AccountEditClient({ account: initial }: Props) {
   }
 
   return (
+    <>
     <Card className="mt-6 max-w-2xl">
       <CardHeader>
         <h2 className="text-lg font-semibold">Personal details</h2>
@@ -182,5 +209,72 @@ export function AccountEditClient({ account: initial }: Props) {
         </form>
       </CardContent>
     </Card>
+
+    {/* Orders section */}
+    <div className="mt-8 max-w-4xl">
+      <h2 className="text-xl font-semibold text-gray-900">Orders ({orders.length})</h2>
+      {orders.length === 0 ? (
+        <p className="mt-4 text-sm text-gray-500">No orders found for this customer.</p>
+      ) : (
+        <div className="mt-4 space-y-4">
+          {orders.map((order) => (
+            <Card key={order.id}>
+              <CardHeader className="pb-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <p className="font-semibold">{order.packageName}</p>
+                    <p className="text-xs text-gray-500">
+                      {order.destination && <span>{order.destination} · </span>}
+                      {order.dataAmount && <span>{order.dataAmount} · </span>}
+                      {order.validity && <span>{order.validity} · </span>}
+                      {new Date(order.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">
+                      ${(order.totalAmount / 100).toFixed(2)} {order.currency.toUpperCase()}
+                    </span>
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${STATUS_COLORS[order.status] ?? 'bg-gray-100 text-gray-700'}`}>
+                      {order.status}
+                    </span>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-2 pt-0">
+                {order.iccid && (
+                  <p className="text-xs text-gray-600"><span className="font-medium">ICCID:</span> {order.iccid}</p>
+                )}
+                {order.smdpAddress && (
+                  <p className="text-xs text-gray-600"><span className="font-medium">SM-DP+:</span> {order.smdpAddress}</p>
+                )}
+                {order.activationCode && (
+                  <p className="text-xs text-gray-600"><span className="font-medium">Activation Code:</span> {order.activationCode}</p>
+                )}
+                {order.qrCodeUrl && (
+                  <details className="text-xs">
+                    <summary className="cursor-pointer font-medium text-emerald-600">Show QR Code</summary>
+                    <img src={order.qrCodeUrl} alt="QR" className="mt-2 h-32 w-32 rounded border" />
+                  </details>
+                )}
+                {order.errorMessage && (
+                  <p className="rounded bg-red-50 px-2 py-1 text-xs text-red-700"><span className="font-medium">Error:</span> {order.errorMessage}</p>
+                )}
+                {order.paddleTransactionId && (
+                  <a
+                    href={`https://vendors.paddle.com/transactions/${order.paddleTransactionId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-emerald-600 underline"
+                  >
+                    View in Paddle ↗
+                  </a>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+    </>
   );
 }

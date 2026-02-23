@@ -9,6 +9,7 @@ import { verifyPaddleWebhook, safeJsonParse } from '@/lib/paddle';
 import { prisma } from '@/lib/prisma';
 import { purchasePackage, getEsimProfile, getPackages, formatDataVolume } from '@/lib/esimaccess';
 import { sendPostPurchaseEmail } from '@/lib/email';
+import { hash } from 'bcryptjs';
 
 const EVENT_TRANSACTION_COMPLETED = 'transaction.completed';
 
@@ -169,6 +170,28 @@ export async function POST(request: Request) {
       },
     });
 
+    // Auto-create or find customer account, link order
+    let tempPassword: string | null = null;
+    try {
+      let customer = await prisma.customer.findUnique({ where: { email: customerEmail } });
+      if (!customer) {
+        tempPassword = Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 10);
+        const hashed = await hash(tempPassword, 10);
+        const nameParts = (customerName || '').trim().split(' ');
+        customer = await prisma.customer.create({
+          data: {
+            email: customerEmail,
+            name: nameParts[0] || customerName || '',
+            lastName: nameParts.slice(1).join(' ') || null,
+            password: hashed,
+          },
+        });
+      }
+      await prisma.order.update({ where: { id: order.id }, data: { customerId: customer.id } });
+    } catch (e) {
+      console.warn('[Paddle webhook] Customer upsert failed (non-fatal)', e);
+    }
+
     // Send email independently — never fail the order if email fails
     if (firstProfile) {
       const loginLink = `${baseUrl()}/account`;
@@ -182,6 +205,7 @@ export async function POST(request: Request) {
         activationCode: firstProfile.activationCode,
         loginLink,
         email: customerEmail,
+        tempPassword,
       }).catch((e) => console.error('[Paddle webhook] Email send failed (non-fatal)', e));
     }
   } catch (e) {

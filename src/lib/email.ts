@@ -38,6 +38,7 @@ export interface PostPurchaseEmailData {
   activationCode: string;
   loginLink: string;
   email: string;
+  tempPassword?: string | null;
 }
 
 /** Hebrew RTL post-purchase email. Subject and body as per SIM2ME spec. */
@@ -86,6 +87,7 @@ export async function sendPostPurchaseEmail(to: string, data: PostPurchaseEmailD
     <p style="margin: 0 0 8px 0; font-weight: 600;">כניסה לחשבון וניהול חבילה:</p>
     <p style="margin: 0 0 20px 0; line-height: 1.6;">תוכל לעקוב אחר צריכת הנתונים שלך ולהוסיף חבילות בקישור הבא: <a href="${escapeHtml(loginLink)}" style="color: #0d9f6e;">${escapeHtml(loginLink)}</a></p>
     <p style="margin: 0 0 4px 0;">שם משתמש: <strong>${escapeHtml(email)}</strong></p>
+    ${data.tempPassword ? `<p style="margin: 4px 0 0 0;">סיסמה זמנית: <strong style="font-family:monospace; background:#f1f5f9; padding:2px 8px; border-radius:4px;">${escapeHtml(data.tempPassword)}</strong> (מומלץ לשנות לאחר הכניסה)</p>` : ''}
     <p style="margin: 24px 0 0 0; font-size: 0.9rem; color: #64748b;">חשוב לדעת: מומלץ להפעיל את ה-eSIM עוד בארץ תחת רשת Wi-Fi יציבה, ולהפעיל 'נדידת נתונים' (Data Roaming) רק ברגע הנחיתה בחו"ל.</p>
     <p style="margin: 20px 0 0 0;">נסיעה טובה!<br/>צוות SIM2ME</p>
   </div>

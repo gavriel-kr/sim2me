@@ -28,6 +28,11 @@ export default async function AdminAccountEditPage({
 
   if (!customer) notFound();
 
+  const orders = await prisma.order.findMany({
+    where: { customerId: id },
+    orderBy: { createdAt: 'desc' },
+  });
+
   const { password: _, ...safe } = customer;
   return (
     <div className="p-6 lg:p-8">
@@ -38,7 +43,7 @@ export default async function AdminAccountEditPage({
       </div>
       <h1 className="text-2xl font-bold text-gray-900">Edit account</h1>
       <p className="mt-1 text-sm text-gray-500">{customer.email}</p>
-      <AccountEditClient account={safe} />
+      <AccountEditClient account={safe} orders={orders} />
     </div>
   );
 }
