@@ -65,7 +65,9 @@
     "noResults": "לא נמצאו יעדים",
     "noResultsHint": "נסה מילות חיפוש אחרות או שנה את המסננים",
     "clearAllFilters": "נקה את כל המסננים",
-    "filterData": "נפח מינימום"
+    "filterData": "נפח מינימום",
+    "filterDays": "ימים מינימום",
+    "filterPrice": "מחיר מקסימום"
   },
   "plan": {
     "data": "נתונים",

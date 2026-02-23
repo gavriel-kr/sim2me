@@ -82,7 +82,6 @@ export async function POST(request: Request) {
             },
           ],
           currency_code: 'USD',
-          collection_mode: 'manual',
           custom_data: customData,
         }),
       });

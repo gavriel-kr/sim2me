@@ -65,7 +65,9 @@
     "noResults": "No destinations found",
     "noResultsHint": "Try different keywords or adjust your filters",
     "clearAllFilters": "Clear all filters",
-    "filterData": "Min data"
+    "filterData": "Min data",
+    "filterDays": "Min days",
+    "filterPrice": "Max price"
   },
   "plan": {
     "data": "Data",
