@@ -4,6 +4,7 @@ import { ContactForm } from './ContactForm';
 import { Mail, MessageSquare, Clock, HelpCircle, Smartphone, Wifi, RefreshCw, AlertCircle, Lightbulb } from 'lucide-react';
 import { getCmsPage } from '@/lib/cms';
 import { prisma } from '@/lib/prisma';
+import { brandConfig } from '@/config/brand';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,8 +28,8 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
   const t = await getTranslations('contact');
   const isRTL = locale === 'he' || locale === 'ar';
 
-  // Get contact info from site settings
-  let email = 'support@sim2me.com';
+  // Get contact info from site settings (fallback: brand config)
+  let email = brandConfig.supportEmail;
   let whatsapp = '972501234567';
   try {
     const settings = await prisma.siteSetting.findMany({

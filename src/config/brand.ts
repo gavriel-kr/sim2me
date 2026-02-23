@@ -19,7 +19,7 @@ export const brandConfig = {
   secondaryColor: '#10b981',
 
   /** Support email shown in footer and help */
-  supportEmail: 'gavriel.kr@gmail.com',
+  supportEmail: 'info.sim2me@gmail.com',
   /** Optional phone (e.g. for RTL regions) */
   supportPhone: null as string | null,
 

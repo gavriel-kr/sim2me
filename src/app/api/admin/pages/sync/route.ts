@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { policies } from '@/content/policies';
 
 // Import translation files directly
 import en from '@/messages/en.json';
@@ -101,30 +102,18 @@ function getPageContent(slug: string, lang: typeof en) {
     }
     case 'terms':
       return {
-        title: lang === en ? 'Terms of Service' : lang === he ? 'תנאי שימוש' : 'شروط الخدمة',
-        content: lang === en
-          ? 'These Terms of Service govern your use of Sim2Me eSIM services.\n\nPlease review the following terms carefully before using our services.'
-          : lang === he
-          ? 'תנאי שימוש אלו חלים על השימוש בשירותי eSIM של Sim2Me.\n\nאנא עיינו בתנאים הבאים בקפידה לפני השימוש בשירותינו.'
-          : 'تحكم شروط الخدمة هذه استخدامك لخدمات eSIM من Sim2Me.\n\nيرجى مراجعة الشروط التالية بعناية قبل استخدام خدماتنا.',
+        title: lang === en ? policies.terms.titleEn : lang === he ? policies.terms.titleHe : policies.terms.titleAr,
+        content: lang === en ? policies.terms.contentEn : lang === he ? policies.terms.contentHe : policies.terms.contentAr,
       };
     case 'privacy':
       return {
-        title: lang === en ? 'Privacy Policy' : lang === he ? 'מדיניות פרטיות' : 'سياسة الخصوصية',
-        content: lang === en
-          ? 'Your privacy is important to us. This policy explains how we collect, use, and protect your information.'
-          : lang === he
-          ? 'הפרטיות שלך חשובה לנו. מדיניות זו מסבירה כיצד אנו אוספים, משתמשים ומגנים על המידע שלך.'
-          : 'خصوصيتك مهمة لنا. توضح هذه السياسة كيف نجمع معلوماتك ونستخدمها ونحميها.',
+        title: lang === en ? policies.privacy.titleEn : lang === he ? policies.privacy.titleHe : policies.privacy.titleAr,
+        content: lang === en ? policies.privacy.contentEn : lang === he ? policies.privacy.contentHe : policies.privacy.contentAr,
       };
     case 'refund':
       return {
-        title: lang === en ? 'Refund Policy' : lang === he ? 'מדיניות החזרים' : 'سياسة الاسترداد',
-        content: lang === en
-          ? 'Unused eSIMs can be refunded within 14 days of purchase. Once installed or activated, plans are non-refundable.'
-          : lang === he
-          ? 'eSIM שלא נעשה בו שימוש ניתן להחזרה תוך 14 יום מהרכישה. לאחר התקנה או הפעלה, החבילות אינן ניתנות להחזרה.'
-          : 'يمكن استرداد eSIM غير المستخدم خلال 14 يومًا من الشراء. بعد التثبيت أو التفعيل، الخطط غير قابلة للاسترداد.',
+        title: lang === en ? policies.refund.titleEn : lang === he ? policies.refund.titleHe : policies.refund.titleAr,
+        content: lang === en ? policies.refund.contentEn : lang === he ? policies.refund.contentHe : policies.refund.contentAr,
       };
     default:
       return { title: slug, content: '' };

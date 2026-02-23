@@ -30,6 +30,7 @@ export default async function TermsPage({ params }: { params: Promise<{ locale: 
           {cms?.content || (
             <>
               <p>Last updated: {new Date().toLocaleDateString('en-US')}</p>
+              <p>These Terms of Service apply globally to all countries and customers worldwide.</p>
               <p>
                 By using this service you agree to purchase eSIM products for personal travel use.
                 You must ensure your device is compatible and unlocked. Refunds are subject to our

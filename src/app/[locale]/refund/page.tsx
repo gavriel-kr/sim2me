@@ -27,7 +27,7 @@ export default async function RefundPage({ params }: { params: Promise<{ locale:
       <div className="container mx-auto max-w-2xl px-4 py-12">
         <h1 className="text-2xl font-bold sm:text-3xl">{cms?.title || 'Refund Policy'}</h1>
         <div className="prose prose-sm mt-6 text-muted-foreground whitespace-pre-line">
-          {cms?.content || 'Unused eSIMs can be refunded within 14 days of purchase. Once the eSIM is installed or activated, the plan is non-refundable. Contact support with your order ID to request a refund.'}
+          {cms?.content || 'This Refund Policy applies globally to all countries and customers worldwide.\n\nUnused eSIMs can be refunded within 14 days of purchase. Once the eSIM is installed or activated, the plan is non-refundable. Contact support with your order ID to request a refund.'}
         </div>
       </div>
     </MainLayout>
