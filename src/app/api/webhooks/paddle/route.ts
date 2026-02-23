@@ -117,7 +117,8 @@ export async function POST(request: Request) {
   }
 
   const totalStr = data.details?.totals?.total ?? '0';
-  const totalAmount = Math.max(0, parseFloat(totalStr) || 0);
+  // Paddle totals are in the currency's minor unit (cents for USD)
+  const totalAmount = Math.max(0, (parseFloat(totalStr) || 0) / 100);
   const currency = (data.currency_code || 'USD').toUpperCase().slice(0, 3);
 
   const order = await prisma.order.create({
@@ -154,22 +155,26 @@ export async function POST(request: Request) {
 
     const profileResult = await getEsimProfile(orderNo);
     const firstProfile = profileResult?.esimList?.[0];
-    if (firstProfile) {
-      await prisma.order.update({
-        where: { id: order.id },
-        data: {
-          status: 'COMPLETED',
+
+    await prisma.order.update({
+      where: { id: order.id },
+      data: {
+        status: 'COMPLETED',
+        ...(firstProfile && {
           iccid: firstProfile.iccid,
           qrCodeUrl: firstProfile.qrCodeUrl,
           smdpAddress: firstProfile.smdpAddress,
           activationCode: firstProfile.activationCode,
-        },
-      });
+        }),
+      },
+    });
 
+    // Send email independently — never fail the order if email fails
+    if (firstProfile) {
       const loginLink = `${baseUrl()}/account`;
-      await sendPostPurchaseEmail(customerEmail, {
+      sendPostPurchaseEmail(customerEmail, {
         customerName: customerName || 'Customer',
-        planName,
+        planName: packageName,
         dataGb: dataAmountStr,
         validityDays: validityStr,
         qrCodeUrl: firstProfile.qrCodeUrl || null,
@@ -177,12 +182,7 @@ export async function POST(request: Request) {
         activationCode: firstProfile.activationCode,
         loginLink,
         email: customerEmail,
-      });
-    } else {
-      await prisma.order.update({
-        where: { id: order.id },
-        data: { status: 'COMPLETED' },
-      });
+      }).catch((e) => console.error('[Paddle webhook] Email send failed (non-fatal)', e));
     }
   } catch (e) {
     console.error('[Paddle webhook] Fulfillment failed', order.id, e);
