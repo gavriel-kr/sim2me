@@ -13,7 +13,7 @@ import { PhoneInput } from '@/components/PhoneInput';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   User, ShoppingBag, Wifi, Settings, LogOut, Phone, Mail,
-  Calendar, Shield, CheckCircle, AlertCircle, ChevronRight,
+  Calendar, Shield, CheckCircle, AlertCircle, ChevronRight, QrCode,
 } from 'lucide-react';
 
 const { Link: IntlLink } = createSharedPathnamesNavigation(routing);
@@ -26,6 +26,30 @@ type Profile = {
   phone: string | null;
   newsletter: boolean;
   createdAt: string;
+};
+
+type Order = {
+  id: string;
+  packageName: string;
+  destination: string | null;
+  dataAmount: string | null;
+  validity: string | null;
+  totalAmount: number;
+  currency: string;
+  status: string;
+  iccid: string | null;
+  qrCodeUrl: string | null;
+  smdpAddress: string | null;
+  activationCode: string | null;
+  createdAt: string;
+  paddleTransactionId: string | null;
+};
+
+const STATUS_COLORS: Record<string, string> = {
+  COMPLETED: 'bg-green-100 text-green-700',
+  PROCESSING: 'bg-blue-100 text-blue-700',
+  FAILED: 'bg-red-100 text-red-700',
+  PENDING: 'bg-yellow-100 text-yellow-700',
 };
 
 function getInitials(name: string, lastName?: string | null) {
@@ -41,6 +65,7 @@ function formatDate(iso: string) {
 export function AccountClient() {
   const t = useTranslations('account');
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [profileForm, setProfileForm] = useState({ name: '', lastName: '', phone: '', newsletter: false });
   const [profileSaving, setProfileSaving] = useState(false);
@@ -54,20 +79,22 @@ export function AccountClient() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch('/api/account/profile')
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (!cancelled && data) {
-          setProfile(data);
-          setProfileForm({
-            name: data.name || '',
-            lastName: data.lastName || '',
-            phone: data.phone || '',
-            newsletter: data.newsletter ?? false,
-          });
-        }
-      })
-      .finally(() => { if (!cancelled) setLoading(false); });
+    Promise.all([
+      fetch('/api/account/profile').then((r) => r.ok ? r.json() : null),
+      fetch('/api/account/orders').then((r) => r.ok ? r.json() : null),
+    ]).then(([profileData, ordersData]) => {
+      if (cancelled) return;
+      if (profileData) {
+        setProfile(profileData);
+        setProfileForm({
+          name: profileData.name || '',
+          lastName: profileData.lastName || '',
+          phone: profileData.phone || '',
+          newsletter: profileData.newsletter ?? false,
+        });
+      }
+      if (ordersData?.orders) setOrders(ordersData.orders);
+    }).finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, []);
 
@@ -196,7 +223,7 @@ export function AccountClient() {
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Orders</p>
-              <p className="font-semibold text-sm">0</p>
+              <p className="font-semibold text-sm">{orders.length}</p>
             </div>
           </div>
           <div className="bg-white rounded-xl p-4 border flex items-center gap-3">
@@ -205,7 +232,7 @@ export function AccountClient() {
             </div>
             <div>
               <p className="text-xs text-muted-foreground">eSIMs</p>
-              <p className="font-semibold text-sm">0</p>
+              <p className="font-semibold text-sm">{orders.filter((o) => o.status === 'COMPLETED').length}</p>
             </div>
           </div>
           <div className="bg-white rounded-xl p-4 border flex items-center gap-3">
@@ -273,17 +300,41 @@ export function AccountClient() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-12">
-                  <ShoppingBag className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
-                  <p className="font-medium text-muted-foreground">{t('noOrders')}</p>
-                  <p className="text-sm text-muted-foreground mt-1">Your orders will appear here after purchase.</p>
-                  <IntlLink href="/destinations">
-                    <Button className="mt-6" size="sm">
-                      Browse destinations
-                      <ChevronRight className="w-4 h-4 ml-1" />
-                    </Button>
-                  </IntlLink>
-                </div>
+                {orders.length === 0 ? (
+                  <div className="text-center py-12">
+                    <ShoppingBag className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
+                    <p className="font-medium text-muted-foreground">{t('noOrders')}</p>
+                    <p className="text-sm text-muted-foreground mt-1">Your orders will appear here after purchase.</p>
+                    <IntlLink href="/destinations">
+                      <Button className="mt-6" size="sm">
+                        Browse destinations
+                        <ChevronRight className="w-4 h-4 ml-1" />
+                      </Button>
+                    </IntlLink>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {orders.map((order) => (
+                      <div key={order.id} className="rounded-xl border p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-sm truncate">
+                            {order.destination ? `${order.destination} — ` : ''}{order.packageName}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {[order.dataAmount, order.validity].filter(Boolean).join(' / ')}
+                            {' · '}{new Date(order.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <span className="text-sm font-medium">${(order.totalAmount / 100).toFixed(2)}</span>
+                          <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${STATUS_COLORS[order.status] ?? 'bg-gray-100 text-gray-700'}`}>
+                            {order.status}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -298,19 +349,78 @@ export function AccountClient() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-12">
-                  <Wifi className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
-                  <p className="font-medium text-muted-foreground">{t('noEsims')}</p>
-                  <p className="text-sm text-muted-foreground mt-1 max-w-xs mx-auto">
-                    After purchase, your eSIMs will appear here with QR code and install instructions.
-                  </p>
-                  <IntlLink href="/destinations">
-                    <Button className="mt-6" size="sm">
-                      Browse destinations
-                      <ChevronRight className="w-4 h-4 ml-1" />
-                    </Button>
-                  </IntlLink>
-                </div>
+                {orders.filter((o) => o.status === 'COMPLETED').length === 0 ? (
+                  <div className="text-center py-12">
+                    <Wifi className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
+                    <p className="font-medium text-muted-foreground">{t('noEsims')}</p>
+                    <p className="text-sm text-muted-foreground mt-1 max-w-xs mx-auto">
+                      After purchase, your eSIMs will appear here with QR code and install instructions.
+                    </p>
+                    <IntlLink href="/destinations">
+                      <Button className="mt-6" size="sm">
+                        Browse destinations
+                        <ChevronRight className="w-4 h-4 ml-1" />
+                      </Button>
+                    </IntlLink>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {orders
+                      .filter((o) => o.status === 'COMPLETED')
+                      .map((order) => (
+                        <div key={order.id} className="rounded-xl border p-4 space-y-4">
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <p className="font-semibold">
+                                {order.destination ? `${order.destination} — ` : ''}{order.packageName}
+                              </p>
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                {[order.dataAmount, order.validity].filter(Boolean).join(' / ')}
+                                {' · '}{new Date(order.createdAt).toLocaleDateString()}
+                              </p>
+                            </div>
+                            <span className={`rounded-full px-2 py-0.5 text-xs font-semibold flex-shrink-0 ${STATUS_COLORS[order.status]}`}>
+                              Active
+                            </span>
+                          </div>
+                          <div className="flex flex-col sm:flex-row gap-4">
+                            {order.qrCodeUrl ? (
+                              <img src={order.qrCodeUrl} alt="QR Code" className="h-36 w-36 rounded-lg border object-contain flex-shrink-0" />
+                            ) : (
+                              <div className="h-36 w-36 rounded-lg border border-dashed flex items-center justify-center text-xs text-muted-foreground bg-muted flex-shrink-0">
+                                <QrCode className="w-8 h-8 opacity-30" />
+                              </div>
+                            )}
+                            <div className="space-y-2 text-sm">
+                              {order.smdpAddress && (
+                                <div>
+                                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">SM-DP+ Address</p>
+                                  <p className="font-mono text-xs break-all mt-0.5">{order.smdpAddress}</p>
+                                </div>
+                              )}
+                              {order.activationCode && (
+                                <div>
+                                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Activation Code</p>
+                                  <p className="font-mono text-sm mt-0.5">{order.activationCode}</p>
+                                </div>
+                              )}
+                              {order.iccid && (
+                                <div>
+                                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">ICCID</p>
+                                  <p className="font-mono text-xs mt-0.5">{order.iccid}</p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div className="border-t pt-3 text-xs text-muted-foreground space-y-1">
+                            <p>1. Open Settings → Cellular → Add Cellular Plan</p>
+                            <p>2. Scan the QR code above or enter the code manually</p>
+                            <p>3. Enable Data Roaming when you land abroad</p>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

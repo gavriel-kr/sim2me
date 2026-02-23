@@ -24,7 +24,13 @@ export default async function MyEsimsPage() {
 
   const orders = customer
     ? await prisma.order.findMany({
-        where: { customerId: customer.id, status: 'COMPLETED' },
+        where: {
+          status: 'COMPLETED',
+          OR: [
+            { customerId: customer.id },
+            { customerEmail: customer.email },
+          ],
+        },
         orderBy: { createdAt: 'desc' },
       })
     : [];
