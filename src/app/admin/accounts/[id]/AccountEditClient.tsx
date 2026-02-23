@@ -232,7 +232,7 @@ export function AccountEditClient({ account: initial, orders }: Props) {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium">
-                      ${(order.totalAmount / 100).toFixed(2)} {order.currency.toUpperCase()}
+                      ${Number(order.totalAmount).toFixed(2)} {order.currency.toUpperCase()}
                     </span>
                     <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${STATUS_COLORS[order.status] ?? 'bg-gray-100 text-gray-700'}`}>
                       {order.status}
