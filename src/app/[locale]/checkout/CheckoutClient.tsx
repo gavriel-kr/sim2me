@@ -15,7 +15,6 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { createSharedPathnamesNavigation } from 'next-intl/navigation';
 import { routing } from '@/i18n/routing';
 import { usePaddle } from '@/components/paddle/PaddleScript';
-import { useToast } from '@/hooks/useToast';
 
 const { Link: IntlLink } = createSharedPathnamesNavigation(routing);
 
@@ -25,7 +24,6 @@ export function CheckoutClient() {
   const t = useTranslations('checkout');
   const router = useRouter();
   const locale = useLocale();
-  const { toast } = useToast();
   const items = useCartStore((s) => s.items);
   const total = useCartStore((s) => s.total());
   const clearCart = useCartStore((s) => s.clearCart);
@@ -77,7 +75,8 @@ export function CheckoutClient() {
       const data = await res.json();
 
       if (!res.ok) {
-        setPaymentError(data.error || 'Checkout unavailable');
+        const detail = data.details ? ` (${data.details})` : '';
+        setPaymentError((data.error || 'Checkout unavailable') + detail);
         return;
       }
       if (!paddleReady || !openCheckout) {
