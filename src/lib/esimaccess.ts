@@ -120,6 +120,38 @@ export async function getEsimProfile(orderNo: string): Promise<{ esimList: EsimP
   });
 }
 
+/**
+ * Get eSIM profile with automatic retries.
+ * eSIMaccess sometimes returns "getting resource" immediately after purchase
+ * while the profile is still being provisioned — retrying solves it.
+ */
+export async function getEsimProfileWithRetry(
+  orderNo: string,
+  maxRetries = 5,
+  delayMs = 5000,
+): Promise<{ esimList: EsimProfile[] }> {
+  let lastError: Error | null = null;
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const result = await getEsimProfile(orderNo);
+      if (result?.esimList?.length > 0) return result;
+      // Empty list: still provisioning
+      lastError = new Error('eSIM profile not yet available');
+    } catch (e) {
+      lastError = e instanceof Error ? e : new Error(String(e));
+      const msg = lastError.message.toLowerCase();
+      // Only retry on "getting resource" / provisioning errors
+      if (!msg.includes('getting resource') && !msg.includes('not yet') && !msg.includes('pending')) {
+        throw lastError;
+      }
+    }
+    if (attempt < maxRetries) {
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+  throw lastError ?? new Error('eSIM profile unavailable after retries');
+}
+
 /** Query eSIM usage by ICCID */
 export async function getEsimUsage(iccid: string): Promise<EsimProfile | null> {
   try {

@@ -4,10 +4,13 @@
  * - On transaction.completed: create Order, call eSIM provider, update order, send Hebrew email.
  */
 
+// Allow up to 60s for eSIMaccess profile provisioning retries
+export const maxDuration = 60;
+
 import { NextResponse } from 'next/server';
 import { verifyPaddleWebhook, safeJsonParse } from '@/lib/paddle';
 import { prisma } from '@/lib/prisma';
-import { purchasePackage, getEsimProfile, getPackages, formatDataVolume } from '@/lib/esimaccess';
+import { purchasePackage, getEsimProfileWithRetry, getPackages, formatDataVolume } from '@/lib/esimaccess';
 import { sendPostPurchaseEmail } from '@/lib/email';
 import { hash } from 'bcryptjs';
 
@@ -154,7 +157,8 @@ export async function POST(request: Request) {
       },
     });
 
-    const profileResult = await getEsimProfile(orderNo);
+    // Retry up to 5 times with 5s delay — eSIMaccess may take time to provision the profile
+    const profileResult = await getEsimProfileWithRetry(orderNo, 5, 5000);
     const firstProfile = profileResult?.esimList?.[0];
 
     await prisma.order.update({
