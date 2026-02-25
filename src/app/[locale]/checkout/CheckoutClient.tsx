@@ -31,7 +31,7 @@ export function CheckoutClient() {
   const setTravelerInfo = useCartStore((s) => s.setTravelerInfo);
   const { ready: paddleReady, openCheckout } = usePaddle();
 
-  const MIN_PURCHASE = 0.70;
+  const MIN_PURCHASE = 1.20;
   const belowMinimum = total < MIN_PURCHASE;
 
   const [step, setStep] = useState<Step>('cart');
@@ -59,7 +59,7 @@ export function CheckoutClient() {
       return;
     }
     if (belowMinimum) {
-      setPaymentError(`Minimum purchase is $${MIN_PURCHASE.toFixed(2)}. Current total: $${total.toFixed(2)}.`);
+      setPaymentError(`Minimum purchase is $${MIN_PURCHASE.toFixed(2)}. Only plans priced $1.20 or above can be purchased.`);
       return;
     }
     setPaymentError(null);
@@ -170,8 +170,8 @@ export function CheckoutClient() {
                 ))}
                 {belowMinimum && (
                   <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                    <strong>Minimum purchase is $0.70.</strong> Your current total is ${total.toFixed(2)}.
-                    Only plans priced $0.70 or above can be purchased.
+                    <strong>Minimum purchase is $1.20.</strong> Your current total is ${total.toFixed(2)}.
+                    Only plans priced $1.20 or above can be purchased.
                   </div>
                 )}
                 <Button
@@ -229,7 +229,7 @@ export function CheckoutClient() {
               <CardContent>
                 {belowMinimum && (
                   <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                    <strong>Minimum purchase is $0.70.</strong> This plan (${total.toFixed(2)}) cannot be purchased individually.
+                    <strong>Minimum purchase is $1.20.</strong> This plan (${total.toFixed(2)}) cannot be purchased individually.
                   </div>
                 )}
                 {paymentError && (

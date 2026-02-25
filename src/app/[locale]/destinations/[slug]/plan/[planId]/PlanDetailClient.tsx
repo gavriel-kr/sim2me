@@ -23,7 +23,7 @@ export function PlanDetailClient({ destination, plan }: PlanDetailClientProps) {
   const addItem = useCartStore((s) => s.addItem);
   const { toast } = useToast();
 
-  const MIN_PURCHASE = 0.70;
+  const MIN_PURCHASE = 1.20;
 
   const handleAddToCart = () => {
     addItem({
