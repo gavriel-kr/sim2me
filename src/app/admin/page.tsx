@@ -2,8 +2,8 @@ import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { BarChart3, ShoppingCart, Users, DollarSign, TrendingUp, TrendingDown, Wallet, Receipt } from 'lucide-react';
 import { BackfillBanner } from './BackfillBanner';
+import { DashboardCubicks } from './DashboardCubicks';
 import { paddleFeeAmount } from '@/lib/profit';
 
 export default async function AdminDashboard() {
@@ -46,14 +46,14 @@ export default async function AdminDashboard() {
   ]);
 
   const stats = [
-    { label: 'Total Orders', value: orderCount, icon: ShoppingCart, color: 'bg-blue-100 text-blue-600' },
-    { label: 'Revenue', value: `$${revenue.toFixed(2)}`, icon: DollarSign, color: 'bg-emerald-100 text-emerald-600' },
-    { label: 'Esim cost', value: `$${esimCost.toFixed(2)}`, icon: TrendingDown, color: 'bg-red-100 text-red-600' },
-    { label: 'Profit', value: `$${profit.toFixed(2)}`, icon: TrendingUp, color: profit >= 0 ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600' },
-    { label: 'Customers', value: customerCount, icon: Users, color: 'bg-violet-100 text-violet-600' },
-    { label: 'Fee cost', value: `$${feeCost.toFixed(2)}`, icon: Receipt, color: 'bg-orange-100 text-orange-600' },
-    { label: 'Net in bank', value: `$${revenueAfterFees.toFixed(2)}`, icon: Wallet, color: 'bg-sky-100 text-sky-600' },
-    { label: 'Avg. Order', value: completedCount > 0 ? `$${(revenue / completedCount).toFixed(2)}` : '$0', icon: BarChart3, color: 'bg-amber-100 text-amber-600' },
+    { label: 'Total Orders', value: orderCount, iconName: 'ShoppingCart' as const, color: 'bg-blue-100 text-blue-600' },
+    { label: 'Revenue', value: `$${revenue.toFixed(2)}`, iconName: 'DollarSign' as const, color: 'bg-emerald-100 text-emerald-600' },
+    { label: 'Esim cost', value: `$${esimCost.toFixed(2)}`, iconName: 'TrendingDown' as const, color: 'bg-red-100 text-red-600' },
+    { label: 'Profit', value: `$${profit.toFixed(2)}`, iconName: 'TrendingUp' as const, color: profit >= 0 ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600' },
+    { label: 'Customers', value: customerCount, iconName: 'Users' as const, color: 'bg-violet-100 text-violet-600' },
+    { label: 'Fee cost', value: `$${feeCost.toFixed(2)}`, iconName: 'Receipt' as const, color: 'bg-orange-100 text-orange-600' },
+    { label: 'Net in bank', value: `$${revenueAfterFees.toFixed(2)}`, iconName: 'Wallet' as const, color: 'bg-sky-100 text-sky-600' },
+    { label: 'Avg. Order', value: completedCount > 0 ? `$${(revenue / completedCount).toFixed(2)}` : '$0', iconName: 'BarChart3' as const, color: 'bg-amber-100 text-amber-600' },
   ];
 
   return (
@@ -63,22 +63,7 @@ export default async function AdminDashboard() {
 
       <BackfillBanner missingCount={missingCostCount} />
 
-      {/* Stats grid */}
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-8">
-        {stats.map(({ label, value, icon: Icon, color }) => (
-          <div key={label} className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${color}`}>
-                <Icon className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">{value}</p>
-                <p className="text-xs text-gray-500">{label}</p>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+      <DashboardCubicks stats={stats} />
 
       {/* Recent orders */}
       <div className="mt-8">
