@@ -101,18 +101,27 @@ export async function GET(req: NextRequest) {
 
     const overrideMap = new Map(overrides.map((o) => [o.packageCode, o]));
 
+    // Minimum price floor: payment processor minimum is $0.70.
+    // Any package whose effective retail price is $0.55–$0.69 is raised to $0.70 automatically.
+    const PRICE_FLOOR = 0.70;
+    const PRICE_FLOOR_MIN = 0.55;
+    function applyFloor(price: number): number {
+      return price >= PRICE_FLOOR_MIN && price < PRICE_FLOOR ? PRICE_FLOOR : price;
+    }
+
     // Merge and filter
     const packages = (apiData.packageList || [])
       .map((pkg) => {
         const override = overrideMap.get(pkg.packageCode);
         const retailPriceUsd = pkg.retailPrice ? pkg.retailPrice / 10000 : pkg.price / 10000;
-        
+        const basePrice = override?.customPrice != null ? Number(override.customPrice) : retailPriceUsd;
+
         return {
           packageCode: pkg.packageCode,
           slug: pkg.slug,
           name: override?.customTitle || pkg.name,
           originalName: pkg.name,
-          price: override?.customPrice ? Number(override.customPrice) : retailPriceUsd,
+          price: applyFloor(basePrice),
           wholesalePrice: pkg.price / 10000,
           currency: 'USD',
           volume: pkg.volume,
