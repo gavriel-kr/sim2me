@@ -14,7 +14,8 @@
     "db:push": "prisma db push",
     "db:seed": "npx tsx prisma/seed.ts",
     "db:studio": "prisma studio",
-    "scripts:update-policies": "tsx scripts/update-policy-pages.ts"
+    "scripts:update-policies": "tsx scripts/update-policy-pages.ts",
+    "test:profit": "tsx src/lib/profit.test.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",

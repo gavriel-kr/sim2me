@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Search, RefreshCw, Globe, Eye, EyeOff, Star, Tag, Save, Filter, ChevronDown, ChevronUp, ArrowUpCircle } from 'lucide-react';
+import { computeProfit, computeOtherFeesTotal, type AdditionalFeeItem } from '@/lib/profit';
 
 interface Package {
   packageCode: string;
@@ -23,6 +24,7 @@ interface Override {
   visible: boolean;
   customTitle: string | null;
   customPrice: number | null;
+  simCost: number | null;
   paddlePriceId: string | null;
   saleBadge: string | null;
   featured: boolean;
@@ -30,10 +32,17 @@ interface Override {
   notes: string | null;
 }
 
+interface FeeSettings {
+  paddlePercentageFee: number;
+  paddleFixedFee: number;
+  currency: string;
+}
+
 interface EditState {
   visible: boolean;
   customTitle: string;
   customPrice: string;
+  simCost: string;
   paddlePriceId: string;
   saleBadge: string;
   featured: boolean;
@@ -43,6 +52,8 @@ interface EditState {
 export function PackagesClient() {
   const [packages, setPackages] = useState<Package[]>([]);
   const [overrides, setOverrides] = useState<Map<string, Override>>(new Map());
+  const [feeSettings, setFeeSettings] = useState<FeeSettings | null>(null);
+  const [additionalFees, setAdditionalFees] = useState<AdditionalFeeItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [balance, setBalance] = useState<number | null>(null);
@@ -59,7 +70,7 @@ export function PackagesClient() {
   // Editing
   const [editingPkg, setEditingPkg] = useState<string | null>(null);
   const [editState, setEditState] = useState<EditState>({
-    visible: true, customTitle: '', customPrice: '', paddlePriceId: '', saleBadge: '', featured: false, notes: '',
+    visible: true, customTitle: '', customPrice: '', simCost: '', paddlePriceId: '', saleBadge: '', featured: false, notes: '',
   });
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState('');
@@ -72,18 +83,24 @@ export function PackagesClient() {
     setLoading(true);
     setError('');
     try {
-      const [pkgRes, overRes] = await Promise.all([
+      const [pkgRes, overRes, feesRes] = await Promise.all([
         fetch('/api/admin/esimaccess/packages'),
         fetch('/api/admin/packages/override'),
+        fetch('/api/admin/fees'),
       ]);
       const pkgData = await pkgRes.json();
       const overData = await overRes.json();
+      const feesData = await feesRes.json();
       if (pkgData.error) throw new Error(pkgData.error);
       setPackages(pkgData.packageList || []);
       setBalance(pkgData.balance ?? null);
       const map = new Map<string, Override>();
       (overData.overrides || []).forEach((o: Override) => map.set(o.packageCode, o));
       setOverrides(map);
+      if (feesData.feeSettings) {
+        setFeeSettings(feesData.feeSettings);
+        setAdditionalFees(feesData.additionalFees || []);
+      }
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -158,6 +175,28 @@ export function PackagesClient() {
     });
   }, [packages, overrides, search, locationFilter, minVolume, maxPrice, speedFilter, visibilityFilter]);
 
+  const getSalePrice = (pkg: Package, override: Override | undefined) =>
+    override?.customPrice != null ? Number(override.customPrice) : (pkg.retailPrice ?? pkg.price) / 10000;
+  const getSimCost = (pkg: Package, override: Override | undefined) =>
+    override?.simCost != null ? Number(override.simCost) : pkg.price / 10000;
+
+  const getProfitForPackage = useCallback(
+    (pkg: Package, override: Override | undefined, salePrice?: number, simCostOverride?: number) => {
+      const sp = salePrice ?? getSalePrice(pkg, override);
+      const sc = simCostOverride ?? getSimCost(pkg, override);
+      if (!feeSettings) return null;
+      const other = computeOtherFeesTotal(sp, additionalFees, pkg.packageCode);
+      return computeProfit({
+        salePrice: sp,
+        simCost: sc,
+        percentageFee: feeSettings.paddlePercentageFee,
+        fixedFee: feeSettings.paddleFixedFee,
+        otherFeesTotal: other,
+      });
+    },
+    [feeSettings, additionalFees]
+  );
+
   const formatVolume = (bytes: number) => {
     if (bytes < 0) return 'Unlimited';
     const gb = bytes / (1024 * 1024 * 1024);
@@ -176,6 +215,7 @@ export function PackagesClient() {
       visible: override?.visible ?? true,
       customTitle: override?.customTitle || '',
       customPrice: override?.customPrice != null ? String(override.customPrice) : '',
+      simCost: override?.simCost != null ? String(override.simCost) : '',
       paddlePriceId: override?.paddlePriceId || '',
       saleBadge: override?.saleBadge || '',
       featured: override?.featured ?? false,
@@ -194,6 +234,7 @@ export function PackagesClient() {
           visible: editState.visible,
           customTitle: editState.customTitle || null,
           customPrice: editState.customPrice ? parseFloat(editState.customPrice) : null,
+          simCost: editState.simCost ? parseFloat(editState.simCost) : null,
           paddlePriceId: editState.paddlePriceId.trim() || null,
           saleBadge: editState.saleBadge || null,
           featured: editState.featured,
@@ -435,6 +476,17 @@ export function PackagesClient() {
                       </>
                     )}
                     <p className="text-[10px] text-orange-400 font-medium">Cost: {formatApiPrice(pkg.price)}</p>
+                    {feeSettings && (() => {
+                      const profit = getProfitForPackage(pkg, override);
+                      if (!profit) return null;
+                      return (
+                        <div className="mt-1.5 space-y-0.5 text-[10px]">
+                          <p className="text-gray-500">Net: <span className={profit.netProfit >= 0 ? 'text-emerald-600 font-medium' : 'text-red-600 font-medium'}>${profit.netProfit.toFixed(2)}</span></p>
+                          <p className="text-gray-500">Margin: <span className="font-medium">{(profit.profitMargin * 100).toFixed(1)}%</span></p>
+                          <p className="text-gray-500">Break-even: <span className="font-medium">${Number.isFinite(profit.breakEvenPrice) ? profit.breakEvenPrice.toFixed(2) : '—'}</span></p>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
 
@@ -511,7 +563,42 @@ export function PackagesClient() {
                           className="mt-0.5 w-full rounded-lg border border-gray-300 px-2 py-1.5 text-xs"
                         />
                       </div>
+                      <div>
+                        <label className="block text-[10px] font-medium text-gray-500 uppercase">SIM cost ($)</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          placeholder={`${(pkg.price / 10000).toFixed(2)} (API)`}
+                          value={editState.simCost}
+                          onChange={(e) => setEditState({ ...editState, simCost: e.target.value })}
+                          className="mt-0.5 w-full rounded-lg border border-gray-300 px-2 py-1.5 text-xs"
+                        />
+                        <p className="mt-0.5 text-[10px] text-gray-400">Override wholesale cost; leave empty to use API.</p>
+                      </div>
                     </div>
+                    {feeSettings && (() => {
+                      const salePrice = editState.customPrice ? parseFloat(editState.customPrice) : (pkg.retailPrice ?? pkg.price) / 10000;
+                      const simCost = editState.simCost ? parseFloat(editState.simCost) : pkg.price / 10000;
+                      const other = computeOtherFeesTotal(salePrice, additionalFees, pkg.packageCode);
+                      const profit = computeProfit({ salePrice, simCost, percentageFee: feeSettings.paddlePercentageFee, fixedFee: feeSettings.paddleFixedFee, otherFeesTotal: other });
+                      return (
+                        <div className="rounded-lg border border-gray-200 bg-gray-50 p-2.5">
+                          <p className="text-[10px] font-semibold uppercase text-gray-500 mb-2">Profit</p>
+                          <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+                            <span className="text-gray-500">Net profit</span>
+                            <span className={profit.netProfit >= 0 ? 'text-emerald-600 font-medium' : 'text-red-600 font-medium'}>${profit.netProfit.toFixed(2)}</span>
+                            <span className="text-gray-500">Profit margin</span>
+                            <span className="font-medium">{(profit.profitMargin * 100).toFixed(1)}%</span>
+                            <span className="text-gray-500">Paddle fee</span>
+                            <span>${profit.paddleFeeAmount.toFixed(2)}</span>
+                            <span className="text-gray-500">Other fees total</span>
+                            <span>${profit.otherFeesTotal.toFixed(2)}</span>
+                            <span className="text-gray-500">Break-even price</span>
+                            <span>{Number.isFinite(profit.breakEvenPrice) ? `$${profit.breakEvenPrice.toFixed(2)}` : '—'}</span>
+                          </div>
+                        </div>
+                      );
+                    })()}
                     <div className="grid grid-cols-2 gap-2">
                       <div>
                         <label className="block text-[10px] font-medium text-gray-500 uppercase">Sale Badge</label>

@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import {
   LayoutDashboard, FileText, Settings, Users, UserCircle, ShoppingCart,
-  Globe, Search, LogOut, Package, BarChart3, Menu, X,
+  Globe, Search, LogOut, Package, BarChart3, Menu, X, DollarSign,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -18,6 +18,7 @@ const navItems = [
   { href: '/admin/orders', label: 'Orders', icon: ShoppingCart },
   { href: '/admin/accounts', label: 'Accounts', icon: UserCircle },
   { href: '/admin/packages', label: 'eSIM Packages', icon: Package },
+  { href: '/admin/packages/fees', label: 'Fees / Charges', icon: DollarSign },
   { href: '/admin/pages', label: 'Pages (CMS)', icon: FileText },
   { href: '/admin/seo', label: 'SEO Settings', icon: Search },
   { href: '/admin/users', label: 'Admin Users', icon: Users },
@@ -28,8 +29,11 @@ export function AdminSidebar({ user }: Props) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
-  const isActive = (href: string) =>
-    href === '/admin' ? pathname === '/admin' : pathname?.startsWith(href);
+  const isActive = (href: string) => {
+    if (href === '/admin') return pathname === '/admin';
+    if (href === '/admin/packages') return pathname === '/admin/packages';
+    return pathname?.startsWith(href) ?? false;
+  };
 
   const navContent = (
     <>

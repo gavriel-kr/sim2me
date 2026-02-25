@@ -122,6 +122,7 @@ model PackageOverride {
   visible        Boolean  @default(true) // show on public website
   customTitle    String?                 // override package name
   customPrice    Decimal? @db.Decimal(10, 2)  // override retail price (USD)
+  simCost        Decimal? @db.Decimal(10, 4) // override SIM cost (USD); when null use API wholesale
   paddlePriceId  String?                 // Paddle price_id (pri_xxx) for checkout
   saleBadge      String?                 // e.g. "20% OFF", "HOT", "SALE"
   featured       Boolean  @default(false)
@@ -131,6 +132,43 @@ model PackageOverride {
   updatedAt      DateTime @updatedAt
 
   @@map("package_overrides")
+}
+
+// ─── Fee Settings (Paddle + additional fees for profit calculations) ───
+model FeeSettings {
+  id                  String   @id @default(cuid())
+  paddlePercentageFee Decimal  @db.Decimal(5, 4) @default(0.05)  // e.g. 0.05 = 5%
+  paddleFixedFee      Decimal  @db.Decimal(10, 2) @default(0.50) // USD per transaction
+  currency            String   @default("USD")
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@map("fee_settings")
+}
+
+model AdditionalFee {
+  id                  String   @id @default(cuid())
+  name                String
+  type                AdditionalFeeType  // FIXED or PERCENTAGE
+  value               Decimal  @db.Decimal(10, 4)  // fixed amount or rate (e.g. 0.02 = 2%)
+  isActive            Boolean  @default(true)
+  appliesTo           AdditionalFeeAppliesTo @default(ALL_PRODUCTS)
+  selectedProductIds  String?  @db.Text  // JSON array of packageCode when appliesTo = SELECTED_PRODUCTS
+  sortOrder           Int      @default(0)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@map("additional_fees")
+}
+
+enum AdditionalFeeType {
+  FIXED
+  PERCENTAGE
+}
+
+enum AdditionalFeeAppliesTo {
+  ALL_PRODUCTS
+  SELECTED_PRODUCTS
 }
 
 // ─── Customers (site users / account holders) ───────────────

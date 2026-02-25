@@ -63,6 +63,20 @@ async function main() {
   }
   console.log('Default settings created');
 
+  // Default fee settings (Paddle 5% + $0.50)
+  const defaultFeeId = 'default';
+  await prisma.feeSettings.upsert({
+    where: { id: defaultFeeId },
+    update: {},
+    create: {
+      id: defaultFeeId,
+      paddlePercentageFee: 0.05,
+      paddleFixedFee: 0.5,
+      currency: 'USD',
+    },
+  });
+  console.log('Default fee settings created');
+
   console.log('Seed complete!');
 }
 

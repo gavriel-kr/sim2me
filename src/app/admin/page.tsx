@@ -1,16 +1,17 @@
+import Link from 'next/link';
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { BarChart3, ShoppingCart, Users, DollarSign, TrendingUp, TrendingDown } from 'lucide-react';
+import { BarChart3, ShoppingCart, Users, DollarSign, TrendingUp, TrendingDown, Percent } from 'lucide-react';
 import { BackfillBanner } from './BackfillBanner';
 
 export default async function AdminDashboard() {
   const session = await getServerSession(authOptions);
   if (!session) redirect('/admin/login');
 
-  // Fetch stats
-  const [orderCount, customerCount, completedAgg, recentOrders] = await Promise.all([
+  // Fetch stats and fee config for tile
+  const [orderCount, customerCount, completedAgg, recentOrders, feeSettings, additionalFeesCount] = await Promise.all([
     prisma.order.count(),
     prisma.customer.count(),
     prisma.order.aggregate({
@@ -18,6 +19,8 @@ export default async function AdminDashboard() {
       where: { status: 'COMPLETED' },
     }),
     prisma.order.findMany({ take: 5, orderBy: { createdAt: 'desc' } }),
+    prisma.feeSettings.findFirst(),
+    prisma.additionalFee.count({ where: { isActive: true } }),
   ]);
 
   const revenue = Number(completedAgg._sum.totalAmount || 0);
@@ -59,6 +62,31 @@ export default async function AdminDashboard() {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Fee config tile */}
+      <div className="mt-6">
+        <Link
+          href="/admin/packages/fees"
+          className="block rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-50/50"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
+              <Percent className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-gray-900">
+                Paddle: {feeSettings ? `${Number(feeSettings.paddlePercentageFee) * 100}% + $${Number(feeSettings.paddleFixedFee).toFixed(2)}` : '5% + $0.50'}
+              </p>
+              <p className="text-xs text-gray-500">
+                {additionalFeesCount > 0
+                  ? `${additionalFeesCount} active additional fee${additionalFeesCount === 1 ? '' : 's'}`
+                  : 'No additional fees'}
+                {' · Edit fees'}
+              </p>
+            </div>
+          </div>
+        </Link>
       </div>
 
       {/* Recent orders */}
