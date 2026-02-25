@@ -147,8 +147,11 @@ export function PackagesClient() {
         if (p.volume < minBytes && p.volume >= 0) return false;
       }
       if (maxPrice) {
-        const max = parseFloat(maxPrice) * 10000;
-        if (p.price > max) return false;
+        const max = parseFloat(maxPrice);
+        const effectivePrice = override?.customPrice != null
+          ? Number(override.customPrice)
+          : (p.retailPrice || p.price) / 10000;
+        if (effectivePrice > max) return false;
       }
       if (speedFilter && p.speed !== speedFilter) return false;
       return true;

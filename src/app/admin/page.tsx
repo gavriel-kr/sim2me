@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { BarChart3, ShoppingCart, Users, DollarSign, TrendingUp, TrendingDown } from 'lucide-react';
+import { BackfillBanner } from './BackfillBanner';
 
 export default async function AdminDashboard() {
   const session = await getServerSession(authOptions);
@@ -22,7 +23,10 @@ export default async function AdminDashboard() {
   const revenue = Number(completedAgg._sum.totalAmount || 0);
   const cost = Number(completedAgg._sum.supplierCost || 0);
   const profit = revenue - cost;
-  const completedCount = await prisma.order.count({ where: { status: 'COMPLETED' } });
+  const [completedCount, missingCostCount] = await Promise.all([
+    prisma.order.count({ where: { status: 'COMPLETED' } }),
+    prisma.order.count({ where: { supplierCost: null, status: { in: ['COMPLETED', 'PROCESSING'] } } }),
+  ]);
 
   const stats = [
     { label: 'Total Orders', value: orderCount, icon: ShoppingCart, color: 'bg-blue-100 text-blue-600' },
@@ -37,6 +41,8 @@ export default async function AdminDashboard() {
     <div className="p-6 lg:p-8">
       <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
       <p className="mt-1 text-sm text-gray-500">Welcome back, {session.user?.name}</p>
+
+      <BackfillBanner missingCount={missingCostCount} />
 
       {/* Stats grid */}
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
