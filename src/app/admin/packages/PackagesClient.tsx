@@ -126,14 +126,6 @@ export function PackagesClient() {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  // #region agent log
-  useEffect(() => {
-    if (!loading) {
-      fetch('http://127.0.0.1:7242/ingest/31d3162a-817c-4d6a-9841-464cdcbf3b94',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'PackagesClient.tsx:useEffect-post-load',message:'Component loaded',data:{packagesCount:packages.length,filteredCount:filtered.length,activeFilterCount,feeSettingsLoaded:!!feeSettings,error},timestamp:Date.now(),hypothesisId:'H1-H3-H4'})}).catch(()=>{});
-    }
-  }, [loading, packages.length, filtered.length, activeFilterCount, feeSettings, error]);
-  // #endregion
-
   const applyPriceFloor = async () => {
     setApplyingFloor(true);
     setFloorResult('');
@@ -171,6 +163,28 @@ export function PackagesClient() {
     packages.forEach((p) => { if (p.duration > 0) d.add(p.duration); });
     return Array.from(d).sort((a, b) => a - b);
   }, [packages]);
+
+  const getSalePrice = (pkg: Package, override: Override | undefined) =>
+    override?.customPrice != null ? Number(override.customPrice) : (pkg.retailPrice ?? pkg.price) / 10000;
+  const getSimCost = (pkg: Package, override: Override | undefined) =>
+    override?.simCost != null ? Number(override.simCost) : pkg.price / 10000;
+
+  const getProfitForPackage = useCallback(
+    (pkg: Package, override: Override | undefined, salePrice?: number, simCostOverride?: number) => {
+      const sp = salePrice ?? getSalePrice(pkg, override);
+      const sc = simCostOverride ?? getSimCost(pkg, override);
+      if (!feeSettings) return null;
+      const other = computeOtherFeesTotal(sp, additionalFees, pkg.packageCode);
+      return computeProfit({
+        salePrice: sp,
+        simCost: sc,
+        percentageFee: feeSettings.paddlePercentageFee,
+        fixedFee: feeSettings.paddleFixedFee,
+        otherFeesTotal: other,
+      });
+    },
+    [feeSettings, additionalFees]
+  );
 
   // Filter packages (super filter: all product fields)
   const filtered = useMemo(() => {
@@ -294,11 +308,6 @@ export function PackagesClient() {
     getProfitForPackage,
   ]);
 
-  const getSalePrice = (pkg: Package, override: Override | undefined) =>
-    override?.customPrice != null ? Number(override.customPrice) : (pkg.retailPrice ?? pkg.price) / 10000;
-  const getSimCost = (pkg: Package, override: Override | undefined) =>
-    override?.simCost != null ? Number(override.simCost) : pkg.price / 10000;
-
   const clearAllFilters = useCallback(() => {
     setSearch('');
     setLocationFilter('');
@@ -348,23 +357,6 @@ export function PackagesClient() {
     paddlePriceIdSearch,
     notesSearch,
   ].filter(Boolean).length;
-
-  const getProfitForPackage = useCallback(
-    (pkg: Package, override: Override | undefined, salePrice?: number, simCostOverride?: number) => {
-      const sp = salePrice ?? getSalePrice(pkg, override);
-      const sc = simCostOverride ?? getSimCost(pkg, override);
-      if (!feeSettings) return null;
-      const other = computeOtherFeesTotal(sp, additionalFees, pkg.packageCode);
-      return computeProfit({
-        salePrice: sp,
-        simCost: sc,
-        percentageFee: feeSettings.paddlePercentageFee,
-        fixedFee: feeSettings.paddleFixedFee,
-        otherFeesTotal: other,
-      });
-    },
-    [feeSettings, additionalFees]
-  );
 
   const formatVolume = (bytes: number) => {
     if (bytes < 0) return 'Unlimited';
@@ -506,9 +498,6 @@ export function PackagesClient() {
       </div>
 
       {/* Super filter panel */}
-      {/* #region agent log */}
-      {showFilters && typeof window !== 'undefined' && (() => { fetch('http://127.0.0.1:7242/ingest/31d3162a-817c-4d6a-9841-464cdcbf3b94',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'PackagesClient.tsx:filter-panel-render',message:'Filter panel opened',data:{filteredCount:filtered.length,totalPackages:packages.length,activeFilterCount},timestamp:Date.now(),hypothesisId:'H1-H3'})}).catch(()=>{}); return null; })()}
-      {/* #endregion */}
       {showFilters && (
         <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
           <div className="border-b border-gray-100 bg-gray-50/80 px-4 py-2.5 flex items-center justify-between">
