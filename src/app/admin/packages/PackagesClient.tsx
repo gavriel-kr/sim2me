@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Search, RefreshCw, Globe, Eye, EyeOff, Star, Tag, Save, Filter, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, RefreshCw, Globe, Eye, EyeOff, Star, Tag, Save, Filter, ChevronDown, ChevronUp, ArrowUpCircle } from 'lucide-react';
 
 interface Package {
   packageCode: string;
@@ -64,6 +64,10 @@ export function PackagesClient() {
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState('');
 
+  // Price floor
+  const [applyingFloor, setApplyingFloor] = useState(false);
+  const [floorResult, setFloorResult] = useState('');
+
   const fetchAll = useCallback(async () => {
     setLoading(true);
     setError('');
@@ -88,6 +92,23 @@ export function PackagesClient() {
   }, []);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
+
+  const applyPriceFloor = async () => {
+    setApplyingFloor(true);
+    setFloorResult('');
+    try {
+      const res = await fetch('/api/admin/packages/apply-price-floor', { method: 'POST' });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setFloorResult(`✓ ${data.updated} packages updated to $0.70`);
+      await fetchAll();
+    } catch (err) {
+      setFloorResult('Error: ' + (err as Error).message);
+    } finally {
+      setApplyingFloor(false);
+      setTimeout(() => setFloorResult(''), 5000);
+    }
+  };
 
   // Unique locations for filter dropdown
   const locations = useMemo(() => {
@@ -250,6 +271,20 @@ export function PackagesClient() {
           <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           Refresh
         </button>
+        <button
+          onClick={applyPriceFloor}
+          disabled={applyingFloor || loading}
+          title="Set customPrice = $0.70 for all packages priced $0.55–$0.69"
+          className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-4 py-2 text-sm font-medium text-white hover:bg-amber-600 disabled:opacity-50"
+        >
+          <ArrowUpCircle className={`h-4 w-4 ${applyingFloor ? 'animate-spin' : ''}`} />
+          Apply Price Floor
+        </button>
+        {floorResult && (
+          <span className={`text-sm font-medium ${floorResult.startsWith('✓') ? 'text-emerald-600' : 'text-red-600'}`}>
+            {floorResult}
+          </span>
+        )}
       </div>
 
       {/* Advanced filters */}
@@ -385,12 +420,18 @@ export function PackagesClient() {
                     {override?.customPrice != null ? (
                       <>
                         <span className="text-lg font-bold text-emerald-600">${Number(override.customPrice).toFixed(2)}</span>
-                        <p className="text-[10px] text-gray-400 line-through">{formatApiPrice(pkg.retailPrice || pkg.price)}</p>
+                        <p className="text-[10px] text-gray-400">
+                          <span className="line-through">{formatApiPrice(pkg.retailPrice || pkg.price)}</span>
+                          <span className="ml-1 not-italic text-gray-400">API</span>
+                        </p>
                       </>
                     ) : (
-                      <span className="text-lg font-bold text-emerald-600">{formatApiPrice(pkg.retailPrice || pkg.price)}</span>
+                      <>
+                        <span className="text-lg font-bold text-emerald-600">{formatApiPrice(pkg.retailPrice || pkg.price)}</span>
+                        <p className="text-[10px] text-gray-400">API Price</p>
+                      </>
                     )}
-                    <p className="text-[10px] text-gray-400">Cost: {formatApiPrice(pkg.price)}</p>
+                    <p className="text-[10px] text-orange-400 font-medium">Cost: {formatApiPrice(pkg.price)}</p>
                   </div>
                 </div>
 

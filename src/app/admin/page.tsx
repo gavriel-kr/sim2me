@@ -2,27 +2,35 @@ import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { BarChart3, ShoppingCart, Users, DollarSign } from 'lucide-react';
+import { BarChart3, ShoppingCart, Users, DollarSign, TrendingUp, TrendingDown } from 'lucide-react';
 
 export default async function AdminDashboard() {
   const session = await getServerSession(authOptions);
   if (!session) redirect('/admin/login');
 
   // Fetch stats
-  const [orderCount, customerCount, totalRevenue, recentOrders] = await Promise.all([
+  const [orderCount, customerCount, completedAgg, recentOrders] = await Promise.all([
     prisma.order.count(),
     prisma.customer.count(),
-    prisma.order.aggregate({ _sum: { totalAmount: true }, where: { status: 'COMPLETED' } }),
+    prisma.order.aggregate({
+      _sum: { totalAmount: true, supplierCost: true },
+      where: { status: 'COMPLETED' },
+    }),
     prisma.order.findMany({ take: 5, orderBy: { createdAt: 'desc' } }),
   ]);
 
-  const revenue = Number(totalRevenue._sum.totalAmount || 0);
+  const revenue = Number(completedAgg._sum.totalAmount || 0);
+  const cost = Number(completedAgg._sum.supplierCost || 0);
+  const profit = revenue - cost;
+  const completedCount = await prisma.order.count({ where: { status: 'COMPLETED' } });
 
   const stats = [
     { label: 'Total Orders', value: orderCount, icon: ShoppingCart, color: 'bg-blue-100 text-blue-600' },
     { label: 'Revenue', value: `$${revenue.toFixed(2)}`, icon: DollarSign, color: 'bg-emerald-100 text-emerald-600' },
+    { label: 'Cost', value: `$${cost.toFixed(2)}`, icon: TrendingDown, color: 'bg-red-100 text-red-600' },
+    { label: 'Profit', value: `$${profit.toFixed(2)}`, icon: TrendingUp, color: profit >= 0 ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600' },
     { label: 'Customers', value: customerCount, icon: Users, color: 'bg-violet-100 text-violet-600' },
-    { label: 'Avg. Order', value: orderCount > 0 ? `$${(revenue / orderCount).toFixed(2)}` : '$0', icon: BarChart3, color: 'bg-amber-100 text-amber-600' },
+    { label: 'Avg. Order', value: completedCount > 0 ? `$${(revenue / completedCount).toFixed(2)}` : '$0', icon: BarChart3, color: 'bg-amber-100 text-amber-600' },
   ];
 
   return (
@@ -31,7 +39,7 @@ export default async function AdminDashboard() {
       <p className="mt-1 text-sm text-gray-500">Welcome back, {session.user?.name}</p>
 
       {/* Stats grid */}
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {stats.map(({ label, value, icon: Icon, color }) => (
           <div key={label} className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
             <div className="flex items-center gap-3">

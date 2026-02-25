@@ -106,6 +106,7 @@ export async function POST(request: Request) {
   let destination = '';
   let dataAmountStr = '';
   let validityStr = '';
+  let supplierCostUsd: number | undefined;
 
   try {
     const { packageList } = await getPackages();
@@ -115,6 +116,8 @@ export async function POST(request: Request) {
       destination = pkg.location || pkg.locationCode || '';
       dataAmountStr = pkg.volume != null ? formatDataVolume(pkg.volume) : '';
       validityStr = pkg.duration != null ? `${pkg.duration} days` : '';
+      // Wholesale cost in USD (API returns price in units where $1 = 10000)
+      if (pkg.price != null) supplierCostUsd = pkg.price / 10000;
     }
   } catch (e) {
     console.warn('[Paddle webhook] Could not resolve package details', e);
@@ -140,6 +143,7 @@ export async function POST(request: Request) {
       dataAmount: dataAmountStr,
       validity: validityStr,
       deviceType: deviceType || null,
+      supplierCost: supplierCostUsd ?? null,
       paidAt: new Date(),
     },
   });
