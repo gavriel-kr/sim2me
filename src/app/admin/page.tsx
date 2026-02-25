@@ -1,27 +1,37 @@
-import Link from 'next/link';
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { BarChart3, ShoppingCart, Users, DollarSign, TrendingUp, TrendingDown, Percent } from 'lucide-react';
+import { BarChart3, ShoppingCart, Users, DollarSign, TrendingUp, TrendingDown, Wallet } from 'lucide-react';
 import { BackfillBanner } from './BackfillBanner';
+import { paddleFeeAmount } from '@/lib/profit';
 
 export default async function AdminDashboard() {
   const session = await getServerSession(authOptions);
   if (!session) redirect('/admin/login');
 
-  // Fetch stats and fee config for tile
-  const [orderCount, customerCount, completedAgg, recentOrders, feeSettings, additionalFeesCount] = await Promise.all([
+  const pctFee = 0.05;
+  const fixedFee = 0.5;
+
+  // Fetch stats and fee config
+  const [orderCount, customerCount, completedAgg, completedOrderAmounts, recentOrders, feeSettings] = await Promise.all([
     prisma.order.count(),
     prisma.customer.count(),
     prisma.order.aggregate({
       _sum: { totalAmount: true, supplierCost: true },
       where: { status: 'COMPLETED' },
     }),
+    prisma.order.findMany({ where: { status: 'COMPLETED' }, select: { totalAmount: true } }),
     prisma.order.findMany({ take: 5, orderBy: { createdAt: 'desc' } }),
     prisma.feeSettings.findFirst(),
-    prisma.additionalFee.count({ where: { isActive: true } }),
   ]);
+
+  const pct = feeSettings ? Number(feeSettings.paddlePercentageFee) : pctFee;
+  const fixed = feeSettings ? Number(feeSettings.paddleFixedFee) : fixedFee;
+  const revenueAfterFees = completedOrderAmounts.reduce(
+    (sum, o) => sum + Number(o.totalAmount) - paddleFeeAmount(Number(o.totalAmount), pct, fixed),
+    0
+  );
 
   const revenue = Number(completedAgg._sum.totalAmount || 0);
   const cost = Number(completedAgg._sum.supplierCost || 0);
@@ -37,6 +47,7 @@ export default async function AdminDashboard() {
     { label: 'Cost', value: `$${cost.toFixed(2)}`, icon: TrendingDown, color: 'bg-red-100 text-red-600' },
     { label: 'Profit', value: `$${profit.toFixed(2)}`, icon: TrendingUp, color: profit >= 0 ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600' },
     { label: 'Customers', value: customerCount, icon: Users, color: 'bg-violet-100 text-violet-600' },
+    { label: 'Revenue after fees', value: `$${revenueAfterFees.toFixed(2)}`, icon: Wallet, color: 'bg-sky-100 text-sky-600' },
     { label: 'Avg. Order', value: completedCount > 0 ? `$${(revenue / completedCount).toFixed(2)}` : '$0', icon: BarChart3, color: 'bg-amber-100 text-amber-600' },
   ];
 
@@ -48,7 +59,7 @@ export default async function AdminDashboard() {
       <BackfillBanner missingCount={missingCostCount} />
 
       {/* Stats grid */}
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-7">
         {stats.map(({ label, value, icon: Icon, color }) => (
           <div key={label} className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
             <div className="flex items-center gap-3">
@@ -62,31 +73,6 @@ export default async function AdminDashboard() {
             </div>
           </div>
         ))}
-      </div>
-
-      {/* Fee config tile */}
-      <div className="mt-6">
-        <Link
-          href="/admin/packages/fees"
-          className="block rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-50/50"
-        >
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
-              <Percent className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-gray-900">
-                Paddle: {feeSettings ? `${Number(feeSettings.paddlePercentageFee) * 100}% + $${Number(feeSettings.paddleFixedFee).toFixed(2)}` : '5% + $0.50'}
-              </p>
-              <p className="text-xs text-gray-500">
-                {additionalFeesCount > 0
-                  ? `${additionalFeesCount} active additional fee${additionalFeesCount === 1 ? '' : 's'}`
-                  : 'No additional fees'}
-                {' · Edit fees'}
-              </p>
-            </div>
-          </div>
-        </Link>
       </div>
 
       {/* Recent orders */}
