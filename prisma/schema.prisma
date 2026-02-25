@@ -9,14 +9,15 @@ datasource db {
 
 // ─── Admin Users ─────────────────────────────────────────────
 model AdminUser {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String
-  password  String
-  role      Role     @default(EDITOR)
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String         @id @default(cuid())
+  email         String         @unique
+  name          String
+  password      String
+  role          Role           @default(EDITOR)
+  active        Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  bulkEditLogs  BulkEditLog[]
 
   @@map("admin_users")
 }
@@ -113,6 +114,19 @@ enum OrderStatus {
   FAILED
   REFUNDED
   CANCELLED
+}
+
+// ─── Bulk Edit Log (audit + rollback for bulk package updates) ────
+model BulkEditLog {
+  id                   String   @id @default(cuid())
+  adminId              String
+  admin                AdminUser @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  timestamp            DateTime @default(now())
+  affectedCount        Int
+  payloadJson          String   @db.Text  // request payload (edits, conditions)
+  rollbackSnapshotJson String   @db.Text  // before-state for rollback
+
+  @@map("bulk_edit_logs")
 }
 
 // ─── Package Overrides (admin control over eSIMaccess packages) ────
