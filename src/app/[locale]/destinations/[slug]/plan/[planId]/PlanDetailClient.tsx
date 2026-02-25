@@ -23,6 +23,8 @@ export function PlanDetailClient({ destination, plan }: PlanDetailClientProps) {
   const addItem = useCartStore((s) => s.addItem);
   const { toast } = useToast();
 
+  const MIN_PURCHASE = 0.70;
+
   const handleAddToCart = () => {
     addItem({
       planId: plan.id,
@@ -31,11 +33,19 @@ export function PlanDetailClient({ destination, plan }: PlanDetailClientProps) {
       destinationSlug: destination.slug,
       plan,
     });
-    toast({
-      title: 'Added to cart',
-      description: `${plan.dataDisplay} / ${plan.days} days for ${destination.name}`,
-      variant: 'success',
-    });
+    if (plan.price < MIN_PURCHASE) {
+      toast({
+        title: 'Added to cart — minimum order notice',
+        description: `This plan costs $${plan.price.toFixed(2)}. Minimum purchase is $${MIN_PURCHASE.toFixed(2)}.`,
+        variant: 'warning',
+      });
+    } else {
+      toast({
+        title: 'Added to cart',
+        description: `${plan.dataDisplay} / ${plan.days} days for ${destination.name}`,
+        variant: 'success',
+      });
+    }
   };
 
   return (

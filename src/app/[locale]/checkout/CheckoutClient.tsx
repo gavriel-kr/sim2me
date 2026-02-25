@@ -31,6 +31,9 @@ export function CheckoutClient() {
   const setTravelerInfo = useCartStore((s) => s.setTravelerInfo);
   const { ready: paddleReady, openCheckout } = usePaddle();
 
+  const MIN_PURCHASE = 0.70;
+  const belowMinimum = total < MIN_PURCHASE;
+
   const [step, setStep] = useState<Step>('cart');
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
@@ -53,6 +56,10 @@ export function CheckoutClient() {
     }
     if (items.length > 1) {
       setPaymentError(t('singlePlanOnly') || 'Please purchase one plan at a time.');
+      return;
+    }
+    if (belowMinimum) {
+      setPaymentError(`Minimum purchase is $${MIN_PURCHASE.toFixed(2)}. Current total: $${total.toFixed(2)}.`);
       return;
     }
     setPaymentError(null);
@@ -161,6 +168,19 @@ export function CheckoutClient() {
                     </div>
                   </div>
                 ))}
+                {belowMinimum && (
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                    <strong>Minimum purchase is $0.70.</strong> Your current total is ${total.toFixed(2)}.
+                    Only plans priced $0.70 or above can be purchased.
+                  </div>
+                )}
+                <Button
+                  className="w-full"
+                  disabled={belowMinimum}
+                  onClick={() => setStep('traveler')}
+                >
+                  Continue to details
+                </Button>
               </CardContent>
             </Card>
           )}
@@ -207,13 +227,18 @@ export function CheckoutClient() {
                 <h2 className="font-semibold">{t('payment')}</h2>
               </CardHeader>
               <CardContent>
+                {belowMinimum && (
+                  <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                    <strong>Minimum purchase is $0.70.</strong> This plan (${total.toFixed(2)}) cannot be purchased individually.
+                  </div>
+                )}
                 {paymentError && (
                   <p className="mb-4 text-sm text-destructive" role="alert">{paymentError}</p>
                 )}
                 <Button
                   className="mt-4 w-full"
                   onClick={onPayWithPaddle}
-                  disabled={paymentLoading || !paddleReady}
+                  disabled={paymentLoading || !paddleReady || belowMinimum}
                 >
                   {paymentLoading ? (t('processing') || 'Processing…') : (t('payNow') || 'Pay now')}
                 </Button>

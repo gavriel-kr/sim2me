@@ -25,6 +25,8 @@ export function PlanCard({ plan, destinationName, destinationSlug }: PlanCardPro
   const addItem = useCartStore((s) => s.addItem);
   const { toast } = useToast();
 
+  const MIN_PURCHASE = 0.70;
+
   const handleAddToCart = () => {
     addItem({
       planId: plan.id,
@@ -33,11 +35,19 @@ export function PlanCard({ plan, destinationName, destinationSlug }: PlanCardPro
       destinationSlug,
       plan,
     });
-    toast({
-      title: 'Added to cart',
-      description: `${plan.dataDisplay} / ${plan.days} days for ${destinationName}`,
-      variant: 'success',
-    });
+    if (plan.price < MIN_PURCHASE) {
+      toast({
+        title: 'Added to cart — minimum order notice',
+        description: `This plan costs $${plan.price.toFixed(2)}. Minimum purchase is $${MIN_PURCHASE.toFixed(2)}.`,
+        variant: 'warning',
+      });
+    } else {
+      toast({
+        title: 'Added to cart',
+        description: `${plan.dataDisplay} / ${plan.days} days for ${destinationName}`,
+        variant: 'success',
+      });
+    }
   };
 
   const perDay = plan.days > 0 ? (plan.price / plan.days).toFixed(2) : plan.price;
