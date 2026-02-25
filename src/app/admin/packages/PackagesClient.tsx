@@ -126,6 +126,14 @@ export function PackagesClient() {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
+  // #region agent log
+  useEffect(() => {
+    if (!loading) {
+      fetch('http://127.0.0.1:7242/ingest/31d3162a-817c-4d6a-9841-464cdcbf3b94',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'PackagesClient.tsx:useEffect-post-load',message:'Component loaded',data:{packagesCount:packages.length,filteredCount:filtered.length,activeFilterCount,feeSettingsLoaded:!!feeSettings,error},timestamp:Date.now(),hypothesisId:'H1-H3-H4'})}).catch(()=>{});
+    }
+  }, [loading, packages.length, filtered.length, activeFilterCount, feeSettings, error]);
+  // #endregion
+
   const applyPriceFloor = async () => {
     setApplyingFloor(true);
     setFloorResult('');
@@ -498,6 +506,9 @@ export function PackagesClient() {
       </div>
 
       {/* Super filter panel */}
+      {/* #region agent log */}
+      {showFilters && typeof window !== 'undefined' && (() => { fetch('http://127.0.0.1:7242/ingest/31d3162a-817c-4d6a-9841-464cdcbf3b94',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'PackagesClient.tsx:filter-panel-render',message:'Filter panel opened',data:{filteredCount:filtered.length,totalPackages:packages.length,activeFilterCount},timestamp:Date.now(),hypothesisId:'H1-H3'})}).catch(()=>{}); return null; })()}
+      {/* #endregion */}
       {showFilters && (
         <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
           <div className="border-b border-gray-100 bg-gray-50/80 px-4 py-2.5 flex items-center justify-between">
