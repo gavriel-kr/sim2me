@@ -62,9 +62,25 @@ export function PackagesClient() {
   const [search, setSearch] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
   const [minVolume, setMinVolume] = useState('');
+  const [maxVolume, setMaxVolume] = useState('');
+  const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
+  const [durationFilter, setDurationFilter] = useState('');
   const [speedFilter, setSpeedFilter] = useState('');
   const [visibilityFilter, setVisibilityFilter] = useState<'all' | 'visible' | 'hidden'>('all');
+  const [featuredFilter, setFeaturedFilter] = useState<'all' | 'yes' | 'no'>('all');
+  const [saleBadgeFilter, setSaleBadgeFilter] = useState<'any' | 'has' | 'none'>('any');
+  const [saleBadgeText, setSaleBadgeText] = useState('');
+  const [simCostMin, setSimCostMin] = useState('');
+  const [simCostMax, setSimCostMax] = useState('');
+  const [profitMin, setProfitMin] = useState('');
+  const [profitMax, setProfitMax] = useState('');
+  const [marginMin, setMarginMin] = useState('');
+  const [marginMax, setMarginMax] = useState('');
+  const [breakEvenMin, setBreakEvenMin] = useState('');
+  const [breakEvenMax, setBreakEvenMax] = useState('');
+  const [paddlePriceIdSearch, setPaddlePriceIdSearch] = useState('');
+  const [notesSearch, setNotesSearch] = useState('');
   const [showFilters, setShowFilters] = useState(false);
 
   // Editing
@@ -141,44 +157,189 @@ export function PackagesClient() {
     return Array.from(s).sort();
   }, [packages]);
 
-  // Filter packages
+  // Unique durations (days) for filter dropdown
+  const durations = useMemo(() => {
+    const d = new Set<number>();
+    packages.forEach((p) => { if (p.duration > 0) d.add(p.duration); });
+    return Array.from(d).sort((a, b) => a - b);
+  }, [packages]);
+
+  // Filter packages (super filter: all product fields)
   const filtered = useMemo(() => {
     return packages.filter((p) => {
       const override = overrides.get(p.packageCode);
       const isVisible = override?.visible ?? true;
+      const displayTitle = override?.customTitle || p.name;
 
+      // Visibility
       if (visibilityFilter === 'visible' && !isVisible) return false;
       if (visibilityFilter === 'hidden' && isVisible) return false;
 
+      // Featured
+      const isFeatured = override?.featured ?? false;
+      if (featuredFilter === 'yes' && !isFeatured) return false;
+      if (featuredFilter === 'no' && isFeatured) return false;
+
+      // Search (name, location, code, custom title, notes)
       if (search) {
         const q = search.toLowerCase();
         const matchName = p.name?.toLowerCase().includes(q);
         const matchLoc = p.location?.toLowerCase().includes(q);
         const matchCode = p.locationCode?.toLowerCase().includes(q);
         const matchPkgCode = p.packageCode?.toLowerCase().includes(q);
-        if (!matchName && !matchLoc && !matchCode && !matchPkgCode) return false;
+        const matchCustomTitle = displayTitle?.toLowerCase().includes(q);
+        const matchNotes = override?.notes?.toLowerCase().includes(q);
+        if (!matchName && !matchLoc && !matchCode && !matchPkgCode && !matchCustomTitle && !matchNotes) return false;
       }
+
       if (locationFilter && p.locationCode !== locationFilter) return false;
+      if (durationFilter && p.duration !== parseInt(durationFilter, 10)) return false;
+      if (speedFilter && p.speed !== speedFilter) return false;
+
+      // Data volume (GB)
       if (minVolume) {
         const minBytes = parseFloat(minVolume) * 1024 * 1024 * 1024;
-        if (p.volume < minBytes && p.volume >= 0) return false;
+        if (p.volume >= 0 && p.volume < minBytes) return false;
+      }
+      if (maxVolume) {
+        const maxBytes = parseFloat(maxVolume) * 1024 * 1024 * 1024;
+        if (p.volume >= 0 && p.volume > maxBytes) return false;
+      }
+
+      const effectivePrice = override?.customPrice != null ? Number(override.customPrice) : (p.retailPrice || p.price) / 10000;
+      if (minPrice) {
+        const min = parseFloat(minPrice);
+        if (effectivePrice < min) return false;
       }
       if (maxPrice) {
         const max = parseFloat(maxPrice);
-        const effectivePrice = override?.customPrice != null
-          ? Number(override.customPrice)
-          : (p.retailPrice || p.price) / 10000;
         if (effectivePrice > max) return false;
       }
-      if (speedFilter && p.speed !== speedFilter) return false;
+
+      const simCost = override?.simCost != null ? Number(override.simCost) : p.price / 10000;
+      if (simCostMin) {
+        const min = parseFloat(simCostMin);
+        if (!Number.isFinite(min) || simCost < min) return false;
+      }
+      if (simCostMax) {
+        const max = parseFloat(simCostMax);
+        if (!Number.isFinite(max) || simCost > max) return false;
+      }
+
+      // Sale badge
+      const hasBadge = !!(override?.saleBadge?.trim());
+      if (saleBadgeFilter === 'has' && !hasBadge) return false;
+      if (saleBadgeFilter === 'none' && hasBadge) return false;
+      if (saleBadgeText.trim()) {
+        const badge = (override?.saleBadge || '').toLowerCase();
+        if (!badge.includes(saleBadgeText.toLowerCase().trim())) return false;
+      }
+
+      if (paddlePriceIdSearch.trim()) {
+        const pid = (override?.paddlePriceId || '').toLowerCase();
+        if (!pid.includes(paddlePriceIdSearch.toLowerCase().trim())) return false;
+      }
+      if (notesSearch.trim()) {
+        const notes = (override?.notes || '').toLowerCase();
+        if (!notes.includes(notesSearch.toLowerCase().trim())) return false;
+      }
+
+      // Profit/margin/break-even (require fee settings)
+      if (feeSettings && (profitMin || profitMax || marginMin || marginMax || breakEvenMin || breakEvenMax)) {
+        const profit = getProfitForPackage(p, override);
+        if (!profit) return false;
+        if (profitMin) {
+          const min = parseFloat(profitMin);
+          if (Number.isFinite(min) && profit.netProfit < min) return false;
+        }
+        if (profitMax) {
+          const max = parseFloat(profitMax);
+          if (Number.isFinite(max) && profit.netProfit > max) return false;
+        }
+        const marginPct = profit.profitMargin * 100;
+        if (marginMin) {
+          const min = parseFloat(marginMin);
+          if (Number.isFinite(min) && marginPct < min) return false;
+        }
+        if (marginMax) {
+          const max = parseFloat(marginMax);
+          if (Number.isFinite(max) && marginPct > max) return false;
+        }
+        if (breakEvenMin) {
+          const min = parseFloat(breakEvenMin);
+          if (Number.isFinite(min) && Number.isFinite(profit.breakEvenPrice) && profit.breakEvenPrice < min) return false;
+        }
+        if (breakEvenMax) {
+          const max = parseFloat(breakEvenMax);
+          if (Number.isFinite(max) && Number.isFinite(profit.breakEvenPrice) && profit.breakEvenPrice > max) return false;
+        }
+      }
+
       return true;
     });
-  }, [packages, overrides, search, locationFilter, minVolume, maxPrice, speedFilter, visibilityFilter]);
+  }, [
+    packages, overrides, feeSettings,
+    search, locationFilter, durationFilter, speedFilter, visibilityFilter, featuredFilter,
+    minVolume, maxVolume, minPrice, maxPrice, simCostMin, simCostMax,
+    saleBadgeFilter, saleBadgeText, paddlePriceIdSearch, notesSearch,
+    profitMin, profitMax, marginMin, marginMax, breakEvenMin, breakEvenMax,
+    getProfitForPackage,
+  ]);
 
   const getSalePrice = (pkg: Package, override: Override | undefined) =>
     override?.customPrice != null ? Number(override.customPrice) : (pkg.retailPrice ?? pkg.price) / 10000;
   const getSimCost = (pkg: Package, override: Override | undefined) =>
     override?.simCost != null ? Number(override.simCost) : pkg.price / 10000;
+
+  const clearAllFilters = useCallback(() => {
+    setSearch('');
+    setLocationFilter('');
+    setMinVolume('');
+    setMaxVolume('');
+    setMinPrice('');
+    setMaxPrice('');
+    setDurationFilter('');
+    setSpeedFilter('');
+    setVisibilityFilter('all');
+    setFeaturedFilter('all');
+    setSaleBadgeFilter('any');
+    setSaleBadgeText('');
+    setSimCostMin('');
+    setSimCostMax('');
+    setProfitMin('');
+    setProfitMax('');
+    setMarginMin('');
+    setMarginMax('');
+    setBreakEvenMin('');
+    setBreakEvenMax('');
+    setPaddlePriceIdSearch('');
+    setNotesSearch('');
+  }, []);
+
+  const activeFilterCount = [
+    search,
+    locationFilter,
+    minVolume,
+    maxVolume,
+    minPrice,
+    maxPrice,
+    durationFilter,
+    speedFilter,
+    visibilityFilter !== 'all',
+    featuredFilter !== 'all',
+    saleBadgeFilter !== 'any',
+    saleBadgeText,
+    simCostMin,
+    simCostMax,
+    profitMin,
+    profitMax,
+    marginMin,
+    marginMax,
+    breakEvenMin,
+    breakEvenMax,
+    paddlePriceIdSearch,
+    notesSearch,
+  ].filter(Boolean).length;
 
   const getProfitForPackage = useCallback(
     (pkg: Package, override: Override | undefined, salePrice?: number, simCostOverride?: number) => {
@@ -304,7 +465,12 @@ export function PackagesClient() {
           className="inline-flex items-center gap-1.5 rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
         >
           <Filter className="h-4 w-4" />
-          Filters
+          Super filter
+          {activeFilterCount > 0 && (
+            <span className="rounded-full bg-emerald-100 px-1.5 py-0.5 text-xs font-semibold text-emerald-700">
+              {activeFilterCount}
+            </span>
+          )}
           {showFilters ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
         </button>
         <button
@@ -331,75 +497,298 @@ export function PackagesClient() {
         )}
       </div>
 
-      {/* Advanced filters */}
+      {/* Super filter panel */}
       {showFilters && (
-        <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Location</label>
-              <select
-                value={locationFilter}
-                onChange={(e) => setLocationFilter(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
+        <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+          <div className="border-b border-gray-100 bg-gray-50/80 px-4 py-2.5 flex items-center justify-between">
+            <span className="text-sm font-semibold text-gray-700">Filter by product fields</span>
+            {activeFilterCount > 0 && (
+              <button
+                onClick={clearAllFilters}
+                className="text-xs font-medium text-emerald-600 hover:text-emerald-700"
               >
-                <option value="">All locations</option>
-                {locations.map(([code, name]) => (
-                  <option key={code} value={code}>{name} ({code})</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Min Data (GB)</label>
-              <input
-                type="number"
-                placeholder="e.g. 5"
-                value={minVolume}
-                onChange={(e) => setMinVolume(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Max Price ($)</label>
-              <input
-                type="number"
-                placeholder="e.g. 25"
-                value={maxPrice}
-                onChange={(e) => setMaxPrice(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Network Speed</label>
-              <select
-                value={speedFilter}
-                onChange={(e) => setSpeedFilter(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
-              >
-                <option value="">All speeds</option>
-                {speeds.map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Visibility</label>
-              <select
-                value={visibilityFilter}
-                onChange={(e) => setVisibilityFilter(e.target.value as 'all' | 'visible' | 'hidden')}
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
-              >
-                <option value="all">All</option>
-                <option value="visible">Visible only</option>
-                <option value="hidden">Hidden only</option>
-              </select>
-            </div>
+                Clear all ({activeFilterCount})
+              </button>
+            )}
           </div>
-          <button
-            onClick={() => { setLocationFilter(''); setMinVolume(''); setMaxPrice(''); setSpeedFilter(''); setVisibilityFilter('all'); }}
-            className="mt-3 text-xs text-emerald-600 hover:text-emerald-700 font-medium"
-          >
-            Clear all filters
-          </button>
+          <div className="p-4 space-y-6">
+            {/* Basics: search, location, data, duration, speed, visibility, featured */}
+            <section>
+              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Basics</h3>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Location</label>
+                  <select
+                    value={locationFilter}
+                    onChange={(e) => setLocationFilter(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                  >
+                    <option value="">All locations</option>
+                    {locations.map(([code, name]) => (
+                      <option key={code} value={code}>{name} ({code})</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Data min (GB)</label>
+                  <input
+                    type="number"
+                    min={0}
+                    step={0.5}
+                    placeholder="e.g. 1"
+                    value={minVolume}
+                    onChange={(e) => setMinVolume(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Data max (GB)</label>
+                  <input
+                    type="number"
+                    min={0}
+                    step={0.5}
+                    placeholder="e.g. 50"
+                    value={maxVolume}
+                    onChange={(e) => setMaxVolume(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Duration</label>
+                  <select
+                    value={durationFilter}
+                    onChange={(e) => setDurationFilter(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                  >
+                    <option value="">All</option>
+                    {durations.map((d) => (
+                      <option key={d} value={d}>{d} days</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Network</label>
+                  <select
+                    value={speedFilter}
+                    onChange={(e) => setSpeedFilter(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                  >
+                    <option value="">All</option>
+                    {speeds.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Visibility</label>
+                  <select
+                    value={visibilityFilter}
+                    onChange={(e) => setVisibilityFilter(e.target.value as 'all' | 'visible' | 'hidden')}
+                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                  >
+                    <option value="all">All</option>
+                    <option value="visible">Visible only</option>
+                    <option value="hidden">Hidden only</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Featured</label>
+                  <select
+                    value={featuredFilter}
+                    onChange={(e) => setFeaturedFilter(e.target.value as 'all' | 'yes' | 'no')}
+                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                  >
+                    <option value="all">All</option>
+                    <option value="yes">Featured only</option>
+                    <option value="no">Not featured</option>
+                  </select>
+                </div>
+              </div>
+            </section>
+
+            {/* Price & cost */}
+            <section>
+              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Price & cost</h3>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Price min ($)</label>
+                  <input
+                    type="number"
+                    step={0.01}
+                    min={0}
+                    placeholder="e.g. 2"
+                    value={minPrice}
+                    onChange={(e) => setMinPrice(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Price max ($)</label>
+                  <input
+                    type="number"
+                    step={0.01}
+                    min={0}
+                    placeholder="e.g. 25"
+                    value={maxPrice}
+                    onChange={(e) => setMaxPrice(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">SIM cost min ($)</label>
+                  <input
+                    type="number"
+                    step={0.01}
+                    min={0}
+                    placeholder="e.g. 0.5"
+                    value={simCostMin}
+                    onChange={(e) => setSimCostMin(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">SIM cost max ($)</label>
+                  <input
+                    type="number"
+                    step={0.01}
+                    min={0}
+                    placeholder="e.g. 5"
+                    value={simCostMax}
+                    onChange={(e) => setSimCostMax(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                  />
+                </div>
+              </div>
+            </section>
+
+            {/* Profit & margin */}
+            <section>
+              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Profit & margin</h3>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Net profit min ($)</label>
+                  <input
+                    type="number"
+                    step={0.01}
+                    placeholder="e.g. 0.5"
+                    value={profitMin}
+                    onChange={(e) => setProfitMin(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Net profit max ($)</label>
+                  <input
+                    type="number"
+                    step={0.01}
+                    placeholder="e.g. 10"
+                    value={profitMax}
+                    onChange={(e) => setProfitMax(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Margin min (%)</label>
+                  <input
+                    type="number"
+                    step={0.1}
+                    min={0}
+                    max={100}
+                    placeholder="e.g. 20"
+                    value={marginMin}
+                    onChange={(e) => setMarginMin(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Margin max (%)</label>
+                  <input
+                    type="number"
+                    step={0.1}
+                    min={0}
+                    max={100}
+                    placeholder="e.g. 80"
+                    value={marginMax}
+                    onChange={(e) => setMarginMax(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Break-even min ($)</label>
+                  <input
+                    type="number"
+                    step={0.01}
+                    min={0}
+                    placeholder="e.g. 2"
+                    value={breakEvenMin}
+                    onChange={(e) => setBreakEvenMin(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Break-even max ($)</label>
+                  <input
+                    type="number"
+                    step={0.01}
+                    min={0}
+                    placeholder="e.g. 5"
+                    value={breakEvenMax}
+                    onChange={(e) => setBreakEvenMax(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                  />
+                </div>
+              </div>
+            </section>
+
+            {/* Override fields: sale badge, Paddle ID, notes */}
+            <section>
+              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Override & identifiers</h3>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Sale badge</label>
+                  <select
+                    value={saleBadgeFilter}
+                    onChange={(e) => setSaleBadgeFilter(e.target.value as 'any' | 'has' | 'none')}
+                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                  >
+                    <option value="any">Any</option>
+                    <option value="has">Has badge</option>
+                    <option value="none">No badge</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Sale badge contains</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 20% OFF"
+                    value={saleBadgeText}
+                    onChange={(e) => setSaleBadgeText(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Paddle Price ID contains</label>
+                  <input
+                    type="text"
+                    placeholder="pri_..."
+                    value={paddlePriceIdSearch}
+                    onChange={(e) => setPaddlePriceIdSearch(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Notes contain</label>
+                  <input
+                    type="text"
+                    placeholder="Search internal notes..."
+                    value={notesSearch}
+                    onChange={(e) => setNotesSearch(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                  />
+                </div>
+              </div>
+            </section>
+          </div>
         </div>
       )}
 
