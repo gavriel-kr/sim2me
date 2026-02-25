@@ -2,7 +2,7 @@ import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { BarChart3, ShoppingCart, Users, DollarSign, TrendingUp, TrendingDown, Wallet } from 'lucide-react';
+import { BarChart3, ShoppingCart, Users, DollarSign, TrendingUp, TrendingDown, Wallet, Receipt } from 'lucide-react';
 import { BackfillBanner } from './BackfillBanner';
 import { paddleFeeAmount } from '@/lib/profit';
 
@@ -28,14 +28,18 @@ export default async function AdminDashboard() {
 
   const pct = feeSettings ? Number(feeSettings.paddlePercentageFee) : pctFee;
   const fixed = feeSettings ? Number(feeSettings.paddleFixedFee) : fixedFee;
-  const revenueAfterFees = completedOrderAmounts.reduce(
-    (sum, o) => sum + Number(o.totalAmount) - paddleFeeAmount(Number(o.totalAmount), pct, fixed),
-    0
-  );
+  let feeCost = 0;
+  let revenueAfterFees = 0;
+  for (const o of completedOrderAmounts) {
+    const amt = Number(o.totalAmount);
+    const fee = paddleFeeAmount(amt, pct, fixed);
+    feeCost += fee;
+    revenueAfterFees += amt - fee;
+  }
 
   const revenue = Number(completedAgg._sum.totalAmount || 0);
-  const cost = Number(completedAgg._sum.supplierCost || 0);
-  const profit = revenue - cost;
+  const esimCost = Number(completedAgg._sum.supplierCost || 0);
+  const profit = revenue - esimCost - feeCost;
   const [completedCount, missingCostCount] = await Promise.all([
     prisma.order.count({ where: { status: 'COMPLETED' } }),
     prisma.order.count({ where: { supplierCost: null, status: { in: ['COMPLETED', 'PROCESSING'] } } }),
@@ -44,10 +48,11 @@ export default async function AdminDashboard() {
   const stats = [
     { label: 'Total Orders', value: orderCount, icon: ShoppingCart, color: 'bg-blue-100 text-blue-600' },
     { label: 'Revenue', value: `$${revenue.toFixed(2)}`, icon: DollarSign, color: 'bg-emerald-100 text-emerald-600' },
-    { label: 'Cost', value: `$${cost.toFixed(2)}`, icon: TrendingDown, color: 'bg-red-100 text-red-600' },
+    { label: 'Esim cost', value: `$${esimCost.toFixed(2)}`, icon: TrendingDown, color: 'bg-red-100 text-red-600' },
     { label: 'Profit', value: `$${profit.toFixed(2)}`, icon: TrendingUp, color: profit >= 0 ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600' },
     { label: 'Customers', value: customerCount, icon: Users, color: 'bg-violet-100 text-violet-600' },
-    { label: 'Revenue after fees', value: `$${revenueAfterFees.toFixed(2)}`, icon: Wallet, color: 'bg-sky-100 text-sky-600' },
+    { label: 'Fee cost', value: `$${feeCost.toFixed(2)}`, icon: Receipt, color: 'bg-orange-100 text-orange-600' },
+    { label: 'Net in bank', value: `$${revenueAfterFees.toFixed(2)}`, icon: Wallet, color: 'bg-sky-100 text-sky-600' },
     { label: 'Avg. Order', value: completedCount > 0 ? `$${(revenue / completedCount).toFixed(2)}` : '$0', icon: BarChart3, color: 'bg-amber-100 text-amber-600' },
   ];
 
@@ -59,7 +64,7 @@ export default async function AdminDashboard() {
       <BackfillBanner missingCount={missingCostCount} />
 
       {/* Stats grid */}
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-7">
+      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-8">
         {stats.map(({ label, value, icon: Icon, color }) => (
           <div key={label} className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
             <div className="flex items-center gap-3">
