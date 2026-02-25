@@ -16,9 +16,13 @@ export interface NumericEdit {
 }
 
 export interface BulkEditEdits {
+  visible?: boolean;
+  customTitle?: { mode: 'set_exact'; value: string | null };
   retailPrice?: NumericEdit;
   simCost?: NumericEdit;
   saleBadge?: { mode: 'set_exact'; value: string | null };
+  featured?: boolean;
+  sortOrder?: { mode: 'set_exact'; value: number };
   notes?: { mode: 'set_exact'; value: string | null };
   paddlePriceId?: { mode: 'set_exact'; value: string | null };
 }

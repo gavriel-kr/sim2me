@@ -97,14 +97,22 @@ export function BulkEditDrawer({
   const [error, setError] = useState('');
 
   // Section A — edits form
+  const [applyVisible, setApplyVisible] = useState(false);
+  const [visibleValue, setVisibleValue] = useState(true);
+  const [applyCustomTitle, setApplyCustomTitle] = useState(false);
+  const [customTitleValue, setCustomTitleValue] = useState('');
   const [retailMode, setRetailMode] = useState<NumericEditMode>('set_exact');
   const [retailValue, setRetailValue] = useState('');
   const [simCostMode, setSimCostMode] = useState<NumericEditMode>('set_exact');
   const [simCostValue, setSimCostValue] = useState('');
   const [saleBadgeValue, setSaleBadgeValue] = useState('');
+  const [applySaleBadge, setApplySaleBadge] = useState(false);
+  const [applyFeatured, setApplyFeatured] = useState(false);
+  const [featuredValue, setFeaturedValue] = useState(false);
+  const [applySortOrder, setApplySortOrder] = useState(false);
+  const [sortOrderValue, setSortOrderValue] = useState('');
   const [notesValue, setNotesValue] = useState('');
   const [paddlePriceIdValue, setPaddlePriceIdValue] = useState('');
-  const [applySaleBadge, setApplySaleBadge] = useState(false);
   const [applyNotes, setApplyNotes] = useState(false);
   const [applyPaddlePriceId, setApplyPaddlePriceId] = useState(false);
 
@@ -141,14 +149,22 @@ export function BulkEditDrawer({
       name,
       edits,
       conditions: conditionsPayload,
+      applyVisible,
+      visibleValue,
+      applyCustomTitle,
+      customTitleValue,
       retailMode,
       retailValue,
       simCostMode,
       simCostValue,
       saleBadgeValue,
+      applySaleBadge,
+      applyFeatured,
+      featuredValue,
+      applySortOrder,
+      sortOrderValue,
       notesValue,
       paddlePriceIdValue,
-      applySaleBadge,
       applyNotes,
       applyPaddlePriceId,
       marginLessThan,
@@ -186,14 +202,22 @@ export function BulkEditDrawer({
       const raw = localStorage.getItem(`${TEMPLATE_KEY}_${id}`);
       if (!raw) return;
       const t = JSON.parse(raw);
+      if (t.applyVisible != null) setApplyVisible(t.applyVisible);
+      if (t.visibleValue != null) setVisibleValue(t.visibleValue);
+      if (t.applyCustomTitle != null) setApplyCustomTitle(t.applyCustomTitle);
+      if (t.customTitleValue != null) setCustomTitleValue(t.customTitleValue);
       if (t.retailMode != null) setRetailMode(t.retailMode);
       if (t.retailValue != null) setRetailValue(t.retailValue);
       if (t.simCostMode != null) setSimCostMode(t.simCostMode);
       if (t.simCostValue != null) setSimCostValue(t.simCostValue);
       if (t.saleBadgeValue != null) setSaleBadgeValue(t.saleBadgeValue);
+      if (t.applySaleBadge != null) setApplySaleBadge(t.applySaleBadge);
+      if (t.applyFeatured != null) setApplyFeatured(t.applyFeatured);
+      if (t.featuredValue != null) setFeaturedValue(t.featuredValue);
+      if (t.applySortOrder != null) setApplySortOrder(t.applySortOrder);
+      if (t.sortOrderValue != null) setSortOrderValue(String(t.sortOrderValue));
       if (t.notesValue != null) setNotesValue(t.notesValue);
       if (t.paddlePriceIdValue != null) setPaddlePriceIdValue(t.paddlePriceIdValue);
-      if (t.applySaleBadge != null) setApplySaleBadge(t.applySaleBadge);
       if (t.applyNotes != null) setApplyNotes(t.applyNotes);
       if (t.applyPaddlePriceId != null) setApplyPaddlePriceId(t.applyPaddlePriceId);
       if (t.marginLessThan != null) setMarginLessThan(t.marginLessThan);
@@ -214,6 +238,12 @@ export function BulkEditDrawer({
 
   const edits = useMemo((): BulkEditEdits => {
     const e: BulkEditEdits = {};
+    if (applyVisible) {
+      e.visible = visibleValue;
+    }
+    if (applyCustomTitle) {
+      e.customTitle = { mode: 'set_exact', value: customTitleValue.trim() || null };
+    }
     const rv = parseFloat(retailValue);
     if (retailValue !== '' && Number.isFinite(rv)) {
       e.retailPrice = { mode: retailMode, value: rv };
@@ -225,6 +255,13 @@ export function BulkEditDrawer({
     if (applySaleBadge) {
       e.saleBadge = { mode: 'set_exact', value: saleBadgeValue.trim() || null };
     }
+    if (applyFeatured) {
+      e.featured = featuredValue;
+    }
+    const so = parseInt(sortOrderValue, 10);
+    if (applySortOrder && sortOrderValue !== '' && !Number.isNaN(so)) {
+      e.sortOrder = { mode: 'set_exact', value: so };
+    }
     if (applyNotes) {
       e.notes = { mode: 'set_exact', value: notesValue.trim() || null };
     }
@@ -233,12 +270,20 @@ export function BulkEditDrawer({
     }
     return e;
   }, [
+    applyVisible,
+    visibleValue,
+    applyCustomTitle,
+    customTitleValue,
     retailMode,
     retailValue,
     simCostMode,
     simCostValue,
     applySaleBadge,
     saleBadgeValue,
+    applyFeatured,
+    featuredValue,
+    applySortOrder,
+    sortOrderValue,
     applyNotes,
     notesValue,
     applyPaddlePriceId,
@@ -435,6 +480,92 @@ export function BulkEditDrawer({
 
           {step === 'edit' && (
             <>
+              {/* Visibility & display */}
+              <section>
+                <h3 className="text-sm font-semibold text-gray-700 mb-3">Visibility & display</h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="flex items-center gap-2 text-xs font-medium text-gray-500 mb-1">
+                      <input
+                        type="checkbox"
+                        checked={applyVisible}
+                        onChange={(e) => setApplyVisible(e.target.checked)}
+                        className="rounded border-gray-300"
+                      />
+                      Change visibility
+                    </label>
+                    <select
+                      value={visibleValue ? 'visible' : 'hidden'}
+                      onChange={(e) => setVisibleValue(e.target.value === 'visible')}
+                      disabled={!applyVisible}
+                      className="w-full rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm disabled:opacity-50"
+                    >
+                      <option value="visible">Visible (show on site)</option>
+                      <option value="hidden">Hidden</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="flex items-center gap-2 text-xs font-medium text-gray-500 mb-1">
+                      <input
+                        type="checkbox"
+                        checked={applyCustomTitle}
+                        onChange={(e) => setApplyCustomTitle(e.target.checked)}
+                        className="rounded border-gray-300"
+                      />
+                      Custom title
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Leave empty to use API name"
+                      value={customTitleValue}
+                      onChange={(e) => setCustomTitleValue(e.target.value)}
+                      disabled={!applyCustomTitle}
+                      className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm disabled:opacity-50"
+                    />
+                  </div>
+                  <div>
+                    <label className="flex items-center gap-2 text-xs font-medium text-gray-500 mb-1">
+                      <input
+                        type="checkbox"
+                        checked={applyFeatured}
+                        onChange={(e) => setApplyFeatured(e.target.checked)}
+                        className="rounded border-gray-300"
+                      />
+                      Featured
+                    </label>
+                    <select
+                      value={featuredValue ? 'yes' : 'no'}
+                      onChange={(e) => setFeaturedValue(e.target.value === 'yes')}
+                      disabled={!applyFeatured}
+                      className="w-full rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm disabled:opacity-50"
+                    >
+                      <option value="no">No</option>
+                      <option value="yes">Yes</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="flex items-center gap-2 text-xs font-medium text-gray-500 mb-1">
+                      <input
+                        type="checkbox"
+                        checked={applySortOrder}
+                        onChange={(e) => setApplySortOrder(e.target.checked)}
+                        className="rounded border-gray-300"
+                      />
+                      Sort order
+                    </label>
+                    <input
+                      type="number"
+                      step={1}
+                      placeholder="0"
+                      value={sortOrderValue}
+                      onChange={(e) => setSortOrderValue(e.target.value)}
+                      disabled={!applySortOrder}
+                      className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm disabled:opacity-50"
+                    />
+                  </div>
+                </div>
+              </section>
+
               {/* Section A — Pricing */}
               <section>
                 <h3 className="text-sm font-semibold text-gray-700 mb-3">Pricing fields</h3>

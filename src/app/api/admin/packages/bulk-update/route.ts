@@ -56,9 +56,13 @@ export async function POST(req: NextRequest) {
   }
 
   const hasAnyEdit =
+    edits.visible !== undefined ||
+    edits.customTitle ||
     edits.retailPrice ||
     edits.simCost ||
     edits.saleBadge ||
+    edits.featured !== undefined ||
+    edits.sortOrder ||
     edits.notes ||
     edits.paddlePriceId;
   if (!hasAnyEdit) {
@@ -231,16 +235,31 @@ export async function POST(req: NextRequest) {
           : (existing?.paddlePriceId ?? null)
         : (existing?.paddlePriceId ?? null);
 
+    const newVisible =
+      edits.visible !== undefined ? edits.visible : (existing?.visible ?? true);
+    const newCustomTitle =
+      edits.customTitle !== undefined
+        ? (edits.customTitle.mode === 'set_exact' ? edits.customTitle.value?.trim() || null : (existing?.customTitle ?? null))
+        : (existing?.customTitle ?? null);
+    const newFeatured =
+      edits.featured !== undefined ? edits.featured : (existing?.featured ?? false);
+    const newSortOrder =
+      edits.sortOrder !== undefined
+        ? edits.sortOrder.mode === 'set_exact'
+          ? edits.sortOrder.value
+          : (existing?.sortOrder ?? 0)
+        : (existing?.sortOrder ?? 0);
+
     updates.push({
       packageCode,
-      visible: existing?.visible ?? true,
-      customTitle: existing?.customTitle ?? null,
+      visible: newVisible,
+      customTitle: newCustomTitle,
       customPrice: newRetail,
       simCost: newSimCost,
       paddlePriceId: newPaddlePriceId,
       saleBadge: newSaleBadge,
-      featured: existing?.featured ?? false,
-      sortOrder: existing?.sortOrder ?? 0,
+      featured: newFeatured,
+      sortOrder: newSortOrder,
       notes: newNotes,
     });
   }
