@@ -1,6 +1,6 @@
 /**
- * Seed script: 25 SEO articles (10 EN, 10 HE, 5 AR)
- * Hebrew: general + USA, Europe, Thailand, Dubai + Cyprus, Bucharest, USA-2, Greece, Germany.
+ * Seed script: 28 SEO articles (10 EN, 13 HE, 5 AR)
+ * Hebrew: general, USA, Europe, Thailand, Dubai, Cyprus, Bucharest, USA-2, Greece, Germany, London, Paris, Turkey.
  * Run: npx tsx prisma/seed-articles.ts
  */
 import { PrismaClient } from '@prisma/client';
