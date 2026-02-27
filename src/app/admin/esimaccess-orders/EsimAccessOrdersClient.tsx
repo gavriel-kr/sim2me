@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Download, Upload, RefreshCw, Search, X,
-  TrendingDown, ShoppingCart, CheckCircle2, DollarSign,
+  TrendingDown, ShoppingCart, CheckCircle2, DollarSign, CloudDownload,
 } from 'lucide-react';
 
 interface EsimAccessOrder {
@@ -123,6 +123,8 @@ export function EsimAccessOrdersClient() {
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState<{ imported: number; alreadyExist: number; errors: string[]; message?: string } | null>(null);
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const autoRefreshRef = useRef<NodeJS.Timeout | null>(null);
@@ -171,6 +173,23 @@ export function EsimAccessOrdersClient() {
     setDateFrom('');
     setDateTo('');
     fetchData('', '');
+  };
+
+  // ─── Sync from eSIMaccess ────────────────────────────────────
+  const handleSync = async () => {
+    if (!confirm('This will import all eSIMaccess orders missing from the database as unassigned stub records. Continue?')) return;
+    setSyncing(true);
+    setSyncResult(null);
+    try {
+      const res = await fetch('/api/admin/esimaccess/sync', { method: 'POST' });
+      const data = await res.json();
+      setSyncResult(data);
+      if (data.imported > 0) fetchData(dateFrom, dateTo, true);
+    } catch (err) {
+      setSyncResult({ imported: 0, alreadyExist: 0, errors: [(err as Error).message] });
+    } finally {
+      setSyncing(false);
+    }
   };
 
   // ─── Export ──────────────────────────────────────────────────
@@ -334,6 +353,15 @@ export function EsimAccessOrdersClient() {
       {/* Action buttons */}
       <div className="flex flex-wrap items-center gap-2">
         <button
+          onClick={handleSync}
+          disabled={syncing}
+          className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+          title="Fetch all eSIMaccess orders and import missing ones as unassigned stubs"
+        >
+          <CloudDownload className="h-4 w-4" />
+          {syncing ? 'Syncing…' : 'Sync from eSIMaccess'}
+        </button>
+        <button
           onClick={handleExport}
           disabled={exporting || !data?.orders.length}
           className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
@@ -356,15 +384,36 @@ export function EsimAccessOrdersClient() {
           <Upload className="h-4 w-4" />
           {importing ? 'Importing…' : 'Import from Excel'}
         </button>
-        {importResult && (
-          <span className="text-sm text-gray-600">{importResult}</span>
-        )}
         {data && (
           <span className="ml-auto text-xs text-gray-400">
             {data.orders.length} of {data.total} orders shown
           </span>
         )}
       </div>
+
+      {/* Sync result */}
+      {syncResult && (
+        <div className={`rounded-xl border px-4 py-3 text-sm ${syncResult.errors.length > 0 && syncResult.imported === 0 ? 'border-red-200 bg-red-50' : 'border-emerald-200 bg-emerald-50'}`}>
+          {syncResult.message ? (
+            <p className="text-gray-700">{syncResult.message}</p>
+          ) : (
+            <p className="font-medium text-gray-800">
+              Sync complete — <span className="text-emerald-700">{syncResult.imported} imported</span>
+              {' '}· {syncResult.alreadyExist} already in DB
+            </p>
+          )}
+          {syncResult.errors.length > 0 && (
+            <ul className="mt-1 space-y-0.5 text-xs text-red-600">
+              {syncResult.errors.map((e, i) => <li key={i}>{e}</li>)}
+            </ul>
+          )}
+        </div>
+      )}
+
+      {/* Import result */}
+      {importResult && (
+        <p className="text-sm text-gray-600">{importResult}</p>
+      )}
 
       {/* Table */}
       {loading ? (

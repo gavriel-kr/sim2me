@@ -165,6 +165,59 @@ export async function getEsimUsage(iccid: string): Promise<EsimProfile | null> {
   }
 }
 
+// ─── Raw eSIM list item (all fields eSIMaccess may return) ───
+
+export interface EsimListItem {
+  iccid?: string;
+  smdpAddress?: string;
+  activationCode?: string;
+  qrCodeUrl?: string;
+  status?: string;
+  // Order identifiers
+  orderNo?: string;          // Batch ID e.g. B260...
+  transactionId?: string;
+  // Package info
+  packageCode?: string;
+  packageName?: string;
+  locationName?: string;
+  locationCode?: string;
+  // Data/validity
+  orderVolume?: number;      // bytes
+  usedVolume?: number;
+  remainingVolume?: number;
+  expiredTime?: number;      // unix ms
+  // Pricing
+  price?: number;            // supplier cost in API units (×10000 = USD cents)
+  // Time
+  createTime?: string;
+  // Sometimes the API wraps package info inside packageList
+  packageList?: Array<{
+    packageCode?: string;
+    packageName?: string;
+    price?: number;
+    volume?: number;
+    duration?: number;
+    location?: string;
+    locationCode?: string;
+    durationUnit?: string;
+    currencyCode?: string;
+  }>;
+}
+
+/**
+ * List all eSIMs for the account with pagination.
+ * Calls /open/esim/query without orderNo/iccid filters.
+ * Pass pageNum starting at 1; keep fetching until esimList is empty.
+ */
+export async function listEsimsPage(
+  pageNum: number,
+  pageSize = 100,
+): Promise<{ esimList: EsimListItem[] }> {
+  return apiCall<{ esimList: EsimListItem[] }>('/open/esim/query', {
+    pager: { pageNum, pageSize },
+  });
+}
+
 /** Cancel/refund an unused eSIM order */
 export async function cancelOrder(orderNo: string): Promise<{ success: boolean; message: string }> {
   return apiCall<{ success: boolean; message: string }>('/open/esim/cancel', {
