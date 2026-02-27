@@ -9,6 +9,7 @@ interface Props {
   articles: ArticleSummary[];
   locale: string;
   heading: string;
+  defaultImage?: { url: string; alt: string } | null;
 }
 
 function formatDate(date: Date, locale: string) {
@@ -32,7 +33,7 @@ function CardPlaceholder({ bgColor }: { bgColor?: string }) {
   );
 }
 
-export function ArticlesIndexClient({ articles, locale, heading }: Props) {
+export function ArticlesIndexClient({ articles, locale, heading, defaultImage }: Props) {
   const params = useParams();
   const prefix = (params.locale as string) === 'en' ? '' : `/${params.locale}`;
   const isRTL = locale === 'he' || locale === 'ar';
@@ -65,6 +66,10 @@ export function ArticlesIndexClient({ articles, locale, heading }: Props) {
                 {a.featuredImage && !isBgColor ? (
                   <div className="relative h-44 w-full overflow-hidden bg-gray-100">
                     <Image src={a.featuredImage} alt={a.title} fill className="object-cover transition-transform duration-300 group-hover:scale-105" />
+                  </div>
+                ) : defaultImage?.url ? (
+                  <div className="relative h-44 w-full overflow-hidden bg-gray-100">
+                    <Image src={defaultImage.url} alt={defaultImage.alt || a.title} fill className="object-cover transition-transform duration-300 group-hover:scale-105" />
                   </div>
                 ) : (
                   <CardPlaceholder bgColor={bgColor} />

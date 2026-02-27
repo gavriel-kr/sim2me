@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { setRequestLocale } from 'next-intl/server';
 import { routing } from '@/i18n/routing';
 import { getPublishedArticles, type ArticleLocale } from '@/lib/articles';
+import { getArticlesDefaultImage } from '@/lib/articles-default-image';
 import { ArticlesIndexClient } from './ArticlesIndexClient';
 import { MainLayout } from '@/components/layout/MainLayout';
 import type { Metadata } from 'next';
@@ -50,7 +51,10 @@ export default async function ArticlesIndexPage({ params }: Props) {
   if (!routing.locales.includes(locale as 'en' | 'he' | 'ar')) notFound();
   setRequestLocale(locale);
 
-  const articles = await getPublishedArticles(locale as ArticleLocale);
+  const [articles, defaultImage] = await Promise.all([
+    getPublishedArticles(locale as ArticleLocale),
+    getArticlesDefaultImage(),
+  ]);
 
   const headings: Record<string, string> = {
     en: 'eSIM Travel Guides',
@@ -60,7 +64,7 @@ export default async function ArticlesIndexPage({ params }: Props) {
 
   return (
     <MainLayout>
-      <ArticlesIndexClient articles={articles} locale={locale} heading={headings[locale] || headings.en} />
+      <ArticlesIndexClient articles={articles} locale={locale} heading={headings[locale] || headings.en} defaultImage={defaultImage} />
     </MainLayout>
   );
 }

@@ -124,8 +124,20 @@ function FeaturedImageField({ value, onChange }: { value: string; onChange: (v: 
   );
 }
 
-export function ArticlesClient({ articles: initial }: { articles: ArticleRow[] }) {
+type DefaultImageState = { url: string; alt: string } | null;
+
+export function ArticlesClient({
+  articles: initial,
+  initialDefaultImage,
+}: {
+  articles: ArticleRow[];
+  initialDefaultImage?: DefaultImageState;
+}) {
   const [articles, setArticles] = useState<ArticleRow[]>(initial);
+  const [defaultImage, setDefaultImage] = useState<DefaultImageState>(initialDefaultImage ?? null);
+  const [defaultImageDraft, setDefaultImageDraft] = useState({ url: initialDefaultImage?.url ?? '', alt: initialDefaultImage?.alt ?? '' });
+  const [savingDefault, setSavingDefault] = useState(false);
+  const defaultImageFileRef = useRef<HTMLInputElement>(null);
   const [editing, setEditing] = useState<string | null>(null); // id or 'new'
   const [form, setForm] = useState<Omit<ArticleRow, 'id' | 'createdAt' | 'updatedAt'> & { content?: string }>(BLANK);
   const [content, setContent] = useState('');
@@ -222,6 +234,41 @@ export function ArticlesClient({ articles: initial }: { articles: ArticleRow[] }
     if (res.ok) {
       setArticles((prev) => prev.map((x) => (x.id === a.id ? { ...x, status: newStatus } : x)));
     }
+  };
+
+  const saveDefaultImage = async () => {
+    setSavingDefault(true);
+    try {
+      const res = await fetch('/api/admin/articles/default-image', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: defaultImageDraft.url.trim() || undefined,
+          alt: defaultImageDraft.alt.trim() || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        flash('err', data.error || 'Failed to save default image');
+        return;
+      }
+      setDefaultImage(data.defaultImage ?? null);
+      setDefaultImageDraft({ url: data.defaultImage?.url ?? '', alt: data.defaultImage?.alt ?? '' });
+      flash('ok', 'Default image saved. Used for articles without a featured image.');
+    } catch {
+      flash('err', 'Network error');
+    } finally {
+      setSavingDefault(false);
+    }
+  };
+
+  const onDefaultImageFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => setDefaultImageDraft((d) => ({ ...d, url: ev.target?.result as string }));
+    reader.readAsDataURL(file);
+    e.target.value = '';
   };
 
   const displayed = articles
@@ -430,6 +477,60 @@ export function ArticlesClient({ articles: initial }: { articles: ArticleRow[] }
               {/* Result count */}
               <span className="text-xs text-gray-400 ml-auto">{displayed.length} article{displayed.length !== 1 ? 's' : ''}</span>
             </div>
+          </div>
+
+          {/* Default image for articles (when no featured image set) */}
+          <div className="mb-4 rounded-xl border border-gray-200 bg-white p-4">
+            <h3 className="text-sm font-semibold text-gray-900 mb-2">Default article image</h3>
+            <p className="text-xs text-gray-500 mb-3">
+              Shown for all articles that have no featured image. Alt text is required for accessibility (screen readers, SEO).
+            </p>
+            <div className="flex flex-wrap gap-4 items-end">
+              <div className="flex-1 min-w-[200px]">
+                <label className="block text-xs font-medium text-gray-700 mb-1">Image URL</label>
+                <input
+                  type="url"
+                  value={defaultImageDraft.url}
+                  onChange={(e) => setDefaultImageDraft((d) => ({ ...d, url: e.target.value }))}
+                  placeholder="https://… or upload below"
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                />
+              </div>
+              <div className="flex-1 min-w-[200px]">
+                <label className="block text-xs font-medium text-gray-700 mb-1">Alt text (required for accessibility)</label>
+                <input
+                  type="text"
+                  value={defaultImageDraft.alt}
+                  onChange={(e) => setDefaultImageDraft((d) => ({ ...d, alt: e.target.value }))}
+                  placeholder="Describe the image for screen readers"
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                />
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => defaultImageFileRef.current?.click()}
+                  className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-600 hover:bg-gray-50"
+                >
+                  <Upload className="h-3.5 w-3.5" /> Upload
+                </button>
+                <button
+                  type="button"
+                  onClick={saveDefaultImage}
+                  disabled={savingDefault}
+                  className="rounded-lg bg-emerald-600 px-4 py-2 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
+                >
+                  {savingDefault ? 'Saving…' : 'Save default image'}
+                </button>
+              </div>
+            </div>
+            {defaultImageDraft.url && (
+              <div className="mt-3 h-20 w-32 overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={defaultImageDraft.url} alt={defaultImageDraft.alt || 'Preview'} className="h-full w-full object-cover" onError={(e) => ((e.target as HTMLImageElement).style.display = 'none')} />
+              </div>
+            )}
+            <input ref={defaultImageFileRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={onDefaultImageFile} />
           </div>
 
           {displayed.length === 0 ? (

@@ -2,6 +2,7 @@ import { notFound, redirect } from 'next/navigation';
 import { setRequestLocale } from 'next-intl/server';
 import { routing } from '@/i18n/routing';
 import { getArticleBySlug, getArticleHreflangs, getRelatedArticles, type ArticleLocale } from '@/lib/articles';
+import { getArticlesDefaultImage } from '@/lib/articles-default-image';
 import { ArticleDetail } from './ArticleDetail';
 import { MainLayout } from '@/components/layout/MainLayout';
 import type { Metadata } from 'next';
@@ -60,10 +61,10 @@ export default async function ArticleDetailPage({ params }: Props) {
   const prefix = localePrefix(locale);
   const canonical = article.canonicalUrl || `${siteUrl}${prefix}/articles/${slug}`;
 
-  const relatedArticles =
-    article.showRelatedArticles !== false
-      ? await getRelatedArticles(article.id, locale as ArticleLocale, 3)
-      : [];
+  const [relatedArticles, defaultImage] = await Promise.all([
+    article.showRelatedArticles !== false ? getRelatedArticles(article.id, locale as ArticleLocale, 3) : Promise.resolve([]),
+    getArticlesDefaultImage(),
+  ]);
 
   // FAQ schema extraction: scan for JSON-LD in content
   const faqMatch = article.content.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);
@@ -85,7 +86,7 @@ export default async function ArticleDetailPage({ params }: Props) {
           ],
         })
       }} />
-      <ArticleDetail article={article} locale={locale} canonical={canonical} relatedArticles={relatedArticles} />
+      <ArticleDetail article={article} locale={locale} canonical={canonical} relatedArticles={relatedArticles} defaultImage={defaultImage} />
     </MainLayout>
   );
 }

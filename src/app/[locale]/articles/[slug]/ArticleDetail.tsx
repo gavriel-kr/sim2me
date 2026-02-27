@@ -10,6 +10,7 @@ interface Props {
   locale: string;
   canonical: string;
   relatedArticles: ArticleSummary[];
+  defaultImage?: { url: string; alt: string } | null;
 }
 
 function formatDate(date: Date, locale: string) {
@@ -31,7 +32,7 @@ function RelatedCardPlaceholder({ bgColor }: { bgColor?: string }) {
   );
 }
 
-export function ArticleDetail({ article, locale, relatedArticles }: Props) {
+export function ArticleDetail({ article, locale, relatedArticles, defaultImage }: Props) {
   const params = useParams();
   const prefix = (params.locale as string) === 'en' ? '' : `/${params.locale}`;
   const isRTL = locale === 'he' || locale === 'ar';
@@ -42,12 +43,17 @@ export function ArticleDetail({ article, locale, relatedArticles }: Props) {
   return (
     <div className="bg-white min-h-screen" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Hero image */}
-      {article.featuredImage && (
+      {(article.featuredImage && !article.featuredImage.startsWith('bg:')) ? (
         <div className="relative h-64 w-full overflow-hidden sm:h-80">
           <Image src={article.featuredImage} alt={article.title} fill className="object-cover" priority />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
         </div>
-      )}
+      ) : defaultImage?.url ? (
+        <div className="relative h-64 w-full overflow-hidden sm:h-80">
+          <Image src={defaultImage.url} alt={defaultImage.alt || article.title} fill className="object-cover" priority />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+        </div>
+      ) : null}
 
       <div className="container mx-auto max-w-3xl px-4 py-10">
         {/* Breadcrumb */}
@@ -102,6 +108,10 @@ export function ArticleDetail({ article, locale, relatedArticles }: Props) {
                     {a.featuredImage && !isBgColor ? (
                       <div className="relative h-32 w-full overflow-hidden bg-gray-100">
                         <Image src={a.featuredImage} alt={a.title} fill className="object-cover transition-transform duration-300 group-hover:scale-105" />
+                      </div>
+                    ) : defaultImage?.url ? (
+                      <div className="relative h-32 w-full overflow-hidden bg-gray-100">
+                        <Image src={defaultImage.url} alt={defaultImage.alt || a.title} fill className="object-cover transition-transform duration-300 group-hover:scale-105" />
                       </div>
                     ) : (
                       <RelatedCardPlaceholder bgColor={bgColor} />

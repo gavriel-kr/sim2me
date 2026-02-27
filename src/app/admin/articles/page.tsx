@@ -2,6 +2,7 @@ import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { getArticlesDefaultImage } from '@/lib/articles-default-image';
 import { ArticlesClient } from './ArticlesClient';
 
 export const dynamic = 'force-dynamic';
@@ -10,6 +11,8 @@ export const metadata = { title: 'Articles (SEO) | Admin' };
 export default async function ArticlesAdminPage() {
   const session = await getServerSession(authOptions);
   if (!session) redirect('/admin/login');
+
+  const defaultImage = await getArticlesDefaultImage();
 
   const articles = await prisma.article.findMany({
     orderBy: [{ locale: 'asc' }, { articleOrder: 'asc' }, { createdAt: 'desc' }],
@@ -43,7 +46,7 @@ export default async function ArticlesAdminPage() {
         <code className="rounded bg-gray-100 px-1 text-xs">/he/articles</code>, and{' '}
         <code className="rounded bg-gray-100 px-1 text-xs">/ar/articles</code>.
       </p>
-      <ArticlesClient articles={articles} />
+      <ArticlesClient articles={articles} initialDefaultImage={defaultImage} />
     </div>
   );
 }
