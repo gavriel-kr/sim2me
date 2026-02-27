@@ -280,7 +280,7 @@ export function AccessibilityToolbar() {
                 {t('positionTitle')}
               </p>
               <div className="flex flex-wrap gap-2">
-                <div className="flex rounded-xl border border-border bg-muted/30 p-1">
+                <div className="flex rounded-xl border border-border bg-muted/30 p-1" dir="ltr">
                   {/* "Left" button — in RTL, physical-left = logical 'end'; in LTR = logical 'start' */}
                   <button
                     type="button"
