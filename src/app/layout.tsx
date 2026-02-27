@@ -4,6 +4,8 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages } from 'next-intl/server';
 import { brandConfig } from '@/config/brand';
 import { Providers } from '@/components/providers/Providers';
+import { CookieConsentProvider } from '@/components/CookieConsentProvider';
+import { CookieBanner } from '@/components/CookieBanner';
 import '@/app/globals.css';
 
 const dmSans = DM_Sans({
@@ -99,40 +101,16 @@ export default async function RootLayout({
   return (
     <html lang={locale} dir={dir} suppressHydrationWarning className={dmSans.variable}>
       <head>
-        {/* Google Tag Manager - as high in head as possible */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','GTM-NSQKP7XQ');`,
-          }}
-        />
-        {/* Google tag (gtag.js) - GA4 */}
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y5BJ7VNNYM" />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `window.dataLayer = window.dataLayer || [];
-function gtag(){dataLayer.push(arguments);}
-gtag('js', new Date());
-gtag('config', 'G-Y5BJ7VNNYM');`,
-          }}
-        />
+        {/* Analytics/marketing scripts loaded only after cookie consent (see CookieConsentProvider) */}
       </head>
       <body className="font-sans">
-        {/* Google Tag Manager (noscript) - immediately after opening body */}
-        <noscript>
-          <iframe
-            src="https://www.googletagmanager.com/ns.html?id=GTM-NSQKP7XQ"
-            height="0"
-            width="0"
-            style={{ display: 'none', visibility: 'hidden' }}
-            title="Google Tag Manager"
-          />
-        </noscript>
         <NextIntlClientProvider locale={locale} messages={messages}>
-          <Providers>{children}</Providers>
+          <Providers>
+            <CookieConsentProvider>
+              {children}
+              <CookieBanner />
+            </CookieConsentProvider>
+          </Providers>
         </NextIntlClientProvider>
         <script
           dangerouslySetInnerHTML={{

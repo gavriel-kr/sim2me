@@ -16,6 +16,7 @@ export const routing = defineRouting({
     '/contact': '/contact',
     '/terms': '/terms',
     '/privacy': '/privacy',
+    '/cookies': '/cookies',
     '/refund': '/refund',
     '/checkout': '/checkout',
     '/account': '/account',

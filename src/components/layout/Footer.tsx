@@ -5,6 +5,7 @@ import { brandConfig } from '@/config/brand';
 import { Mail, ExternalLink } from 'lucide-react';
 import { createSharedPathnamesNavigation } from 'next-intl/navigation';
 import { routing } from '@/i18n/routing';
+import { useCookieConsent } from '@/components/CookieConsentProvider';
 
 const { Link: IntlLink } = createSharedPathnamesNavigation(routing);
 
@@ -31,6 +32,7 @@ export function Footer() {
   const t = useTranslations('nav');
   const tFooter = useTranslations('footer');
   const tHome = useTranslations('home');
+  const { openCookieSettings } = useCookieConsent();
 
   return (
     <footer className="border-t border-border/40 bg-gray-50">
@@ -129,6 +131,16 @@ export function Footer() {
                   </IntlLink>
                 </li>
               ))}
+              <li>
+                <button
+                  type="button"
+                  onClick={openCookieSettings}
+                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                  aria-label={tFooter('cookieSettings')}
+                >
+                  {tFooter('cookieSettings')}
+                </button>
+              </li>
             </ul>
           </div>
         </div>
