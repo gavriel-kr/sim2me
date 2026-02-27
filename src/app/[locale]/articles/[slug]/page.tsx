@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import { setRequestLocale } from 'next-intl/server';
 import { routing } from '@/i18n/routing';
-import { getArticleBySlug, getArticleHreflangs, type ArticleLocale } from '@/lib/articles';
+import { getArticleBySlug, getArticleHreflangs, getRelatedArticles, type ArticleLocale } from '@/lib/articles';
 import { ArticleDetail } from './ArticleDetail';
 import { MainLayout } from '@/components/layout/MainLayout';
 import type { Metadata } from 'next';
@@ -60,6 +60,11 @@ export default async function ArticleDetailPage({ params }: Props) {
   const prefix = localePrefix(locale);
   const canonical = article.canonicalUrl || `${siteUrl}${prefix}/articles/${slug}`;
 
+  const relatedArticles =
+    article.showRelatedArticles !== false
+      ? await getRelatedArticles(article.id, locale as ArticleLocale, 3)
+      : [];
+
   // FAQ schema extraction: scan for JSON-LD in content
   const faqMatch = article.content.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);
   const schemaJson = faqMatch ? faqMatch[1] : null;
@@ -80,7 +85,7 @@ export default async function ArticleDetailPage({ params }: Props) {
           ],
         })
       }} />
-      <ArticleDetail article={article} locale={locale} canonical={canonical} />
+      <ArticleDetail article={article} locale={locale} canonical={canonical} relatedArticles={relatedArticles} />
     </MainLayout>
   );
 }

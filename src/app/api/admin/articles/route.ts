@@ -23,6 +23,7 @@ export async function GET() {
       metaDesc: true,
       articleOrder: true,
       status: true,
+      showRelatedArticles: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -39,7 +40,7 @@ export async function POST(request: Request) {
   const {
     slug, locale, title, content, excerpt, featuredImage,
     focusKeyword, metaTitle, metaDesc, ogTitle, ogDesc,
-    canonicalUrl, articleOrder, status,
+    canonicalUrl, articleOrder, status, showRelatedArticles,
   } = body;
 
   if (!slug || !locale || !title) {
@@ -60,6 +61,7 @@ export async function POST(request: Request) {
       canonicalUrl,
       articleOrder: articleOrder ?? 0,
       status: status || 'DRAFT',
+      showRelatedArticles: showRelatedArticles !== false,
     },
   });
 

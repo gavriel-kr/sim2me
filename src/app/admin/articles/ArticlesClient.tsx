@@ -21,6 +21,7 @@ interface ArticleRow {
   canonicalUrl: string | null;
   articleOrder: number;
   status: ArticleStatus;
+  showRelatedArticles: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -29,7 +30,7 @@ const BLANK: Omit<ArticleRow, 'id' | 'createdAt' | 'updatedAt'> = {
   slug: '', locale: 'en', title: '', excerpt: null,
   featuredImage: null, focusKeyword: null,
   metaTitle: null, metaDesc: null, ogTitle: null, ogDesc: null,
-  canonicalUrl: null, articleOrder: 0, status: 'DRAFT',
+  canonicalUrl: null, articleOrder: 0, status: 'DRAFT', showRelatedArticles: true,
 };
 
 const LOCALE_LABELS: Record<string, string> = { en: '🇬🇧 EN', he: '🇮🇱 HE', ar: '🇸🇦 AR' };
@@ -155,6 +156,7 @@ export function ArticlesClient({ articles: initial }: { articles: ArticleRow[] }
       focusKeyword: a.focusKeyword, metaTitle: a.metaTitle,
       metaDesc: a.metaDesc, ogTitle: a.ogTitle, ogDesc: a.ogDesc,
       canonicalUrl: a.canonicalUrl, articleOrder: a.articleOrder, status: a.status,
+      showRelatedArticles: a.showRelatedArticles !== false,
     });
     // Fetch full content
     fetch(`/api/admin/articles/${a.id}`)
@@ -300,6 +302,18 @@ export function ArticlesClient({ articles: initial }: { articles: ArticleRow[] }
                   <div>
                     <label className={labelCls}>Article Order</label>
                     <input type="number" className={inputCls} value={form.articleOrder} onChange={(e) => setForm({ ...form, articleOrder: Number(e.target.value) })} />
+                  </div>
+                  <div className="sm:col-span-2 flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="showRelated"
+                      checked={form.showRelatedArticles !== false}
+                      onChange={(e) => setForm({ ...form, showRelatedArticles: e.target.checked })}
+                      className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                    />
+                    <label htmlFor="showRelated" className="text-sm font-medium text-gray-700">
+                      Show related articles at end of post (2–3 same language, random order)
+                    </label>
                   </div>
                   <div>
                     <label className={labelCls}>Focus Keyword</label>

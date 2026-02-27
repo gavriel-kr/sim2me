@@ -26,7 +26,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const {
     slug, locale, title, content, excerpt, featuredImage,
     focusKeyword, metaTitle, metaDesc, ogTitle, ogDesc,
-    canonicalUrl, articleOrder, status,
+    canonicalUrl, articleOrder, status, showRelatedArticles,
   } = body;
 
   // If slug+locale changed, check for conflicts
@@ -56,6 +56,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       ...(canonicalUrl !== undefined && { canonicalUrl }),
       ...(articleOrder !== undefined && { articleOrder }),
       ...(status !== undefined && { status }),
+      ...(showRelatedArticles !== undefined && { showRelatedArticles: Boolean(showRelatedArticles) }),
     },
   });
 

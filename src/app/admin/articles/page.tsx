@@ -28,6 +28,7 @@ export default async function ArticlesAdminPage() {
       canonicalUrl: true,
       articleOrder: true,
       status: true,
+      showRelatedArticles: true,
       createdAt: true,
       updatedAt: true,
     },
