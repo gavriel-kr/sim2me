@@ -1,6 +1,7 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
+import { useEffect } from 'react';
 import { brandConfig } from '@/config/brand';
 import { Mail, ExternalLink } from 'lucide-react';
 import { createSharedPathnamesNavigation } from 'next-intl/navigation';
@@ -29,11 +30,19 @@ const legalLinks = [
   { href: '/accessibility-statement', key: 'accessibilityStatement' },
 ];
 
+const LOCALE_COOKIE = 'NEXT_LOCALE';
+
 export function Footer() {
   const t = useTranslations('nav');
   const tFooter = useTranslations('footer');
   const tHome = useTranslations('home');
   const { openCookieSettings } = useCookieConsent();
+  const locale = useLocale();
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    document.cookie = `${LOCALE_COOKIE}=${locale}; path=/; max-age=31536000; SameSite=Lax`;
+  }, [locale]);
 
   return (
     <footer className="border-t border-border/40 bg-gray-50">

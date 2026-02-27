@@ -110,7 +110,10 @@ export function Header() {
                 return (
                   <DropdownMenuItem
                     key={code}
-                    onSelect={() => { window.location.href = localePath; }}
+                    onSelect={() => {
+                      document.cookie = `NEXT_LOCALE=${code}; path=/; max-age=31536000; SameSite=Lax`;
+                      window.location.href = localePath;
+                    }}
                     className="gap-2.5"
                   >
                     <span className="text-base">{flag}</span>
@@ -193,6 +196,9 @@ export function Header() {
                     <a
                       key={code}
                       href={localePath}
+                      onClick={() => {
+                        document.cookie = `NEXT_LOCALE=${code}; path=/; max-age=31536000; SameSite=Lax`;
+                      }}
                       className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
                         currentLocale === code
                           ? 'bg-primary text-primary-foreground shadow-sm'
