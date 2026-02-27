@@ -50,7 +50,10 @@ function applyPrefs(prefs: Prefs) {
   }
 }
 
-/** International Symbol of Access (ISA) — ISO 7001, widely recognized for accessibility. */
+/**
+ * Standard accessibility figure: person with arms extended (T-shape),
+ * matching the widely-recognized digital accessibility symbol.
+ */
 function ISAIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -58,17 +61,21 @@ function ISAIcon({ className }: { className?: string }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="2"
+      strokeWidth="2.4"
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
-      xmlns="http://www.w3.org/2000/svg"
     >
-      {/* Wheelchair figure per ISA: head + body + wheelchair arc + wheels */}
-      <circle cx="12" cy="6" r="2.5" fill="currentColor" />
-      <path d="M8 11v3h2l1.5 5" stroke="currentColor" fill="none" />
-      <path d="M10 11V8.5a2.5 2.5 0 0 1 5 0V11" stroke="currentColor" fill="none" />
-      <path d="M14.5 16a4 4 0 1 1-6.5-3" stroke="currentColor" fill="none" />
+      {/* Head */}
+      <circle cx="12" cy="4.5" r="2.5" fill="currentColor" stroke="none" />
+      {/* Torso */}
+      <line x1="12" y1="8" x2="12" y2="15.5" />
+      {/* Arms extended */}
+      <line x1="6" y1="11.5" x2="18" y2="11.5" />
+      {/* Left leg */}
+      <line x1="12" y1="15.5" x2="9" y2="21" />
+      {/* Right leg */}
+      <line x1="12" y1="15.5" x2="15" y2="21" />
     </svg>
   );
 }
@@ -85,27 +92,41 @@ export function AccessibilityToolbar() {
   const headingId = 'a11y-panel-heading';
   const initialLoadDone = useRef(false);
 
-  // Load from localStorage and respect prefers-reduced-motion on first visit
+  // Load from localStorage and respect prefers-reduced-motion on first visit.
+  // Default horizontal position is locale-aware so the button never overlaps
+  // the help button (StickyHelpButton is always physical right-6 via dir="ltr").
   useEffect(() => {
     if (initialLoadDone.current) return;
     initialLoadDone.current = true;
+
+    // Physical-left default: 'start' in LTR, 'end' in RTL
+    const safeH: PositionHorizontal = isRTL ? 'end' : 'start';
+    const prefersReduced =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as Partial<Prefs>;
-        const merged = { ...DEFAULT, ...parsed } as Prefs;
+        // Migrate old RTL default ('start' → 'end') so existing users stop overlapping
+        const resolvedH: PositionHorizontal =
+          parsed.positionHorizontal === 'start' && isRTL ? 'end' : (parsed.positionHorizontal ?? safeH);
+        const merged: Prefs = { ...DEFAULT, ...parsed, positionHorizontal: resolvedH };
         setPrefs(merged);
         applyPrefs(merged);
-      } else if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        setPrefs(prev => ({ ...prev, reduceMotion: true }));
-        applyPrefs({ ...DEFAULT, reduceMotion: true });
+      } else {
+        const firstDefault: Prefs = { ...DEFAULT, positionHorizontal: safeH, reduceMotion: prefersReduced };
+        setPrefs(firstDefault);
+        applyPrefs(firstDefault);
       }
     } catch {
-      if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        setPrefs(prev => ({ ...prev, reduceMotion: true }));
-        applyPrefs({ ...DEFAULT, reduceMotion: true });
-      }
+      const firstDefault: Prefs = { ...DEFAULT, positionHorizontal: safeH, reduceMotion: prefersReduced };
+      setPrefs(firstDefault);
+      applyPrefs(firstDefault);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -396,7 +417,7 @@ export function AccessibilityToolbar() {
         aria-label={open ? t('closeLabel') : t('openLabel')}
         aria-expanded={open}
         aria-controls="a11y-toolbar-panel"
-        className={`fixed z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-105 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${triggerPositionClasses}`}
+        className={`fixed z-50 flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg transition-transform hover:scale-105 hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 ${triggerPositionClasses}`}
       >
         {activeCount > 0 && (
           <span
