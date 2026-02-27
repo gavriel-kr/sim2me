@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { Download, Upload } from 'lucide-react';
+import { DashboardCubicks, type CubickStat } from '../DashboardCubicks';
 import { applyOrderFilters, type OrderFiltersState } from './orderFilters';
 import { OrdersFilters } from './OrdersFilters';
 import { exportOrdersToExcel, parseOrdersExcelFile } from './ordersExcel';
@@ -43,7 +44,7 @@ const defaultFilters: OrderFiltersState = {
   rules: [],
 };
 
-export function AdminOrdersClient({ orders: initialOrders }: { orders: Order[] }) {
+export function AdminOrdersClient({ stats, orders: initialOrders }: { stats: CubickStat[]; orders: Order[] }) {
   const [orders, setOrders] = useState(initialOrders);
   const [filters, setFilters] = useState<OrderFiltersState>(defaultFilters);
   const [loading, setLoading] = useState<Record<string, boolean>>({});
@@ -137,6 +138,7 @@ export function AdminOrdersClient({ orders: initialOrders }: { orders: Order[] }
 
   return (
     <div className="mt-6 space-y-4">
+      <DashboardCubicks stats={stats} />
       <OrdersFilters
         filters={filters}
         onFiltersChange={setFilters}

@@ -190,7 +190,7 @@ export function DashboardCubicks({ stats }: { stats: CubickStat[] }) {
         </div>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-8">
+      <div className="grid w-full min-w-0 grid-cols-1 gap-4 overflow-x-hidden sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8">
         {orderedVisible.map((label) => {
           const stat = statByLabel[label];
           if (!stat) return null;
@@ -206,7 +206,7 @@ export function DashboardCubicks({ stats }: { stats: CubickStat[] }) {
               onDragLeave={handleDragLeave}
               onDrop={(e) => handleDrop(e, label)}
               onDragEnd={handleDragEnd}
-              className={`flex cursor-grab items-center gap-2 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm active:cursor-grabbing ${isDragging ? 'opacity-60' : ''} ${isDropTarget ? 'ring-2 ring-emerald-400 ring-offset-2' : ''}`}
+              className={`flex min-w-0 cursor-grab items-center gap-2 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm active:cursor-grabbing sm:p-5 ${isDragging ? 'opacity-60' : ''} ${isDropTarget ? 'ring-2 ring-emerald-400 ring-offset-2' : ''}`}
             >
               <div className="flex shrink-0 cursor-grab touch-none text-gray-400 hover:text-gray-600">
                 <GripVertical className="h-5 w-5" />
@@ -214,9 +214,9 @@ export function DashboardCubicks({ stats }: { stats: CubickStat[] }) {
               <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${stat.color}`}>
                 <Icon className="h-5 w-5" />
               </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                <p className="text-xs text-gray-500">{stat.label}</p>
+              <div className="min-w-0 flex-1 overflow-hidden">
+                <p className="truncate text-xl font-bold text-gray-900 sm:text-2xl">{stat.value}</p>
+                <p className="truncate text-xs text-gray-500">{stat.label}</p>
               </div>
               <button
                 type="button"
