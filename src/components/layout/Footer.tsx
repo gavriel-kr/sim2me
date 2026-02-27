@@ -125,9 +125,6 @@ export function Footer() {
           <div>
             <h3 className="text-sm font-bold text-foreground">{tFooter('legal')}</h3>
             <ul className="mt-4 space-y-2.5">
-              {/* #region agent log */}
-              {typeof window !== 'undefined' && fetch('http://127.0.0.1:7242/ingest/31d3162a-817c-4d6a-9841-464cdcbf3b94',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Footer.tsx:128',message:'Footer legal links render',data:{legalLinks,a11yLabel:(() => { try { return tFooter('accessibilityStatement'); } catch(e) { return 'ERROR:'+String(e); } })()},timestamp:Date.now(),hypothesisId:'C'})}).catch(()=>{})}
-              {/* #endregion */}
               {legalLinks.map(({ href, key }) => (
                 <li key={key}>
                   <IntlLink href={href} className="text-sm text-muted-foreground transition-colors hover:text-foreground">

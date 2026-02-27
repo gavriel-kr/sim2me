@@ -27,42 +27,7 @@ export default async function AccessibilityStatementPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-
-  // #region agent log
-  let tResolved: boolean = false;
-  let tErrorMsg: string = '';
-  let titleSample: string = '';
-  // #endregion
-
-  const t = await (async () => {
-    try {
-      const trans = await getTranslations({ locale, namespace: 'accessibilityStatement' });
-      // #region agent log
-      tResolved = true;
-      titleSample = trans('title');
-      // #endregion
-      return trans;
-    } catch (err) {
-      // #region agent log
-      tErrorMsg = String(err);
-      // #endregion
-      throw err;
-    }
-  })();
-
-  // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/31d3162a-817c-4d6a-9841-464cdcbf3b94', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      location: 'accessibility-statement/page.tsx:51',
-      message: tResolved ? 'getTranslations success' : 'getTranslations FAILED',
-      data: { locale, tResolved, titleSample, tErrorMsg },
-      timestamp: Date.now(),
-      hypothesisId: 'A',
-    }),
-  }).catch(() => {});
-  // #endregion
+  const t = await getTranslations({ locale, namespace: 'accessibilityStatement' });
 
   return (
     <MainLayout>
