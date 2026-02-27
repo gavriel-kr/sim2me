@@ -130,6 +130,21 @@ export function Footer() {
                   {tFooter('guidesAll')}
                 </IntlLink>
               </li>
+              <li>
+                <IntlLink href="/articles/esim-europe-guide" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+                  {tFooter('guidesEurope')}
+                </IntlLink>
+              </li>
+              <li>
+                <IntlLink href="/articles/how-does-esim-work" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+                  {tFooter('guidesHowTo')}
+                </IntlLink>
+              </li>
+              <li>
+                <IntlLink href="/articles/esim-vs-physical-sim-vs-roaming" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+                  {tFooter('guidesVsRoaming')}
+                </IntlLink>
+              </li>
             </ul>
           </div>
 

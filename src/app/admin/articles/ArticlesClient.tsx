@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useCallback } from 'react';
-import { Plus, Pencil, Trash2, Eye, EyeOff, GripVertical, Globe } from 'lucide-react';
+import { useState, useRef, useCallback } from 'react';
+import { Plus, Pencil, Trash2, Eye, EyeOff, GripVertical, Globe, Bold, Italic, Underline as UnderlineIcon, List, ListOrdered, Link as LinkIcon, Code, Heading2, Heading3 } from 'lucide-react';
 
 type ArticleStatus = 'DRAFT' | 'PUBLISHED';
 
@@ -33,6 +33,121 @@ const BLANK: Omit<ArticleRow, 'id' | 'createdAt' | 'updatedAt'> = {
 
 const LOCALE_LABELS: Record<string, string> = { en: '🇬🇧 EN', he: '🇮🇱 HE', ar: '🇸🇦 AR' };
 
+// ── Rich Text Editor ─────────────────────────────────────────────────────────
+function RichTextEditor({ value, onChange, isRTL }: { value: string; onChange: (v: string) => void; isRTL: boolean }) {
+  const editorRef = useRef<HTMLDivElement>(null);
+  const [isSource, setIsSource] = useState(false);
+
+  // Sync contentEditable → state
+  const handleInput = useCallback(() => {
+    if (editorRef.current) onChange(editorRef.current.innerHTML);
+  }, [onChange]);
+
+  // When switching from source mode back to visual, sync
+  const syncFromSource = useCallback((html: string) => {
+    if (editorRef.current) editorRef.current.innerHTML = html;
+  }, []);
+
+  const exec = useCallback((cmd: string, value?: string) => {
+    editorRef.current?.focus();
+    document.execCommand(cmd, false, value);
+    handleInput();
+  }, [handleInput]);
+
+  const insertHTML = useCallback((html: string) => {
+    editorRef.current?.focus();
+    document.execCommand('insertHTML', false, html);
+    handleInput();
+  }, [handleInput]);
+
+  const insertLink = useCallback(() => {
+    const url = prompt('Enter URL:');
+    if (url) exec('createLink', url);
+  }, [exec]);
+
+  const toolbarBtns = [
+    { icon: <Bold className="h-4 w-4" />, title: 'Bold', action: () => exec('bold') },
+    { icon: <Italic className="h-4 w-4" />, title: 'Italic', action: () => exec('italic') },
+    { icon: <UnderlineIcon className="h-4 w-4" />, title: 'Underline', action: () => exec('underline') },
+    { type: 'sep' },
+    { icon: <Heading2 className="h-4 w-4" />, title: 'H2', action: () => exec('formatBlock', '<h2>') },
+    { icon: <Heading3 className="h-4 w-4" />, title: 'H3', action: () => exec('formatBlock', '<h3>') },
+    { type: 'sep' },
+    { icon: <List className="h-4 w-4" />, title: 'Bullet list', action: () => exec('insertUnorderedList') },
+    { icon: <ListOrdered className="h-4 w-4" />, title: 'Numbered list', action: () => exec('insertOrderedList') },
+    { type: 'sep' },
+    { icon: <LinkIcon className="h-4 w-4" />, title: 'Insert link', action: insertLink },
+    { icon: <Code className="h-4 w-4" />, title: 'Inline code', action: () => insertHTML('<code>code</code>') },
+    { type: 'sep' },
+    { icon: <span className="text-xs font-bold">¶</span>, title: 'Paragraph', action: () => exec('formatBlock', '<p>') },
+    { icon: <span className="text-xs font-semibold">—</span>, title: 'Horizontal rule', action: () => exec('insertHorizontalRule') },
+  ] as const;
+
+  return (
+    <div className="rounded-lg border border-gray-200 overflow-hidden">
+      {/* Toolbar */}
+      <div className="flex flex-wrap items-center gap-0.5 border-b border-gray-200 bg-gray-50 px-2 py-1.5">
+        {toolbarBtns.map((btn, i) =>
+          'type' in btn ? (
+            <div key={i} className="mx-1 h-5 w-px bg-gray-300" />
+          ) : (
+            <button
+              key={i}
+              type="button"
+              title={btn.title}
+              onMouseDown={(e) => { e.preventDefault(); btn.action(); }}
+              className="flex h-7 w-7 items-center justify-center rounded text-gray-600 hover:bg-gray-200 hover:text-gray-900"
+            >
+              {btn.icon}
+            </button>
+          )
+        )}
+        <div className="ml-auto">
+          <button
+            type="button"
+            title="Toggle HTML source"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              if (!isSource) {
+                // entering source mode: show raw HTML
+                setIsSource(true);
+              } else {
+                // leaving source mode: parse HTML back
+                setIsSource(false);
+                syncFromSource(value);
+              }
+            }}
+            className={`rounded px-2 py-0.5 text-xs font-mono font-medium ${isSource ? 'bg-emerald-100 text-emerald-700' : 'text-gray-500 hover:bg-gray-200'}`}
+          >
+            {'</>'}
+          </button>
+        </div>
+      </div>
+
+      {isSource ? (
+        <textarea
+          className="w-full p-3 font-mono text-xs text-gray-700 outline-none resize-y min-h-[420px]"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          dir={isRTL ? 'rtl' : 'ltr'}
+          spellCheck={false}
+        />
+      ) : (
+        <div
+          ref={editorRef}
+          contentEditable
+          suppressContentEditableWarning
+          dir={isRTL ? 'rtl' : 'ltr'}
+          className="min-h-[420px] p-4 text-sm text-gray-800 outline-none prose prose-sm max-w-none focus:ring-0 overflow-auto"
+          dangerouslySetInnerHTML={{ __html: value }}
+          onInput={handleInput}
+          onBlur={handleInput}
+        />
+      )}
+    </div>
+  );
+}
+
 export function ArticlesClient({ articles: initial }: { articles: ArticleRow[] }) {
   const [articles, setArticles] = useState<ArticleRow[]>(initial);
   const [editing, setEditing] = useState<string | null>(null); // id or 'new'
@@ -41,6 +156,9 @@ export function ArticlesClient({ articles: initial }: { articles: ArticleRow[] }
   const [saving, setSaving] = useState(false);
   const [tab, setTab] = useState<'main' | 'seo' | 'content'>('main');
   const [filterLocale, setFilterLocale] = useState<string>('all');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [search, setSearch] = useState('');
+  const [sortOrder, setSortOrder] = useState<'newest' | 'oldest' | 'az' | 'za'>('newest');
   const [msg, setMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
 
   const flash = (type: 'ok' | 'err', text: string) => {
@@ -129,7 +247,16 @@ export function ArticlesClient({ articles: initial }: { articles: ArticleRow[] }
     }
   };
 
-  const displayed = filterLocale === 'all' ? articles : articles.filter((a) => a.locale === filterLocale);
+  const displayed = articles
+    .filter((a) => filterLocale === 'all' || a.locale === filterLocale)
+    .filter((a) => filterStatus === 'all' || a.status === filterStatus)
+    .filter((a) => !search || a.title.toLowerCase().includes(search.toLowerCase()) || a.slug.includes(search.toLowerCase()) || (a.focusKeyword || '').toLowerCase().includes(search.toLowerCase()))
+    .sort((a, b) => {
+      if (sortOrder === 'newest') return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      if (sortOrder === 'oldest') return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      if (sortOrder === 'az') return a.title.localeCompare(b.title);
+      return b.title.localeCompare(a.title);
+    });
 
   const inputCls = 'w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500';
   const labelCls = 'block text-xs font-medium text-gray-700 mb-1';
@@ -221,16 +348,16 @@ export function ArticlesClient({ articles: initial }: { articles: ArticleRow[] }
 
             {tab === 'content' && (
               <div>
-                <p className="mb-2 text-xs text-gray-500">
-                  Paste or write HTML content. RTL languages (HE/AR) are rendered with correct direction on the frontend automatically.
-                </p>
-                <textarea
-                  className={`${inputCls} font-mono text-xs`}
-                  rows={30}
+                <div className="mb-2 flex items-center gap-2">
+                  <p className="text-xs text-gray-500">
+                    Use the toolbar for visual editing, or press <code className="bg-gray-100 px-1 rounded text-xs">&lt;/&gt;</code> to edit raw HTML.
+                    RTL (HE/AR) is applied automatically on the frontend.
+                  </p>
+                </div>
+                <RichTextEditor
                   value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  placeholder="<h2>Section</h2><p>Content…</p>"
-                  dir={form.locale === 'ar' || form.locale === 'he' ? 'rtl' : 'ltr'}
+                  onChange={setContent}
+                  isRTL={form.locale === 'ar' || form.locale === 'he'}
                 />
               </div>
             )}
@@ -264,18 +391,57 @@ export function ArticlesClient({ articles: initial }: { articles: ArticleRow[] }
       ) : (
         /* ── List ── */
         <>
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex gap-2">
-              {['all', 'en', 'he', 'ar'].map((loc) => (
-                <button key={loc} onClick={() => setFilterLocale(loc)}
-                  className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${filterLocale === loc ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
-                  {loc === 'all' ? 'All' : LOCALE_LABELS[loc]}
-                </button>
-              ))}
+          {/* Filter toolbar */}
+          <div className="mb-4 rounded-xl border border-gray-200 bg-gray-50 p-3 space-y-3">
+            <div className="flex flex-wrap gap-2 items-center justify-between">
+              {/* Search */}
+              <div className="relative flex-1 min-w-[180px]">
+                <input
+                  type="text"
+                  placeholder="Search title, slug, keyword…"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full rounded-lg border border-gray-200 bg-white pl-8 pr-3 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                />
+                <svg className="absolute left-2.5 top-2 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+              </div>
+              <button onClick={startNew} className="flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 shrink-0">
+                <Plus className="h-4 w-4" /> New Article
+              </button>
             </div>
-            <button onClick={startNew} className="flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
-              <Plus className="h-4 w-4" /> New Article
-            </button>
+            <div className="flex flex-wrap gap-2 items-center">
+              {/* Language */}
+              <div className="flex gap-1">
+                {['all', 'en', 'he', 'ar'].map((loc) => (
+                  <button key={loc} onClick={() => setFilterLocale(loc)}
+                    className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${filterLocale === loc ? 'bg-emerald-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-100'}`}>
+                    {loc === 'all' ? 'All langs' : LOCALE_LABELS[loc]}
+                  </button>
+                ))}
+              </div>
+              {/* Status */}
+              <div className="flex gap-1">
+                {[{ v: 'all', l: 'All status' }, { v: 'PUBLISHED', l: '✅ Live' }, { v: 'DRAFT', l: '🟡 Draft' }].map(({ v, l }) => (
+                  <button key={v} onClick={() => setFilterStatus(v)}
+                    className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${filterStatus === v ? 'bg-emerald-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-100'}`}>
+                    {l}
+                  </button>
+                ))}
+              </div>
+              {/* Sort */}
+              <select
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value as typeof sortOrder)}
+                className="rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs text-gray-600 focus:outline-none focus:border-emerald-500"
+              >
+                <option value="newest">Newest first</option>
+                <option value="oldest">Oldest first</option>
+                <option value="az">Title A→Z</option>
+                <option value="za">Title Z→A</option>
+              </select>
+              {/* Result count */}
+              <span className="text-xs text-gray-400 ml-auto">{displayed.length} article{displayed.length !== 1 ? 's' : ''}</span>
+            </div>
           </div>
 
           {displayed.length === 0 ? (

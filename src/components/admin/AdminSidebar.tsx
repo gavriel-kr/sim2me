@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import {
   LayoutDashboard, FileText, Settings, Users, UserCircle, ShoppingCart,
@@ -28,6 +28,7 @@ const navItems = [
 
 export function AdminSidebar({ user }: Props) {
   const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
 
   const isActive = (href: string) => {
@@ -53,7 +54,11 @@ export function AdminSidebar({ user }: Props) {
           <Link
             key={href}
             href={href}
-            onClick={() => setOpen(false)}
+            onClick={() => {
+              setOpen(false);
+              // If already on this page, force a full refresh to reset client state
+              if (pathname === href) router.refresh();
+            }}
             className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
               isActive(href)
                 ? 'bg-emerald-50 text-emerald-700'

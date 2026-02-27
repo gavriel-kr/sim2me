@@ -3,6 +3,7 @@ import { setRequestLocale } from 'next-intl/server';
 import { routing } from '@/i18n/routing';
 import { getPublishedArticles, type ArticleLocale } from '@/lib/articles';
 import { ArticlesIndexClient } from './ArticlesIndexClient';
+import { MainLayout } from '@/components/layout/MainLayout';
 import type { Metadata } from 'next';
 
 export const dynamic = 'force-dynamic';
@@ -58,8 +59,8 @@ export default async function ArticlesIndexPage({ params }: Props) {
   };
 
   return (
-    <div dir={locale === 'he' || locale === 'ar' ? 'rtl' : 'ltr'}>
+    <MainLayout>
       <ArticlesIndexClient articles={articles} locale={locale} heading={headings[locale] || headings.en} />
-    </div>
+    </MainLayout>
   );
 }

@@ -3,6 +3,7 @@ import { setRequestLocale } from 'next-intl/server';
 import { routing } from '@/i18n/routing';
 import { getArticleBySlug, getArticleHreflangs, type ArticleLocale } from '@/lib/articles';
 import { ArticleDetail } from './ArticleDetail';
+import { MainLayout } from '@/components/layout/MainLayout';
 import type { Metadata } from 'next';
 
 export const dynamic = 'force-dynamic';
@@ -64,7 +65,7 @@ export default async function ArticleDetailPage({ params }: Props) {
   const schemaJson = faqMatch ? faqMatch[1] : null;
 
   return (
-    <div dir={locale === 'he' || locale === 'ar' ? 'rtl' : 'ltr'}>
+    <MainLayout>
       {schemaJson && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: schemaJson }} />
       )}
@@ -80,6 +81,6 @@ export default async function ArticleDetailPage({ params }: Props) {
         })
       }} />
       <ArticleDetail article={article} locale={locale} canonical={canonical} />
-    </div>
+    </MainLayout>
   );
 }
