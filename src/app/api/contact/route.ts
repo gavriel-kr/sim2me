@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { contactFormSchema } from '@/lib/validation/schemas';
+import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,7 +16,12 @@ export async function POST(request: Request) {
       );
     }
 
-    const { name, email, subject, message } = parsed.data;
+    const { name, email, subject, message, marketingConsent } = parsed.data;
+
+    // Always save to DB regardless of email config
+    await prisma.contactSubmission.create({
+      data: { name, email, subject, message, marketingConsent: marketingConsent ?? false },
+    });
 
     if (!process.env.RESEND_API_KEY) {
       console.log('[Contact Form] No RESEND_API_KEY set — logging instead:');

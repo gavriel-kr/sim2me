@@ -204,6 +204,20 @@ model Customer {
   @@map("customers")
 }
 
+// ─── Contact Submissions ─────────────────────────────────────
+model ContactSubmission {
+  id               String   @id @default(cuid())
+  name             String
+  email            String
+  subject          String
+  message          String   @db.Text
+  marketingConsent Boolean  @default(false)
+  read             Boolean  @default(false)
+  createdAt        DateTime @default(now())
+
+  @@map("contact_submissions")
+}
+
 // ─── Articles (SEO blog / guides) ────────────────────────────
 model Article {
   id                  String        @id @default(cuid())

@@ -53,10 +53,10 @@ export function ContactForm() {
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
           <CheckCircle className="h-8 w-8 text-primary" />
         </div>
-        <h3 className="mt-4 text-lg font-semibold text-foreground">Message sent!</h3>
-        <p className="mt-1 text-sm text-muted-foreground">We&apos;ll respond within 1 hour.</p>
+        <h3 className="mt-4 text-lg font-semibold text-foreground">{t('messageSent')}</h3>
+        <p className="mt-1 text-sm text-muted-foreground">{t('messageSentDesc')}</p>
         <Button variant="outline" className="mt-6" onClick={() => setSent(false)}>
-          Send another message
+          {t('sendAnother')}
         </Button>
       </div>
     );
@@ -70,7 +70,7 @@ export function ContactForm() {
           <Input
             id="name"
             className="mt-1.5 h-11 rounded-xl"
-            placeholder="John Doe"
+            placeholder={t('namePlaceholder')}
             aria-invalid={!!errors.name}
             aria-describedby={errors.name ? 'contact-name-error' : undefined}
             {...register('name')}
@@ -85,7 +85,7 @@ export function ContactForm() {
             id="email"
             type="email"
             className="mt-1.5 h-11 rounded-xl"
-            placeholder="john@example.com"
+            placeholder={t('emailPlaceholder')}
             aria-invalid={!!errors.email}
             aria-describedby={errors.email ? 'contact-email-error' : undefined}
             {...register('email')}
@@ -100,7 +100,7 @@ export function ContactForm() {
         <Input
           id="subject"
           className="mt-1.5 h-11 rounded-xl"
-          placeholder="How can we help?"
+          placeholder={t('subjectPlaceholder')}
           aria-invalid={!!errors.subject}
           aria-describedby={errors.subject ? 'contact-subject-error' : undefined}
           {...register('subject')}
@@ -115,7 +115,7 @@ export function ContactForm() {
           id="message"
           rows={5}
           className="mt-1.5 flex w-full rounded-xl border border-input bg-background px-4 py-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none"
-          placeholder="Tell us more..."
+          placeholder={t('messagePlaceholder')}
           aria-invalid={!!errors.message}
           aria-describedby={errors.message ? 'contact-message-error' : undefined}
           {...register('message')}
@@ -123,6 +123,17 @@ export function ContactForm() {
         {errors.message && (
           <p id="contact-message-error" className="mt-1 text-sm text-destructive" role="alert">{errors.message.message}</p>
         )}
+      </div>
+      <div className="flex items-start gap-3">
+        <input
+          id="marketingConsent"
+          type="checkbox"
+          className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-primary"
+          {...register('marketingConsent')}
+        />
+        <Label htmlFor="marketingConsent" className="text-sm text-muted-foreground cursor-pointer leading-snug">
+          {t('marketingConsent')}
+        </Label>
       </div>
       <Button
         type="submit"
@@ -132,7 +143,7 @@ export function ContactForm() {
         {sending ? (
           <span className="flex items-center gap-2">
             <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
-            Sending...
+            {t('sending')}
           </span>
         ) : (
           <span className="flex items-center gap-2">

@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRef, useState, useCallback, useEffect } from 'react';
-import { useParams } from 'next/navigation';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { ArticleFull, ArticleSummary } from '@/lib/articles';
 
@@ -35,8 +34,7 @@ function RelatedCardPlaceholder({ bgColor }: { bgColor?: string }) {
 }
 
 export function ArticleDetail({ article, locale, relatedArticles, defaultImage }: Props) {
-  const params = useParams();
-  const prefix = (params.locale as string) === 'en' ? '' : `/${params.locale}`;
+  const prefix = locale === 'en' ? '' : `/${locale}`;
   const isRTL = locale === 'he' || locale === 'ar';
 
   const breadcrumbLabel = locale === 'he' ? 'מדריכים' : locale === 'ar' ? 'أدلة' : 'Articles';

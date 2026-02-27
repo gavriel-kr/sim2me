@@ -1,7 +1,7 @@
 import { getTranslations } from 'next-intl/server';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { ContactForm } from './ContactForm';
-import { Mail, MessageSquare, Clock, HelpCircle, Smartphone, Wifi, RefreshCw, AlertCircle, Lightbulb } from 'lucide-react';
+import { Mail, Clock, HelpCircle, Smartphone, Wifi, RefreshCw, AlertCircle, Lightbulb } from 'lucide-react';
 import { getCmsPage } from '@/lib/cms';
 import { prisma } from '@/lib/prisma';
 import { brandConfig } from '@/config/brand';
@@ -30,14 +30,12 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
 
   // Get contact info from site settings (fallback: brand config)
   let email = brandConfig.supportEmail;
-  let whatsapp = '972501234567';
   try {
     const settings = await prisma.siteSetting.findMany({
-      where: { key: { in: ['support_email', 'whatsapp_number'] } },
+      where: { key: { in: ['support_email'] } },
     });
     for (const s of settings) {
       if (s.key === 'support_email' && s.value) email = s.value;
-      if (s.key === 'whatsapp_number' && s.value) whatsapp = s.value;
     }
   } catch { /* use defaults */ }
 
@@ -75,22 +73,6 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
                 <h3 className="mt-4 font-semibold text-foreground">{t('emailLabel')}</h3>
                 <a href={`mailto:${email}`} className="mt-1 block text-sm text-primary hover:underline">
                   {email}
-                </a>
-              </div>
-
-              {/* WhatsApp */}
-              <div className="rounded-2xl border border-border bg-card p-6 shadow-card">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-600 text-white">
-                  <MessageSquare className="h-5 w-5" />
-                </div>
-                <h3 className="mt-4 font-semibold text-foreground">WhatsApp</h3>
-                <a
-                  href={`https://wa.me/${whatsapp}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-1 block text-sm text-primary hover:underline"
-                >
-                  {whatsapp}
                 </a>
               </div>
 

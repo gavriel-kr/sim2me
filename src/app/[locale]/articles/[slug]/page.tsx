@@ -55,16 +55,27 @@ export default async function ArticleDetailPage({ params }: Props) {
   if (!routing.locales.includes(locale as 'en' | 'he' | 'ar')) notFound();
   setRequestLocale(locale);
 
-  const article = await getArticleBySlug(slug, locale as ArticleLocale);
+  let article: Awaited<ReturnType<typeof getArticleBySlug>>;
+  try {
+    article = await getArticleBySlug(slug, locale as ArticleLocale);
+  } catch {
+    redirect(locale === 'en' ? '/articles' : `/${locale}/articles`);
+  }
   if (!article) redirect(locale === 'en' ? '/articles' : `/${locale}/articles`);
 
   const prefix = localePrefix(locale);
   const canonical = article.canonicalUrl || `${siteUrl}${prefix}/articles/${slug}`;
 
-  const [relatedArticles, defaultImage] = await Promise.all([
-    article.showRelatedArticles !== false ? getRelatedArticlesForCarousel(article.id, locale as ArticleLocale) : Promise.resolve([]),
-    getArticlesDefaultImage(),
-  ]);
+  let relatedArticles: Awaited<ReturnType<typeof getRelatedArticlesForCarousel>> = [];
+  let defaultImage: Awaited<ReturnType<typeof getArticlesDefaultImage>> = null;
+  try {
+    [relatedArticles, defaultImage] = await Promise.all([
+      article.showRelatedArticles !== false ? getRelatedArticlesForCarousel(article.id, locale as ArticleLocale) : Promise.resolve([]),
+      getArticlesDefaultImage(),
+    ]);
+  } catch {
+    // non-fatal: show page without related carousel or default image
+  }
 
   // FAQ schema extraction: scan for JSON-LD in content
   const faqMatch = article.content.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);

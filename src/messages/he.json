@@ -233,7 +233,16 @@
     "issueActivation": "בעיות הפעלה",
     "issueConnectivity": "בעיות חיבור",
     "issueRefund": "בקשת החזר",
-    "issueOther": "שאלה כללית"
+    "issueOther": "שאלה כללית",
+    "namePlaceholder": "ישראל ישראלי",
+    "emailPlaceholder": "israel@example.com",
+    "subjectPlaceholder": "במה נוכל לעזור?",
+    "messagePlaceholder": "ספרו לנו יותר...",
+    "marketingConsent": "אשמח לקבל עדכונים, חדשות ומבצעים מ-Sim2Me",
+    "sending": "שולח...",
+    "messageSent": "ההודעה נשלחה!",
+    "messageSentDesc": "נחזור אליך בהקדם.",
+    "sendAnother": "שלח הודעה נוספת"
   },
   "checkout": {
     "title": "השלמת רכישה",

@@ -11,6 +11,7 @@ export const contactFormSchema = z.object({
   email: z.string().email(),
   subject: z.string().min(1, 'Required'),
   message: z.string().min(10, 'Message must be at least 10 characters'),
+  marketingConsent: z.boolean().optional(),
 });
 
 export const newsletterSchema = z.object({

@@ -233,7 +233,16 @@
     "issueActivation": "Activation Problems",
     "issueConnectivity": "Connectivity Issues",
     "issueRefund": "Refund Request",
-    "issueOther": "General Inquiry"
+    "issueOther": "General Inquiry",
+    "namePlaceholder": "John Doe",
+    "emailPlaceholder": "john@example.com",
+    "subjectPlaceholder": "How can we help?",
+    "messagePlaceholder": "Tell us more...",
+    "marketingConsent": "I'd like to receive updates, news, and deals from Sim2Me",
+    "sending": "Sending...",
+    "messageSent": "Message sent!",
+    "messageSentDesc": "We'll get back to you soon.",
+    "sendAnother": "Send another message"
   },
   "checkout": {
     "title": "Checkout",

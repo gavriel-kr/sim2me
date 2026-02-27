@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import {
   LayoutDashboard, FileText, Settings, Users, UserCircle, ShoppingCart,
-  Globe, Search, LogOut, Package, BarChart3, Menu, X, DollarSign,
+  Globe, Search, LogOut, Package, BarChart3, Menu, X, DollarSign, MessageSquare,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -16,6 +16,7 @@ interface Props {
 const navItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/orders', label: 'Orders', icon: ShoppingCart },
+  { href: '/admin/contact', label: 'Contact Submissions', icon: MessageSquare },
   { href: '/admin/accounts', label: 'Accounts', icon: UserCircle },
   { href: '/admin/packages', label: 'eSIM Packages', icon: Package },
   { href: '/admin/packages/fees', label: 'Fees / Charges', icon: DollarSign },
