@@ -10,7 +10,7 @@ export default async function OrdersPage() {
 
   const orders = await prisma.order.findMany({
     orderBy: { createdAt: 'desc' },
-    take: 100,
+    take: 500,
   });
 
   return (

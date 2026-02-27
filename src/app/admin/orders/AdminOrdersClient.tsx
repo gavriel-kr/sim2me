@@ -1,6 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import { Download, Upload } from 'lucide-react';
+import { applyOrderFilters, type OrderFiltersState } from './orderFilters';
+import { OrdersFilters } from './OrdersFilters';
+import { exportOrdersToExcel, parseOrdersExcelFile } from './ordersExcel';
 
 interface Order {
   id: string;
@@ -30,11 +34,27 @@ const STATUS_COLORS: Record<string, string> = {
   CANCELLED: 'bg-gray-100 text-gray-600',
 };
 
+const defaultFilters: OrderFiltersState = {
+  search: '',
+  status: '',
+  countryCode: '',
+  dateFrom: '',
+  dateTo: '',
+  rules: [],
+};
+
 export function AdminOrdersClient({ orders: initialOrders }: { orders: Order[] }) {
   const [orders, setOrders] = useState(initialOrders);
+  const [filters, setFilters] = useState<OrderFiltersState>(defaultFilters);
   const [loading, setLoading] = useState<Record<string, boolean>>({});
   const [expanded, setExpanded] = useState<string | null>(null);
   const [message, setMessage] = useState<{ id: string; text: string; ok: boolean } | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const filteredOrders = applyOrderFilters(orders, filters);
 
   const setOrderLoading = (id: string, val: boolean) =>
     setLoading((prev) => ({ ...prev, [id]: val }));
@@ -59,6 +79,54 @@ export function AdminOrdersClient({ orders: initialOrders }: { orders: Order[] }
     }
   };
 
+  const handleExportExcel = async () => {
+    if (filteredOrders.length === 0) return;
+    setExporting(true);
+    try {
+      await exportOrdersToExcel(filteredOrders, `orders-${new Date().toISOString().slice(0, 10)}.xlsx`);
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setImporting(true);
+    setImportResult(null);
+    try {
+      const rows = await parseOrdersExcelFile(file);
+      if (rows.length === 0) {
+        setImportResult('No valid rows (need order_id column).');
+        return;
+      }
+      const updates = rows.map((r) => ({ order_id: r.order_id, status: r.status }));
+      const res = await fetch('/api/admin/orders/bulk-update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ updates }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setImportResult(data?.error ?? 'Bulk update failed');
+        return;
+      }
+      const updatedIds = new Set(updates.map((u) => u.order_id));
+      setOrders((prev) =>
+        prev.map((o) => {
+          const u = updates.find((x) => x.order_id === o.orderNo);
+          return u ? { ...o, status: u.status } : o;
+        })
+      );
+      setImportResult(`Updated ${data.updated} of ${data.total} orders.${data.errors?.length ? ` Errors: ${data.errors.join('; ')}` : ''}`);
+    } catch (err) {
+      setImportResult(err instanceof Error ? err.message : 'Import failed');
+    } finally {
+      setImporting(false);
+    }
+  };
+
   if (orders.length === 0) {
     return (
       <div className="mt-6 rounded-2xl border border-gray-200 bg-white px-6 py-16 text-center shadow-sm">
@@ -68,8 +136,48 @@ export function AdminOrdersClient({ orders: initialOrders }: { orders: Order[] }
   }
 
   return (
-    <div className="mt-6 space-y-3">
-      {orders.map((order) => (
+    <div className="mt-6 space-y-4">
+      <OrdersFilters
+        filters={filters}
+        onFiltersChange={setFilters}
+        orders={orders}
+        resultCount={filteredOrders.length}
+      />
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={handleExportExcel}
+          disabled={exporting || filteredOrders.length === 0}
+          className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+        >
+          <Download className="h-4 w-4" /> Export to Excel
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".xlsx,.xls"
+          className="hidden"
+          onChange={handleImportExcel}
+        />
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={importing}
+          className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+        >
+          <Upload className="h-4 w-4" /> {importing ? 'Importing…' : 'Import from Excel'}
+        </button>
+        {importResult && (
+          <p className="text-sm text-gray-600">{importResult}</p>
+        )}
+      </div>
+      {filteredOrders.length === 0 ? (
+        <div className="rounded-2xl border border-gray-200 bg-white px-6 py-12 text-center text-gray-500">
+          No orders match the current filters.
+        </div>
+      ) : (
+        <div className="space-y-3">
+      {filteredOrders.map((order) => (
         <div key={order.id} className="rounded-2xl border border-gray-200 bg-white shadow-sm">
           {/* Main row */}
           <div
@@ -178,6 +286,8 @@ export function AdminOrdersClient({ orders: initialOrders }: { orders: Order[] }
           )}
         </div>
       ))}
+        </div>
+      )}
     </div>
   );
 }
