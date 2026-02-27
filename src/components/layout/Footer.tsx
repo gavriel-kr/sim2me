@@ -26,6 +26,7 @@ const legalLinks = [
   { href: '/terms', key: 'terms' },
   { href: '/privacy', key: 'privacy' },
   { href: '/refund', key: 'refund' },
+  { href: '/accessibility-statement', key: 'accessibilityStatement' },
 ];
 
 export function Footer() {
@@ -40,9 +41,9 @@ export function Footer() {
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-5">
           {/* Brand */}
           <div className="lg:col-span-2">
-            <IntlLink href="/" className="inline-flex items-center gap-2.5 transition-opacity hover:opacity-80">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600">
-                <svg width="14" height="14" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <IntlLink href="/" className="inline-flex items-center gap-2.5 transition-opacity hover:opacity-80" aria-label="Sim2Me – Home">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600" aria-hidden="true">
+                <svg width="14" height="14" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                   <rect x="3" y="1" width="8" height="14" rx="1.5" fill="white" fillOpacity="0.9"/>
                   <circle cx="7" cy="12" r="1" fill="#059669"/>
                   <path d="M12 5c1.5-0.7 3 0 3.5 1.5s0 3-1.5 3.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" fill="none" opacity="0.8"/>

@@ -95,7 +95,7 @@ export function ResetPasswordClient({ token }: { token: string }) {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive" role="alert">
+            <p id="reset-error" className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive" role="alert">
               {error}
             </p>
           )}
@@ -111,6 +111,8 @@ export function ResetPasswordClient({ token }: { token: string }) {
               required
               minLength={8}
               className="h-11"
+              aria-invalid={!!error}
+              aria-describedby={error ? 'reset-error' : undefined}
             />
           </div>
           <div className="space-y-2">
@@ -124,6 +126,8 @@ export function ResetPasswordClient({ token }: { token: string }) {
               required
               minLength={8}
               className="h-11"
+              aria-invalid={!!error}
+              aria-describedby={error ? 'reset-error' : undefined}
             />
           </div>
           <Button type="submit" className="w-full h-11" size="lg" disabled={loading}>

@@ -68,7 +68,7 @@ export function ForgotPasswordClient() {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive" role="alert">
+            <p id="forgot-email-error" className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive" role="alert">
               {error}
             </p>
           )}
@@ -83,6 +83,8 @@ export function ForgotPasswordClient() {
               onChange={(e) => setEmail(e.target.value)}
               required
               className="h-11"
+              aria-invalid={!!error}
+              aria-describedby={error ? 'forgot-email-error' : undefined}
             />
           </div>
           <Button type="submit" className="w-full h-11" size="lg" disabled={loading}>

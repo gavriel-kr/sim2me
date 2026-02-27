@@ -55,7 +55,7 @@ export function AccountLoginClient() {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive" role="alert">
+            <p id="login-error" className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive" role="alert">
               {error}
             </p>
           )}
@@ -70,6 +70,8 @@ export function AccountLoginClient() {
               onChange={(e) => setEmail(e.target.value)}
               required
               className="h-11"
+              aria-invalid={!!error}
+              aria-describedby={error ? 'login-error' : undefined}
             />
           </div>
           <div className="space-y-2">
@@ -90,6 +92,8 @@ export function AccountLoginClient() {
               onChange={(e) => setPassword(e.target.value)}
               required
               className="h-11"
+              aria-invalid={!!error}
+              aria-describedby={error ? 'login-error' : undefined}
             />
           </div>
           <Button type="submit" className="w-full h-11" size="lg" disabled={loading}>

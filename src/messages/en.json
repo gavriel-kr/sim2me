@@ -325,8 +325,26 @@
     "terms": "Terms of Service",
     "privacy": "Privacy Policy",
     "refund": "Refund Policy",
+    "accessibilityStatement": "Accessibility",
     "cookieSettings": "Cookie settings",
     "allRightsReserved": "All rights reserved."
+  },
+  "accessibilityStatement": {
+    "title": "Accessibility Statement",
+    "lastUpdated": "Last updated",
+    "intro": "Sim2Me is committed to ensuring digital accessibility for people with disabilities. We are continually improving the user experience for everyone and applying the relevant accessibility standards.",
+    "conformanceTitle": "Conformance target",
+    "conformanceBody": "We aim to conform to Web Content Accessibility Guidelines (WCAG) 2.2 at Level AA, as well as to the functional accessibility requirements of Directive (EU) 2019/882 (European Accessibility Act) where they apply, using EN 301 549 as a technical reference.",
+    "whatWeHaveDoneTitle": "What we have done",
+    "whatWeHaveDoneBody": "We have implemented accessibility across the site, including: semantic structure (headings, landmarks, page title), a skip link to main content, keyboard-accessible navigation and controls (visible focus, no keyboard traps), color contrast that meets WCAG 2.2 Level AA where applicable, text alternatives for meaningful images, respect for reduced motion preferences, forms with associated labels and clear error messages, and language and text direction (e.g. RTL for Hebrew and Arabic) set on the page.",
+    "knownIssuesTitle": "Known issues and limitations",
+    "knownIssuesBody": "We are still auditing some third-party integrations (e.g. payment) for full WCAG 2.2 AA compliance. We are working to address these and will update this statement as we fix issues.",
+    "feedbackTitle": "Feedback and contact",
+    "feedbackBody": "We welcome your feedback. If you have trouble accessing any part of this website or need information in an alternative format, please use our contact form or email support. We will respond within a few business days.",
+    "contactLink": "Contact us",
+    "auditTitle": "Date of last audit",
+    "auditBody": "Last accessibility review and testing are ongoing. This statement is updated as we complete audits.",
+    "disclaimer": "This statement does not constitute legal advice. Compliance with the European Accessibility Act (Directive (EU) 2019/882) is pursued where the directive applies to our services."
   },
   "common": {
     "loading": "Loading...",

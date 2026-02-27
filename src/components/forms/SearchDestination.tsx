@@ -71,8 +71,10 @@ export function SearchDestination() {
           }}
           onFocus={() => setOpen(true)}
           className="h-12 pl-10 pr-10 text-base rounded-xl"
+          aria-label={t('searchPlaceholder')}
           aria-autocomplete="list"
           aria-expanded={showList}
+          aria-controls={showList ? 'search-destinations-listbox' : undefined}
           role="combobox"
         />
         {query && (
@@ -98,7 +100,7 @@ export function SearchDestination() {
             </div>
           )}
 
-          <ul role="listbox" className="max-h-80 overflow-auto">
+          <ul id="search-destinations-listbox" role="listbox" className="max-h-80 overflow-auto">
             {isFetching && (
               <>
                 <SkeletonRow />

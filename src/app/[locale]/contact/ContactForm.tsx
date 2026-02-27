@@ -71,10 +71,12 @@ export function ContactForm() {
             id="name"
             className="mt-1.5 h-11 rounded-xl"
             placeholder="John Doe"
+            aria-invalid={!!errors.name}
+            aria-describedby={errors.name ? 'contact-name-error' : undefined}
             {...register('name')}
           />
           {errors.name && (
-            <p className="mt-1 text-sm text-destructive">{errors.name.message}</p>
+            <p id="contact-name-error" className="mt-1 text-sm text-destructive" role="alert">{errors.name.message}</p>
           )}
         </div>
         <div>
@@ -84,10 +86,12 @@ export function ContactForm() {
             type="email"
             className="mt-1.5 h-11 rounded-xl"
             placeholder="john@example.com"
+            aria-invalid={!!errors.email}
+            aria-describedby={errors.email ? 'contact-email-error' : undefined}
             {...register('email')}
           />
           {errors.email && (
-            <p className="mt-1 text-sm text-destructive">{errors.email.message}</p>
+            <p id="contact-email-error" className="mt-1 text-sm text-destructive" role="alert">{errors.email.message}</p>
           )}
         </div>
       </div>
@@ -97,10 +101,12 @@ export function ContactForm() {
           id="subject"
           className="mt-1.5 h-11 rounded-xl"
           placeholder="How can we help?"
+          aria-invalid={!!errors.subject}
+          aria-describedby={errors.subject ? 'contact-subject-error' : undefined}
           {...register('subject')}
         />
         {errors.subject && (
-          <p className="mt-1 text-sm text-destructive">{errors.subject.message}</p>
+          <p id="contact-subject-error" className="mt-1 text-sm text-destructive" role="alert">{errors.subject.message}</p>
         )}
       </div>
       <div>
@@ -110,10 +116,12 @@ export function ContactForm() {
           rows={5}
           className="mt-1.5 flex w-full rounded-xl border border-input bg-background px-4 py-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none"
           placeholder="Tell us more..."
+          aria-invalid={!!errors.message}
+          aria-describedby={errors.message ? 'contact-message-error' : undefined}
           {...register('message')}
         />
         {errors.message && (
-          <p className="mt-1 text-sm text-destructive">{errors.message.message}</p>
+          <p id="contact-message-error" className="mt-1 text-sm text-destructive" role="alert">{errors.message.message}</p>
         )}
       </div>
       <Button

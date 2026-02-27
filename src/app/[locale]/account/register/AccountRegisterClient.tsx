@@ -83,7 +83,7 @@ export function AccountRegisterClient() {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive" role="alert">
+            <p id="register-error" className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive" role="alert">
               {error}
             </p>
           )}
@@ -98,6 +98,8 @@ export function AccountRegisterClient() {
               onChange={(e) => setForm({ ...form, email: e.target.value })}
               required
               className="h-11"
+              aria-invalid={!!error}
+              aria-describedby={error ? 'register-error' : undefined}
             />
           </div>
           <div className="space-y-2">

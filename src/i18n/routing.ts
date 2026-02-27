@@ -18,6 +18,7 @@ export const routing = defineRouting({
     '/privacy': '/privacy',
     '/cookies': '/cookies',
     '/refund': '/refund',
+    '/accessibility-statement': '/accessibility-statement',
     '/checkout': '/checkout',
     '/account': '/account',
     '/account/orders': '/account/orders',

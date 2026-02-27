@@ -46,9 +46,9 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-white/80 backdrop-blur-lg">
       <div className="container flex h-16 items-center justify-between gap-4 px-4">
         {/* Logo */}
-        <IntlLink href="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-80">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-sm">
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <IntlLink href="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-80" aria-label="Sim2Me – Home">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-sm" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
               <rect x="3" y="1" width="8" height="14" rx="1.5" fill="white" fillOpacity="0.9"/>
               <circle cx="7" cy="12" r="1" fill="#059669"/>
               <path d="M12 5c1.5-0.7 3 0 3.5 1.5s0 3-1.5 3.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" fill="none" opacity="0.8"/>
@@ -61,7 +61,7 @@ export function Header() {
         </IntlLink>
 
         {/* Desktop nav */}
-        <nav className="hidden items-center gap-1 lg:flex">
+        <nav className="hidden items-center gap-1 lg:flex" aria-label="Main navigation">
           {navLinks.map(({ href, key }) => (
             <IntlLink
               key={key}
@@ -131,7 +131,8 @@ export function Header() {
             type="button"
             className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted lg:hidden"
             onClick={() => setMobileOpen(!mobileOpen)}
-            aria-label="Menu"
+            aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={mobileOpen}
           >
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -141,7 +142,7 @@ export function Header() {
       {/* Mobile menu */}
       {mobileOpen && (
         <div className="border-t border-border/40 bg-white lg:hidden animate-fade-up">
-          <nav className="container flex flex-col gap-0.5 px-4 py-3">
+          <nav className="container flex flex-col gap-0.5 px-4 py-3" aria-label="Mobile navigation">
             {navLinks.map(({ href, key }) => (
               <IntlLink
                 key={key}

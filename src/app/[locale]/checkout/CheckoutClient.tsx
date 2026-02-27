@@ -194,24 +194,43 @@ export function CheckoutClient() {
                 <form onSubmit={handleSubmit(onTravelerSubmit)} className="space-y-4">
                   <div>
                     <Label htmlFor="email">{t('email')}</Label>
-                    <Input id="email" type="email" className="mt-1" {...register('email')} />
+                    <Input
+                      id="email"
+                      type="email"
+                      className="mt-1"
+                      aria-invalid={!!errors.email}
+                      aria-describedby={errors.email ? 'checkout-email-error' : undefined}
+                      {...register('email')}
+                    />
                     {errors.email && (
-                      <p className="mt-1 text-sm text-destructive">{errors.email.message}</p>
+                      <p id="checkout-email-error" className="mt-1 text-sm text-destructive" role="alert">{errors.email.message}</p>
                     )}
                   </div>
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
                       <Label htmlFor="firstName">{t('firstName')}</Label>
-                      <Input id="firstName" className="mt-1" {...register('firstName')} />
+                      <Input
+                        id="firstName"
+                        className="mt-1"
+                        aria-invalid={!!errors.firstName}
+                        aria-describedby={errors.firstName ? 'checkout-firstName-error' : undefined}
+                        {...register('firstName')}
+                      />
                       {errors.firstName && (
-                        <p className="mt-1 text-sm text-destructive">{errors.firstName.message}</p>
+                        <p id="checkout-firstName-error" className="mt-1 text-sm text-destructive" role="alert">{errors.firstName.message}</p>
                       )}
                     </div>
                     <div>
                       <Label htmlFor="lastName">{t('lastName')}</Label>
-                      <Input id="lastName" className="mt-1" {...register('lastName')} />
+                      <Input
+                        id="lastName"
+                        className="mt-1"
+                        aria-invalid={!!errors.lastName}
+                        aria-describedby={errors.lastName ? 'checkout-lastName-error' : undefined}
+                        {...register('lastName')}
+                      />
                       {errors.lastName && (
-                        <p className="mt-1 text-sm text-destructive">{errors.lastName.message}</p>
+                        <p id="checkout-lastName-error" className="mt-1 text-sm text-destructive" role="alert">{errors.lastName.message}</p>
                       )}
                     </div>
                   </div>
