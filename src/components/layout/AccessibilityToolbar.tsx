@@ -239,32 +239,41 @@ export function AccessibilityToolbar() {
   return (
     <>
       {open && (
-        <div
-          ref={panelRef}
-          id="a11y-toolbar-panel"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby={headingId}
-          className={`fixed z-[60] w-72 max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-border bg-background shadow-2xl ${panelPositionClasses}`}
-        >
-          <div className="flex items-center justify-between border-b border-border bg-muted/40 px-4 py-3">
-            <div className="flex items-center gap-2">
-              <ISAIcon className="h-[18px] w-[18px] text-primary" aria-hidden="true" />
-              <h2 id={headingId} className="text-sm font-bold text-foreground">
-                {t('panelTitle')}
-              </h2>
-            </div>
-            <button
-              type="button"
-              onClick={closePanel}
-              aria-label={t('closePanelLabel')}
-              className="rounded-lg p-1.5 text-muted-foreground transition hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <X className="h-4 w-4" aria-hidden="true" />
-            </button>
-          </div>
+        <>
+          {/* Backdrop — click anywhere outside the panel to close */}
+          <div
+            className="fixed inset-0 z-[59]"
+            aria-hidden="true"
+            onClick={closePanel}
+          />
 
-          <div className="p-4 space-y-4">
+          <div
+            ref={panelRef}
+            id="a11y-toolbar-panel"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={headingId}
+            className={`fixed z-[60] flex flex-col w-72 max-w-[calc(100vw-2rem)] max-h-[calc(100vh-5rem)] overflow-hidden rounded-2xl border border-border bg-background shadow-2xl ${panelPositionClasses}`}
+          >
+            {/* Header — always visible, never scrolls away */}
+            <div className="flex-none flex items-center justify-between border-b border-border bg-muted/40 px-4 py-3">
+              <div className="flex items-center gap-2">
+                <ISAIcon className="h-[18px] w-[18px] text-primary" aria-hidden="true" />
+                <h2 id={headingId} className="text-sm font-bold text-foreground">
+                  {t('panelTitle')}
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={closePanel}
+                aria-label={t('closePanelLabel')}
+                className="rounded-lg p-1.5 text-muted-foreground transition hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <X className="h-4 w-4" aria-hidden="true" />
+              </button>
+            </div>
+
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {/* Position */}
             <div>
               <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
@@ -407,7 +416,8 @@ export function AccessibilityToolbar() {
               {t('savedNote')}
             </p>
           </div>
-        </div>
+          </div>
+        </>
       )}
 
       <button
