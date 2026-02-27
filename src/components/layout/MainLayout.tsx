@@ -4,14 +4,13 @@ import { Header } from './Header';
 import { Footer } from './Footer';
 import { StickyHelpButton } from './StickyHelpButton';
 import { InstallAppBanner } from './InstallAppBanner';
+import { AccessibilityToolbar } from './AccessibilityToolbar';
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <a
-        href="#main-content"
-        className="sr-only left-4 top-4 z-[100] rounded bg-primary px-4 py-2 text-primary-foreground focus:not-sr-only focus:fixed focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-      >
+      {/* Skip link: visible only on keyboard Tab focus, never on mouse (WCAG 2.4.1) */}
+      <a href="#main-content" className="skip-to-content">
         Skip to main content
       </a>
       <Header />
@@ -20,6 +19,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
       </main>
       <Footer />
       <StickyHelpButton />
+      <AccessibilityToolbar />
       <InstallAppBanner />
     </>
   );
