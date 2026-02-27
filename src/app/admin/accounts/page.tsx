@@ -34,7 +34,9 @@ export default async function AdminAccountsPage() {
     <div className="p-6 lg:p-8">
       <h1 className="text-2xl font-bold text-gray-900">Accounts</h1>
       <p className="mt-1 text-sm text-gray-500">Customer accounts — view and edit details</p>
-      <AccountsClient accounts={accounts} />
+      <AccountsClient
+        accounts={accounts.map((a) => ({ ...a, createdAt: a.createdAt.toISOString() }))}
+      />
     </div>
   );
 }

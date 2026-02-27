@@ -14,22 +14,39 @@ function requireAdmin(session: unknown) {
 }
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions);
   if (!requireAdmin(session)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   const { id } = await params;
-  const customer = await prisma.customer.findUnique({
-    where: { id },
-  });
+  const customer = await prisma.customer.findUnique({ where: { id } });
 
   if (!customer) return NextResponse.json({ error: 'Account not found' }, { status: 404 });
 
-  // Do not send password hash to client
   const { password: _, ...safe } = customer;
-  return NextResponse.json(safe);
+
+  const url = new URL(request.url);
+  if (url.searchParams.get('full') !== '1') return NextResponse.json(safe);
+
+  // Full mode: include orders and contact submissions with notes
+  const orders = await prisma.order.findMany({
+    where: { customerId: id },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  const contactWhere = customer.phone
+    ? { OR: [{ email: customer.email }, { phone: customer.phone }] }
+    : { email: customer.email };
+
+  const contactSubmissions = await prisma.contactSubmission.findMany({
+    where: contactWhere,
+    orderBy: { createdAt: 'desc' },
+    include: { notes: { orderBy: { createdAt: 'asc' } } },
+  });
+
+  return NextResponse.json({ ...safe, orders, contactSubmissions });
 }
 
 export async function PATCH(
