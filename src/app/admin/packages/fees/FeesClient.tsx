@@ -26,6 +26,7 @@ export function FeesClient() {
     paddleFixedFee: 0.5,
     currency: 'USD',
   });
+  const [esimAdditionalCost, setEsimAdditionalCost] = useState<number>(0);
   const [additionalFees, setAdditionalFees] = useState<AdditionalFeeData[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -46,6 +47,7 @@ export function FeesClient() {
           currency: data.feeSettings.currency ?? 'USD',
         });
       }
+      setEsimAdditionalCost(data.esimAdditionalCost ?? 0);
       setAdditionalFees((data.additionalFees || []).map((f: AdditionalFeeData, i: number) => ({
         ...f,
         sortOrder: f.sortOrder ?? i,
@@ -74,6 +76,7 @@ export function FeesClient() {
             paddleFixedFee: feeSettings.paddleFixedFee,
             currency: feeSettings.currency,
           },
+          esimAdditionalCost,
           additionalFees: additionalFees.map((f) => ({
             name: f.name,
             type: f.type,
@@ -185,6 +188,30 @@ export function FeesClient() {
               className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
             />
           </div>
+        </div>
+      </section>
+
+      {/* eSIM cost adjustment */}
+      <section className="rounded-2xl border border-amber-200 bg-amber-50 p-6 shadow-sm">
+        <h2 className="text-lg font-bold text-gray-900">eSIM cost adjustment ($)</h2>
+        <p className="mt-1 text-sm text-gray-500">
+          Add manual costs for eSIM purchases made directly on eSIMaccess outside the app (e.g. test purchases).
+          This amount is added to the tracked eSIM cost on the dashboard and affects profit.
+        </p>
+        <div className="mt-4 max-w-xs">
+          <label className="block text-sm font-medium text-gray-700">Additional eSIM cost ($)</label>
+          <input
+            type="number"
+            min={0}
+            step={0.01}
+            value={esimAdditionalCost}
+            onChange={(e) => setEsimAdditionalCost(parseFloat(e.target.value) || 0)}
+            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+            placeholder="0.00"
+          />
+          <p className="mt-0.5 text-xs text-gray-500">
+            Example: if eSIMaccess balance shows $2.20 spent but the dashboard shows $1.30, enter $0.90 here.
+          </p>
         </div>
       </section>
 

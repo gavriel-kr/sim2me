@@ -18,9 +18,10 @@ export async function GET() {
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   if (!isAdmin(session)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-  const [feeSettings, additionalFees] = await Promise.all([
+  const [feeSettings, additionalFees, esimAdditionalCostSetting] = await Promise.all([
     prisma.feeSettings.findFirst(),
     prisma.additionalFee.findMany({ orderBy: { sortOrder: 'asc' } }),
+    prisma.siteSetting.findUnique({ where: { key: 'esim_additional_cost' } }),
   ]);
 
   // Ensure default row exists (e.g. if migration ran but seed didn't)
@@ -42,6 +43,7 @@ export async function GET() {
       paddleFixedFee: Number(settings.paddleFixedFee),
       currency: settings.currency,
     },
+    esimAdditionalCost: esimAdditionalCostSetting ? parseFloat(esimAdditionalCostSetting.value) || 0 : 0,
     additionalFees: additionalFees.map((f) => ({
       id: f.id,
       name: f.name,
@@ -66,6 +68,7 @@ export async function PUT(req: NextRequest) {
 
   let body: {
     feeSettings?: { paddlePercentageFee?: number; paddleFixedFee?: number; currency?: string };
+    esimAdditionalCost?: number;
     additionalFees?: Array<{
       id?: string;
       name: string;
@@ -122,6 +125,18 @@ export async function PUT(req: NextRequest) {
     });
   }
 
+  // Save eSIM additional cost adjustment (for test/manual purchases outside the app)
+  if (body.esimAdditionalCost != null) {
+    const val = typeof body.esimAdditionalCost === 'number' && body.esimAdditionalCost >= 0
+      ? body.esimAdditionalCost
+      : 0;
+    await prisma.siteSetting.upsert({
+      where: { key: 'esim_additional_cost' },
+      create: { key: 'esim_additional_cost', value: String(val) },
+      update: { value: String(val) },
+    });
+  }
+
   // Replace additional fees if provided
   if (Array.isArray(body.additionalFees)) {
     for (let i = 0; i < body.additionalFees.length; i++) {
@@ -159,9 +174,10 @@ export async function PUT(req: NextRequest) {
     });
   }
 
-  const [feeSettings, additionalFees] = await Promise.all([
+  const [feeSettings, additionalFees, esimAdditionalCostSetting] = await Promise.all([
     prisma.feeSettings.findFirst(),
     prisma.additionalFee.findMany({ orderBy: { sortOrder: 'asc' } }),
+    prisma.siteSetting.findUnique({ where: { key: 'esim_additional_cost' } }),
   ]);
 
   const settings = feeSettings!;
@@ -172,6 +188,7 @@ export async function PUT(req: NextRequest) {
       paddleFixedFee: Number(settings.paddleFixedFee),
       currency: settings.currency,
     },
+    esimAdditionalCost: esimAdditionalCostSetting ? parseFloat(esimAdditionalCostSetting.value) || 0 : 0,
     additionalFees: (additionalFees ?? []).map((f) => ({
       id: f.id,
       name: f.name,
