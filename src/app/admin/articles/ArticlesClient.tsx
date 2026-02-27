@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
-import { Plus, Pencil, Trash2, Eye, EyeOff, GripVertical, Globe, Bold, Italic, Underline as UnderlineIcon, List, ListOrdered, Link as LinkIcon, Code, Heading2, Heading3 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Eye, EyeOff, GripVertical, Globe, Upload, ImageIcon } from 'lucide-react';
+import { RichTextEditor } from './RichTextEditor';
 
 type ArticleStatus = 'DRAFT' | 'PUBLISHED';
 
@@ -33,117 +34,91 @@ const BLANK: Omit<ArticleRow, 'id' | 'createdAt' | 'updatedAt'> = {
 
 const LOCALE_LABELS: Record<string, string> = { en: '🇬🇧 EN', he: '🇮🇱 HE', ar: '🇸🇦 AR' };
 
-// ── Rich Text Editor ─────────────────────────────────────────────────────────
-function RichTextEditor({ value, onChange, isRTL }: { value: string; onChange: (v: string) => void; isRTL: boolean }) {
-  const editorRef = useRef<HTMLDivElement>(null);
-  const [isSource, setIsSource] = useState(false);
+// ── Featured Image Field ──────────────────────────────────────────────────────
+function FeaturedImageField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const inputCls = 'w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500';
+  const labelCls = 'block text-xs font-medium text-gray-700 mb-1';
 
-  // Sync contentEditable → state
-  const handleInput = useCallback(() => {
-    if (editorRef.current) onChange(editorRef.current.innerHTML);
-  }, [onChange]);
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    // In production, upload to CDN. For now, generate a data-URL preview.
+    const reader = new FileReader();
+    reader.onload = (ev) => onChange(ev.target?.result as string);
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
 
-  // When switching from source mode back to visual, sync
-  const syncFromSource = useCallback((html: string) => {
-    if (editorRef.current) editorRef.current.innerHTML = html;
-  }, []);
-
-  const exec = useCallback((cmd: string, value?: string) => {
-    editorRef.current?.focus();
-    document.execCommand(cmd, false, value);
-    handleInput();
-  }, [handleInput]);
-
-  const insertHTML = useCallback((html: string) => {
-    editorRef.current?.focus();
-    document.execCommand('insertHTML', false, html);
-    handleInput();
-  }, [handleInput]);
-
-  const insertLink = useCallback(() => {
-    const url = prompt('Enter URL:');
-    if (url) exec('createLink', url);
-  }, [exec]);
-
-  const toolbarBtns = [
-    { icon: <Bold className="h-4 w-4" />, title: 'Bold', action: () => exec('bold') },
-    { icon: <Italic className="h-4 w-4" />, title: 'Italic', action: () => exec('italic') },
-    { icon: <UnderlineIcon className="h-4 w-4" />, title: 'Underline', action: () => exec('underline') },
-    { type: 'sep' },
-    { icon: <Heading2 className="h-4 w-4" />, title: 'H2', action: () => exec('formatBlock', '<h2>') },
-    { icon: <Heading3 className="h-4 w-4" />, title: 'H3', action: () => exec('formatBlock', '<h3>') },
-    { type: 'sep' },
-    { icon: <List className="h-4 w-4" />, title: 'Bullet list', action: () => exec('insertUnorderedList') },
-    { icon: <ListOrdered className="h-4 w-4" />, title: 'Numbered list', action: () => exec('insertOrderedList') },
-    { type: 'sep' },
-    { icon: <LinkIcon className="h-4 w-4" />, title: 'Insert link', action: insertLink },
-    { icon: <Code className="h-4 w-4" />, title: 'Inline code', action: () => insertHTML('<code>code</code>') },
-    { type: 'sep' },
-    { icon: <span className="text-xs font-bold">¶</span>, title: 'Paragraph', action: () => exec('formatBlock', '<p>') },
-    { icon: <span className="text-xs font-semibold">—</span>, title: 'Horizontal rule', action: () => exec('insertHorizontalRule') },
-  ] as const;
+  // Detect if it's a bg-color special value
+  const isBgColor = value.startsWith('bg:');
+  const bgColor = isBgColor ? value.slice(3) : '';
 
   return (
-    <div className="rounded-lg border border-gray-200 overflow-hidden">
-      {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-0.5 border-b border-gray-200 bg-gray-50 px-2 py-1.5">
-        {toolbarBtns.map((btn, i) =>
-          'type' in btn ? (
-            <div key={i} className="mx-1 h-5 w-px bg-gray-300" />
-          ) : (
-            <button
-              key={i}
-              type="button"
-              title={btn.title}
-              onMouseDown={(e) => { e.preventDefault(); btn.action(); }}
-              className="flex h-7 w-7 items-center justify-center rounded text-gray-600 hover:bg-gray-200 hover:text-gray-900"
-            >
-              {btn.icon}
-            </button>
-          )
-        )}
-        <div className="ml-auto">
+    <div>
+      <label className={labelCls}>Featured Image</label>
+      <p className="mb-2 text-[11px] text-gray-400">
+        Recommended: <strong>1200 × 630 px</strong> (16:9) · JPG/PNG/WebP · max 500 KB.
+        Leave empty to use a placeholder card.
+      </p>
+
+      {/* Image URL or file upload */}
+      {!isBgColor && (
+        <div className="flex gap-2 mb-2">
+          <input
+            className={inputCls}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder="https://… or upload below"
+          />
           <button
             type="button"
-            title="Toggle HTML source"
-            onMouseDown={(e) => {
-              e.preventDefault();
-              if (!isSource) {
-                // entering source mode: show raw HTML
-                setIsSource(true);
-              } else {
-                // leaving source mode: parse HTML back
-                setIsSource(false);
-                syncFromSource(value);
-              }
-            }}
-            className={`rounded px-2 py-0.5 text-xs font-mono font-medium ${isSource ? 'bg-emerald-100 text-emerald-700' : 'text-gray-500 hover:bg-gray-200'}`}
+            title="Upload from computer"
+            onClick={() => fileRef.current?.click()}
+            className="flex shrink-0 items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-600 hover:bg-gray-50"
           >
-            {'</>'}
+            <Upload className="h-3.5 w-3.5" /> Upload
           </button>
         </div>
+      )}
+
+      {/* Preview */}
+      {value && !isBgColor && (
+        <div className="mb-2 h-24 w-40 overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={value} alt="preview" className="h-full w-full object-cover" onError={(e) => ((e.target as HTMLImageElement).style.display = 'none')} />
+        </div>
+      )}
+
+      {/* Background color option (for card placeholder) */}
+      <div className="mt-2 flex items-center gap-3">
+        <label className="flex items-center gap-2 cursor-pointer text-xs text-gray-600">
+          <input
+            type="checkbox"
+            checked={isBgColor}
+            onChange={(e) => {
+              if (e.target.checked) onChange('bg:#059669');
+              else onChange('');
+            }}
+            className="rounded border-gray-300"
+          />
+          Use background color instead of image
+        </label>
+        {isBgColor && (
+          <div className="flex items-center gap-2">
+            <input
+              type="color"
+              value={bgColor || '#059669'}
+              onChange={(e) => onChange(`bg:${e.target.value}`)}
+              className="h-7 w-10 cursor-pointer rounded border border-gray-200 p-0.5"
+              title="Card background color"
+            />
+            <span className="text-xs text-gray-500">Card background color</span>
+          </div>
+        )}
       </div>
 
-      {isSource ? (
-        <textarea
-          className="w-full p-3 font-mono text-xs text-gray-700 outline-none resize-y min-h-[420px]"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          dir={isRTL ? 'rtl' : 'ltr'}
-          spellCheck={false}
-        />
-      ) : (
-        <div
-          ref={editorRef}
-          contentEditable
-          suppressContentEditableWarning
-          dir={isRTL ? 'rtl' : 'ltr'}
-          className="min-h-[420px] p-4 text-sm text-gray-800 outline-none prose prose-sm max-w-none focus:ring-0 overflow-auto"
-          dangerouslySetInnerHTML={{ __html: value }}
-          onInput={handleInput}
-          onBlur={handleInput}
-        />
-      )}
+      <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleFile} />
     </div>
   );
 }
@@ -335,10 +310,10 @@ export function ArticlesClient({ articles: initial }: { articles: ArticleRow[] }
                   <label className={labelCls}>Excerpt (shown in index/listing)</label>
                   <textarea className={inputCls} rows={3} value={form.excerpt || ''} onChange={(e) => setForm({ ...form, excerpt: e.target.value || null })} placeholder="Short summary for article index page…" />
                 </div>
-                <div>
-                  <label className={labelCls}>Featured Image URL</label>
-                  <input className={inputCls} value={form.featuredImage || ''} onChange={(e) => setForm({ ...form, featuredImage: e.target.value || null })} placeholder="https://…" />
-                </div>
+                <FeaturedImageField
+                  value={form.featuredImage || ''}
+                  onChange={(v) => setForm({ ...form, featuredImage: v || null })}
+                />
                 <div>
                   <label className={labelCls}>Canonical URL (leave blank to auto-generate)</label>
                   <input className={inputCls} value={form.canonicalUrl || ''} onChange={(e) => setForm({ ...form, canonicalUrl: e.target.value || null })} placeholder="https://www.sim2me.net/articles/…" />
@@ -348,13 +323,12 @@ export function ArticlesClient({ articles: initial }: { articles: ArticleRow[] }
 
             {tab === 'content' && (
               <div>
-                <div className="mb-2 flex items-center gap-2">
-                  <p className="text-xs text-gray-500">
-                    Use the toolbar for visual editing, or press <code className="bg-gray-100 px-1 rounded text-xs">&lt;/&gt;</code> to edit raw HTML.
-                    RTL (HE/AR) is applied automatically on the frontend.
-                  </p>
-                </div>
+                <p className="mb-2 text-xs text-gray-500">
+                  Full rich-text editor — fonts, colors, direction, tables, images, YouTube and more.
+                  Click <code className="rounded bg-gray-100 px-1">&lt;/&gt;</code> to switch to raw HTML mode.
+                </p>
                 <RichTextEditor
+                  key={editing ?? 'new'}
                   value={content}
                   onChange={setContent}
                   isRTL={form.locale === 'ar' || form.locale === 'he'}

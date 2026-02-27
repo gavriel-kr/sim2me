@@ -2,8 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useParams, usePathname } from 'next/navigation';
-import { useEffect } from 'react';
+import { useParams } from 'next/navigation';
 import type { ArticleFull } from '@/lib/articles';
 
 interface Props {
@@ -20,16 +19,8 @@ function formatDate(date: Date, locale: string) {
 
 export function ArticleDetail({ article, locale }: Props) {
   const params = useParams();
-  const pathname = usePathname();
   const prefix = (params.locale as string) === 'en' ? '' : `/${params.locale}`;
   const isRTL = locale === 'he' || locale === 'ar';
-
-  // #region agent log — H-A: confirm MainLayout is present after fix
-  useEffect(() => {
-    const hasHeader = !!document.querySelector('header');
-    fetch('http://127.0.0.1:7242/ingest/31d3162a-817c-4d6a-9841-464cdcbf3b94', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ArticleDetail.tsx:mount',message:'H-A post-fix: article page rendered',data:{hasHeader,pathname,locale},timestamp:Date.now(),hypothesisId:'H-A'})}).catch(()=>{});
-  }, [pathname, locale]);
-  // #endregion
 
   const breadcrumbLabel = locale === 'he' ? 'מדריכים' : locale === 'ar' ? 'أدلة' : 'Articles';
 
@@ -67,9 +58,10 @@ export function ArticleDetail({ article, locale }: Props) {
           </p>
         </header>
 
-        {/* Article body — RTL handled at HTML level by root layout */}
+        {/* Article body */}
         <div
-          className={`prose prose-gray max-w-none prose-headings:font-bold prose-a:text-emerald-700 prose-a:no-underline hover:prose-a:underline prose-img:rounded-xl prose-table:text-sm ${isRTL ? '[&_*]:text-right [&_h1]:text-right [&_h2]:text-right [&_h3]:text-right [&_li]:text-right' : ''}`}
+          dir={isRTL ? 'rtl' : 'ltr'}
+          className={`prose prose-gray max-w-none prose-headings:font-bold prose-a:text-emerald-700 prose-a:no-underline hover:prose-a:underline prose-img:rounded-xl prose-table:text-sm ${isRTL ? '[&_h1]:text-right [&_h2]:text-right [&_h3]:text-right [&_h4]:text-right [&_p]:text-right [&_li]:text-right [&_blockquote]:text-right [&_td]:text-right [&_th]:text-right' : ''}`}
           dangerouslySetInnerHTML={{ __html: article.content }}
         />
 
