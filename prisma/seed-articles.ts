@@ -1046,154 +1046,130 @@ const articles = [
   },
 
   // ─────────────────────────────────────────────
-  // HE ARTICLE 2
+  // HE ARTICLE 2 — איסים לארצות הברית
   // ─────────────────────────────────────────────
   {
     slug: 'esim-artsot-habrit',
     locale: 'he',
-    title: 'eSIM לארצות הברית: המדריך המלא לתייר הישראלי',
-    excerpt: 'טסים לארה"ב? eSIM אמריקאי יחסוך לכם מאות שקלים על רומינג. מדריך מלא עם המלצות תוכניות, כיסוי רשת, וטיפים שימושיים.',
-    focusKeyword: 'esim ארצות הברית',
-    metaTitle: 'eSIM לארצות הברית 2025 | מדריך לישראלים',
-    metaDesc: 'המדריך הישראלי ל-eSIM בארה"ב. 30 תוכניות מ-$0.70/יום, 5G, כיסוי בכל 50 מדינות. חסכו על רומינג בינלאומי.',
-    ogTitle: 'eSIM לארה"ב — המדריך המלא לתייר הישראלי 2025',
-    ogDesc: 'כל מה שישראלי צריך לדעת על eSIM בארצות הברית. תוכניות, מחירים, כיסוי, והתקנה.',
+    title: 'איסים לארצות הברית – הדרך החכמה להישאר מחוברים בטיול לאמריקה',
+    excerpt: 'מחפשים איסים לארצות הברית? Sim2Me מציעה כרטיסי eSIM לנסיעות לארה"ב עם כיסוי מלא, מחירים נמוכים וחיבור מיידי.',
+    focusKeyword: 'איסים לארצות הברית',
+    metaTitle: 'איסים לארצות הברית | sim2me',
+    metaDesc: 'מחפשים איסים לארצות הברית? Sim2Me מציעה כרטיסי eSIM לנסיעות לארה"ב עם כיסוי מלא, מחירים נמוכים וחיבור מיידי. הזמינו עכשיו!',
+    ogTitle: 'איסים לארצות הברית – הדרך החכמה להישאר מחוברים בטיול לאמריקה',
+    ogDesc: 'כיסוי T-Mobile ו-AT&T, הפעלה מיידית, עד 20GB ומעלה.',
     articleOrder: 2,
     status: 'PUBLISHED' as const,
     content: `
 <div class="quick-summary rounded-xl border border-emerald-100 bg-emerald-50 p-5 mb-8" dir="rtl">
   <h2 class="text-lg font-bold text-emerald-800 mt-0 mb-2">תקציר מהיר</h2>
   <ul class="text-sm text-emerald-900 space-y-1 mb-0">
-    <li>✅ 30 תוכניות eSIM לארה"ב — מ-$0.70 ליום</li>
-    <li>✅ 4G LTE בכל 50 המדינות; 5G בערים גדולות</li>
-    <li>✅ עדיף פי 5–10 על רומינג בינלאומי של חברות ישראליות</li>
-    <li>✅ גם תוכנית ארה"ב + קנדה זמינה לטיולים מרובי מדינות</li>
+    <li>✅ הימנעות מעלויות רואמינג של מאות שקלים ביום</li>
+    <li>✅ הפעלה מיידית — הורידו לפני הנסיעה, הפעילו עם הנחיתה</li>
+    <li>✅ כיסוי ברשתות T-Mobile ו-AT&T</li>
+    <li>✅ נפח עד 20GB ומעלה, תוקף 7 / 15 / 30 יום</li>
   </ul>
 </div>
 
-<h2>למה ישראלים משלמים יותר מדי על רומינג בארה"ב?</h2>
-<p>פרייסרייט, פרטנר, צלקום, הוט מובייל — כולן מציעות חבילות רומינג לארה"ב. אבל בחינה מעמיקה מגלה מחיר מדהים: ₪80–₪200 לשבוע, לעתים עם הגבלת נתונים של 1–2 GB בלבד. בהשוואה, תוכנית eSIM ל-10 GB לשבוע בארה"ב תעלה $15–$25 בלבד — חיסכון של 70% ומעלה.</p>
+<h2>למה לבחור eSIM לנסיעה לארה"ב?</h2>
+<p>ארצות הברית היא מדינה ענקית. ממנהטן שוקקת החיים ועד הכבישים הרחבים של Route 66, אתם תצטרכו ניווט, גישה למפות, שיחות ותקשורת רציפה. <strong>איסים לארצות הברית</strong> מבית Sim2Me מאפשר: הימנעות מעלויות רואמינג של חברות הסלולר הישראליות שיכולות להגיע למאות שקלים ביום; הפעלה מיידית — הורידו את ה-eSIM לפני הנסיעה, הפעילו עם הנחיתה; כיסוי ברשתות T-Mobile ו-AT&T.</p>
 
-<a href="${SITE}/he/destinations/us" class="inline-block rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white my-4 hover:bg-emerald-700">← ראו תוכניות eSIM לארה"ב</a>
+<h2>כיסוי גיאוגרפי — גם מחוץ לערים הגדולות</h2>
+<p>אחד היתרונות של <strong>איסים לארצות הברית</strong> של Sim2Me הוא הכיסוי הרחב. בין אם אתם בניו יורק, לוס אנג\'לס, מיאמי, או בפארקים הלאומיים כמו יוסמיטי או גרנד קניון — הכיסוי נשאר יציב ואמין.</p>
 
-<h2>השוואת עלויות: eSIM מול רומינג ישראלי</h2>
+<h3>מה כולל החבילה?</h3>
 <table class="w-full text-sm border-collapse mb-6">
-  <thead><tr class="bg-gray-100"><th class="p-3 text-right border">אפשרות</th><th class="p-3 text-right border">עלות ל-14 ימים</th><th class="p-3 text-right border">נתונים</th></tr></thead>
+  <thead><tr class="bg-gray-100"><th class="p-3 text-right border">פרט</th><th class="p-3 text-right border">פרטים</th></tr></thead>
   <tbody>
-    <tr><td class="p-3 border font-bold">eSIM ב-Sim2Me</td><td class="p-3 border">$20–$40</td><td class="p-3 border">10–20 GB</td></tr>
-    <tr><td class="p-3 border">חבילת רומינג ישראלית</td><td class="p-3 border">₪200–₪400</td><td class="p-3 border">5–15 GB</td></tr>
-    <tr><td class="p-3 border">כרטיס SIM אמריקאי (שדה תעופה)</td><td class="p-3 border">$40–$60</td><td class="p-3 border">10–25 GB</td></tr>
+    <tr><td class="p-3 border">נפח גלישה</td><td class="p-3 border">עד 20GB ומעלה (תלוי בחבילה)</td></tr>
+    <tr><td class="p-3 border">תוקף</td><td class="p-3 border">7, 15 או 30 יום</td></tr>
+    <tr><td class="p-3 border">הפעלה</td><td class="p-3 border">סריקת QR קוד בלבד</td></tr>
   </tbody>
 </table>
 
-<h2>כיסוי רשת בארה"ב</h2>
-<p>תוכניות ה-eSIM האמריקאיות פועלות על רשתות הסלולר המובילות בארה"ב עם כיסוי 4G LTE ברחבי הארץ. בערים גדולות (ניו יורק, לוס אנג'לס, שיקגו, מיאמי, לאס וגאס, סן פרנסיסקו) ישנה גם גלישה 5G מהירה. אזורים כפריים מרוחקים (אלסקה, חלקים ממונטנה ויומינג) עשויים להיות עם כיסוי מוגבל.</p>
+<h2>כיצד מתקינים eSIM לארה"ב?</h2>
+<ol>
+  <li>רכשו את החבילה באתר Sim2Me</li>
+  <li>קבלו QR קוד למייל</li>
+  <li>הגדרות ← סים סלולרי ← הוסף תוכנית</li>
+  <li>סרקו את הקוד — סיימתם!</li>
+</ol>
+<p><strong>טיפ:</strong> ה-eSIM נשמר בטלפון ואפשר להפעיל אותו בעתיד.</p>
 
-<h2>איזו תוכנית לבחור?</h2>
-<p><strong>שבוע בניו יורק בלבד:</strong> 5–8 GB — מספיק לניווט, אינסטגרם ושיחות וידאו יומיות.</p>
-<p><strong>שבועיים טיול רחב:</strong> 10–15 GB — מתאים לטיול סטנדרטי.</p>
-<p><strong>חודש עבודה מרחוק:</strong> 20 GB+ — לכנסים ב-Zoom ועבודה שוטפת.</p>
+<h2>השוואה: eSIM מול כרטיס SIM מקומי</h2>
+<p>כרטיס SIM מקומי דורש ביקור בחנות עם דרכון והמתנה. <strong>איסים לארצות הברית</strong> מבית Sim2Me מוכן מראש מהבית. אין צורך בנעילת SIM מיוחדת (כל עוד הטלפון אנלוקד).</p>
 
-<h2>טיול לארה"ב + קנדה?</h2>
-<p>אם מסלול הטיול שלכם כולל גם קנדה — שקלו את <a href="${SITE}/he/destinations/na-3">תוכנית צפון אמריקה (ארה"ב + קנדה)</a>. eSIM אחד לשתי המדינות.</p>
-
-<h2>שאלות נפוצות</h2>
-<h3>ש: האם eSIM אמריקאי עובד בהוואי ופורטו ריקו?</h3>
-<p>ת: כן — תוכניות ארה"ב כוללות בדרך כלל את כל 50 המדינות כולל הוואי ופורטו ריקו.</p>
-<h3>ש: אפשר להשתמש ב-WhatsApp שיחות עם eSIM אמריקאי?</h3>
-<p>ת: כן — ה-eSIM מספק נתונים רגילים. WhatsApp, FaceTime ו-Zoom עובדים מצוין.</p>
-<h3>ש: הטלפון שלי נעול לפרטנר — אפשר להשתמש ב-eSIM?</h3>
-<p>ת: לא — הטלפון חייב להיות unlocked. צרו קשר עם הספק לשחרור.</p>
-<h3>ש: אפשר לקנות eSIM אמריקאי אחרי שכבר נחתתי?</h3>
-<p>ת: כן, כל עוד יש לכם Wi-Fi להתקנה. אבל עדיף לרכוש ולהתקין לפני הטיסה.</p>
-
-<script type="application/ld+json">
-{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"האם eSIM אמריקאי עובד בהוואי?","acceptedAnswer":{"@type":"Answer","text":"כן — תוכניות ארה"ב כוללות את כל 50 המדינות כולל הוואי."}},{"@type":"Question","name":"הטלפון שלי נעול לפרטנר — אפשר להשתמש ב-eSIM?","acceptedAnswer":{"@type":"Answer","text":"לא — הטלפון חייב להיות unlocked. צרו קשר עם הספק לשחרור."}}]}
-</script>
+<h2>מי מרוויח מ-eSIM לארה"ב?</h2>
+<ul>
+  <li><strong>תיירים</strong> המבקרים בין שבוע לחודש</li>
+  <li><strong>אנשי עסקים</strong> הנוסעים תכופות לארה"ב</li>
+  <li><strong>סטודנטים</strong> בתכניות לימוד קצרות</li>
+  <li><strong>ישראלים עם משפחה</strong> בארה"ב שצריכים תקשורת יומיומית</li>
+</ul>
 
 <div class="cta-block rounded-xl border border-emerald-200 bg-emerald-50 p-6 my-8 text-center" dir="rtl">
-  <p class="text-xl font-bold text-emerald-900 mb-2">טסים לארה"ב? בדקו את התוכניות שלנו</p>
+  <p class="text-xl font-bold text-emerald-900 mb-2">קנו איסים לארצות הברית לפני הטיסה</p>
   <a href="${SITE}/he/destinations/us" class="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700">← תוכניות eSIM לארה"ב</a>
 </div>
 `,
   },
 
   // ─────────────────────────────────────────────
-  // HE ARTICLE 3
+  // HE ARTICLE 3 — איסים לאירופה
   // ─────────────────────────────────────────────
   {
     slug: 'esim-europa-madrich',
     locale: 'he',
-    title: 'eSIM לאירופה: מה לבחור ואיך להתקין לטיול הבא שלכם',
-    excerpt: 'טיול לאירופה עם eSIM אזורי — מדינות 30–43 בכרטיס אחד. מדריך להשוואת תוכניות, כיסוי, ומה לדעת לפני היציאה.',
-    focusKeyword: 'esim אירופה',
-    metaTitle: 'eSIM לאירופה 2025 | מדריך ישראלי לטיול',
-    metaDesc: 'מדריך eSIM לאירופה. תוכנית אזורית ל-30–43 מדינות, מ-$0.90 ליום. כיסוי 4G/5G, ללא סים פיזי.',
-    ogTitle: 'eSIM לאירופה 2025 — מה לבחור ואיך לחסוך',
-    ogDesc: 'מדריך מלא ל-eSIM לטיול באירופה. השווה תוכניות אזוריות ומדינתיות, הבן כיסוי, וחסוך על רומינג.',
+    title: 'איסים לאירופה — חבילה אחת לכל היבשת',
+    excerpt: 'איסים לאירופה – חבילת eSIM אחת לכל יעדי אירופה. Sim2Me מציעה כיסוי בעשרות מדינות, גלישה מהירה ומחיר שמשתלם.',
+    focusKeyword: 'איסים לאירופה',
+    metaTitle: 'איסים לאירופה | sim2me',
+    metaDesc: 'איסים לאירופה – חבילת eSIM אחת לכל יעדי אירופה. Sim2Me מציעה כיסוי בעשרות מדינות, גלישה מהירה ומחיר שמשתלם.',
+    ogTitle: 'איסים לאירופה — חבילה אחת לכל היבשת',
+    ogDesc: '30–40 מדינות, רשתות מקומיות מובילות, 4G LTE. כיסוי בריטניה תלוי בחבילה.',
     articleOrder: 3,
     status: 'PUBLISHED' as const,
     content: `
 <div class="quick-summary rounded-xl border border-emerald-100 bg-emerald-50 p-5 mb-8" dir="rtl">
   <h2 class="text-lg font-bold text-emerald-800 mt-0 mb-2">תקציר מהיר</h2>
   <ul class="text-sm text-emerald-900 space-y-1 mb-0">
-    <li>✅ תוכנית אזורית = 30–43 מדינות אירופה על eSIM אחד</li>
-    <li>✅ 4G LTE בכל האיחוד האירופי; 5G בערים גדולות</li>
-    <li>✅ מחיר מ-$0.90 ליום — עשרות אחוזים פחות מרומינג</li>
-    <li>✅ כולל בריטניה, שוויץ, נורווגיה, טורקיה (בהתאם לתוכנית)</li>
+    <li>✅ 30–40 מדינות אירופה — גרמניה, צרפת, ספרד, איטליה, יוון, הולנד, פולין ועוד</li>
+    <li>✅ גלישה על רשתות מקומיות מובילות בכל מדינה, ללא תוספת על מעבר גבול</li>
+    <li>✅ eSIM אחד לכל הטיול — ניהול מרכזי, חיסכון, Roaming חכם</li>
+    <li>✅ שימו לב: כיסוי בריטניה תלוי בחבילה הנבחרת</li>
   </ul>
 </div>
 
-<h2>למה eSIM הוא הפתרון הנכון לטיול אירופאי?</h2>
-<p>ישראלים רבים עדיין רוכשים חבילות רומינג מחברות כמו פרטנר, פרייסרייט או צלקום לטיול באירופה. אבל המחיר יכול להגיע ל-₪100–₪250 לשבוע — לעתים עם הגבלות נתונים מתסכלות. לחלופין, eSIM אירופי מאפשר לכם לשלם $15–$30 לשבועיים של גלישה חופשית ב-30 מדינות.</p>
+<h2>מה כולל איסים לאירופה?</h2>
+<p>חבילות <strong>איסים לאירופה</strong> של Sim2Me מכסות בדרך כלל 30–40 מדינות, גלישה על רשתות מקומיות מובילות, וללא תוספת תשלום על מעבר בין מדינות.</p>
 
-<h2>תוכנית אזורית מול תוכנית מדינתית</h2>
+<h2>לאיזה מטיילים זה מתאים?</h2>
 <table class="w-full text-sm border-collapse mb-6">
-  <thead><tr class="bg-gray-100"><th class="p-3 text-right border">סוג</th><th class="p-3 text-right border">מתאים ל</th><th class="p-3 text-right border">כיסוי</th><th class="p-3 text-right border">מחיר</th></tr></thead>
+  <thead><tr class="bg-gray-100"><th class="p-3 text-right border">סוג מטייל</th><th class="p-3 text-right border">המלצה</th></tr></thead>
   <tbody>
-    <tr><td class="p-3 border font-bold">תוכנית אזורית (EU-30/EU-42)</td><td class="p-3 border">טיולים במדינות מרובות</td><td class="p-3 border">30–43 מדינות</td><td class="p-3 border">מ-$0.90/יום</td></tr>
-    <tr><td class="p-3 border">תוכנית מדינתית (FR/DE/IT)</td><td class="p-3 border">ביקור במדינה אחת</td><td class="p-3 border">מדינה אחת</td><td class="p-3 border">מ-$0.70/יום</td></tr>
+    <tr><td class="p-3 border">סיור מולטי-קאנטרי 2+ שבועות</td><td class="p-3 border">מצוין</td></tr>
+    <tr><td class="p-3 border">מסע ירח-דבש באירופה</td><td class="p-3 border">מומלץ מאוד</td></tr>
+    <tr><td class="p-3 border">נסיעות עסקיות באירופה</td><td class="p-3 border">אידיאלי</td></tr>
+    <tr><td class="p-3 border">ביקור קצר במדינה אחת</td><td class="p-3 border">כדאי לשקול חבילה ייעודית</td></tr>
   </tbody>
 </table>
 
-<p>עושים טיול רכבת מפריז לרומא דרך ברצלונה? תוכנית אזורית תכסה אתכם ללא הפתעות.</p>
-
-<a href="${SITE}/he/destinations/eu-30" class="inline-block rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white my-4 hover:bg-emerald-700">← ראו תוכניות eSIM לאירופה</a>
-
-<h2>מדינות מרכזיות ומחירי eSIM</h2>
-<table class="w-full text-sm border-collapse mb-6">
-  <thead><tr class="bg-gray-100"><th class="p-3 text-right border">מדינה</th><th class="p-3 text-right border">מחיר מ-</th><th class="p-3 text-right border">רשת</th></tr></thead>
-  <tbody>
-    <tr><td class="p-3 border"><a href="${SITE}/he/destinations/fr">צרפת</a></td><td class="p-3 border">$0.70/יום</td><td class="p-3 border">4G/5G</td></tr>
-    <tr><td class="p-3 border"><a href="${SITE}/he/destinations/de">גרמניה</a></td><td class="p-3 border">$0.80/יום</td><td class="p-3 border">4G/5G</td></tr>
-    <tr><td class="p-3 border"><a href="${SITE}/he/destinations/it">איטליה</a></td><td class="p-3 border">$0.80/יום</td><td class="p-3 border">4G/5G</td></tr>
-    <tr><td class="p-3 border"><a href="${SITE}/he/destinations/es">ספרד</a></td><td class="p-3 border">$0.80/יום</td><td class="p-3 border">4G/5G</td></tr>
-    <tr><td class="p-3 border"><a href="${SITE}/he/destinations/gb">בריטניה</a></td><td class="p-3 border">$0.70/יום</td><td class="p-3 border">4G/5G</td></tr>
-  </tbody>
-</table>
-
-<h2>התקנה בשלושה שלבים</h2>
+<h2>כיצד לרכוש?</h2>
 <ol>
-  <li>בחרו תוכנית <a href="${SITE}/he/destinations/eu-30">eSIM לאירופה</a> ורכשו.</li>
-  <li>סרקו את קוד ה-QR בהגדרות הטלפון לפני הטיסה.</li>
-  <li>בנחיתה באירופה — הפעילו נדידת נתונים על קו ה-eSIM.</li>
+  <li>היכנסו לאתר Sim2Me</li>
+  <li>בחרו "eSIM לאירופה"</li>
+  <li>בחרו נפח וזמן</li>
+  <li>שלמו וקבלו QR קוד</li>
+  <li>סרקו והפעילו בנחיתה הראשונה</li>
 </ol>
 
 <h2>שאלות נפוצות</h2>
-<h3>ש: האם תוכנית EU כוללת את טורקיה וישראל?</h3>
-<p>ת: ישראל ≠ אירופה — תצטרכו תוכנית נפרדת לישראל. טורקיה כלולה בחלק מהתוכניות (EU-42/EU-43). בדקו בפרטי התוכנית.</p>
-<h3>ש: כמה נתונים צריך לשבועיים באירופה?</h3>
-<p>ת: 8–12 GB לתייר ממוצע (ניווט, אינסטגרם, שיחות). 15–20 GB לצלמים ועובדים מרחוק.</p>
-<h3>ש: האם eSIM אירופי עובד בחצי האי הבלקני (יוון, קרואטיה)?</h3>
-<p>ת: כן — יוון וקרואטיה נמצאות ב-EU ונכללות בתוכניות EU-30 ו-EU-42.</p>
-
-<script type="application/ld+json">
-{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"האם תוכנית EU כוללת את ישראל?","acceptedAnswer":{"@type":"Answer","text":"לא — ישראל אינה חלק מאירופה לצורך תוכניות eSIM. נדרשת תוכנית נפרדת."}},{"@type":"Question","name":"כמה נתונים צריך לשבועיים באירופה?","acceptedAnswer":{"@type":"Answer","text":"8–12 GB לתייר ממוצע. 15–20 GB לצלמים ועובדים מרחוק."}}]}
-</script>
+<p><strong>האם ה-eSIM עובד בטורקיה?</strong> — טורקיה אינה חלק מהאיחוד האירופי; חבילות אירופה לרוב לא כוללות אותה. רכשו <strong>איסים לטורקיה</strong> נפרד.</p>
+<p><strong>האם ה-eSIM עובד בישראל?</strong> — ה-eSIM פעיל רק ביעד הנסיעה. בישראל שמרו את ה-SIM המקומי.</p>
 
 <div class="cta-block rounded-xl border border-emerald-200 bg-emerald-50 p-6 my-8 text-center" dir="rtl">
-  <p class="text-xl font-bold text-emerald-900 mb-2">תכננו את הטיול האירופאי שלכם מחוברים</p>
-  <a href="${SITE}/he/destinations/eu-30" class="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700">← תוכניות אירופה</a>
+  <p class="text-xl font-bold text-emerald-900 mb-2">איסים לאירופה — הזמינו עכשיו</p>
+  <a href="${SITE}/he/destinations/eu-30" class="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700">← תוכניות eSIM לאירופה</a>
 </div>
 `,
   },
@@ -1204,133 +1180,111 @@ const articles = [
   {
     slug: 'esim-thailand-he',
     locale: 'he',
-    title: 'eSIM לתאילנד: המדריך הישראלי לקישוריות בבנגקוק ובאיים',
-    excerpt: '26 תוכניות eSIM לתאילנד מ-$0.70 ליום. המדריך הישראלי לכיסוי רשת, הגדרות, וטיפים לטיול בדרום מזרח אסיה.',
-    focusKeyword: 'esim תאילנד',
-    metaTitle: 'eSIM לתאילנד 2025 | מדריך ישראלי',
-    metaDesc: 'מדריך eSIM לתאילנד לישראלים. 26 תוכניות מ-$0.70/יום, כיסוי בבנגקוק, פוקט, קו סאמוי. גם תוכנית דרום מזרח אסיה.',
-    ogTitle: 'eSIM לתאילנד 2025 — מדריך לתייר הישראלי',
-    ogDesc: 'כל מה שישראלי צריך לדעת על eSIM בתאילנד. כיסוי, תוכניות, ומה לצפות באיים.',
+    title: 'איסים לתאילנד — הישארו מחוברים בממלכה של חיוכים',
+    excerpt: 'איסים לתאילנד – גלשו בקצב גבוה בבנגקוק, פוקט ובין האיים. Sim2Me מציעה eSIM לתאילנד עם כיסוי 4G, מחיר נוח והפעלה פשוטה.',
+    focusKeyword: 'איסים לתאילנד',
+    metaTitle: 'איסים לתאילנד | sim2me',
+    metaDesc: 'איסים לתאילנד – גלשו בקצב גבוה בבנגקוק, פוקט ובין האיים. Sim2Me מציעה eSIM לתאילנד עם כיסוי 4G, מחיר נוח והפעלה פשוטה.',
+    ogTitle: 'איסים לתאילנד — הישארו מחוברים בממלכה של חיוכים',
+    ogDesc: 'רשתות AIS, DTAC, TRUE. בנגקוק, פוקט, קו סאמוי, קו פנגן.',
     articleOrder: 4,
     status: 'PUBLISHED' as const,
     content: `
 <div class="quick-summary rounded-xl border border-emerald-100 bg-emerald-50 p-5 mb-8" dir="rtl">
   <h2 class="text-lg font-bold text-emerald-800 mt-0 mb-2">תקציר מהיר</h2>
   <ul class="text-sm text-emerald-900 space-y-1 mb-0">
-    <li>✅ 26 תוכניות eSIM לתאילנד — מ-$0.70 ליום</li>
-    <li>✅ כיסוי 4G מצוין בבנגקוק, צ'יאנג מאי, פוקט, קו סאמוי</li>
-    <li>✅ אזורים מרוחקים ואיים קטנים — כיסוי חלקי</li>
-    <li>✅ תוכנית דרום מזרח אסיה — תאילנד + 4 מדינות נוספות</li>
+    <li>✅ גלישה מהירה 4G LTE בערי המפתח — רשתות AIS, DTAC (TRUE), NPERF</li>
+    <li>✅ כיסוי בבנגקוק, פטאיה, פוקט, קו סאמוי, קו פנגן, קו פי פי</li>
+    <li>✅ מחיר נמוך משמעותית מרואמינג ישראלי</li>
+    <li>✅ דלגו על התור בשדה התעופה — הפעילו בנחיתה</li>
   </ul>
 </div>
 
-<h2>למה תאילנד מושלמת ל-eSIM?</h2>
-<p>תאילנד קולטת מעל 30 מיליון תיירים מדי שנה, ותשתית הסלולר שלה השתפרה בהתאם. שלוש הרשתות הגדולות — AIS, DTAC ו-True Move — מציעות כיסוי 4G LTE מצוין בכל מרכזי התיירות המרכזיים. עבור ישראלים, הנחיתה בסובארנאבהומי ו"לדלג" ישירות לכרטיס eSIM שכבר מותקן היא חוויה הרבה יותר נוחה מהמתנה בתור לחנות SIM.</p>
+<h2>מדוע eSIM הוא הבחירה הטבעית לתאילנד?</h2>
+<p>תאילנד ידועה בתשתית סלולרית טובה — האיים הפופולריים מכוסים היטב ב-4G. <strong>איסים לתאילנד</strong> של Sim2Me מתחבר לרשתות המובילות ומאפשר multi-carrier למעבר אוטומטי לרשת הזמינה הטובה ביותר.</p>
 
-<a href="${SITE}/he/destinations/th" class="inline-block rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white my-4 hover:bg-emerald-700">← ראו תוכניות eSIM לתאילנד</a>
-
-<h2>כיסוי לפי אזורים</h2>
+<h3>כיסוי לפי יעד פופולרי</h3>
 <table class="w-full text-sm border-collapse mb-6">
-  <thead><tr class="bg-gray-100"><th class="p-3 text-right border">מקום</th><th class="p-3 text-right border">כיסוי</th><th class="p-3 text-right border">5G</th></tr></thead>
+  <thead><tr class="bg-gray-100"><th class="p-3 text-right border">יעד</th><th class="p-3 text-right border">כיסוי</th></tr></thead>
   <tbody>
-    <tr><td class="p-3 border">בנגקוק</td><td class="p-3 border">מצוין</td><td class="p-3 border">זמין</td></tr>
-    <tr><td class="p-3 border">צ'יאנג מאי</td><td class="p-3 border">טוב מאוד</td><td class="p-3 border">מוגבל</td></tr>
-    <tr><td class="p-3 border">פוקט (עיר)</td><td class="p-3 border">טוב מאוד</td><td class="p-3 border">מוגבל</td></tr>
-    <tr><td class="p-3 border">קו סאמוי</td><td class="p-3 border">טוב</td><td class="p-3 border">לא</td></tr>
-    <tr><td class="p-3 border">קו טאו / קו פאנגאן</td><td class="p-3 border">בינוני</td><td class="p-3 border">לא</td></tr>
-    <tr><td class="p-3 border">הרים ג'ונגל</td><td class="p-3 border">חלש</td><td class="p-3 border">לא</td></tr>
+    <tr><td class="p-3 border">בנגקוק</td><td class="p-3 border">מצוין</td></tr>
+    <tr><td class="p-3 border">פוקט</td><td class="p-3 border">מצוין</td></tr>
+    <tr><td class="p-3 border">קו סאמוי</td><td class="p-3 border">טוב מאוד</td></tr>
+    <tr><td class="p-3 border">קו פנגן</td><td class="p-3 border">טוב</td></tr>
+    <tr><td class="p-3 border">צ'יאנג מאי</td><td class="p-3 border">מצוין</td></tr>
+    <tr><td class="p-3 border">קראבי</td><td class="p-3 border">טוב מאוד</td></tr>
   </tbody>
 </table>
 
-<h2>תאילנד בלבד מול דרום מזרח אסיה?</h2>
-<p>אם הטיול שלכם כולל גם סינגפור, מלזיה, ווייטנאם או אינדונזיה — שקלו את <a href="${SITE}/he/destinations/sgmyth-3">תוכנית סינגפור, מלזיה ותאילנד</a> או <a href="${SITE}/he/destinations/as-12">תוכנית דרום מזרח אסיה</a>. eSIM אחד לכל המסע.</p>
+<p>ישראלים רבים עומדים בתור לקניית SIM בבנגקוק (BKK). עם <strong>איסים לתאילנד</strong> — דלגו על התור. בנחיתה, הפעילו את ה-eSIM ואתם מחוברים.</p>
 
-<h2>כמה נתונים תצטרכו?</h2>
-<p><strong>שבועיים — תיירות רגילה:</strong> 8–12 GB. מספיק לניווט, וואטסאפ, אינסטגרם ושיחות וידאו.</p>
-<p><strong>חודש — עובדים מרחוק:</strong> 20 GB+. חשבו על כנסי Zoom ועדכוני ענן.</p>
+<h2>מה לגבי שיחות?</h2>
+<p>חבילות ה-eSIM של Sim2Me לתאילנד מתמקדות בגלישה. לשיחות מקומיות — השתמשו ב-WhatsApp, FaceTime או Google Meet דרך ה-Data.</p>
 
-<h2>שאלות נפוצות</h2>
-<h3>ש: האם eSIM תאילנד עובד בהפלגות בין האיים?</h3>
-<p>ת: במסעות בים — לרוב אין קליטה. זהו מצב תקין. ה-eSIM מתחבר מחדש כשמגיעים לאי הבא.</p>
-<h3>ש: כמה MB צורכת אפליקציית Grab?</h3>
-<p>ת: כ-10–20 MB לנסיעה רגילה. צריכה מינימלית — לא תפגע בתוכנית.</p>
-<h3>ש: האם אפשר לבצע שיחות וידאו ב-eSIM תאילנדי?</h3>
-<p>ת: כן — WhatsApp, FaceTime ו-Zoom עובדים מצוין. תאילנד לא מגבילה VoIP.</p>
-
-<script type="application/ld+json">
-{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"האם eSIM תאילנד עובד בהפלגות בין האיים?","acceptedAnswer":{"@type":"Answer","text":"במסעות בים לרוב אין קליטה. ה-eSIM מתחבר מחדש כשמגיעים לאי הבא."}},{"@type":"Question","name":"האם אפשר לבצע שיחות וידאו ב-eSIM תאילנדי?","acceptedAnswer":{"@type":"Answer","text":"כן — WhatsApp, FaceTime ו-Zoom עובדים מצוין. תאילנד לא מגבילה VoIP."}}]}
-</script>
+<h2>איסים לתאילנד לעומת SIM תיירותי בשדה התעופה</h2>
+<p>כרטיסי SIM בנמל התעופה מגיעים עם כרטיס פיזי שצריך לפרוק ולשמור. eSIM לא יכול ללכת לאיבוד, לא ייכנס למים ולא ישתבש מחול — חשוב מאוד בתאילנד.</p>
 
 <div class="cta-block rounded-xl border border-emerald-200 bg-emerald-50 p-6 my-8 text-center" dir="rtl">
-  <p class="text-xl font-bold text-emerald-900 mb-2">גלשו בתאילנד מ-$0.70 ליום</p>
+  <p class="text-xl font-bold text-emerald-900 mb-2">הזמינו איסים לתאילנד עוד היום</p>
   <a href="${SITE}/he/destinations/th" class="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700">← תוכניות eSIM לתאילנד</a>
 </div>
 `,
   },
 
   // ─────────────────────────────────────────────
-  // HE ARTICLE 5
+  // HE ARTICLE 5 — איסים לדובאי
   // ─────────────────────────────────────────────
   {
     slug: 'esim-dubai-he',
     locale: 'he',
-    title: 'eSIM לדובאי ואיחוד האמירויות: המדריך לתייר הישראלי',
-    excerpt: 'אחרי הסכמי אברהם, דובאי הפכה ליעד מוביל לישראלים. מדריך מלא לשימוש ב-eSIM באיחוד האמירויות — כולל VoIP, כיסוי, ומחירים.',
-    focusKeyword: 'esim דובאי',
-    metaTitle: 'eSIM לדובאי ואיחוד האמירויות 2025 | מדריך ישראלי',
-    metaDesc: 'מדריך eSIM לדובאי ואיחוד האמירויות לישראלים. 18 תוכניות מ-$0.70/יום, 5G, WhatsApp מותר. כולל טיפים שימושיים.',
-    ogTitle: 'eSIM לדובאי 2025 — מה ישראלים צריכים לדעת',
-    ogDesc: 'המדריך הישראלי ל-eSIM בדובאי. VoIP, כיסוי רשת, תוכניות ומחירים לתיירים מישראל.',
+    title: 'איסים לדובאי — חיבור עתידני בעיר של מחר',
+    excerpt: 'איסים לדובאי – גלשו ב-4G/5G בדובאי עם eSIM מהיר ואמין של Sim2Me לנסיעות לאמירויות. הזמינו לפני הטיסה וחסכו!',
+    focusKeyword: 'איסים לדובאי',
+    metaTitle: 'איסים לדובאי | sim2me',
+    metaDesc: 'איסים לדובאי – גלשו ב-4G/5G בדובאי, תוצאות eSIM מהיר ואמין של Sim2Me לנסיעות לאמירויות. הזמינו לפני הטיסה וחסכו!',
+    ogTitle: 'איסים לדובאי — חיבור עתידני בעיר של מחר',
+    ogDesc: 'Etisalat (e&), du. כיסוי 5G בדובאי, אבו דאבי, שארג\'ה.',
     articleOrder: 5,
     status: 'PUBLISHED' as const,
     content: `
 <div class="quick-summary rounded-xl border border-emerald-100 bg-emerald-50 p-5 mb-8" dir="rtl">
   <h2 class="text-lg font-bold text-emerald-800 mt-0 mb-2">תקציר מהיר</h2>
   <ul class="text-sm text-emerald-900 space-y-1 mb-0">
-    <li>✅ 18 תוכניות eSIM לאיחוד האמירויות — מ-$0.70 ליום</li>
-    <li>✅ 5G מצוין בדובאי, אבו דאבי ושארג'ה</li>
-    <li>✅ WhatsApp שיחות, FaceTime ו-Zoom — כולם מותרים!</li>
-    <li>✅ טיסות ישירות מישראל לדובאי מאז 2020 — יעד פופולרי לישראלים</li>
+    <li>✅ Etisalat (e&) ו-du — רשתות מהשורה הראשונה ב-UAE</li>
+    <li>✅ כיסוי 5G נרחב — Downtown Dubai, Dubai Marina, Deira</li>
+    <li>✅ חבילה מכסה את כל האמירויות — דובאי, אבו דאבי, שארג'ה, עג'מאן ורא'ס אל ח'יימה</li>
+    <li>✅ רכישה והתקנה לפני הטיסה — עוברים ישר לאוסף המזוודות</li>
   </ul>
 </div>
 
-<h2>דובאי — יעד חדש ואהוב לישראלים</h2>
-<p>מאז חתימת הסכמי אברהם בספטמבר 2020, דובאי הפכה ליעד הטיול הנחשק ביותר לישראלים. טיסות ישירות מתל אביב לדובאי פועלות על ידי אל-על, ישראייר ואחרות — ומאות אלפי ישראלים ביקרו בה מאז. לכן, בחירת הפתרון הנכון לקישוריות בדובאי היא שאלה רלוונטית מאוד.</p>
+<h2>האמירויות — תשתית סלולרית מהעולם הראשון</h2>
+<p>האמירויות הן מהמובילות בעולם בתשתיות טלקום. עם <strong>איסים לדובאי</strong> מבית Sim2Me תיהנו מחיבור 5G מהיר ואמין ביותר מ-90% מאזורי הרשת — מרגע הנחיתה ועד החזרה.</p>
 
-<h2>עדכון חשוב: VoIP מותר באמירויות</h2>
-<p>שאלה שחוזרת על עצמה בכל קבוצות הטיול לדובאי: "האם WhatsApp שיחות עובד שם?" <strong>התשובה: כן!</strong> החל מ-2021, כל שירותי ה-VoIP — WhatsApp Audio ו-Video, FaceTime, Skype, Zoom — מותרים לשימוש מלא באיחוד האמירויות. אין הגבלה.</p>
+<h2>מה מיוחד ב-eSIM לדובאי?</h2>
+<p>בדובאי VoIP מוגבל חלקית — ב-Sim2Me תמצאו חבילות המותאמות לתקנות המקומיות ומספקות Data מהיר לשיחות בשיטות הנתמכות.</p>
 
-<a href="${SITE}/he/destinations/ae" class="inline-block rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white my-4 hover:bg-emerald-700">← ראו תוכניות eSIM לדובאי</a>
-
-<h2>כיסוי רשת בדובאי ובאמירויות</h2>
+<h3>כיסוי לפי אזור</h3>
 <table class="w-full text-sm border-collapse mb-6">
-  <thead><tr class="bg-gray-100"><th class="p-3 text-right border">אזור</th><th class="p-3 text-right border">4G</th><th class="p-3 text-right border">5G</th></tr></thead>
+  <thead><tr class="bg-gray-100"><th class="p-3 text-right border">אזור</th><th class="p-3 text-right border">כיסוי</th></tr></thead>
   <tbody>
-    <tr><td class="p-3 border">דובאי (עיר, מרינה, JBR)</td><td class="p-3 border">מצוין</td><td class="p-3 border">כן</td></tr>
-    <tr><td class="p-3 border">מטרו דובאי</td><td class="p-3 border">מצוין</td><td class="p-3 border">כן</td></tr>
-    <tr><td class="p-3 border">אבו דאבי</td><td class="p-3 border">מצוין</td><td class="p-3 border">כן</td></tr>
-    <tr><td class="p-3 border">שארג'ה / עג'מאן</td><td class="p-3 border">טוב מאוד</td><td class="p-3 border">מוגבל</td></tr>
-    <tr><td class="p-3 border">ספארי מדבר</td><td class="p-3 border">חלש (אזורים מרוחקים)</td><td class="p-3 border">לא</td></tr>
+    <tr><td class="p-3 border">Downtown Dubai</td><td class="p-3 border">מצוין (5G)</td></tr>
+    <tr><td class="p-3 border">Dubai Marina</td><td class="p-3 border">מצוין (5G)</td></tr>
+    <tr><td class="p-3 border">Deira</td><td class="p-3 border">מצוין</td></tr>
+    <tr><td class="p-3 border">ג'בל עלי</td><td class="p-3 border">טוב מאוד</td></tr>
   </tbody>
 </table>
 
-<h2>טיול לאמירויות ולסעודיה, קטר או כווית?</h2>
-<p>אם הטיול שלכם כולל מדינות מפרץ נוספות — <a href="${SITE}/he/destinations/saaeqakwombh-6">תוכנית מדינות המפרץ</a> מכסה שש מדינות: איחוד האמירויות, ערב הסעודית, קטר, כווית, עומאן ובחריין — ב-eSIM אחד.</p>
-
-<h2>שאלות נפוצות</h2>
-<h3>ש: האם אפשר להשתמש ב-eSIM אמירותי ב"ספארי מדברי"?</h3>
-<p>ת: בשטחי הספארי המרוחקים הכיסוי חלש. מומלץ להוריד מפות אופליין לפני.</p>
-<h3>ש: כמה נתונים צריך לשבוע בדובאי?</h3>
-<p>ת: 5–10 GB מספיק לרוב התיירים. עם שיחות וידאו יומיות — 10–15 GB.</p>
-<h3>ש: האם eSIM לאמירויות כולל את כל 7 האמירויות?</h3>
-<p>ת: כן — כל שבע: דובאי, אבו דאבי, שארג'ה, עג'מאן, אום אל-קיוון, פוג'יירה וראס אל-ח'יימה.</p>
-
-<script type="application/ld+json">
-{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"האם WhatsApp שיחות מותר באמירויות?","acceptedAnswer":{"@type":"Answer","text":"כן — כל שירותי VoIP (WhatsApp, FaceTime, Zoom) מותרים באיחוד האמירויות מאז 2021."}},{"@type":"Question","name":"האם eSIM לאמירויות כולל את כל 7 האמירויות?","acceptedAnswer":{"@type":"Answer","text":"כן — כולל דובאי, אבו דאבי, שארג'ה, עג'מאן, אום אל-קיוון, פוג'יירה וראס אל-ח'יימה."}}]}
-</script>
+<h2>מדריך רכישה והתקנה</h2>
+<ol>
+  <li>בקרו ב-Sim2Me.net ובחרו חבילת eSIM לדובאי/UAE</li>
+  <li>שלמו בצורה מאובטחת</li>
+  <li>קבלו QR קוד למייל</li>
+  <li>סרקו בהגדרות הטלפון (לפני הטיסה!)</li>
+  <li>הפעילו את ה-eSIM עם הנחיתה</li>
+</ol>
 
 <div class="cta-block rounded-xl border border-emerald-200 bg-emerald-50 p-6 my-8 text-center" dir="rtl">
-  <p class="text-xl font-bold text-emerald-900 mb-2">טסים לדובאי? הישארו מחוברים מ-$0.70 ליום</p>
+  <p class="text-xl font-bold text-emerald-900 mb-2">איסים לדובאי — הזמינו עוד היום</p>
   <a href="${SITE}/he/destinations/ae" class="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700">← תוכניות eSIM לדובאי</a>
 </div>
 `,
@@ -1770,57 +1724,55 @@ const articles = [
   {
     slug: 'esim-cyprus',
     locale: 'he',
-    title: 'איסים לקפריסין – הדרך החכמה להישאר מחוברים באי הים התיכון',
-    excerpt: 'מחפשים איסים לקפריסין? גלו כיצד להישאר מחוברים בקפריסין ללא חיובי רואמינג מפתיעים – הפעלה מיידית, כיסוי 4G/5G ועלויות נמוכות.',
+    title: 'איסים לקפריסין — גלשו ללא הגבלה בחופשה הקפריסאית שלכם',
+    excerpt: 'איסים לקפריסין – הפתרון הסלולרי המושלם לחופשה באי הקסום. Sim2Me מציעה eSIM עם כיסוי מלא, מהיר וללא הפתעות בחשבון.',
     focusKeyword: 'איסים לקפריסין',
     metaTitle: 'איסים לקפריסין | sim2me',
-    metaDesc: 'מחפשים איסים לקפריסין? גלו כיצד להישאר מחוברים בקפריסין ללא חיובי רואמינג מפתיעים – הפעלה מיידית, כיסוי 4G/5G ועלויות נמוכות.',
-    ogTitle: 'איסים לקפריסין – הדרך החכמה להישאר מחוברים',
-    ogDesc: 'איסים לקפריסין מ-sim2me – כיסוי 4G/5G, הפעלה מיידית, עלויות נמוכות. ללא רואמינג יקר.',
+    metaDesc: 'איסים לקפריסין – הפתרון הסלולרי המושלם לחופשה באי הקסום. Sim2Me מציעה eSIM עם כיסוי מלא, מהיר וללא הפתעות בחשבון.',
+    ogTitle: 'איסים לקפריסין — גלשו ללא הגבלה בחופשה הקפריסאית',
+    ogDesc: 'רשתות CYTA, MTN, Epic. כיסוי ניקוסיה, לימסול, לרנקה, פאפוס, איה נאפה.',
     articleOrder: 6,
     status: 'PUBLISHED' as const,
     content: `
 <div class="quick-summary rounded-xl border border-emerald-100 bg-emerald-50 p-5 mb-8" dir="rtl">
   <h2 class="text-lg font-bold text-emerald-800 mt-0 mb-2">תקציר מהיר</h2>
   <ul class="text-sm text-emerald-900 space-y-1 mb-0">
-    <li>✅ איסים לקפריסין – כיסוי 4G LTE נרחב בלרנקה, לימסול, פאפוס, ניקוסיה ואיה נאפה</li>
-    <li>✅ עלות נמוכה משמעותית לעומת רואמינג בינלאומי</li>
-    <li>✅ הפעלה בתוך דקות – רכישה אונליין, QR Code למייל, סריקה והתחברות אוטומטית</li>
-    <li>✅ שמירה על מספר הטלפון הישראלי – ה-eSIM פועל במקביל</li>
+    <li>✅ גלישה מהירה 4G/LTE על רשתות CYTA, MTN ו-Epic</li>
+    <li>✅ כיסוי בניקוסיה, לימסול, לרנקה, פאפוס ואיה נאפה</li>
+    <li>✅ תוקף גמיש 7–30 יום, ללא נעילת SIM</li>
+    <li>✅ רכישה מרחוק, הפעלה מיידית — בלי תור בשדה התעופה</li>
   </ul>
 </div>
 
-<h2>הבעיה שכולם מכירים: רואמינג שעולה ביוקר</h2>
-<p>נחתתם בלרנקה, פתחתם את הטלפון – וכבר קיבלתם הודעת "שימוש בנתונים בחו"ל". עד שתחזרו הביתה, ייתכן שחשבון הסלולר שלכם יזנק לסכומים שלא ציפיתם להם. הפתרון? <strong>איסים לקפריסין</strong> – כרטיס ה-SIM הדיגיטלי שמשנה את כללי המשחק לכל מטייל ישראלי.</p>
+<h2>למה eSIM הוא הבחירה הנכונה לקפריסין?</h2>
+<p>קפריסין היא מדינת האיחוד האירופי עם תשתית סלולרית טובה — אבל רואמינג ישראלי עדיין יקר. <strong>איסים לקפריסין</strong> של Sim2Me פועל על הרשתות המקומיות CYTA, MTN ו-Epic.</p>
 
-<h2>למה דווקא איסים לקפריסין?</h2>
-<p>קפריסין היא יעד תיירות פופולרי מאוד בקרב ישראלים – בין אם לנסיעת סופ"ש, חופשת משפחה בפאפוס או ירח דבש בלימסול. הביקוש לקישוריות אמינה גבוה: ניווט ב-Google Maps, שיתוף סטוריז, עדכוני לוח טיסות ותיאום עם מלון. <strong>איסים לקפריסין מ-sim2me</strong> מאפשרים לכם ליהנות מגלישה מהירה ברשתות המקומיות המובילות של האי – ללא הסכמי רואמינג יקרים וללא הפתעות בחשבון.</p>
+<h2>נסיעה לקפריסין הצפונית?</h2>
+<p>ב-Sim2Me תוכלו למצוא חבילות המתאימות גם לקפריסין הצפונית (הטורקית), עם כיסוי על הרשתות הטורקיות. מומלץ לבדוק את הפרטים בעמוד המוצר.</p>
 
-<h3>היתרונות המרכזיים</h3>
-<ul>
-  <li><strong>עלות נמוכה משמעותית</strong> לעומת רואמינג בינלאומי</li>
-  <li><strong>כיסוי 4G LTE נרחב</strong> בכל ערי החוף המרכזיות: לרנקה, לימסול, פאפוס, ניקוסיה ואיה נאפה</li>
-  <li><strong>שמירה על מספר הטלפון הישראלי</strong> – ה-eSIM פועל במקביל לכרטיס הישראלי שלכם</li>
-  <li><strong>ידידותי לסביבה</strong> – אין צורך בכרטיס פיזי, אין אריזה, אין בזבוז</li>
-</ul>
-
-<h2>יתרונות טכניים: מה מייחד את ה-eSIM?</h2>
-<p>בניגוד לכרטיסי SIM פיזיים שצריך לרכוש בשדה התעופה (בתורים ארוכים ובמחירים מנופחים), <strong>איסים</strong> הם כרטיסי SIM דיגיטליים המוטמעים ישירות במכשיר התואם. תהליך ההפעלה פשוט:</p>
+<h2>מדריך התקנת איסים לקפריסין</h2>
 <ol>
-  <li><strong>רכישה אונליין</strong> מ-sim2me לפני הטיסה</li>
-  <li><strong>קבלת QR Code</strong> למייל</li>
-  <li><strong>סריקת הקוד</strong> בהגדרות המכשיר – תוך דקות בודדות</li>
-  <li><strong>נחיתה בקפריסין</strong> – ה-eSIM מתחבר אוטומטית לרשת המקומית</li>
+  <li>בחרו חבילה מתאימה ב-Sim2Me.net</li>
+  <li>קבלו QR קוד למייל (תוך 5 דקות)</li>
+  <li>הגדרות ← חיבורים ← מנהל ה-SIM ← הוסף</li>
+  <li>סרקו את הקוד</li>
+  <li>בנחיתה — הפעילו את ה-eSIM</li>
 </ol>
 
-<h3>תאימות מכשירים</h3>
-<p>רוב דגמי האייפון מ-XS ומעלה וסמארטפונים מובילים של סמסונג, גוגל פיקסל ו-OnePlus תומכים ב-eSIM. ניתן לבדוק תאימות ישירות באתר.</p>
+<h2>השוואה: eSIM לקפריסין מול SIM תיירותי מקומי</h2>
+<table class="w-full text-sm border-collapse mb-6">
+  <thead><tr class="bg-gray-100"><th class="p-3 text-right border">קריטריון</th><th class="p-3 text-right border">eSIM של Sim2Me</th><th class="p-3 text-right border">SIM מקומי</th></tr></thead>
+  <tbody>
+    <tr><td class="p-3 border">רכישה מרחוק</td><td class="p-3 border">כן</td><td class="p-3 border">לא</td></tr>
+    <tr><td class="p-3 border">הפעלה מיידית</td><td class="p-3 border">כן</td><td class="p-3 border">דורש ביקור בחנות</td></tr>
+    <tr><td class="p-3 border">נוחות</td><td class="p-3 border">גבוהה</td><td class="p-3 border">בינונית</td></tr>
+  </tbody>
+</table>
 
-<h2>סיכום: איסים לקפריסין – ההחלטה הנכונה לפני כל טיסה</h2>
-<p>אל תיתנו לחיובי הרואמינג לקלקל את החופשה. <strong>איסים לקפריסין</strong> הם הדרך הזולה, הנוחה והמהירה ביותר לשמור על קישוריות מלאה באי. רכשו לפני הטיסה, הפעילו בשניות, וגלשו בחופשיות.</p>
+<p>אם אתם נוסעים גם לחלק אחר של אירופה לפני קפריסין — בדקו את חבילות <strong>איסים לאירופה</strong> של Sim2Me שמכסות מספר מדינות בחבילה אחת.</p>
 
 <div class="cta-block rounded-xl border border-emerald-200 bg-emerald-50 p-6 my-8 text-center" dir="rtl">
-  <p class="text-xl font-bold text-emerald-900 mb-2">לרכישת איסים לקפריסין – לחצו כאן</p>
+  <p class="text-xl font-bold text-emerald-900 mb-2">הזמינו איסים לקפריסין עוד לפני שאורזים את המזוודה</p>
   <a href="${SITE}/he/destinations/cy" class="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700">← תוכניות eSIM לקפריסין</a>
 </div>
 `,
@@ -1959,56 +1911,57 @@ const articles = [
   {
     slug: 'esim-greece',
     locale: 'he',
-    title: 'איסים ליוון – קישוריות מושלמת מאתונה ועד האיים',
-    excerpt: 'איסים ליוון – גלשו ביוון ובאיים ללא רואמינג יקר. כיסוי 4G נרחב, הפעלה מיידית ומחירים נוחים לכל מטייל ישראלי.',
+    title: 'איסים ליוון – חיבור אמין לאיים, לאתונה ולכל יעד יווני',
+    excerpt: 'איסים ליוון — גלשו בחופי יוון ללא הפסקה עם eSIM של Sim2Me. כיסוי מלא, מחיר הוגן והפעלה מיידית לחופשה מושלמת.',
     focusKeyword: 'איסים ליוון',
     metaTitle: 'איסים ליוון | sim2me',
-    metaDesc: 'איסים ליוון – גלשו ביוון ובאיים ללא רואמינג יקר. כיסוי 4G נרחב, הפעלה מיידית ומחירים נוחים לכל מטייל ישראלי.',
-    ogTitle: 'איסים ליוון – קישוריות מושלמת מאתונה ועד האיים',
-    ogDesc: 'כיסוי גם באיים – מיקונוס, סנטוריני, רודוס. הפעלה מיידית, מחיר קבוע מראש.',
+    metaDesc: 'איסים ליוון — גלשו בחופי יוון ללא הפסקה עם eSIM של Sim2Me. כיסוי מלא, מחיר הוגן והפעלה מיידית לחופשה מושלמת.',
+    ogTitle: 'איסים ליוון – חיבור אמין לאיים, לאתונה ולכל יעד יווני',
+    ogDesc: 'Cosmote, Vodafone GR, Wind. כיסוי באיים ובאתונה.',
     articleOrder: 9,
     status: 'PUBLISHED' as const,
     content: `
 <div class="quick-summary rounded-xl border border-emerald-100 bg-emerald-50 p-5 mb-8" dir="rtl">
   <h2 class="text-lg font-bold text-emerald-800 mt-0 mb-2">תקציר מהיר</h2>
   <ul class="text-sm text-emerald-900 space-y-1 mb-0">
-    <li>✅ כיסוי גם על האיים – מיקונוס, סנטוריני, רודוס, כרתים, קורפו</li>
-    <li>✅ מחיר קבוע מראש – בלי הפתעות, בלי חיובים לפי MB</li>
-    <li>✅ עובד על הפיירי – גלישה גם בנסיעת המעבורת בין האיים</li>
-    <li>✅ הפעלה מיידית – בלי תורים בנמל הטיסות</li>
+    <li>✅ גישה לרשתות Cosmote, Vodafone GR ו-Wind</li>
+    <li>✅ כיסוי באיים: סנטוריני, מיקונוס, כרתים, קורפו, רודוס</li>
+    <li>✅ חיסכון של עשרות יורו לעומת רואמינג ישראלי</li>
+    <li>✅ התקנה פחות מ-3 דקות — QR למייל, סריקה, הפעלה בנחיתה</li>
   </ul>
 </div>
 
-<h2>יוון: גן עדן לתיירים, סיוט לרואמינג</h2>
-<p>מיליוני תיירים מבקרים ביוון מדי שנה, וישראלים נמצאים בחזית הרשימה. סנטוריני, מיקונוס, כרתים, רודוס, קורפו – כל האיים שחלמתם עליהם. אבל בזמן שאתם מצלמים שקיעות ומעלים סטוריז, מונה הרואמינג מסתובב. <strong>איסים ליוון</strong> הם הפתרון שיאפשר לכם לשתף כל רגע מבלי לשבור את הכיס.</p>
+<h2>הסיבות לבחור eSIM ליוון</h2>
+<p>יוון, ובפרט האיים, ידועה בפערי כיסוי בין אזורים עירוניים לאיים מרוחקים. <strong>איסים ליוון</strong> של Sim2Me מספק גישה לרשתות מקומיות מובילות, כיסוי באיים הגדולים וחיסכון משמעותי.</p>
 
-<h2>איסים ליוון: למה זה עובד כל כך טוב?</h2>
-<p>יוון חברה באיחוד האירופי, מה שאומר שרשתות הסלולר כפופות לרגולציה אירופאית קפדנית באיכות השירות. <strong>איסים ליוון מ-sim2me</strong> מחברים אתכם לרשתות המקומיות המהירות (Cosmote, Vodafone Greece, Wind Hellas) עם כיסוי 4G LTE גם על האיים הקטנים יותר.</p>
+<h2>כיסוי באיים — האמת שחשוב לדעת</h2>
+<p>ב-Sim2Me אנחנו כנים: יש איים קטנים עם כיסוי מוגבל — אבל זה נכון לגבי כל כרטיסי ה-SIM. היתרון של eSIM הוא מעבר אוטומטי לרשת הזמינה הטובה ביותר.</p>
 
-<h3>יתרונות שכל מטייל ביוון צריך לדעת:</h3>
-<ul>
-  <li><strong>כיסוי גם על האיים</strong> – לא רק אתונה ותסלוניקי, אלא גם מיקונוס, סנטוריני ורודוס</li>
-  <li><strong>מחיר קבוע מראש</strong> – בלי הפתעות, בלי חיובים לפי MB</li>
-  <li><strong>עובד על הפיירי</strong> – ב-SIM מקומי אפשר לגלוש גם בזמן נסיעת המעבורת בין האיים</li>
-  <li><strong>הפעלה מיידית</strong> – בלי תורים בנמל הטיסות, בלי כרטיסים שנתקעים</li>
-</ul>
+<h3>כיסוי לפי אזור</h3>
+<table class="w-full text-sm border-collapse mb-6">
+  <thead><tr class="bg-gray-100"><th class="p-3 text-right border">אזור</th><th class="p-3 text-right border">רמת כיסוי</th></tr></thead>
+  <tbody>
+    <tr><td class="p-3 border">אתונה</td><td class="p-3 border">מצוין</td></tr>
+    <tr><td class="p-3 border">סנטוריני</td><td class="p-3 border">טוב מאוד</td></tr>
+    <tr><td class="p-3 border">כרתים</td><td class="p-3 border">מצוין</td></tr>
+    <tr><td class="p-3 border">מיקונוס</td><td class="p-3 border">טוב</td></tr>
+    <tr><td class="p-3 border">איים קטנים</td><td class="p-3 border">בסיסי עד טוב</td></tr>
+  </tbody>
+</table>
 
-<h2>ניווט בין האיים – למה חיבור יציב קריטי?</h2>
-<p>מי שנסע ביוון יודע: לוחות הזמנים של המעבורות משתנים, האוטובוסים המקומיים לא תמיד על הדקה, וצריך לבדוק חדרים ב-Booking באמצע הדרך. <strong>איסים ליוון</strong> מבטיחים שתהיו תמיד עם אינטרנט – בין אם אתם על חוף ב-iOS ובין אם אתם מחפשים מסעדה ביוואנינה.</p>
-
-<h2>איך מפעילים איסים ליוון?</h2>
+<h2>כיצד מותקן eSIM ליוון?</h2>
 <ol>
-  <li><strong>בחרו חבילה</strong> ב-sim2me – 5, 10 או 20GB</li>
-  <li><strong>סרקו QR Code</strong> שיישלח למייל שלכם</li>
-  <li><strong>הגדרות ← סלולרי ← הוסף תוכנית</strong> – זה הכל</li>
-  <li><strong>נחיתה ביוון</strong> – חיבור אוטומטי לרשת המקומית המהירה</li>
+  <li>בחרו חבילה ב-Sim2Me המתאימה לאורך החופשה</li>
+  <li>קבלו QR קוד למייל בתוך דקות</li>
+  <li>סרקו דרך הגדרות הטלפון</li>
+  <li>הפעילו בנחיתה — ברגע ש-Wi-Fi של המטוס נכבה</li>
 </ol>
 
-<h2>סיכום: איסים ליוון – חובה לכל טיול ביוון</h2>
-<p>מסיורים מודרכים באתונה ועד ימים עצלים על החוף הכחול-לבן, <strong>איסים ליוון</strong> מבטיחים שתהיו תמיד מחוברים. שתפו, נווטו, חפשו – בלי לדאוג לעלות.</p>
+<h2>איסים ליוון מול SIM מקומי ביוון</h2>
+<p>ביוון אפשר לקנות SIM מקומי, אך זה מצריך ביקור בחנות, הצגת דרכון ולעיתים המתנה. עם <strong>איסים ליוון</strong> של Sim2Me — הכול מוכן מראש. מגיעים, מדליקים, גולשים.</p>
 
 <div class="cta-block rounded-xl border border-emerald-200 bg-emerald-50 p-6 my-8 text-center" dir="rtl">
-  <p class="text-xl font-bold text-emerald-900 mb-2">לרכישת איסים ליוון – לחצו כאן</p>
+  <p class="text-xl font-bold text-emerald-900 mb-2">הזמינו איסים ליוון עוד היום</p>
   <a href="${SITE}/he/destinations/gr" class="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700">← תוכניות eSIM ליוון</a>
 </div>
 `,
@@ -2020,63 +1973,230 @@ const articles = [
   {
     slug: 'esim-germany',
     locale: 'he',
-    title: 'איסים לגרמניה – אינטרנט מהיר בלב אירופה',
-    excerpt: 'איסים לגרמניה – הישארו מחוברים בברלין, מינכן ופרנקפורט ללא רואמינג. כיסוי 5G מהיר, הפעלה קלה ומחירים נוחים לנוסעים מישראל.',
+    title: 'איסים לגרמניה — הישארו מחוברים בלב אירופה',
+    excerpt: 'איסים לגרמניה – גלשו בברלין, מינכן, המבורג וכל גרמניה עם eSIM מהיר של Sim2Me. כיסוי 4G/5G, מחיר הוגן, הפעלה מיידית.',
     focusKeyword: 'איסים לגרמניה',
     metaTitle: 'איסים לגרמניה | sim2me',
-    metaDesc: 'איסים לגרמניה – הישארו מחוברים בברלין, מינכן ופרנקפורט ללא רואמינג. כיסוי 5G מהיר, הפעלה קלה ומחירים נוחים לנוסעים מישראל.',
-    ogTitle: 'איסים לגרמניה – אינטרנט מהיר בלב אירופה',
-    ogDesc: 'גלישה ב-5G/4G LTE בכל רחבי גרמניה. הפעלה בתוך 3 דקות.',
+    metaDesc: 'איסים לגרמניה – גלשו בברלין, מינכן, המבורג וכל גרמניה עם eSIM מהיר של Sim2Me. כיסוי 4G/5G, מחיר הוגן, הפעלה מיידית.',
+    ogTitle: 'איסים לגרמניה — הישארו מחוברים בלב אירופה',
+    ogDesc: 'Deutsche Telekom, Vodafone DE, O2. 4G/5G בערים הגדולות.',
     articleOrder: 10,
     status: 'PUBLISHED' as const,
     content: `
 <div class="quick-summary rounded-xl border border-emerald-100 bg-emerald-50 p-5 mb-8" dir="rtl">
   <h2 class="text-lg font-bold text-emerald-800 mt-0 mb-2">תקציר מהיר</h2>
   <ul class="text-sm text-emerald-900 space-y-1 mb-0">
-    <li>✅ גלישה ב-5G/4G LTE בכל רחבי גרמניה</li>
-    <li>✅ כיסוי עירוני ובין-עירוני גם בנסיעות ב-ICE (הרכבת המהירה הגרמנית)</li>
-    <li>✅ תאימות לשימוש אירופאי – חלק מהחבילות כוללות מדינות שכנות</li>
-    <li>✅ הפעלה בתוך 3 דקות – QR Code למייל, סריקה והתחברות</li>
+    <li>✅ רשתות Deutsche Telekom (T-Mobile DE), Vodafone DE, O2 Germany</li>
+    <li>✅ כיסוי מצוין (5G) בברלין, מינכן, המבורג, קלן, פרנקפורט</li>
+    <li>✅ מתאים לתיירים, אנשי עסקים, סטודנטים, ביקורי משפחה</li>
+    <li>✅ התקנה: רכישה ב-Sim2Me → QR → סריקה → הפעלה בנחיתה</li>
   </ul>
 </div>
 
-<h2>גרמניה: יעד עסקי ותיירותי מוביל לישראלים</h2>
-<p>ברלין, מינכן, פרנקפורט, המבורג וקלן – גרמניה היא אחד היעדים הנפוצים ביותר לישראלים, בין אם לטיולים, לכנסים עסקיים, לפסטיבלים, לביקורי משפחה או ללימודים. ולכולם יש מכנה משותף: הצורך בקישוריות אמינה. <strong>איסים לגרמניה</strong> נולדו בדיוק בשביל זה.</p>
+<h2>מדוע גרמניה צריכה eSIM ייעודי?</h2>
+<p>גרמניה — המדינה הגדולה ב-GDP באירופה — היא גם יעד תיירותי מרשים. <strong>איסים לגרמניה</strong> של Sim2Me פועל על הרשתות הגרמניות המובילות; הערים הגדולות מכוסות ב-4G ו-5G מצוין.</p>
 
-<h2>למה איסים לגרמניה הם הבחירה הנכונה?</h2>
-<p>גרמניה נמצאת בחזית פריסת רשתות 5G באירופה, עם כיסוי נרחב של Deutsche Telekom, Vodafone Germany ו-O2 גרמניה. <strong>איסים לגרמניה מ-sim2me</strong> מאפשרים לכם לנצל את הרשתות המהירות הללו מהרגע הראשון שנוחתים.</p>
+<h2>כיסוי לפי ערים</h2>
+<table class="w-full text-sm border-collapse mb-6">
+  <thead><tr class="bg-gray-100"><th class="p-3 text-right border">עיר</th><th class="p-3 text-right border">כיסוי</th></tr></thead>
+  <tbody>
+    <tr><td class="p-3 border">ברלין</td><td class="p-3 border">מצוין (5G)</td></tr>
+    <tr><td class="p-3 border">מינכן</td><td class="p-3 border">מצוין (5G)</td></tr>
+    <tr><td class="p-3 border">המבורג</td><td class="p-3 border">מצוין</td></tr>
+    <tr><td class="p-3 border">קלן</td><td class="p-3 border">מצוין</td></tr>
+    <tr><td class="p-3 border">פרנקפורט</td><td class="p-3 border">מצוין (5G)</td></tr>
+  </tbody>
+</table>
 
-<h3>מה כלול בחבילת איסים לגרמניה?</h3>
-<ul>
-  <li><strong>גלישה ב-5G/4G LTE</strong> בכל רחבי גרמניה</li>
-  <li><strong>כיסוי עירוני ובין-עירוני</strong> גם בנסיעות ב-ICE (הרכבת המהירה הגרמנית)</li>
-  <li><strong>תאימות לשימוש אירופאי</strong> – ניתן להשתמש גם במדינות שכנות בחלק מהחבילות</li>
-  <li><strong>ללא חוזה או התחייבות</strong> – רק מה שצריך לאורך הטיול</li>
-</ul>
-
-<h3>נסיעת עסקים לפרנקפורט? ה-eSIM בשבילכם</h3>
-<p>נוסעי עסקים ישראלים שמגיעים לירידים ולכנסים בפרנקפורט (כמו Messe Frankfurt) יודעים היטב: ה-WiFi של המרכז הירידים לא תמיד מספיק. <strong>איסים לגרמניה</strong> נותנים לכם חיבור פרטי, מאובטח ומהיר – לפגישות Zoom, לאימיילים בזמן אמת ולהורדת מצגות.</p>
-
-<h2>הפעלת ה-eSIM – תהליך של 3 דקות</h2>
-<p><strong>שלב 1:</strong> בחרו את <strong>חבילת האיסים לגרמניה</strong> המתאימה באתר sim2me<br>
-<strong>שלב 2:</strong> קבלו QR Code מיידי למייל<br>
-<strong>שלב 3:</strong> סרקו את הקוד בהגדרות המכשיר<br>
-<strong>שלב 4:</strong> הגעתם לגרמניה – אתם כבר מחוברים</p>
-<p><strong>טיפ:</strong> אם אתם נוסעים גם לאוסטריה או שווייץ, בדקו אם חבילת האיסים לגרמניה שלכם כוללת רואמינג אירופאי.</p>
-
-<h2>סיכום: איסים לגרמניה – לטיול חכם ומחובר</h2>
-<p>בין אם מטרת הנסיעה היא עסקים, תרבות, בירה בוואריאנית ב-Oktoberfest, או טיול בשוקי חג המולד בחורף – <strong>איסים לגרמניה</strong> יגרמו לכם להרגיש כאילו אתם מחוברים לרשת ביתית. מהיר, אמין, וזול יותר ממה שחשבתם.</p>
+<h2>איסים לגרמניה כחלק מנסיעת אירופה</h2>
+<p>מגיעים לגרמניה כעצירה בנסיעה ארוכה? בדקו את חבילת <strong>איסים לאירופה</strong> שמכסה גם את גרמניה. אם גרמניה היא היעד העיקרי — חבילה ייעודית תנצל טוב יותר את הנפח.</p>
 
 <div class="cta-block rounded-xl border border-emerald-200 bg-emerald-50 p-6 my-8 text-center" dir="rtl">
-  <p class="text-xl font-bold text-emerald-900 mb-2">לרכישת איסים לגרמניה – לחצו כאן</p>
+  <p class="text-xl font-bold text-emerald-900 mb-2">הזמינו איסים לגרמניה עכשיו</p>
   <a href="${SITE}/he/destinations/de" class="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700">← תוכניות eSIM לגרמניה</a>
+</div>
+`,
+  },
+
+  // ─────────────────────────────────────────────
+  // HE ARTICLE 11 — איסים ללונדון
+  // ─────────────────────────────────────────────
+  {
+    slug: 'esim-london',
+    locale: 'he',
+    title: 'איסים ללונדון — חיבור מהיר ואמין בבירת בריטניה',
+    excerpt: 'איסים ללונדון – גלשו בלא הגבלה ברחבי העיר עם Sim2Me. כיסוי מלא, מחיר נוח ורשתות בריטיות מהשורה הראשונה.',
+    focusKeyword: 'איסים ללונדון',
+    metaTitle: 'איסים ללונדון | sim2me',
+    metaDesc: 'איסים ללונדון – גלשו בלא הגבלה ברחבי העיר הגדולה עם Sim2Me. כיסוי מלא, מחיר נוח ועבודה על רשתות בריטיות מהשורה הראשונה.',
+    ogTitle: 'איסים ללונדון — חיבור מהיר ואמין בבירת בריטניה',
+    ogDesc: 'כיסוי 4G/5G בלונדון ובריטניה. הפעלה מיידית.',
+    articleOrder: 11,
+    status: 'PUBLISHED' as const,
+    content: `
+<div class="quick-summary rounded-xl border border-emerald-100 bg-emerald-50 p-5 mb-8" dir="rtl">
+  <h2 class="text-lg font-bold text-emerald-800 mt-0 mb-2">תקציר מהיר</h2>
+  <ul class="text-sm text-emerald-900 space-y-1 mb-0">
+    <li>✅ איסים ללונדון – 4G/5G בתחנות, באזורי קניות ובפארקים</li>
+    <li>✅ רשתות EE, Vodafone UK ו-Three – מהמובילות בבריטניה</li>
+    <li>✅ כיסוי בכל בריטניה – אוקספורד, קיימברידג', אדינבורו, מנצ'סטר</li>
+    <li>✅ הפעלה עם הנחיתה בהיתרו'</li>
+  </ul>
+</div>
+
+<h2>למה לא לסמוך על Wi-Fi בלבד בלונדון?</h2>
+<p>Wi-Fi ציבורי בלונדון קיים, אך הוא איטי, לא תמיד מאובטח ולא זמין ברכבת התחתית. <strong>איסים ללונדון</strong> של Sim2Me נותן לכם 4G/5G אמין בכל מקום: תחנות אוטובוס ורכבת, אזורי קניות (Oxford Street, Westfield, Covent Garden), פארקים (Hyde Park, Regent's Park), שכונות (Shoreditch, Notting Hill).</p>
+
+<h2>רשתות בריטיות — הטובות ביותר לנסיעה</h2>
+<p>ה-<strong>איסים ללונדון</strong> של Sim2Me פועל על רשתות כמו <strong>EE, Vodafone UK ו-Three</strong>, שנחשבות לרשתות הגדולות והמהירות בבריטניה. כיסוי 5G זמין בחלקים גדולים מלונדון.</p>
+
+<h2>מדריך מהיר להתקנה</h2>
+<ol>
+  <li>היכנסו ל-Sim2Me.net ובחרו חבילת eSIM ללונדון/בריטניה</li>
+  <li>השלימו את הרכישה</li>
+  <li>קבלו QR קוד למייל — מיידי</li>
+  <li>סרקו בהגדרות הטלפון</li>
+  <li>הפעילו עם הנחיתה בהיתרו'</li>
+</ol>
+<p><strong>שימו לב:</strong> ודאו שהטלפון שלכם אנלוקד לפני הנסיעה.</p>
+
+<h2>עלות: eSIM לעומת רואמינג ישראלי בבריטניה</h2>
+<table class="w-full text-sm border-collapse mb-6">
+  <thead><tr class="bg-gray-100"><th class="p-3 text-right border">שיטה</th><th class="p-3 text-right border">עלות ממוצעת ל-7 ימים</th></tr></thead>
+  <tbody>
+    <tr><td class="p-3 border">רואמינג ישראלי</td><td class="p-3 border">₪300–₪600</td></tr>
+    <tr><td class="p-3 border">SIM בריטי מקומי</td><td class="p-3 border">£10–£20</td></tr>
+    <tr><td class="p-3 border font-bold">eSIM של Sim2Me</td><td class="p-3 border">מחיר תחרותי</td></tr>
+  </tbody>
+</table>
+
+<h2>לונדון היא גם שער לבריטניה כולה</h2>
+<p>מתכננים לנסוע מלונדון לאוקספורד, קיימברידג\', אדינבורו או מנצ\'סטר? ה-<strong>איסים ללונדון</strong> מכסה את כל בריטניה ולא רק את הבירה.</p>
+
+<h2>אחרי Brexit — האם יש שינוי בשימוש ב-eSIM?</h2>
+<p>בריטניה יצאה מהאיחוד האירופי, מה שאומר שחבילות "כל אירופה" לא תמיד כוללות אותה. ב-Sim2Me ניתן לרכוש <strong>איסים ללונדון</strong> כחבילה נפרדת — בדקו באתר.</p>
+
+<div class="cta-block rounded-xl border border-emerald-200 bg-emerald-50 p-6 my-8 text-center" dir="rtl">
+  <p class="text-xl font-bold text-emerald-900 mb-2">לרכישת איסים ללונדון – לחצו כאן</p>
+  <a href="${SITE}/he/destinations/gb" class="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700">← תוכניות eSIM לבריטניה</a>
+</div>
+`,
+  },
+
+  // ─────────────────────────────────────────────
+  // HE ARTICLE 12 — איסים לפריז
+  // ─────────────────────────────────────────────
+  {
+    slug: 'esim-paris',
+    locale: 'he',
+    title: 'איסים לפריז — גלשו בעיר האור ללא הגבלה',
+    excerpt: 'איסים לפריז – גלשו בעיר האור ללא עצירות עם eSIM מבית Sim2Me. כיסוי מלא, הפעלה מיידית ומחיר שמתאים לכל תקציב.',
+    focusKeyword: 'איסים לפריז',
+    metaTitle: 'איסים לפריז | sim2me',
+    metaDesc: 'איסים לפריז – גלשו בעיר האור ללא עצירות עם eSIM מבית Sim2Me. כיסוי מלא, הפעלה מיידית ומחיר שמתאים לכל תקציב.',
+    ogTitle: 'איסים לפריז — גלשו בעיר האור ללא הגבלה',
+    ogDesc: 'כיסוי Orange, SFR, Bouygues. פריז, ורסאי, ניס, ליון, מרסיי.',
+    articleOrder: 12,
+    status: 'PUBLISHED' as const,
+    content: `
+<div class="quick-summary rounded-xl border border-emerald-100 bg-emerald-50 p-5 mb-8" dir="rtl">
+  <h2 class="text-lg font-bold text-emerald-800 mt-0 mb-2">תקציר מהיר</h2>
+  <ul class="text-sm text-emerald-900 space-y-1 mb-0">
+    <li>✅ גלישה על Orange, SFR ו-Bouygues — המובילות בצרפת</li>
+    <li>✅ כיסוי בפריז כולה ומחוץ לפריז: ורסאי, ניס, ליון, מרסיי</li>
+    <li>✅ ניווט, תרגום שלטים, מפות אופליין</li>
+    <li>✅ התקנה: רכישה → QR למייל → סריקה → מוכנים!</li>
+  </ul>
+</div>
+
+<h2>eSIM לצרפת — למה זה שווה את זה?</h2>
+<p>צרפת היא חלק מהאיחוד האירופי, אבל רואמינג ישראלי שם עדיין יקר. עם <strong>איסים לפריז</strong> של Sim2Me אתם מקבלים גלישה על רשתות <strong>Orange, SFR ו-Bouygues</strong>, כיסוי בפריז כולה ומחוץ לפריז.</p>
+
+<h2>פריז — עיר עצומה שצריכה ניווט</h2>
+<p>פריז מחולקת ל-20 מחוזות ורשת מטרו ענקית. ה-<strong>איסים לפריז</strong> של Sim2Me יאפשר לכם ניווט בגוגל, תרגום שלטים עם Google Lens, ושמירת מסלולים אופליין כגיבוי.</p>
+
+<h2>השוואת עלויות</h2>
+<table class="w-full text-sm border-collapse mb-6">
+  <thead><tr class="bg-gray-100"><th class="p-3 text-right border">אפשרות</th><th class="p-3 text-right border">עלות משוערת לשבוע</th></tr></thead>
+  <tbody>
+    <tr><td class="p-3 border">רואמינג ישראלי</td><td class="p-3 border">₪400–₪700</td></tr>
+    <tr><td class="p-3 border">SIM צרפתי מקומי</td><td class="p-3 border">€15–€25</td></tr>
+    <tr><td class="p-3 border font-bold">eSIM Sim2Me לפריז</td><td class="p-3 border">מחיר תחרותי</td></tr>
+  </tbody>
+</table>
+
+<h2>אחרי פריז — חבילת אירופה</h2>
+<p>מתכננים לנסוע גם לרומא, ברצלונה או ברלין? בדקו את חבילות <strong>האיסים לאירופה</strong> שמכסות עשרות מדינות בחבילה אחת.</p>
+
+<div class="cta-block rounded-xl border border-emerald-200 bg-emerald-50 p-6 my-8 text-center" dir="rtl">
+  <p class="text-xl font-bold text-emerald-900 mb-2">לרכישת איסים לפריז – לחצו כאן</p>
+  <a href="${SITE}/he/destinations/fr" class="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700">← תוכניות eSIM לצרפת</a>
+</div>
+`,
+  },
+
+  // ─────────────────────────────────────────────
+  // HE ARTICLE 13 — איסים לטורקיה
+  // ─────────────────────────────────────────────
+  {
+    slug: 'esim-turkey',
+    locale: 'he',
+    title: 'איסים לטורקיה — חיבור מהיר ממרחקי איסטנבול ועד קפדוקיה',
+    excerpt: 'איסים לטורקיה – גלשו בלי הגבלה באיסטנבול, אנטליה וקפדוקיה עם Sim2Me. eSIM מהיר ואמין לנסיעות טורקיה.',
+    focusKeyword: 'איסים לטורקיה',
+    metaTitle: 'איסים לטורקיה | sim2me',
+    metaDesc: 'איסים לטורקיה – גלשו בלי הגבלה באיסטנבול, אנטליה וקפדוקיה עם Sim2Me. eSIM מהיר ואמין לנסיעות טורקיה.',
+    ogTitle: 'איסים לטורקיה — חיבור מהיר מאיסטנבול ועד קפדוקיה',
+    ogDesc: 'Turkcell, Vodafone TR, Türk Telekom. ללא רישום דרכון.',
+    articleOrder: 13,
+    status: 'PUBLISHED' as const,
+    content: `
+<div class="quick-summary rounded-xl border border-emerald-100 bg-emerald-50 p-5 mb-8" dir="rtl">
+  <h2 class="text-lg font-bold text-emerald-800 mt-0 mb-2">תקציר מהיר</h2>
+  <ul class="text-sm text-emerald-900 space-y-1 mb-0">
+    <li>✅ Turkcell, Vodafone TR ו-Türk Telekom — כיסוי נרחב</li>
+    <li>✅ איסטנבול 4G/5G, אנטליה, קפדוקיה, פמוקלה, בודרום</li>
+    <li>✅ ללא רישום דרכון — עוקף בירוקרטיית SIM מקומי</li>
+    <li>✅ שיחות דרך WhatsApp ו-FaceTime על Data</li>
+  </ul>
+</div>
+
+<h2>מדוע eSIM הוא הבחירה הנכונה לטורקיה?</h2>
+<p>טורקיה אינה חלק מהאיחוד האירופי, ורואמינג יכול להיות יקר. <strong>איסים לטורקיה</strong> של Sim2Me פועל על <strong>Turkcell</strong> (הרשת הגדולה והמהירה), <strong>Vodafone TR ו-Türk Telekom</strong>.</p>
+
+<h2>כיסוי לאורך כל הטיול</h2>
+<table class="w-full text-sm border-collapse mb-6">
+  <thead><tr class="bg-gray-100"><th class="p-3 text-right border">יעד</th><th class="p-3 text-right border">כיסוי</th></tr></thead>
+  <tbody>
+    <tr><td class="p-3 border">איסטנבול</td><td class="p-3 border">מצוין (4G/5G)</td></tr>
+    <tr><td class="p-3 border">אנטליה</td><td class="p-3 border">מצוין</td></tr>
+    <tr><td class="p-3 border">קפדוקיה</td><td class="p-3 border">טוב מאוד</td></tr>
+    <tr><td class="p-3 border">פמוקלה</td><td class="p-3 border">טוב</td></tr>
+    <tr><td class="p-3 border">בודרום</td><td class="p-3 border">טוב מאוד</td></tr>
+  </tbody>
+</table>
+
+<h2>טיפ — טורקיה ו-SIM מקומי</h2>
+<p>SIM מקומי תיירותי בטורקיה דורש רישום עם דרכון ועלות מיסוי. <strong>איסים לטורקיה</strong> עוקף את הבירוקרטיה — אין רישום, אין מיסים נסתרים.</p>
+
+<h2>מדריך התקנה</h2>
+<ol>
+  <li>בחרו חבילה ב-Sim2Me.net</li>
+  <li>קבלו QR קוד</li>
+  <li>סרקו בהגדרות → SIM → הוסף eSIM</li>
+  <li>הפעילו עם הנחיתה בשדה התעופה</li>
+</ol>
+
+<div class="cta-block rounded-xl border border-emerald-200 bg-emerald-50 p-6 my-8 text-center" dir="rtl">
+  <p class="text-xl font-bold text-emerald-900 mb-2">לרכישת איסים לטורקיה – לחצו כאן</p>
+  <a href="${SITE}/he/destinations/tr" class="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700">← תוכניות eSIM לטורקיה</a>
 </div>
 `,
   },
 ];
 
 async function main() {
-  console.log('Seeding SEO articles (20 existing + 5 new Hebrew)...');
+  console.log('Seeding SEO articles...');
 
   for (const article of articles) {
     const existing = await prisma.article.findFirst({
