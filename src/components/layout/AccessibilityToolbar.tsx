@@ -2,9 +2,12 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { X, RotateCcw } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 
 const STORAGE_KEY = 'sim2me-a11y';
+
+type PositionHorizontal = 'start' | 'end';
+type PositionVertical = 'top' | 'middle' | 'bottom';
 
 interface Prefs {
   fontScale: number;
@@ -13,6 +16,8 @@ interface Prefs {
   reduceMotion: boolean;
   highlightLinks: boolean;
   highlightFocus: boolean;
+  positionHorizontal: PositionHorizontal;
+  positionVertical: PositionVertical;
 }
 
 const DEFAULT: Prefs = {
@@ -22,6 +27,8 @@ const DEFAULT: Prefs = {
   reduceMotion: false,
   highlightLinks: false,
   highlightFocus: false,
+  positionHorizontal: 'start',
+  positionVertical: 'bottom',
 };
 
 type BoolKey = 'textSpacing' | 'highContrast' | 'reduceMotion' | 'highlightLinks' | 'highlightFocus';
@@ -43,23 +50,62 @@ function applyPrefs(prefs: Prefs) {
   }
 }
 
+/** International Symbol of Access (ISA) — ISO 7001, widely recognized for accessibility. */
+function ISAIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      {/* Wheelchair figure per ISA: head + body + wheelchair arc + wheels */}
+      <circle cx="12" cy="6" r="2.5" fill="currentColor" />
+      <path d="M8 11v3h2l1.5 5" stroke="currentColor" fill="none" />
+      <path d="M10 11V8.5a2.5 2.5 0 0 1 5 0V11" stroke="currentColor" fill="none" />
+      <path d="M14.5 16a4 4 0 1 1-6.5-3" stroke="currentColor" fill="none" />
+    </svg>
+  );
+}
+
 export function AccessibilityToolbar() {
   const t = useTranslations('a11y');
+  const locale = useLocale() as string;
+  const isRTL = locale === 'he' || locale === 'ar';
+
   const [open, setOpen] = useState(false);
   const [prefs, setPrefs] = useState<Prefs>(DEFAULT);
   const panelRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const headingId = 'a11y-panel-heading';
+  const initialLoadDone = useRef(false);
 
+  // Load from localStorage and respect prefers-reduced-motion on first visit
   useEffect(() => {
+    if (initialLoadDone.current) return;
+    initialLoadDone.current = true;
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
-        const merged = { ...DEFAULT, ...JSON.parse(raw) } as Prefs;
+        const parsed = JSON.parse(raw) as Partial<Prefs>;
+        const merged = { ...DEFAULT, ...parsed } as Prefs;
         setPrefs(merged);
         applyPrefs(merged);
+      } else if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        setPrefs(prev => ({ ...prev, reduceMotion: true }));
+        applyPrefs({ ...DEFAULT, reduceMotion: true });
       }
-    } catch {}
+    } catch {
+      if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        setPrefs(prev => ({ ...prev, reduceMotion: true }));
+        applyPrefs({ ...DEFAULT, reduceMotion: true });
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -69,13 +115,16 @@ export function AccessibilityToolbar() {
     applyPrefs(prefs);
   }, [prefs]);
 
+  // Focus trap and Escape
   useEffect(() => {
     if (!open || !panelRef.current) return;
     const panel = panelRef.current;
     const focusable = Array.from(
-      panel.querySelectorAll<HTMLElement>('button:not([disabled]), [href], input, [tabindex]:not([tabindex="-1"])')
+      panel.querySelectorAll<HTMLElement>('button:not([disabled]), [href], input, select, [tabindex]:not([tabindex="-1"])')
     );
-    focusable[0]?.focus();
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    first?.focus();
 
     function handleKey(e: KeyboardEvent) {
       if (e.key === 'Escape') {
@@ -84,14 +133,12 @@ export function AccessibilityToolbar() {
         return;
       }
       if (e.key !== 'Tab' || focusable.length === 0) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
       if (e.shiftKey && document.activeElement === first) {
         e.preventDefault();
-        last.focus();
+        last?.focus();
       } else if (!e.shiftKey && document.activeElement === last) {
         e.preventDefault();
-        first.focus();
+        first?.focus();
       }
     }
 
@@ -110,10 +157,20 @@ export function AccessibilityToolbar() {
     }));
   }, []);
 
+  const setPositionHorizontal = useCallback((value: PositionHorizontal) => {
+    setPrefs(prev => ({ ...prev, positionHorizontal: value }));
+  }, []);
+
+  const setPositionVertical = useCallback((value: PositionVertical) => {
+    setPrefs(prev => ({ ...prev, positionVertical: value }));
+  }, []);
+
   const reset = useCallback(() => {
     setPrefs(DEFAULT);
     applyPrefs(DEFAULT);
-    try { localStorage.removeItem(STORAGE_KEY); } catch {}
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {}
   }, []);
 
   const closePanel = useCallback(() => {
@@ -138,7 +195,26 @@ export function AccessibilityToolbar() {
     prefs.highlightFocus,
   ].filter(Boolean).length;
 
-  // Fixed on the physical LEFT so it never overlaps the help button (bottom-right)
+  const triggerPositionClasses = [
+    prefs.positionVertical === 'top' && 'top-4',
+    prefs.positionVertical === 'middle' && 'top-1/2 -translate-y-1/2',
+    prefs.positionVertical === 'bottom' && 'bottom-6',
+    prefs.positionHorizontal === 'start' && 'start-4',
+    prefs.positionHorizontal === 'end' && 'end-4',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  const panelPositionClasses = [
+    prefs.positionVertical === 'top' && 'top-24',
+    prefs.positionVertical === 'middle' && 'top-1/2 -translate-y-1/2',
+    prefs.positionVertical === 'bottom' && 'bottom-24',
+    prefs.positionHorizontal === 'start' && 'start-4',
+    prefs.positionHorizontal === 'end' && 'end-4',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
     <>
       {open && (
@@ -148,17 +224,11 @@ export function AccessibilityToolbar() {
           role="dialog"
           aria-modal="true"
           aria-labelledby={headingId}
-          className="fixed bottom-24 left-4 z-[60] w-72 overflow-hidden rounded-2xl border border-border bg-background shadow-2xl"
+          className={`fixed z-[60] w-72 max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-border bg-background shadow-2xl ${panelPositionClasses}`}
         >
-          {/* Header */}
           <div className="flex items-center justify-between border-b border-border bg-muted/40 px-4 py-3">
             <div className="flex items-center gap-2">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="text-blue-600">
-                <circle cx="12" cy="5" r="2.5" fill="currentColor" />
-                <path d="M7 13h5l1.5 5.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M9.5 13V9.5a2.5 2.5 0 0 1 5 0V13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                <path d="M14.5 18.5A4 4 0 1 0 7 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              </svg>
+              <ISAIcon className="h-[18px] w-[18px] text-primary" aria-hidden="true" />
               <h2 id={headingId} className="text-sm font-bold text-foreground">
                 {t('panelTitle')}
               </h2>
@@ -174,6 +244,55 @@ export function AccessibilityToolbar() {
           </div>
 
           <div className="p-4 space-y-4">
+            {/* Position */}
+            <div>
+              <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                {t('positionTitle')}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <div className="flex rounded-xl border border-border bg-muted/30 p-1">
+                  <button
+                    type="button"
+                    onClick={() => setPositionHorizontal('start')}
+                    aria-pressed={prefs.positionHorizontal === 'start'}
+                    aria-label={t('positionStart')}
+                    className={`rounded-lg px-3 py-1.5 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                      prefs.positionHorizontal === 'start' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {t('positionStart')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPositionHorizontal('end')}
+                    aria-pressed={prefs.positionHorizontal === 'end'}
+                    aria-label={t('positionEnd')}
+                    className={`rounded-lg px-3 py-1.5 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                      prefs.positionHorizontal === 'end' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {t('positionEnd')}
+                  </button>
+                </div>
+                <div className="flex rounded-xl border border-border bg-muted/30 p-1">
+                  {(['top', 'middle', 'bottom'] as const).map((v) => (
+                    <button
+                      key={v}
+                      type="button"
+                      onClick={() => setPositionVertical(v)}
+                      aria-pressed={prefs.positionVertical === v}
+                      aria-label={t(`position${v.charAt(0).toUpperCase() + v.slice(1)}` as 'positionTop' | 'positionMiddle' | 'positionBottom')}
+                      className={`rounded-lg px-2 py-1.5 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                        prefs.positionVertical === v ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      {t(`position${v.charAt(0).toUpperCase() + v.slice(1)}` as 'positionTop' | 'positionMiddle' | 'positionBottom')}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
             {/* Font size */}
             <div>
               <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
@@ -236,13 +355,13 @@ export function AccessibilityToolbar() {
                         aria-describedby={`a11y-desc-${key}`}
                         onClick={() => toggle(key)}
                         className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
-                          checked ? 'bg-blue-600' : 'bg-muted-foreground/25'
+                          checked ? 'bg-primary' : 'bg-muted-foreground/25'
                         }`}
                       >
                         <span
                           aria-hidden="true"
                           className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform duration-200 ${
-                            checked ? 'translate-x-5' : 'translate-x-0'
+                            checked ? (isRTL ? '-translate-x-5' : 'translate-x-5') : 'translate-x-0'
                           }`}
                         />
                         <span id={`a11y-desc-${key}`} className="sr-only">{desc}</span>
@@ -270,7 +389,6 @@ export function AccessibilityToolbar() {
         </div>
       )}
 
-      {/* Floating trigger – always physical left-4 to avoid overlapping help button */}
       <button
         ref={triggerRef}
         type="button"
@@ -278,22 +396,17 @@ export function AccessibilityToolbar() {
         aria-label={open ? t('closeLabel') : t('openLabel')}
         aria-expanded={open}
         aria-controls="a11y-toolbar-panel"
-        className="fixed bottom-6 left-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg transition-transform hover:scale-105 hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2"
+        className={`fixed z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-105 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${triggerPositionClasses}`}
       >
         {activeCount > 0 && (
           <span
             aria-label={t('activeBadge', { count: activeCount })}
-            className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-amber-400 text-[10px] font-bold text-black"
+            className="absolute -end-1 -top-1 flex h-5 w-5 min-w-5 items-center justify-center rounded-full bg-amber-400 text-[10px] font-bold text-black"
           >
             {activeCount}
           </span>
         )}
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <circle cx="12" cy="5" r="2.5" fill="currentColor" />
-          <path d="M7 13h5l1.5 5.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="M9.5 13V9.5a2.5 2.5 0 0 1 5 0V13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-          <path d="M14.5 18.5A4 4 0 1 0 7 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-        </svg>
+        <ISAIcon className="h-7 w-7" aria-hidden="true" />
       </button>
     </>
   );
