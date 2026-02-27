@@ -2,26 +2,23 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { writeFile, mkdir } from 'fs/promises';
-import path from 'path';
 
 export const dynamic = 'force-dynamic';
 
 const ALLOWED_LOGO = ['image/svg+xml', 'image/png', 'image/jpeg', 'image/webp'] as const;
 const ALLOWED_FAVICON = ['image/x-icon', 'image/png', 'image/svg+xml'] as const;
-const EXT_BY_MIME: Record<string, string> = {
-  'image/svg+xml': '.svg',
-  'image/png': '.png',
-  'image/jpeg': '.jpg',
-  'image/webp': '.webp',
-  'image/x-icon': '.ico',
-};
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const formData = await request.formData();
+  let formData: FormData;
+  try {
+    formData = await request.formData();
+  } catch {
+    return NextResponse.json({ error: 'Could not parse form data' }, { status: 400 });
+  }
+
   const type = formData.get('type') as string | null;
   const file = formData.get('file') as File | null;
 
@@ -38,26 +35,22 @@ export async function POST(request: Request) {
     );
   }
 
-  const ext = EXT_BY_MIME[mime] || (type === 'favicon' ? '.ico' : '.png');
-  const basename = type === 'logo' ? 'logo' : 'favicon';
-  const filename = basename + ext;
-
   try {
-    const publicDir = path.join(process.cwd(), 'public');
-    const siteDir = path.join(publicDir, 'site');
-    await mkdir(siteDir, { recursive: true });
-
     const bytes = await file.arrayBuffer();
-    const outPath = path.join(siteDir, filename);
-    await writeFile(outPath, Buffer.from(bytes));
+    const base64 = Buffer.from(bytes).toString('base64');
+    const dataUrl = `data:${mime};base64,${base64}`;
 
-    const url = '/site/' + filename;
+    const dbKey = type === 'logo' ? 'logo_url' : 'favicon_url';
 
     await prisma.siteSetting.upsert({
-      where: { key: type === 'logo' ? 'logo_url' : 'favicon_url' },
-      create: { key: type === 'logo' ? 'logo_url' : 'favicon_url', value: url },
-      update: { value: url },
+      where: { key: dbKey },
+      create: { key: dbKey, value: dataUrl },
+      update: { value: dataUrl },
     });
+
+    // Logo: return data URL directly (works as <img src>)
+    // Favicon: return the serving API route URL (browser-compatible)
+    const url = type === 'favicon' ? '/api/site-branding/favicon' : dataUrl;
 
     return NextResponse.json({ url });
   } catch (e) {

@@ -20,8 +20,14 @@ export async function getSiteBranding(): Promise<SiteBranding> {
     },
   });
   const map = Object.fromEntries(settings.map((s) => [s.key, s.value]));
+  const rawFavicon = map[SITE_BRANDING_KEYS.faviconUrl]?.trim() || null;
   return {
     logoUrl: map[SITE_BRANDING_KEYS.logoUrl]?.trim() || null,
-    faviconUrl: map[SITE_BRANDING_KEYS.faviconUrl]?.trim() || null,
+    // If favicon is stored as base64 data URL, serve via API route for browser compatibility
+    faviconUrl: rawFavicon
+      ? rawFavicon.startsWith('data:')
+        ? '/api/site-branding/favicon'
+        : rawFavicon
+      : null,
   };
 }

@@ -23,12 +23,28 @@ interface Props {
   initialSettings: Record<string, string>;
 }
 
+function initPreviewUrl(value: string | undefined, type: 'logo' | 'favicon'): string {
+  if (!value) return '';
+  // data URLs work directly as <img src> for both logo and favicon
+  // For favicon, if it's a data URL, show via the API route (cache busted) 
+  if (type === 'favicon' && value.startsWith('data:')) return '/api/site-branding/favicon';
+  return value;
+}
+
 export function SettingsClient({ initialSettings }: Props) {
-  const [settings, setSettings] = useState(initialSettings);
+  // logo_url / favicon_url are managed by the upload endpoint directly — exclude from general settings POST
+  const [settings, setSettings] = useState(() => {
+    const s = { ...initialSettings };
+    delete s.logo_url;
+    delete s.favicon_url;
+    return s;
+  });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingFavicon, setUploadingFavicon] = useState(false);
+  const [logoPreview, setLogoPreview] = useState(() => initPreviewUrl(initialSettings.logo_url, 'logo'));
+  const [faviconPreview, setFaviconPreview] = useState(() => initPreviewUrl(initialSettings.favicon_url, 'favicon'));
   const logoInputRef = useRef<HTMLInputElement>(null);
   const faviconInputRef = useRef<HTMLInputElement>(null);
 
@@ -64,7 +80,7 @@ export function SettingsClient({ initialSettings }: Props) {
         throw new Error(data.error || 'Upload failed');
       }
       const { url } = await res.json();
-      setSettings((s) => ({ ...s, logo_url: url }));
+      setLogoPreview(url);
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to upload logo');
     } finally {
@@ -87,7 +103,8 @@ export function SettingsClient({ initialSettings }: Props) {
         throw new Error(data.error || 'Upload failed');
       }
       const { url } = await res.json();
-      setSettings((s) => ({ ...s, favicon_url: url }));
+      // Bust cache so the preview shows the updated favicon
+      setFaviconPreview(url + '?t=' + Date.now());
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to upload favicon');
     } finally {
@@ -96,8 +113,8 @@ export function SettingsClient({ initialSettings }: Props) {
     }
   }
 
-  const logoUrl = settings.logo_url || '';
-  const faviconUrl = settings.favicon_url || '';
+  const logoUrl = logoPreview;
+  const faviconUrl = faviconPreview;
 
   return (
     <div className="mt-6 max-w-2xl space-y-8">
