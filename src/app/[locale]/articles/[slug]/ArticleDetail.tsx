@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useParams, useRef, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
+import { useParams } from 'next/navigation';
 import type { ArticleFull } from '@/lib/articles';
 
 interface Props {
