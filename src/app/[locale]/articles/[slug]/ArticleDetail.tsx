@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useParams, useRef, useState, useCallback, useEffect } from 'react';
+import { useRef, useState, useCallback, useEffect } from 'react';
+import { useParams } from 'next/navigation';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { ArticleFull, ArticleSummary } from '@/lib/articles';
 
