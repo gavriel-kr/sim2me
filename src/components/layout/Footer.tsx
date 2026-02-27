@@ -38,9 +38,9 @@ export function Footer() {
   return (
     <footer className="border-t border-border/40 bg-gray-50">
       <div className="container px-4 py-14 sm:py-16">
-        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-6">
           {/* Brand */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 sm:col-span-2">
             <IntlLink href="/" className="inline-flex items-center gap-2.5 transition-opacity hover:opacity-80" aria-label="Sim2Me – Home">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600" aria-hidden="true">
                 <svg width="14" height="14" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -118,6 +118,18 @@ export function Footer() {
                   </IntlLink>
                 </li>
               ))}
+            </ul>
+          </div>
+
+          {/* eSIM Guides */}
+          <div>
+            <h3 className="text-sm font-bold text-foreground">{tFooter('guides')}</h3>
+            <ul className="mt-4 space-y-2.5">
+              <li>
+                <IntlLink href="/articles" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+                  {tFooter('guidesAll')}
+                </IntlLink>
+              </li>
             </ul>
           </div>
 

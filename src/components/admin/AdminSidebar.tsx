@@ -20,6 +20,7 @@ const navItems = [
   { href: '/admin/packages', label: 'eSIM Packages', icon: Package },
   { href: '/admin/packages/fees', label: 'Fees / Charges', icon: DollarSign },
   { href: '/admin/pages', label: 'Pages (CMS)', icon: FileText },
+  { href: '/admin/articles', label: 'Articles (SEO)', icon: Globe },
   { href: '/admin/seo', label: 'SEO Settings', icon: Search },
   { href: '/admin/users', label: 'Admin Users', icon: Users },
   { href: '/admin/settings', label: 'Site Settings', icon: Settings },

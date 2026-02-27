@@ -31,5 +31,7 @@ export const routing = defineRouting({
     '/account/verify-email': '/account/verify-email',
     '/success': '/success',
     '/installation-guide': '/installation-guide',
+    '/articles': '/articles',
+    '/articles/[slug]': '/articles/[slug]',
   },
 });

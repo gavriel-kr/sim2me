@@ -203,3 +203,32 @@ model Customer {
 
   @@map("customers")
 }
+
+// ─── Articles (SEO blog / guides) ────────────────────────────
+model Article {
+  id            String        @id @default(cuid())
+  slug          String
+  locale        String        // 'en' | 'he' | 'ar'
+  title         String
+  content       String        @db.Text
+  excerpt       String?       @db.Text
+  featuredImage String?
+  focusKeyword  String?
+  metaTitle     String?
+  metaDesc      String?
+  ogTitle       String?
+  ogDesc        String?
+  canonicalUrl  String?
+  articleOrder  Int           @default(0)
+  status        ArticleStatus @default(DRAFT)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@unique([slug, locale])
+  @@map("articles")
+}
+
+enum ArticleStatus {
+  DRAFT
+  PUBLISHED
+}

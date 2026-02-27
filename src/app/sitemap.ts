@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next';
 import { routing } from '@/i18n/routing';
+import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 3600; // regenerate every hour
@@ -24,6 +25,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   } catch {
     // Gracefully handle - sitemap will just have static pages
   }
+  // Fetch published articles for sitemap
+  let articles: { slug: string; locale: string; updatedAt: Date }[] = [];
+  try {
+    articles = await prisma.article.findMany({
+      where: { status: 'PUBLISHED' },
+      select: { slug: true, locale: true, updatedAt: true },
+    });
+  } catch {
+    // graceful fallback
+  }
+
   const staticPaths = [
     '',
     '/destinations',
@@ -60,6 +72,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         priority: 0.7,
       });
     }
+  }
+
+  // Articles sitemap entries
+  for (const article of articles) {
+    const prefix = article.locale === routing.defaultLocale ? '' : `/${article.locale}`;
+    entries.push({
+      url: `${baseUrl}${prefix}/articles/${article.slug}`,
+      lastModified: article.updatedAt,
+      changeFrequency: 'monthly',
+      priority: 0.6,
+    });
   }
 
   return entries;
