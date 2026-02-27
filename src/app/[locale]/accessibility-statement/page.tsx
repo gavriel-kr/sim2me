@@ -1,4 +1,4 @@
-import { getTranslations } from 'next-intl/server';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { createSharedPathnamesNavigation } from 'next-intl/navigation';
 import { routing } from '@/i18n/routing';
@@ -9,7 +9,8 @@ const siteUrl = 'https://www.sim2me.net';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  const t = await getTranslations('accessibilityStatement');
+  setRequestLocale(locale);
+  const t = await getTranslations({ locale, namespace: 'accessibilityStatement' });
   const prefix = locale === 'en' ? '' : `/${locale}`;
   return {
     title: `${t('title')} – Sim2Me`,
@@ -25,7 +26,43 @@ export default async function AccessibilityStatementPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const t = await getTranslations('accessibilityStatement');
+  setRequestLocale(locale);
+
+  // #region agent log
+  let tResolved: boolean = false;
+  let tErrorMsg: string = '';
+  let titleSample: string = '';
+  // #endregion
+
+  const t = await (async () => {
+    try {
+      const trans = await getTranslations({ locale, namespace: 'accessibilityStatement' });
+      // #region agent log
+      tResolved = true;
+      titleSample = trans('title');
+      // #endregion
+      return trans;
+    } catch (err) {
+      // #region agent log
+      tErrorMsg = String(err);
+      // #endregion
+      throw err;
+    }
+  })();
+
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/31d3162a-817c-4d6a-9841-464cdcbf3b94', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      location: 'accessibility-statement/page.tsx:51',
+      message: tResolved ? 'getTranslations success' : 'getTranslations FAILED',
+      data: { locale, tResolved, titleSample, tErrorMsg },
+      timestamp: Date.now(),
+      hypothesisId: 'A',
+    }),
+  }).catch(() => {});
+  // #endregion
 
   return (
     <MainLayout>
