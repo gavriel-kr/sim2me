@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import Link from 'next/link';
 
 type Account = {
   id: string;
@@ -37,9 +38,25 @@ type OrderRow = {
   createdAt: Date | string;
 };
 
+type ContactSubmissionRow = {
+  id: string;
+  subject: string;
+  message: string;
+  status: string;
+  read: boolean;
+  createdAt: string;
+};
+
+const CONTACT_STATUS_COLORS: Record<string, string> = {
+  NEW: 'bg-blue-100 text-blue-700',
+  IN_PROGRESS: 'bg-amber-100 text-amber-700',
+  RESOLVED: 'bg-emerald-100 text-emerald-700',
+};
+
 interface Props {
   account: Account;
   orders: OrderRow[];
+  contactSubmissions: ContactSubmissionRow[];
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -49,7 +66,7 @@ const STATUS_COLORS: Record<string, string> = {
   PENDING: 'bg-yellow-100 text-yellow-800',
 };
 
-export function AccountEditClient({ account: initial, orders }: Props) {
+export function AccountEditClient({ account: initial, orders, contactSubmissions }: Props) {
   const router = useRouter();
   const [form, setForm] = useState({
     email: initial.email,
@@ -209,6 +226,39 @@ export function AccountEditClient({ account: initial, orders }: Props) {
         </form>
       </CardContent>
     </Card>
+
+    {/* Contact submissions section */}
+    {contactSubmissions.length > 0 && (
+      <div className="mt-8 max-w-4xl">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold text-gray-900">Contact Submissions ({contactSubmissions.length})</h2>
+          <Link href="/admin/contact" className="text-sm font-medium text-emerald-600 hover:text-emerald-700">
+            View all submissions →
+          </Link>
+        </div>
+        <div className="space-y-3">
+          {contactSubmissions.map((sub) => (
+            <Card key={sub.id}>
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="font-semibold text-sm">{sub.subject}</p>
+                  <div className="flex items-center gap-2">
+                    {!sub.read && <span className="h-2 w-2 rounded-full bg-blue-500" />}
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${CONTACT_STATUS_COLORS[sub.status] ?? 'bg-gray-100 text-gray-700'}`}>
+                      {sub.status.replace('_', ' ')}
+                    </span>
+                    <span className="text-xs text-gray-400">{sub.createdAt}</span>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <p className="text-sm text-gray-600 line-clamp-2">{sub.message}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    )}
 
     {/* Orders section */}
     <div className="mt-8 max-w-4xl">

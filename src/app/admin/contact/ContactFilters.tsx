@@ -19,8 +19,10 @@ import {
 const FILTER_FIELDS: { value: FilterField; label: string }[] = [
   { value: 'name', label: 'Name' },
   { value: 'email', label: 'Email' },
+  { value: 'phone', label: 'Phone' },
   { value: 'subject', label: 'Subject' },
   { value: 'message', label: 'Message' },
+  { value: 'status', label: 'Status' },
   { value: 'marketing_consent', label: 'Marketing Consent' },
   { value: 'read', label: 'Read' },
   { value: 'date', label: 'Date' },
@@ -63,11 +65,12 @@ export function ContactFilters({ filters, onFiltersChange, resultCount }: Contac
   const removeRule = (index: number) => update({ rules: filters.rules.filter((_, i) => i !== index) });
 
   const clearAll = () =>
-    onFiltersChange({ search: '', readStatus: '', marketingConsent: '', dateFrom: '', dateTo: '', rules: [] });
+    onFiltersChange({ search: '', readStatus: '', status: '', marketingConsent: '', dateFrom: '', dateTo: '', rules: [] });
 
   const hasActiveFilters =
     filters.search.trim() ||
     filters.readStatus ||
+    filters.status ||
     filters.marketingConsent ||
     filters.dateFrom.trim() ||
     filters.dateTo.trim() ||
@@ -94,6 +97,17 @@ export function ContactFilters({ filters, onFiltersChange, resultCount }: Contac
             <SelectItem value="_">All</SelectItem>
             <SelectItem value="unread">Unread</SelectItem>
             <SelectItem value="read">Read</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={filters.status || '_'} onValueChange={(v) => update({ status: v === '_' ? '' : v })}>
+          <SelectTrigger className="w-[130px] border-gray-300 bg-gray-50">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="_">All statuses</SelectItem>
+            <SelectItem value="NEW">New</SelectItem>
+            <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+            <SelectItem value="RESOLVED">Resolved</SelectItem>
           </SelectContent>
         </Select>
         <Select value={filters.marketingConsent || '_'} onValueChange={(v) => update({ marketingConsent: v === '_' ? '' : v as ContactFiltersState['marketingConsent'] })}>

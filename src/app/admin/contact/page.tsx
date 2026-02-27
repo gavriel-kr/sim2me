@@ -13,6 +13,9 @@ export default async function ContactSubmissionsPage() {
   const submissions = await prisma.contactSubmission.findMany({
     orderBy: { createdAt: 'desc' },
     take: 500,
+    include: {
+      notes: { orderBy: { createdAt: 'asc' } },
+    },
   });
 
   return (
@@ -24,11 +27,18 @@ export default async function ContactSubmissionsPage() {
           id: s.id,
           name: s.name,
           email: s.email,
+          phone: s.phone ?? null,
           subject: s.subject,
           message: s.message,
           marketingConsent: s.marketingConsent,
           read: s.read,
+          status: s.status as string,
           createdAt: s.createdAt.toLocaleDateString(),
+          notes: s.notes.map((n) => ({
+            id: n.id,
+            content: n.content,
+            createdAt: n.createdAt.toLocaleString(),
+          })),
         }))}
       />
     </div>

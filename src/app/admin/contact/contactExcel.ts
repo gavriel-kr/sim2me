@@ -7,8 +7,10 @@ export interface ContactExcelRow {
   id: string;
   name: string;
   email: string;
+  phone: string;
   subject: string;
   message: string;
+  status: string;
   marketing_consent: string;
   read: string;
   date: string;
@@ -18,15 +20,17 @@ export interface ContactForExcel {
   id: string;
   name: string;
   email: string;
+  phone: string | null;
   subject: string;
   message: string;
+  status: string;
   marketingConsent: boolean;
   read: boolean;
   createdAt: string;
 }
 
 const COLUMNS: (keyof ContactExcelRow)[] = [
-  'id', 'name', 'email', 'subject', 'message', 'marketing_consent', 'read', 'date',
+  'id', 'name', 'email', 'phone', 'subject', 'message', 'status', 'marketing_consent', 'read', 'date',
 ];
 
 export function contactToExcelRows(items: ContactForExcel[]): ContactExcelRow[] {
@@ -34,8 +38,10 @@ export function contactToExcelRows(items: ContactForExcel[]): ContactExcelRow[] 
     id: i.id,
     name: i.name,
     email: i.email,
+    phone: i.phone ?? '',
     subject: i.subject,
     message: i.message,
+    status: i.status,
     marketing_consent: i.marketingConsent ? 'yes' : 'no',
     read: i.read ? 'yes' : 'no',
     date: i.createdAt,

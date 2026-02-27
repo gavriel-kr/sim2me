@@ -6,10 +6,22 @@ export const travelerInfoSchema = z.object({
   lastName: z.string().min(1, 'Required'),
 });
 
+export const CONTACT_SUBJECTS = [
+  'Installation Help',
+  'Activation Issue',
+  'Connectivity Problem',
+  'Refund Request',
+  'Billing & Payment',
+  'General Inquiry',
+] as const;
+
+export type ContactSubject = typeof CONTACT_SUBJECTS[number];
+
 export const contactFormSchema = z.object({
   name: z.string().min(1, 'Required'),
   email: z.string().email(),
-  subject: z.string().min(1, 'Required'),
+  phone: z.string().regex(/^\+[1-9]\d{6,14}$/, 'Invalid phone number'),
+  subject: z.enum(CONTACT_SUBJECTS),
   message: z.string().min(10, 'Message must be at least 10 characters'),
   marketingConsent: z.boolean().optional(),
 });

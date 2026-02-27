@@ -1,22 +1,23 @@
 /**
  * Contact submission filter state and apply logic for Admin Contact page.
- * Fields: name, email, subject, message, marketing_consent, read, date.
  */
 
 export type ContactForFilter = {
   id: string;
   name: string;
   email: string;
+  phone: string | null;
   subject: string;
   message: string;
   marketingConsent: boolean;
   read: boolean;
+  status: string;
   createdAt: string;
 };
 
 export type FilterOperator = '=' | '!=' | '>' | '>=' | '<' | '<=' | 'contains';
 
-export type FilterField = 'name' | 'email' | 'subject' | 'message' | 'marketing_consent' | 'read' | 'date';
+export type FilterField = 'name' | 'email' | 'phone' | 'subject' | 'message' | 'marketing_consent' | 'read' | 'status' | 'date';
 
 export interface FilterRule {
   field: FilterField;
@@ -27,6 +28,7 @@ export interface FilterRule {
 export interface ContactFiltersState {
   search: string;
   readStatus: '' | 'read' | 'unread';
+  status: string;
   marketingConsent: '' | 'yes' | 'no';
   dateFrom: string;
   dateTo: string;
@@ -43,10 +45,12 @@ function getContactValue(item: ContactForFilter, field: FilterField): string | n
   switch (field) {
     case 'name': return item.name;
     case 'email': return item.email;
+    case 'phone': return item.phone ?? '';
     case 'subject': return item.subject;
     case 'message': return item.message;
     case 'marketing_consent': return item.marketingConsent;
     case 'read': return item.read;
+    case 'status': return item.status;
     case 'date': return item.createdAt;
     default: return '';
   }
@@ -67,36 +71,29 @@ function matchRule(item: ContactForFilter, rule: FilterRule): boolean {
     case '!=':
       if (isDateField) return itemCompare !== ruleCompare;
       return itemVal !== ruleVal;
-    case '>':
-      return itemCompare > ruleCompare;
-    case '>=':
-      return itemCompare >= ruleCompare;
-    case '<':
-      return itemCompare < ruleCompare;
-    case '<=':
-      return itemCompare <= ruleCompare;
-    case 'contains':
-      return itemVal.includes(ruleVal);
-    default:
-      return true;
+    case '>': return itemCompare > ruleCompare;
+    case '>=': return itemCompare >= ruleCompare;
+    case '<': return itemCompare < ruleCompare;
+    case '<=': return itemCompare <= ruleCompare;
+    case 'contains': return itemVal.includes(ruleVal);
+    default: return true;
   }
 }
 
-export function applyContactFilters(
-  items: ContactForFilter[],
-  filters: ContactFiltersState
-): ContactForFilter[] {
+export function applyContactFilters(items: ContactForFilter[], filters: ContactFiltersState): ContactForFilter[] {
   return items.filter((item) => {
     if (filters.search.trim()) {
       const q = filters.search.trim().toLowerCase();
       const match =
         item.name.toLowerCase().includes(q) ||
         item.email.toLowerCase().includes(q) ||
-        item.subject.toLowerCase().includes(q);
+        item.subject.toLowerCase().includes(q) ||
+        (item.phone ?? '').toLowerCase().includes(q);
       if (!match) return false;
     }
     if (filters.readStatus === 'read' && !item.read) return false;
     if (filters.readStatus === 'unread' && item.read) return false;
+    if (filters.status && item.status !== filters.status) return false;
     if (filters.marketingConsent === 'yes' && !item.marketingConsent) return false;
     if (filters.marketingConsent === 'no' && item.marketingConsent) return false;
     if (filters.dateFrom.trim()) {

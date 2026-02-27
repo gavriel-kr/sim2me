@@ -2,21 +2,38 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { contactFormSchema, type ContactFormData } from '@/lib/validation/schemas';
+import { contactFormSchema, type ContactFormData, CONTACT_SUBJECTS } from '@/lib/validation/schemas';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { PhoneInput } from '@/components/PhoneInput';
 import { useToast } from '@/hooks/useToast';
 import { Send, CheckCircle } from 'lucide-react';
+
+const SUBJECT_KEYS: Record<string, string> = {
+  'Installation Help': 'subject_installation_help',
+  'Activation Issue': 'subject_activation_issue',
+  'Connectivity Problem': 'subject_connectivity_problem',
+  'Refund Request': 'subject_refund_request',
+  'Billing & Payment': 'subject_billing_payment',
+  'General Inquiry': 'subject_general_inquiry',
+};
 
 export function ContactForm() {
   const t = useTranslations('contact');
   const { toast } = useToast();
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
-  const { register, handleSubmit, formState: { errors }, reset } = useForm<ContactFormData>({
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors },
+    reset,
+    setValue,
+  } = useForm<ContactFormData>({
     resolver: zodResolver(contactFormSchema),
   });
 
@@ -30,11 +47,7 @@ export function ContactForm() {
       });
       if (!res.ok) throw new Error('Failed to send');
       setSent(true);
-      toast({
-        title: 'Message sent!',
-        description: "We'll get back to you soon.",
-        variant: 'success',
-      });
+      toast({ title: t('messageSent'), description: t('messageSentDesc'), variant: 'success' });
       reset();
     } catch {
       toast({
@@ -64,6 +77,7 @@ export function ContactForm() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-5">
+      {/* Name + Email */}
       <div className="grid gap-5 sm:grid-cols-2">
         <div>
           <Label htmlFor="name" className="text-sm font-medium">{t('name')}</Label>
@@ -72,12 +86,9 @@ export function ContactForm() {
             className="mt-1.5 h-11 rounded-xl"
             placeholder={t('namePlaceholder')}
             aria-invalid={!!errors.name}
-            aria-describedby={errors.name ? 'contact-name-error' : undefined}
             {...register('name')}
           />
-          {errors.name && (
-            <p id="contact-name-error" className="mt-1 text-sm text-destructive" role="alert">{errors.name.message}</p>
-          )}
+          {errors.name && <p className="mt-1 text-sm text-destructive" role="alert">{errors.name.message}</p>}
         </div>
         <div>
           <Label htmlFor="email" className="text-sm font-medium">{t('email')}</Label>
@@ -87,28 +98,55 @@ export function ContactForm() {
             className="mt-1.5 h-11 rounded-xl"
             placeholder={t('emailPlaceholder')}
             aria-invalid={!!errors.email}
-            aria-describedby={errors.email ? 'contact-email-error' : undefined}
             {...register('email')}
           />
-          {errors.email && (
-            <p id="contact-email-error" className="mt-1 text-sm text-destructive" role="alert">{errors.email.message}</p>
-          )}
+          {errors.email && <p className="mt-1 text-sm text-destructive" role="alert">{errors.email.message}</p>}
         </div>
       </div>
+
+      {/* Phone */}
+      <div>
+        <Label htmlFor="phone" className="text-sm font-medium">
+          {t('phone')} <span className="text-destructive">*</span>
+        </Label>
+        <div className="mt-1.5">
+          <Controller
+            name="phone"
+            control={control}
+            render={({ field }) => (
+              <PhoneInput
+                id="phone"
+                value={field.value ?? ''}
+                onChange={(v) => field.onChange(v ?? '')}
+                placeholder={t('phonePlaceholder')}
+              />
+            )}
+          />
+        </div>
+        {errors.phone && <p className="mt-1 text-sm text-destructive" role="alert">{errors.phone.message}</p>}
+      </div>
+
+      {/* Subject dropdown */}
       <div>
         <Label htmlFor="subject" className="text-sm font-medium">{t('subject')}</Label>
-        <Input
+        <select
           id="subject"
-          className="mt-1.5 h-11 rounded-xl"
-          placeholder={t('subjectPlaceholder')}
+          className="mt-1.5 flex h-11 w-full appearance-none rounded-xl border border-input bg-background px-4 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
           aria-invalid={!!errors.subject}
-          aria-describedby={errors.subject ? 'contact-subject-error' : undefined}
+          defaultValue=""
           {...register('subject')}
-        />
-        {errors.subject && (
-          <p id="contact-subject-error" className="mt-1 text-sm text-destructive" role="alert">{errors.subject.message}</p>
-        )}
+        >
+          <option value="" disabled>{t('subjectPlaceholder')}</option>
+          {CONTACT_SUBJECTS.map((s) => (
+            <option key={s} value={s}>
+              {t(SUBJECT_KEYS[s] as Parameters<typeof t>[0])}
+            </option>
+          ))}
+        </select>
+        {errors.subject && <p className="mt-1 text-sm text-destructive" role="alert">{errors.subject.message}</p>}
       </div>
+
+      {/* Message */}
       <div>
         <Label htmlFor="message" className="text-sm font-medium">{t('message')}</Label>
         <textarea
@@ -117,13 +155,12 @@ export function ContactForm() {
           className="mt-1.5 flex w-full rounded-xl border border-input bg-background px-4 py-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none"
           placeholder={t('messagePlaceholder')}
           aria-invalid={!!errors.message}
-          aria-describedby={errors.message ? 'contact-message-error' : undefined}
           {...register('message')}
         />
-        {errors.message && (
-          <p id="contact-message-error" className="mt-1 text-sm text-destructive" role="alert">{errors.message.message}</p>
-        )}
+        {errors.message && <p className="mt-1 text-sm text-destructive" role="alert">{errors.message.message}</p>}
       </div>
+
+      {/* Marketing consent */}
       <div className="flex items-start gap-3">
         <input
           id="marketingConsent"
@@ -135,6 +172,7 @@ export function ContactForm() {
           {t('marketingConsent')}
         </Label>
       </div>
+
       <Button
         type="submit"
         disabled={sending}

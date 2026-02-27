@@ -16,11 +16,11 @@ export async function POST(request: Request) {
       );
     }
 
-    const { name, email, subject, message, marketingConsent } = parsed.data;
+    const { name, email, phone, subject, message, marketingConsent } = parsed.data;
 
     // Always save to DB regardless of email config
     await prisma.contactSubmission.create({
-      data: { name, email, subject, message, marketingConsent: marketingConsent ?? false },
+      data: { name, email, phone: phone ?? null, subject, message, marketingConsent: marketingConsent ?? false },
     });
 
     if (!process.env.RESEND_API_KEY) {

@@ -206,16 +206,36 @@ model Customer {
 
 // ─── Contact Submissions ─────────────────────────────────────
 model ContactSubmission {
-  id               String   @id @default(cuid())
+  id               String              @id @default(cuid())
   name             String
   email            String
+  phone            String?
   subject          String
-  message          String   @db.Text
-  marketingConsent Boolean  @default(false)
-  read             Boolean  @default(false)
-  createdAt        DateTime @default(now())
+  message          String              @db.Text
+  marketingConsent Boolean             @default(false)
+  read             Boolean             @default(false)
+  status           ContactStatus       @default(NEW)
+  notes            ContactNote[]
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @default(now()) @updatedAt
 
   @@map("contact_submissions")
+}
+
+model ContactNote {
+  id           String            @id @default(cuid())
+  submissionId String
+  submission   ContactSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  content      String            @db.Text
+  createdAt    DateTime          @default(now())
+
+  @@map("contact_notes")
+}
+
+enum ContactStatus {
+  NEW
+  IN_PROGRESS
+  RESOLVED
 }
 
 // ─── Articles (SEO blog / guides) ────────────────────────────

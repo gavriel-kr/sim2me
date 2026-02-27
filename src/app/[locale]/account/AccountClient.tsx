@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   User, ShoppingBag, Wifi, Settings, LogOut, Phone, Mail,
   Calendar, Shield, CheckCircle, AlertCircle, ChevronRight, QrCode,
-  RotateCcw, ChevronDown, ChevronUp, HelpCircle, Download,
+  RotateCcw, ChevronDown, ChevronUp, HelpCircle, Download, MessageSquare,
 } from 'lucide-react';
 
 const { Link: IntlLink } = createSharedPathnamesNavigation(routing);
@@ -137,6 +137,8 @@ export function AccountClient() {
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileError, setProfileError] = useState('');
   const [profileSuccess, setProfileSuccess] = useState(false);
+  const [contactSubmissions, setContactSubmissions] = useState<{ id: string; subject: string; message: string; status: string; createdAt: string }[]>([]);
+  const [contactLoaded, setContactLoaded] = useState(false);
 
   const [pwForm, setPwForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [pwSaving, setPwSaving] = useState(false);
@@ -351,8 +353,15 @@ export function AccountClient() {
           </div>
         )}
 
-        <Tabs defaultValue="orders" className="space-y-4">
-          <TabsList className="bg-white border grid w-full grid-cols-4 h-auto p-1 gap-1">
+        <Tabs defaultValue="orders" className="space-y-4" onValueChange={(v) => {
+          if (v === 'support' && !contactLoaded) {
+            fetch('/api/account/contact-submissions')
+              .then((r) => r.ok ? r.json() : { submissions: [] })
+              .then((d) => { setContactSubmissions(d.submissions ?? []); setContactLoaded(true); })
+              .catch(() => setContactLoaded(true));
+          }
+        }}>
+          <TabsList className="bg-white border grid w-full grid-cols-5 h-auto p-1 gap-1">
             <TabsTrigger value="orders" className="flex items-center gap-1.5 text-xs sm:text-sm py-2">
               <ShoppingBag className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">{t('orders')}</span>
@@ -372,6 +381,11 @@ export function AccountClient() {
               <Shield className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Security</span>
               <span className="sm:hidden">Security</span>
+            </TabsTrigger>
+            <TabsTrigger value="support" className="flex items-center gap-1.5 text-xs sm:text-sm py-2">
+              <MessageSquare className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Support</span>
+              <span className="sm:hidden">Support</span>
             </TabsTrigger>
           </TabsList>
 
@@ -876,6 +890,69 @@ export function AccountClient() {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+          {/* Support */}
+          <TabsContent value="support">
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4 text-primary" />
+                  My Support Requests
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {!contactLoaded ? (
+                  <p className="text-sm text-muted-foreground animate-pulse">Loading…</p>
+                ) : contactSubmissions.length === 0 ? (
+                  <div className="text-center py-12">
+                    <MessageSquare className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
+                    <p className="font-medium text-muted-foreground">No support requests yet</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Your contact form submissions will appear here.
+                    </p>
+                    <IntlLink href="/contact">
+                      <Button className="mt-6" size="sm">
+                        Contact support
+                        <ChevronRight className="w-4 h-4 ml-1" />
+                      </Button>
+                    </IntlLink>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {contactSubmissions.map((sub) => {
+                      const statusColors: Record<string, string> = {
+                        NEW: 'bg-blue-50 text-blue-700 border-blue-200',
+                        IN_PROGRESS: 'bg-amber-50 text-amber-700 border-amber-200',
+                        RESOLVED: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                      };
+                      const statusLabels: Record<string, string> = {
+                        NEW: 'Under review',
+                        IN_PROGRESS: 'In progress',
+                        RESOLVED: 'Resolved',
+                      };
+                      return (
+                        <div key={sub.id} className="rounded-xl border overflow-hidden">
+                          <div className="p-4">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1 min-w-0">
+                                <p className="font-semibold text-sm">{sub.subject}</p>
+                                <p className="text-xs text-muted-foreground mt-0.5">
+                                  {new Date(sub.createdAt).toLocaleDateString()}
+                                </p>
+                              </div>
+                              <span className={`shrink-0 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold border ${statusColors[sub.status] ?? 'bg-gray-50 text-gray-600 border-gray-200'}`}>
+                                {statusLabels[sub.status] ?? sub.status}
+                              </span>
+                            </div>
+                            <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{sub.message}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>

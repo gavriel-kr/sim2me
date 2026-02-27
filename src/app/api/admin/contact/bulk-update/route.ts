@@ -10,7 +10,7 @@ export async function POST(req: Request) {
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const body = await req.json();
-  const updates: { id: string; read: boolean }[] = body.updates ?? [];
+  const updates: { id: string; read?: boolean; status?: string }[] = body.updates ?? [];
 
   if (!Array.isArray(updates) || updates.length === 0) {
     return NextResponse.json({ error: 'No updates provided' }, { status: 400 });
@@ -22,7 +22,10 @@ export async function POST(req: Request) {
     try {
       await prisma.contactSubmission.update({
         where: { id: u.id },
-        data: { read: u.read },
+        data: {
+          ...(u.read !== undefined && { read: u.read }),
+          ...(u.status !== undefined && { status: u.status as 'NEW' | 'IN_PROGRESS' | 'RESOLVED' }),
+        },
       });
       updated++;
     } catch {

@@ -236,13 +236,21 @@
     "issueOther": "שאלה כללית",
     "namePlaceholder": "ישראל ישראלי",
     "emailPlaceholder": "israel@example.com",
-    "subjectPlaceholder": "במה נוכל לעזור?",
+    "phone": "מספר טלפון",
+    "phonePlaceholder": "מספר טלפון בינלאומי",
+    "subjectPlaceholder": "בחרו נושא",
     "messagePlaceholder": "ספרו לנו יותר...",
     "marketingConsent": "אשמח לקבל עדכונים, חדשות ומבצעים מ-Sim2Me",
     "sending": "שולח...",
     "messageSent": "ההודעה נשלחה!",
     "messageSentDesc": "נחזור אליך בהקדם.",
-    "sendAnother": "שלח הודעה נוספת"
+    "sendAnother": "שלח הודעה נוספת",
+    "subject_installation_help": "עזרה בהתקנה",
+    "subject_activation_issue": "בעיית הפעלה",
+    "subject_connectivity_problem": "בעיית חיבור",
+    "subject_refund_request": "בקשת החזר",
+    "subject_billing_payment": "חיוב ותשלום",
+    "subject_general_inquiry": "שאלה כללית"
   },
   "checkout": {
     "title": "השלמת רכישה",

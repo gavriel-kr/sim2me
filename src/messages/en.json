@@ -236,13 +236,21 @@
     "issueOther": "General Inquiry",
     "namePlaceholder": "John Doe",
     "emailPlaceholder": "john@example.com",
-    "subjectPlaceholder": "How can we help?",
+    "phone": "Phone number",
+    "phonePlaceholder": "International phone number",
+    "subjectPlaceholder": "Select a subject",
     "messagePlaceholder": "Tell us more...",
     "marketingConsent": "I'd like to receive updates, news, and deals from Sim2Me",
     "sending": "Sending...",
     "messageSent": "Message sent!",
     "messageSentDesc": "We'll get back to you soon.",
-    "sendAnother": "Send another message"
+    "sendAnother": "Send another message",
+    "subject_installation_help": "eSIM Installation Help",
+    "subject_activation_issue": "Activation Issue",
+    "subject_connectivity_problem": "Connectivity Problem",
+    "subject_refund_request": "Refund Request",
+    "subject_billing_payment": "Billing & Payment",
+    "subject_general_inquiry": "General Inquiry"
   },
   "checkout": {
     "title": "Checkout",
