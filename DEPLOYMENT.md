@@ -52,7 +52,16 @@ Vercel will build and deploy. You’ll get a URL like `sim2me-esim.vercel.app`. 
 2. Add your domain (e.g. `sim2me.com`) and follow the DNS instructions.
 3. Vercel will provision SSL automatically.
 
-## 4. Notes
+## 4. SEO articles in production
+
+After the first deploy (or after adding new articles to the repo), run the article seed **once** against the production database so the 41 SEO articles appear on the live site:
+
+1. In your project folder, set `DATABASE_URL` to your **production** Postgres URL (e.g. from Vercel Postgres or Neon).
+2. Run: `npm run db:seed-articles`
+
+This creates/updates all articles in the DB. The app and admin panel read from the same DB, so no further deploy is needed.
+
+## 5. Notes
 
 - **i18n:** The app uses `next-intl` with locales `en`, `he`, `ar`. No extra Vercel config is required.
 - **Build:** If the build fails, check the Vercel build logs. Common fixes: run `npm run build` locally and fix any TypeScript or lint errors.
