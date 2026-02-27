@@ -352,5 +352,29 @@
     "close": "Close",
     "save": "Save",
     "cancel": "Cancel"
+  },
+  "a11y": {
+    "openLabel": "Accessibility options",
+    "closeLabel": "Close accessibility toolbar",
+    "panelTitle": "Accessibility",
+    "closePanelLabel": "Close accessibility panel",
+    "activeBadge": "{count} settings active",
+    "textSizeTitle": "Text Size",
+    "decreaseLabel": "Decrease text size",
+    "increaseLabel": "Increase text size",
+    "fontSizeAnnounce": "Text size {percent} percent",
+    "displayTitle": "Display",
+    "textSpacing": "Text Spacing",
+    "textSpacingDesc": "Increase letter, word and line spacing",
+    "highContrast": "High Contrast",
+    "highContrastDesc": "Boost page contrast ratio",
+    "reduceMotion": "Reduce Motion",
+    "reduceMotionDesc": "Pause animations and transitions",
+    "highlightLinks": "Highlight Links",
+    "highlightLinksDesc": "Underline all links",
+    "highlightFocus": "Highlight Focus",
+    "highlightFocusDesc": "Show strong focus indicator",
+    "reset": "Reset to default",
+    "savedNote": "Saved locally · No data sent to servers"
   }
 }

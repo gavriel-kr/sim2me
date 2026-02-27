@@ -352,5 +352,29 @@
     "close": "סגור",
     "save": "שמור",
     "cancel": "ביטול"
+  },
+  "a11y": {
+    "openLabel": "אפשרויות נגישות",
+    "closeLabel": "סגור סרגל נגישות",
+    "panelTitle": "נגישות",
+    "closePanelLabel": "סגור לוח נגישות",
+    "activeBadge": "{count} הגדרות פעילות",
+    "textSizeTitle": "גודל טקסט",
+    "decreaseLabel": "הקטן טקסט",
+    "increaseLabel": "הגדל טקסט",
+    "fontSizeAnnounce": "גודל טקסט {percent} אחוז",
+    "displayTitle": "תצוגה",
+    "textSpacing": "ריווח טקסט",
+    "textSpacingDesc": "הגדלת ריווח בין אותיות, מילים ושורות",
+    "highContrast": "ניגודיות גבוהה",
+    "highContrastDesc": "הגברת ניגודיות הדף",
+    "reduceMotion": "הפחת תנועה",
+    "reduceMotionDesc": "השהיית אנימציות ומעברים",
+    "highlightLinks": "הדגש קישורים",
+    "highlightLinksDesc": "הוסף קו תחתון לכל הקישורים",
+    "highlightFocus": "הדגש מיקוד",
+    "highlightFocusDesc": "הצג אינדיקטור מיקוד חזק",
+    "reset": "אפס להגדרות ברירת מחדל",
+    "savedNote": "נשמר מקומית · אין שליחת נתונים לשרתים"
   }
 }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { X, RotateCcw } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 const STORAGE_KEY = 'sim2me-a11y';
 
@@ -33,14 +34,6 @@ const CLASS_MAP: Record<BoolKey, string> = {
   highlightFocus: 'a11y-highlight-focus',
 };
 
-const TOGGLES: { key: BoolKey; label: string; description: string }[] = [
-  { key: 'textSpacing', label: 'Text Spacing', description: 'Increase letter, word and line spacing' },
-  { key: 'highContrast', label: 'High Contrast', description: 'Boost page contrast ratio' },
-  { key: 'reduceMotion', label: 'Reduce Motion', description: 'Pause animations and transitions' },
-  { key: 'highlightLinks', label: 'Highlight Links', description: 'Underline all links' },
-  { key: 'highlightFocus', label: 'Highlight Focus', description: 'Show strong focus indicator' },
-];
-
 function applyPrefs(prefs: Prefs) {
   if (typeof document === 'undefined') return;
   const html = document.documentElement;
@@ -51,6 +44,7 @@ function applyPrefs(prefs: Prefs) {
 }
 
 export function AccessibilityToolbar() {
+  const t = useTranslations('a11y');
   const [open, setOpen] = useState(false);
   const [prefs, setPrefs] = useState<Prefs>(DEFAULT);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -127,10 +121,24 @@ export function AccessibilityToolbar() {
     triggerRef.current?.focus();
   }, []);
 
-  const activeCount = Object.values(prefs).filter((v, i) =>
-    i === 0 ? v !== 1 : Boolean(v)
-  ).length;
+  const TOGGLES: { key: BoolKey; labelKey: keyof typeof t; descKey: keyof typeof t }[] = [
+    { key: 'textSpacing', labelKey: 'textSpacing' as never, descKey: 'textSpacingDesc' as never },
+    { key: 'highContrast', labelKey: 'highContrast' as never, descKey: 'highContrastDesc' as never },
+    { key: 'reduceMotion', labelKey: 'reduceMotion' as never, descKey: 'reduceMotionDesc' as never },
+    { key: 'highlightLinks', labelKey: 'highlightLinks' as never, descKey: 'highlightLinksDesc' as never },
+    { key: 'highlightFocus', labelKey: 'highlightFocus' as never, descKey: 'highlightFocusDesc' as never },
+  ];
 
+  const activeCount = [
+    prefs.fontScale !== 1,
+    prefs.textSpacing,
+    prefs.highContrast,
+    prefs.reduceMotion,
+    prefs.highlightLinks,
+    prefs.highlightFocus,
+  ].filter(Boolean).length;
+
+  // Fixed on the physical LEFT so it never overlaps the help button (bottom-right)
   return (
     <>
       {open && (
@@ -140,27 +148,25 @@ export function AccessibilityToolbar() {
           role="dialog"
           aria-modal="true"
           aria-labelledby={headingId}
-          className="fixed bottom-24 start-4 z-[60] w-72 overflow-hidden rounded-2xl border border-border bg-background shadow-2xl"
+          className="fixed bottom-24 left-4 z-[60] w-72 overflow-hidden rounded-2xl border border-border bg-background shadow-2xl"
         >
           {/* Header */}
           <div className="flex items-center justify-between border-b border-border bg-muted/40 px-4 py-3">
             <div className="flex items-center gap-2">
-              {/* Accessibility icon */}
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="text-blue-600">
                 <circle cx="12" cy="5" r="2.5" fill="currentColor" />
                 <path d="M7 13h5l1.5 5.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 <path d="M9.5 13V9.5a2.5 2.5 0 0 1 5 0V13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                <path d="M16 13h1.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                 <path d="M14.5 18.5A4 4 0 1 0 7 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
               </svg>
               <h2 id={headingId} className="text-sm font-bold text-foreground">
-                Accessibility
+                {t('panelTitle')}
               </h2>
             </div>
             <button
               type="button"
               onClick={closePanel}
-              aria-label="Close accessibility panel"
+              aria-label={t('closePanelLabel')}
               className="rounded-lg p-1.5 text-muted-foreground transition hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <X className="h-4 w-4" aria-hidden="true" />
@@ -171,14 +177,14 @@ export function AccessibilityToolbar() {
             {/* Font size */}
             <div>
               <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-                Text Size
+                {t('textSizeTitle')}
               </p>
               <div className="flex items-center gap-2 rounded-xl border border-border bg-muted/30 p-1">
                 <button
                   type="button"
                   onClick={() => setFontScale(-0.1)}
                   disabled={prefs.fontScale <= 0.8}
-                  aria-label="Decrease text size"
+                  aria-label={t('decreaseLabel')}
                   className="flex h-9 flex-1 items-center justify-center rounded-lg text-sm font-bold text-foreground transition hover:bg-background disabled:opacity-35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <span className="text-base" aria-hidden="true">A</span>
@@ -187,7 +193,7 @@ export function AccessibilityToolbar() {
                 <span
                   className="min-w-[3rem] text-center text-sm font-semibold tabular-nums text-foreground"
                   aria-live="polite"
-                  aria-label={`Text size ${Math.round(prefs.fontScale * 100)} percent`}
+                  aria-label={t('fontSizeAnnounce', { percent: Math.round(prefs.fontScale * 100) })}
                 >
                   {Math.round(prefs.fontScale * 100)}%
                 </span>
@@ -195,7 +201,7 @@ export function AccessibilityToolbar() {
                   type="button"
                   onClick={() => setFontScale(0.1)}
                   disabled={prefs.fontScale >= 1.5}
-                  aria-label="Increase text size"
+                  aria-label={t('increaseLabel')}
                   className="flex h-9 flex-1 items-center justify-center rounded-lg text-sm font-bold text-foreground transition hover:bg-background disabled:opacity-35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <span className="text-lg" aria-hidden="true">A</span>
@@ -207,11 +213,13 @@ export function AccessibilityToolbar() {
             {/* Toggle switches */}
             <div>
               <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-                Display
+                {t('displayTitle')}
               </p>
               <div className="space-y-0.5">
-                {TOGGLES.map(({ key, label, description }) => {
+                {TOGGLES.map(({ key, labelKey, descKey }) => {
                   const checked = prefs[key];
+                  const label = t(labelKey as Parameters<typeof t>[0]);
+                  const desc = t(descKey as Parameters<typeof t>[0]);
                   return (
                     <div
                       key={key}
@@ -237,7 +245,7 @@ export function AccessibilityToolbar() {
                             checked ? 'translate-x-5' : 'translate-x-0'
                           }`}
                         />
-                        <span id={`a11y-desc-${key}`} className="sr-only">{description}</span>
+                        <span id={`a11y-desc-${key}`} className="sr-only">{desc}</span>
                       </button>
                     </div>
                   );
@@ -252,35 +260,34 @@ export function AccessibilityToolbar() {
               className="flex w-full items-center justify-center gap-2 rounded-xl border border-border px-3 py-2.5 text-sm text-muted-foreground transition hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
-              Reset to default
+              {t('reset')}
             </button>
 
             <p className="text-center text-[10px] leading-tight text-muted-foreground">
-              Saved locally · No data sent to servers
+              {t('savedNote')}
             </p>
           </div>
         </div>
       )}
 
-      {/* Floating trigger */}
+      {/* Floating trigger – always physical left-4 to avoid overlapping help button */}
       <button
         ref={triggerRef}
         type="button"
         onClick={() => setOpen(o => !o)}
-        aria-label={open ? 'Close accessibility toolbar' : 'Accessibility options'}
+        aria-label={open ? t('closeLabel') : t('openLabel')}
         aria-expanded={open}
         aria-controls="a11y-toolbar-panel"
-        className="fixed bottom-6 start-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg transition-transform hover:scale-105 hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2"
+        className="fixed bottom-6 left-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg transition-transform hover:scale-105 hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2"
       >
         {activeCount > 0 && (
           <span
-            aria-label={`${activeCount} accessibility settings active`}
+            aria-label={t('activeBadge', { count: activeCount })}
             className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-amber-400 text-[10px] font-bold text-black"
           >
             {activeCount}
           </span>
         )}
-        {/* Universal accessibility symbol */}
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <circle cx="12" cy="5" r="2.5" fill="currentColor" />
           <path d="M7 13h5l1.5 5.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />

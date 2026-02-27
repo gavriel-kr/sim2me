@@ -352,5 +352,29 @@
     "close": "إغلاق",
     "save": "حفظ",
     "cancel": "إلغاء"
+  },
+  "a11y": {
+    "openLabel": "خيارات إمكانية الوصول",
+    "closeLabel": "أغلق شريط إمكانية الوصول",
+    "panelTitle": "إمكانية الوصول",
+    "closePanelLabel": "أغلق لوحة إمكانية الوصول",
+    "activeBadge": "{count} إعدادات نشطة",
+    "textSizeTitle": "حجم النص",
+    "decreaseLabel": "تصغير النص",
+    "increaseLabel": "تكبير النص",
+    "fontSizeAnnounce": "حجم النص {percent} بالمئة",
+    "displayTitle": "العرض",
+    "textSpacing": "تباعد النص",
+    "textSpacingDesc": "زيادة تباعد الحروف والكلمات والأسطر",
+    "highContrast": "تباين عالٍ",
+    "highContrastDesc": "تعزيز نسبة تباين الصفحة",
+    "reduceMotion": "تقليل الحركة",
+    "reduceMotionDesc": "إيقاف الرسوم المتحركة والتحولات",
+    "highlightLinks": "تمييز الروابط",
+    "highlightLinksDesc": "وضع خط تحت جميع الروابط",
+    "highlightFocus": "تمييز التركيز",
+    "highlightFocusDesc": "إظهار مؤشر تركيز قوي",
+    "reset": "إعادة الضبط الافتراضي",
+    "savedNote": "محفوظ محلياً · لا يتم إرسال بيانات للخوادم"
   }
 }
