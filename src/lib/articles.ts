@@ -49,30 +49,25 @@ export async function getArticleBySlug(slug: string, locale: ArticleLocale): Pro
   } as ArticleFull;
 }
 
-/** Same locale, exclude current article, random order, for "related articles" block */
-export async function getRelatedArticles(
+/** Same locale, exclude current article — all for carousel (ordered by articleOrder, then date) */
+export async function getRelatedArticlesForCarousel(
   excludeArticleId: string,
-  locale: ArticleLocale,
-  limit: number = 3
+  locale: ArticleLocale
 ): Promise<ArticleSummary[]> {
-  const rows = await prisma.article.findMany({
+  return prisma.article.findMany({
     where: {
       locale,
       status: 'PUBLISHED',
       id: { not: excludeArticleId },
     },
-    orderBy: { id: 'asc' }, // stable order before random
-    take: limit * 2, // fetch extra then shuffle and slice (Prisma has no random())
+    orderBy: [{ articleOrder: 'asc' }, { createdAt: 'desc' }],
     select: {
       id: true, slug: true, locale: true, title: true,
       excerpt: true, featuredImage: true,
       metaTitle: true, metaDesc: true,
       articleOrder: true, createdAt: true, updatedAt: true,
     },
-  });
-  // Shuffle and take `limit` (random order per request)
-  const shuffled = [...rows].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, limit);
+  }) as Promise<ArticleSummary[]>;
 }
 
 /** Returns alternate hreflangs for a given slug across all locales */

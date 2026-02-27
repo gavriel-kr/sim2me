@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useParams } from 'next/navigation';
+import { useParams, useRef, useState, useCallback, useEffect } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { ArticleFull, ArticleSummary } from '@/lib/articles';
 
 interface Props {
@@ -38,7 +39,47 @@ export function ArticleDetail({ article, locale, relatedArticles, defaultImage }
   const isRTL = locale === 'he' || locale === 'ar';
 
   const breadcrumbLabel = locale === 'he' ? 'מדריכים' : locale === 'ar' ? 'أدلة' : 'Articles';
+  const backToGuidesLabel = locale === 'he' ? 'חזרה למדריכים' : locale === 'ar' ? 'العودة إلى الأدلة' : 'Back to guides';
   const relatedHeading = locale === 'he' ? 'עוד מדריכים מומלצים עבורך' : locale === 'ar' ? 'المزيد من الأدلة الموصى بها لك' : 'More recommended guides for you';
+
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const [canScrollPrev, setCanScrollPrev] = useState(false);
+  const [canScrollNext, setCanScrollNext] = useState(false);
+
+  const updateScrollState = useCallback(() => {
+    const el = carouselRef.current;
+    if (!el) return;
+    const { scrollLeft, scrollWidth, clientWidth } = el;
+    const isRtlScroll = el.getAttribute('dir') === 'rtl';
+    if (isRtlScroll) {
+      setCanScrollPrev(scrollLeft < 0);
+      setCanScrollNext(scrollLeft > -(scrollWidth - clientWidth) + 2);
+    } else {
+      setCanScrollPrev(scrollLeft > 1);
+      setCanScrollNext(scrollLeft < scrollWidth - clientWidth - 1);
+    }
+  }, []);
+
+  useEffect(() => {
+    updateScrollState();
+    const el = carouselRef.current;
+    if (!el) return;
+    el.addEventListener('scroll', updateScrollState);
+    const ro = new ResizeObserver(updateScrollState);
+    ro.observe(el);
+    return () => {
+      el.removeEventListener('scroll', updateScrollState);
+      ro.disconnect();
+    };
+  }, [relatedArticles.length, updateScrollState]);
+
+  const scrollCarousel = (direction: 'prev' | 'next') => {
+    const el = carouselRef.current;
+    if (!el) return;
+    const step = el.clientWidth * 0.8;
+    const left = direction === 'next' ? step : -step;
+    el.scrollBy({ left: el.dir === 'rtl' ? -left : left, behavior: 'smooth' });
+  };
 
   return (
     <div className="bg-white min-h-screen" dir={isRTL ? 'rtl' : 'ltr'}>
@@ -89,47 +130,76 @@ export function ArticleDetail({ article, locale, relatedArticles, defaultImage }
           dangerouslySetInnerHTML={{ __html: article.content }}
         />
 
-        {/* Related articles (2–3 same language, random order) */}
+        {/* Related articles carousel — all enabled articles in same language */}
         {relatedArticles.length > 0 && (
           <section className="mt-12 border-t border-gray-100 pt-8" aria-label={relatedHeading}>
             <h2 className="text-lg font-bold text-gray-900 mb-4" dir={isRTL ? 'rtl' : 'ltr'}>
               {relatedHeading}
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {relatedArticles.map((a) => {
-                const isBgColor = a.featuredImage?.startsWith('bg:');
-                const bgColor = isBgColor ? a.featuredImage!.slice(3) : undefined;
-                return (
-                  <Link
-                    key={a.id}
-                    href={`${prefix}/articles/${a.slug}`}
-                    className="group flex flex-col overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm transition-shadow hover:shadow-md"
+            <div className="relative">
+              {relatedArticles.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => scrollCarousel('prev')}
+                    disabled={!canScrollPrev}
+                    aria-label={locale === 'he' ? 'הקודם' : locale === 'ar' ? 'السابق' : 'Previous'}
+                    className={`absolute top-1/2 -translate-y-1/2 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white shadow-md transition-opacity hover:bg-gray-50 disabled:opacity-30 disabled:pointer-events-none ${isRTL ? 'right-0 -translate-x-2' : 'left-0 translate-x-2'}`}
                   >
-                    {a.featuredImage && !isBgColor ? (
-                      <div className="relative h-32 w-full overflow-hidden bg-gray-100">
-                        <Image src={a.featuredImage} alt={a.title} fill className="object-cover transition-transform duration-300 group-hover:scale-105" />
-                      </div>
-                    ) : defaultImage?.url ? (
-                      <div className="relative h-32 w-full overflow-hidden bg-gray-100">
-                        <Image src={defaultImage.url} alt={defaultImage.alt || a.title} fill className="object-cover transition-transform duration-300 group-hover:scale-105" />
-                      </div>
-                    ) : (
-                      <RelatedCardPlaceholder bgColor={bgColor} />
-                    )}
-                    <div className="flex flex-1 flex-col p-3" dir={isRTL ? 'rtl' : 'ltr'}>
-                      <h3 className="text-sm font-bold text-gray-900 line-clamp-2 group-hover:text-emerald-700 transition-colors">
-                        {a.title}
-                      </h3>
-                      {a.excerpt && (
-                        <p className="mt-1 text-xs text-gray-500 line-clamp-2">{a.excerpt}</p>
+                    <ChevronLeft className="h-5 w-5 text-gray-700" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => scrollCarousel('next')}
+                    disabled={!canScrollNext}
+                    aria-label={locale === 'he' ? 'הבא' : locale === 'ar' ? 'التالي' : 'Next'}
+                    className={`absolute top-1/2 -translate-y-1/2 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white shadow-md transition-opacity hover:bg-gray-50 disabled:opacity-30 disabled:pointer-events-none ${isRTL ? 'left-0 translate-x-2' : 'right-0 -translate-x-2'}`}
+                  >
+                    <ChevronRight className="h-5 w-5 text-gray-700" />
+                  </button>
+                </>
+              )}
+              <div
+                ref={carouselRef}
+                dir={isRTL ? 'rtl' : 'ltr'}
+                className="flex gap-4 overflow-x-auto overflow-y-hidden py-2 scroll-smooth snap-x snap-mandatory scrollbar-thin"
+                style={{ scrollbarWidth: 'thin' }}
+              >
+                {relatedArticles.map((a) => {
+                  const isBgColor = a.featuredImage?.startsWith('bg:');
+                  const bgColor = isBgColor ? a.featuredImage!.slice(3) : undefined;
+                  return (
+                    <Link
+                      key={a.id}
+                      href={`${prefix}/articles/${a.slug}`}
+                      className="group flex flex-col overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm transition-shadow hover:shadow-md flex-shrink-0 w-[min(280px,85vw)] snap-start"
+                    >
+                      {a.featuredImage && !isBgColor ? (
+                        <div className="relative h-32 w-full overflow-hidden bg-gray-100">
+                          <Image src={a.featuredImage} alt={a.title} fill className="object-cover transition-transform duration-300 group-hover:scale-105" />
+                        </div>
+                      ) : defaultImage?.url ? (
+                        <div className="relative h-32 w-full overflow-hidden bg-gray-100">
+                          <Image src={defaultImage.url} alt={defaultImage.alt || a.title} fill className="object-cover transition-transform duration-300 group-hover:scale-105" />
+                        </div>
+                      ) : (
+                        <RelatedCardPlaceholder bgColor={bgColor} />
                       )}
-                      <span className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-emerald-700">
-                        {isRTL ? '← קרא עוד' : locale === 'ar' ? '← اقرأ المزيد' : 'Read more →'}
-                      </span>
-                    </div>
-                  </Link>
-                );
-              })}
+                      <div className="flex flex-1 flex-col p-3" dir={isRTL ? 'rtl' : 'ltr'}>
+                        <h3 className="text-sm font-bold text-gray-900 line-clamp-2 group-hover:text-emerald-700 transition-colors">
+                          {a.title}
+                        </h3>
+                        {a.excerpt && (
+                          <p className="mt-1 text-xs text-gray-500 line-clamp-2">{a.excerpt}</p>
+                        )}
+                        <span className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-emerald-700">
+                          {isRTL ? '← קרא עוד' : locale === 'ar' ? '← اقرأ المزيد' : 'Read more →'}
+                        </span>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
           </section>
         )}
@@ -137,7 +207,7 @@ export function ArticleDetail({ article, locale, relatedArticles, defaultImage }
         {/* Back nav */}
         <div className="mt-10 border-t border-gray-100 pt-6">
           <Link href={`${prefix}/articles`} className="inline-flex items-center gap-2 text-sm font-medium text-emerald-700 hover:text-emerald-900">
-            {isRTL ? `${breadcrumbLabel} →` : `← ${breadcrumbLabel}`}
+            {isRTL ? `← ${backToGuidesLabel}` : `${backToGuidesLabel} →`}
           </Link>
         </div>
       </div>

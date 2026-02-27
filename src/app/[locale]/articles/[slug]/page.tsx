@@ -1,7 +1,7 @@
 import { notFound, redirect } from 'next/navigation';
 import { setRequestLocale } from 'next-intl/server';
 import { routing } from '@/i18n/routing';
-import { getArticleBySlug, getArticleHreflangs, getRelatedArticles, type ArticleLocale } from '@/lib/articles';
+import { getArticleBySlug, getArticleHreflangs, getRelatedArticlesForCarousel, type ArticleLocale } from '@/lib/articles';
 import { getArticlesDefaultImage } from '@/lib/articles-default-image';
 import { ArticleDetail } from './ArticleDetail';
 import { MainLayout } from '@/components/layout/MainLayout';
@@ -62,7 +62,7 @@ export default async function ArticleDetailPage({ params }: Props) {
   const canonical = article.canonicalUrl || `${siteUrl}${prefix}/articles/${slug}`;
 
   const [relatedArticles, defaultImage] = await Promise.all([
-    article.showRelatedArticles !== false ? getRelatedArticles(article.id, locale as ArticleLocale, 3) : Promise.resolve([]),
+    article.showRelatedArticles !== false ? getRelatedArticlesForCarousel(article.id, locale as ArticleLocale) : Promise.resolve([]),
     getArticlesDefaultImage(),
   ]);
 
