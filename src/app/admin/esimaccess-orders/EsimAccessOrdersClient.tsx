@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Download, Upload, RefreshCw, Search, X,
-  TrendingDown, ShoppingCart, CheckCircle2, DollarSign, CloudDownload,
+  TrendingDown, ShoppingCart, CheckCircle2, DollarSign, DownloadCloud,
 } from 'lucide-react';
 
 interface EsimAccessOrder {
@@ -358,7 +358,7 @@ export function EsimAccessOrdersClient() {
           className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
           title="Fetch all eSIMaccess orders and import missing ones as unassigned stubs"
         >
-          <CloudDownload className="h-4 w-4" />
+          <DownloadCloud className="h-4 w-4" />
           {syncing ? 'Syncing…' : 'Sync from eSIMaccess'}
         </button>
         <button
