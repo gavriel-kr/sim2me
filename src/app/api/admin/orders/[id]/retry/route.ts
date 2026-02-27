@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { purchasePackage, getEsimProfileWithRetry } from '@/lib/esimaccess';
+import { purchasePackage, getEsimProfileWithRetry, getPackages } from '@/lib/esimaccess';
 import { sendPostPurchaseEmail } from '@/lib/email';
 import { hash } from 'bcryptjs';
 
@@ -30,12 +30,26 @@ export async function POST(
   try {
     await prisma.order.update({ where: { id: order.id }, data: { status: 'PROCESSING', errorMessage: null } });
 
+    // Refresh supplierCost at retry time (price may have changed; also ensures cost is tracked)
+    let retryCost: number | undefined;
+    try {
+      const { packageList } = await getPackages();
+      const pkg = packageList?.find((p: { packageCode: string }) => p.packageCode === order.packageCode);
+      if (pkg?.price != null) retryCost = pkg.price / 10000;
+    } catch {
+      // Non-fatal: proceed without refreshing cost
+    }
+
     const purchase = await purchasePackage(order.packageCode, 1);
     const orderNo = purchase.orderNo;
 
     await prisma.order.update({
       where: { id: order.id },
-      data: { esimOrderId: orderNo, esimTransactionId: purchase.transactionId },
+      data: {
+        esimOrderId: orderNo,
+        esimTransactionId: purchase.transactionId,
+        ...(retryCost != null && { supplierCost: retryCost }),
+      },
     });
 
     const profileResult = await getEsimProfileWithRetry(orderNo, 5, 5000);

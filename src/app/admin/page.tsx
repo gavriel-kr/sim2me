@@ -15,12 +15,18 @@ export default async function AdminDashboard() {
   const fixedFee = 0.5;
 
   // Fetch stats and fee config
-  const [orderCount, customerCount, completedAgg, completedOrderAmounts, recentOrders, feeSettings] = await Promise.all([
+  const [orderCount, customerCount, completedAgg, allEsimCostAgg, completedOrderAmounts, recentOrders, feeSettings] = await Promise.all([
     prisma.order.count(),
     prisma.customer.count(),
     prisma.order.aggregate({
-      _sum: { totalAmount: true, supplierCost: true },
+      _sum: { totalAmount: true },
       where: { status: 'COMPLETED' },
+    }),
+    // Sum supplierCost for ALL orders where eSIMaccess was actually charged
+    // (esimOrderId is set the moment purchasePackage() succeeds, even if the order later fails)
+    prisma.order.aggregate({
+      _sum: { supplierCost: true },
+      where: { esimOrderId: { not: null } },
     }),
     prisma.order.findMany({ where: { status: 'COMPLETED' }, select: { totalAmount: true } }),
     prisma.order.findMany({ take: 5, orderBy: { createdAt: 'desc' } }),
@@ -39,11 +45,13 @@ export default async function AdminDashboard() {
   }
 
   const revenue = Number(completedAgg._sum.totalAmount || 0);
-  const esimCost = Number(completedAgg._sum.supplierCost || 0);
+  // Use actual eSIM spend (all orders that hit eSIMaccess, including failed/retried ones)
+  const esimCost = Number(allEsimCostAgg._sum.supplierCost || 0);
   const profit = revenue - esimCost - feeCost;
   const [completedCount, missingCostCount, balanceData] = await Promise.all([
     prisma.order.count({ where: { status: 'COMPLETED' } }),
-    prisma.order.count({ where: { supplierCost: null, status: { in: ['COMPLETED', 'PROCESSING'] } } }),
+    // Orders where eSIMaccess was charged but supplierCost was never recorded
+    prisma.order.count({ where: { esimOrderId: { not: null }, supplierCost: null } }),
     getBalance().catch(() => null),
   ]);
 

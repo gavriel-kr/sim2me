@@ -15,9 +15,9 @@ export async function POST() {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  // Find orders with no supplierCost recorded
+  // Find orders where eSIMaccess was charged but cost was never recorded
   const ordersToFill = await prisma.order.findMany({
-    where: { supplierCost: null },
+    where: { esimOrderId: { not: null }, supplierCost: null },
     select: { id: true, packageCode: true },
   });
 
