@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import Link from 'next/link';
 import { Download, Upload } from 'lucide-react';
 import { DashboardCubicks, type CubickStat } from '../DashboardCubicks';
 import { applyOrderFilters, type OrderFiltersState } from './orderFilters';
@@ -150,9 +151,12 @@ export function AdminOrdersClient({ stats, orders: initialOrders }: { stats: Cub
       {esimBalance !== null && (
         <div className="flex items-center gap-2 text-sm">
           <span className="text-gray-500">eSIMaccess balance:</span>
-          <span className={`font-semibold ${esimBalance < 10 ? 'text-red-600' : 'text-emerald-600'}`}>
+          <Link
+            href="/admin/esimaccess-orders"
+            className={`font-semibold underline-offset-2 hover:underline ${esimBalance < 10 ? 'text-red-600' : 'text-emerald-600'}`}
+          >
             ${esimBalance.toFixed(2)}
-          </span>
+          </Link>
         </div>
       )}
       <OrdersFilters

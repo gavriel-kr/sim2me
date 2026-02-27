@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
@@ -83,9 +84,12 @@ export default async function AdminDashboard() {
       {esimAccessBalance !== null && (
         <div className="mt-3 flex items-center gap-2 text-sm">
           <span className="text-gray-500">eSIMaccess balance:</span>
-          <span className={`font-semibold ${esimAccessBalance < 10 ? 'text-red-600' : 'text-emerald-600'}`}>
+          <Link
+            href="/admin/esimaccess-orders"
+            className={`font-semibold underline-offset-2 hover:underline ${esimAccessBalance < 10 ? 'text-red-600' : 'text-emerald-600'}`}
+          >
             ${esimAccessBalance.toFixed(2)}
-          </span>
+          </Link>
         </div>
       )}
 

@@ -16,6 +16,7 @@ interface Props {
 const navItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/orders', label: 'Orders', icon: ShoppingCart },
+  { href: '/admin/esimaccess-orders', label: 'eSIMaccess Orders', icon: BarChart3 },
   { href: '/admin/contact', label: 'Contact Submissions', icon: MessageSquare },
   { href: '/admin/accounts', label: 'Accounts', icon: UserCircle },
   { href: '/admin/packages', label: 'eSIM Packages', icon: Package },
