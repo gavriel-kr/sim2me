@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { BackfillBanner } from './BackfillBanner';
 import { DashboardCubicks } from './DashboardCubicks';
 import { paddleFeeAmount } from '@/lib/profit';
+import { getBalance } from '@/lib/esimaccess';
 
 export default async function AdminDashboard() {
   const session = await getServerSession(authOptions);
@@ -40,10 +41,13 @@ export default async function AdminDashboard() {
   const revenue = Number(completedAgg._sum.totalAmount || 0);
   const esimCost = Number(completedAgg._sum.supplierCost || 0);
   const profit = revenue - esimCost - feeCost;
-  const [completedCount, missingCostCount] = await Promise.all([
+  const [completedCount, missingCostCount, balanceData] = await Promise.all([
     prisma.order.count({ where: { status: 'COMPLETED' } }),
     prisma.order.count({ where: { supplierCost: null, status: { in: ['COMPLETED', 'PROCESSING'] } } }),
+    getBalance().catch(() => null),
   ]);
+
+  const esimAccessBalance = balanceData ? (balanceData.balance ?? 0) / 10000 : null;
 
   const stats = [
     { label: 'Total Orders', value: orderCount, iconName: 'ShoppingCart' as const, color: 'bg-blue-100 text-blue-600' },
@@ -64,6 +68,15 @@ export default async function AdminDashboard() {
       <BackfillBanner missingCount={missingCostCount} />
 
       <DashboardCubicks stats={stats} />
+
+      {esimAccessBalance !== null && (
+        <div className="mt-3 flex items-center gap-2 text-sm">
+          <span className="text-gray-500">eSIMaccess balance:</span>
+          <span className={`font-semibold ${esimAccessBalance < 10 ? 'text-red-600' : 'text-emerald-600'}`}>
+            ${esimAccessBalance.toFixed(2)}
+          </span>
+        </div>
+      )}
 
       {/* Recent orders */}
       <div className="mt-8">

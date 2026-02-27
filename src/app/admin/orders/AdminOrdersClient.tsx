@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Download, Upload } from 'lucide-react';
 import { DashboardCubicks, type CubickStat } from '../DashboardCubicks';
 import { applyOrderFilters, type OrderFiltersState } from './orderFilters';
@@ -53,7 +53,15 @@ export function AdminOrdersClient({ stats, orders: initialOrders }: { stats: Cub
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<string | null>(null);
+  const [esimBalance, setEsimBalance] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    fetch('/api/admin/esimaccess/packages')
+      .then((r) => r.json())
+      .then((d) => { if (typeof d.balance === 'number') setEsimBalance(d.balance); })
+      .catch(() => {});
+  }, []);
 
   const filteredOrders = applyOrderFilters(orders, filters);
 
@@ -139,6 +147,14 @@ export function AdminOrdersClient({ stats, orders: initialOrders }: { stats: Cub
   return (
     <div className="mt-6 space-y-4">
       <DashboardCubicks stats={stats} />
+      {esimBalance !== null && (
+        <div className="flex items-center gap-2 text-sm">
+          <span className="text-gray-500">eSIMaccess balance:</span>
+          <span className={`font-semibold ${esimBalance < 10 ? 'text-red-600' : 'text-emerald-600'}`}>
+            ${esimBalance.toFixed(2)}
+          </span>
+        </div>
+      )}
       <OrdersFilters
         filters={filters}
         onFiltersChange={setFilters}
