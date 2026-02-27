@@ -13,15 +13,21 @@ export default async function OrdersPage() {
   const pctFee = 0.05;
   const fixedFee = 0.5;
 
-  const [orders, orderCount, customerCount, completedAgg, completedOrderAmounts, feeSettings] = await Promise.all([
+  const [orders, orderCount, customerCount, completedAgg, allEsimCostAgg, completedOrderAmounts, feeSettings] = await Promise.all([
     prisma.order.findMany({ orderBy: { createdAt: 'desc' }, take: 500 }),
     prisma.order.count(),
     prisma.customer.count(),
     prisma.order.aggregate({
-      _sum: { totalAmount: true, supplierCost: true },
+      _sum: { totalAmount: true },
       where: { status: 'COMPLETED' },
     }),
-    prisma.order.findMany({ where: { status: 'COMPLETED' }, select: { totalAmount: true } }),
+    // All actual eSIMaccess charges (regardless of order status)
+    prisma.order.aggregate({
+      _sum: { supplierCost: true },
+      where: { esimOrderId: { not: null } },
+    }),
+    // Only real Paddle transactions — test/admin orders with no paddleTransactionId have no fee
+    prisma.order.findMany({ where: { status: 'COMPLETED', paddleTransactionId: { not: null } }, select: { totalAmount: true } }),
     prisma.feeSettings.findFirst(),
   ]);
 
@@ -37,7 +43,7 @@ export default async function OrdersPage() {
   }
 
   const revenue = Number(completedAgg._sum.totalAmount || 0);
-  const esimCost = Number(completedAgg._sum.supplierCost || 0);
+  const esimCost = Number(allEsimCostAgg._sum.supplierCost || 0);
   const profit = revenue - esimCost - feeCost;
   const completedCount = completedOrderAmounts.length;
 

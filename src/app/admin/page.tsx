@@ -29,7 +29,8 @@ export default async function AdminDashboard() {
       _sum: { supplierCost: true },
       where: { esimOrderId: { not: null } },
     }),
-    prisma.order.findMany({ where: { status: 'COMPLETED' }, select: { totalAmount: true } }),
+    // Only real Paddle transactions — test/admin orders with no paddleTransactionId have no fee
+    prisma.order.findMany({ where: { status: 'COMPLETED', paddleTransactionId: { not: null } }, select: { totalAmount: true } }),
     prisma.order.findMany({ take: 5, orderBy: { createdAt: 'desc' } }),
     prisma.feeSettings.findFirst(),
     // Manual adjustment for test/direct purchases made outside the app
@@ -53,7 +54,7 @@ export default async function AdminDashboard() {
   const esimCost = Number(allEsimCostAgg._sum.supplierCost || 0) + esimAdditionalCost;
   const profit = revenue - esimCost - feeCost;
   const [completedCount, missingCostCount, balanceData] = await Promise.all([
-    prisma.order.count({ where: { status: 'COMPLETED' } }),
+    prisma.order.count({ where: { status: 'COMPLETED', paddleTransactionId: { not: null } } }),
     // Orders where eSIMaccess was charged but supplierCost was never recorded
     prisma.order.count({ where: { esimOrderId: { not: null }, supplierCost: null } }),
     getBalance().catch(() => null),
