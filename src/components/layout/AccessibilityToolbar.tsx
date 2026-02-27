@@ -281,24 +281,30 @@ export function AccessibilityToolbar() {
               </p>
               <div className="flex flex-wrap gap-2">
                 <div className="flex rounded-xl border border-border bg-muted/30 p-1">
+                  {/* "Left" button — in RTL, physical-left = logical 'end'; in LTR = logical 'start' */}
                   <button
                     type="button"
-                    onClick={() => setPositionHorizontal('start')}
-                    aria-pressed={prefs.positionHorizontal === 'start'}
+                    onClick={() => setPositionHorizontal(isRTL ? 'end' : 'start')}
+                    aria-pressed={isRTL ? prefs.positionHorizontal === 'end' : prefs.positionHorizontal === 'start'}
                     aria-label={t('positionStart')}
                     className={`rounded-lg px-3 py-1.5 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                      prefs.positionHorizontal === 'start' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                      (isRTL ? prefs.positionHorizontal === 'end' : prefs.positionHorizontal === 'start')
+                        ? 'bg-background text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
                     }`}
                   >
                     {t('positionStart')}
                   </button>
+                  {/* "Right" button — in RTL, physical-right = logical 'start'; in LTR = logical 'end' */}
                   <button
                     type="button"
-                    onClick={() => setPositionHorizontal('end')}
-                    aria-pressed={prefs.positionHorizontal === 'end'}
+                    onClick={() => setPositionHorizontal(isRTL ? 'start' : 'end')}
+                    aria-pressed={isRTL ? prefs.positionHorizontal === 'start' : prefs.positionHorizontal === 'end'}
                     aria-label={t('positionEnd')}
                     className={`rounded-lg px-3 py-1.5 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                      prefs.positionHorizontal === 'end' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                      (isRTL ? prefs.positionHorizontal === 'start' : prefs.positionHorizontal === 'end')
+                        ? 'bg-background text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
                     }`}
                   >
                     {t('positionEnd')}
