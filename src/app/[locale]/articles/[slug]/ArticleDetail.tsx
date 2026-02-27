@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useParams } from 'next/navigation';
+import { useParams, useRef, useEffect } from 'react';
 import type { ArticleFull } from '@/lib/articles';
 
 interface Props {
@@ -21,11 +21,35 @@ export function ArticleDetail({ article, locale }: Props) {
   const params = useParams();
   const prefix = (params.locale as string) === 'en' ? '' : `/${params.locale}`;
   const isRTL = locale === 'he' || locale === 'ar';
+  const h1Ref = useRef<HTMLHeadingElement>(null);
+
+  // #region agent log — H-A/B/C: check computed text-align and dir at runtime
+  useEffect(() => {
+    if (!h1Ref.current) return;
+    const h1 = h1Ref.current;
+    const headerEl = h1.parentElement;
+    const htmlDir = document.documentElement.getAttribute('dir');
+    const h1Align = window.getComputedStyle(h1).textAlign;
+    const h1Dir = window.getComputedStyle(h1).direction;
+    const headerAlign = headerEl ? window.getComputedStyle(headerEl).textAlign : 'no-header';
+    fetch('http://127.0.0.1:7242/ingest/31d3162a-817c-4d6a-9841-464cdcbf3b94', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        location: 'ArticleDetail.tsx:useEffect',
+        message: 'H-A/B/C: computed text-align on h1',
+        data: { htmlDir, h1Align, h1Dir, headerAlign, locale, isRTL },
+        timestamp: Date.now(),
+        hypothesisId: 'H-A-B-C',
+      }),
+    }).catch(() => {});
+  }, [locale, isRTL]);
+  // #endregion
 
   const breadcrumbLabel = locale === 'he' ? 'מדריכים' : locale === 'ar' ? 'أدلة' : 'Articles';
 
   return (
-    <div className="bg-white min-h-screen">
+    <div className="bg-white min-h-screen" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Hero image */}
       {article.featuredImage && (
         <div className="relative h-64 w-full overflow-hidden sm:h-80">
@@ -47,7 +71,11 @@ export function ArticleDetail({ article, locale }: Props) {
         </nav>
 
         <header className={`mb-8 ${isRTL ? 'text-right' : ''}`}>
-          <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl leading-tight">
+          <h1
+            ref={h1Ref}
+            className={`text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl leading-tight${isRTL ? ' text-right' : ''}`}
+            dir={isRTL ? 'rtl' : 'ltr'}
+          >
             {article.title}
           </h1>
           <p className="mt-3 text-sm text-gray-400">
