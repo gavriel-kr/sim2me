@@ -1,6 +1,8 @@
 /**
- * Seed script: 28 SEO articles (10 EN, 13 HE, 5 AR)
- * Hebrew: general, USA, Europe, Thailand, Dubai, Cyprus, Bucharest, USA-2, Greece, Germany, London, Paris, Turkey.
+ * Seed script: 41 SEO articles (15 EN, 13 HE, 13 AR)
+ * EN: general, Europe, USA, Japan, Thailand, UAE, Turkey, UK, Greece, Global, Germany + 5 more.
+ * HE: general, USA, Europe, Thailand, Dubai, Cyprus, Bucharest, USA-2, Greece, Germany, London, Paris, Turkey.
+ * AR: general, Dubai, how eSIM works, eSIM vs SIM, Saudi/Gulf, America, Europe, Turkey, Greece, London, Thailand, Germany, Cyprus.
  * Run: npx tsx prisma/seed-articles.ts
  */
 import { PrismaClient } from '@prisma/client';
@@ -952,9 +954,229 @@ const articles = [
 `,
   },
 
-  // ─────────────────────────────────────────────
+  // EN ARTICLE 11 — eSIM Turkey
+  {
+    slug: 'esim-turkey-guide',
+    locale: 'en',
+    title: 'eSIM Turkey — The Easiest Way to Stay Connected in the Land of Two Continents',
+    excerpt: 'Get eSIM Turkey from Sim2Me — instant activation on Turkcell, no passport registration, and full 4G coverage across Istanbul, Antalya & beyond.',
+    focusKeyword: 'esim turkey',
+    metaTitle: 'eSIM Turkey | Sim2Me',
+    metaDesc: 'Get eSIM Turkey from Sim2Me — instant activation on Turkcell, no passport registration, and full 4G coverage across Istanbul, Antalya & beyond. Order now!',
+    ogTitle: 'eSIM Turkey — Stay Connected in Istanbul, Cappadocia & Beyond',
+    ogDesc: 'Turkcell, Vodafone TR, Türk Telekom. No passport registration.',
+    articleOrder: 11,
+    status: 'PUBLISHED' as const,
+    content: `
+<div class="quick-summary rounded-xl border border-emerald-100 bg-emerald-50 p-5 mb-8">
+  <h2 class="text-lg font-bold text-emerald-800 mt-0 mb-2">Quick Summary</h2>
+  <ul class="text-sm text-emerald-900 space-y-1 mb-0">
+    <li>✅ No passport registration — simply scan and go</li>
+    <li>✅ Works on Turkcell — Turkey's largest and fastest mobile network</li>
+    <li>✅ Istanbul, Antalya, Cappadocia, Pamukkale, Bodrum coverage</li>
+    <li>✅ Activate before you land — set up at home, switch on at arrival</li>
+  </ul>
+</div>
+
+<h2>Why eSIM Turkey Is Smarter Than a Local SIM</h2>
+<p>Turkish telecommunications law requires foreign SIM cards to be registered with passport details. An <strong>eSIM Turkey</strong> plan from Sim2Me requires no passport registration, has no hidden device taxes, works on Turkcell, and activates before you land.</p>
+
+<h2>Network Coverage Across Turkey</h2>
+<table class="w-full text-sm border-collapse mb-6">
+  <thead><tr class="bg-gray-100"><th class="p-3 text-left border">Destination</th><th class="p-3 text-left border">Coverage</th></tr></thead>
+  <tbody>
+    <tr><td class="p-3 border">Istanbul</td><td class="p-3 border">Excellent (4G/5G)</td></tr>
+    <tr><td class="p-3 border">Antalya</td><td class="p-3 border">Excellent</td></tr>
+    <tr><td class="p-3 border">Cappadocia</td><td class="p-3 border">Very Good</td></tr>
+    <tr><td class="p-3 border">Pamukkale</td><td class="p-3 border">Good</td></tr>
+    <tr><td class="p-3 border">Bodrum</td><td class="p-3 border">Very Good</td></tr>
+  </tbody>
+</table>
+
+<h2>How to Install Your eSIM Turkey Plan</h2>
+<ol>
+  <li>Browse plans at Sim2Me.net and choose the Turkey eSIM that fits your trip</li>
+  <li>Pay securely — receive QR code to your inbox instantly</li>
+  <li>Settings → Mobile/Cellular → Add eSIM → Use QR Code</li>
+  <li>Scan the code — activate upon landing in Turkey</li>
+</ol>
+
+<div class="cta-block rounded-xl border border-emerald-200 bg-emerald-50 p-6 my-8 text-center">
+  <p class="text-xl font-bold text-emerald-900 mb-2">Order eSIM Turkey before your flight</p>
+  <a href="${SITE}/destinations/tr" class="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700">Browse Turkey Plans →</a>
+</div>
+`,
+  },
+
+  // EN ARTICLE 12 — eSIM UK Travel
+  {
+    slug: 'esim-uk-guide',
+    locale: 'en',
+    title: 'eSIM UK Travel — Stay Connected Across Britain From the Moment You Land',
+    excerpt: 'eSIM UK travel made easy with Sim2Me — connect to EE, Vodafone & Three networks across England, Scotland & Wales. Instant eSIM activation.',
+    focusKeyword: 'esim uk travel',
+    metaTitle: 'eSIM UK Travel | Sim2Me',
+    metaDesc: 'eSIM UK travel made easy with Sim2Me — connect to EE, Vodafone & Three networks across England, Scotland & Wales. Instant eSIM activation. Order now!',
+    ogTitle: 'eSIM UK Travel — Stay Connected Across Britain',
+    ogDesc: 'EE, Vodafone UK, Three. 5G in London, Manchester, Birmingham.',
+    articleOrder: 12,
+    status: 'PUBLISHED' as const,
+    content: `
+<div class="quick-summary rounded-xl border border-emerald-100 bg-emerald-50 p-5 mb-8">
+  <h2 class="text-lg font-bold text-emerald-800 mt-0 mb-2">Quick Summary</h2>
+  <ul class="text-sm text-emerald-900 space-y-1 mb-0">
+    <li>✅ EE, Vodafone UK, Three — Britain's best networks</li>
+    <li>✅ 5G across London, Manchester, Birmingham, Glasgow</li>
+    <li>✅ Coverage beyond London — Edinburgh, Cardiff, Lake District, Cornwall</li>
+    <li>✅ Post-Brexit: dedicated UK plan (EU plans often exclude UK)</li>
+  </ul>
+</div>
+
+<h2>Post-Brexit: Why the UK Needs Its Own eSIM</h2>
+<p>Since Brexit, the UK is no longer part of the EU's free roaming zone. European eSIM plans frequently exclude the UK. Purchase a dedicated <strong>eSIM UK travel</strong> plan from Sim2Me to guarantee coverage.</p>
+
+<h2>Installation — Up and Running in Minutes</h2>
+<ol>
+  <li>Choose your UK eSIM plan at Sim2Me.net</li>
+  <li>Checkout → QR code delivered instantly to your email</li>
+  <li>Settings → Mobile Data → Add eSIM → Scan QR</li>
+  <li>Activate on arrival at Heathrow, Gatwick, or Manchester</li>
+</ol>
+
+<div class="cta-block rounded-xl border border-emerald-200 bg-emerald-50 p-6 my-8 text-center">
+  <p class="text-xl font-bold text-emerald-900 mb-2">Order your eSIM UK travel plan today</p>
+  <a href="${SITE}/destinations/gb" class="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700">Browse UK Plans →</a>
+</div>
+`,
+  },
+
+  // EN ARTICLE 13 — eSIM Greece
+  {
+    slug: 'esim-greece-guide',
+    locale: 'en',
+    title: 'eSIM Greece — Stay Connected on the Islands, in the Cities, and Everywhere Between',
+    excerpt: 'eSIM Greece from Sim2Me — reliable 4G coverage across Athens, Santorini, Mykonos, Crete & 200+ islands. Instant activation, great value.',
+    focusKeyword: 'esim greece',
+    metaTitle: 'eSIM Greece | Sim2Me',
+    metaDesc: 'eSIM Greece from Sim2Me — reliable 4G coverage across Athens, Santorini, Mykonos, Crete & 200+ islands. Instant activation, great value. Order today!',
+    ogTitle: 'eSIM Greece — Islands, Cities, Everywhere Between',
+    ogDesc: 'Cosmote, Vodafone GR, Wind. Athens, Santorini, Mykonos, Crete.',
+    articleOrder: 13,
+    status: 'PUBLISHED' as const,
+    content: `
+<div class="quick-summary rounded-xl border border-emerald-100 bg-emerald-50 p-5 mb-8">
+  <h2 class="text-lg font-bold text-emerald-800 mt-0 mb-2">Quick Summary</h2>
+  <ul class="text-sm text-emerald-900 space-y-1 mb-0">
+    <li>✅ Cosmote, Vodafone GR, Wind Hellas — best island coverage</li>
+    <li>✅ Athens, Santorini, Mykonos, Crete, Rhodes, Corfu</li>
+    <li>✅ Connected as soon as you dock — no hunting for ferry Wi-Fi</li>
+    <li>✅ Part of a Europe trip? Check Sim2Me's Europe plan for Greece + 30+ countries</li>
+  </ul>
+</div>
+
+<h2>Island-by-Island Coverage Guide</h2>
+<p><strong>eSIM Greece</strong> from Sim2Me connects you to Greece's largest networks. Athens: Excellent. Santorini, Mykonos, Crete, Rhodes, Corfu: Very Good. Small remote islands: Basic to Moderate.</p>
+
+<h2>How to Get Your eSIM Greece Plan</h2>
+<ol>
+  <li>Visit Sim2Me.net and select your Greece eSIM plan</li>
+  <li>Choose data amount and validity (7, 14, or 30 days)</li>
+  <li>Complete purchase — receive QR code instantly</li>
+  <li>Activate when you land at Athens International (ATH)</li>
+</ol>
+
+<div class="cta-block rounded-xl border border-emerald-200 bg-emerald-50 p-6 my-8 text-center">
+  <p class="text-xl font-bold text-emerald-900 mb-2">Order eSIM Greece and explore without limits</p>
+  <a href="${SITE}/destinations/gr" class="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700">Browse Greece Plans →</a>
+</div>
+`,
+  },
+
+  // EN ARTICLE 14 — Global eSIM Card
+  {
+    slug: 'global-esim-card',
+    locale: 'en',
+    title: 'Global eSIM Card — One Plan for Every Destination on Your Itinerary',
+    excerpt: 'Need a global eSIM card for worldwide travel? Sim2Me\'s global eSIM covers 100+ countries with instant activation, local network speeds, and zero roaming fees.',
+    focusKeyword: 'global esim card',
+    metaTitle: 'Global eSIM Card | Sim2Me',
+    metaDesc: 'Need a global eSIM card for worldwide travel? Sim2Me\'s global eSIM covers 100+ countries with instant activation, local network speeds, and zero roaming fees.',
+    ogTitle: 'Global eSIM Card — One Plan for Every Destination',
+    ogDesc: '100+ countries, local 4G LTE, one QR code. Digital nomads & frequent travelers.',
+    articleOrder: 14,
+    status: 'PUBLISHED' as const,
+    content: `
+<div class="quick-summary rounded-xl border border-emerald-100 bg-emerald-50 p-5 mb-8">
+  <h2 class="text-lg font-bold text-emerald-800 mt-0 mb-2">Quick Summary</h2>
+  <ul class="text-sm text-emerald-900 space-y-1 mb-0">
+    <li>✅ One digital SIM, valid across 100+ countries</li>
+    <li>✅ Switches automatically to the best local network in each country</li>
+    <li>✅ Europe, Asia, Americas, Middle East — multiple regions in one plan</li>
+    <li>✅ Activates instantly via QR code — no physical card handling</li>
+  </ul>
+</div>
+
+<h2>Who Needs a Global eSIM Card?</h2>
+<p>Long-term backpackers, digital nomads, business travelers with multi-country meetings, honeymoon travelers, and families — one <strong>global eSIM card</strong> from Sim2Me covers destinations across Europe (40+), Asia, Middle East (UAE, Turkey, Israel, Saudi), Americas (USA, Canada, Mexico), and more.</p>
+
+<h2>How to Activate Your Global eSIM Card</h2>
+<ol>
+  <li>Purchase at Sim2Me.net</li>
+  <li>Receive QR code by email</li>
+  <li>Scan QR in your phone's eSIM settings</li>
+  <li>The eSIM activates automatically per country</li>
+</ol>
+
+<div class="cta-block rounded-xl border border-emerald-200 bg-emerald-50 p-6 my-8 text-center">
+  <p class="text-xl font-bold text-emerald-900 mb-2">Your passport deserves a global eSIM card</p>
+  <a href="${SITE}/destinations" class="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700">Browse All Destinations →</a>
+</div>
+`,
+  },
+
+  // EN ARTICLE 15 — eSIM Germany
+  {
+    slug: 'esim-germany-guide',
+    locale: 'en',
+    title: 'eSIM Germany — High-Speed Connectivity in the Heart of Europe',
+    excerpt: 'eSIM Germany from Sim2Me — fast 4G/5G on Deutsche Telekom, Vodafone & O2 networks. Cover Berlin, Munich, Frankfurt & beyond. Instant activation.',
+    focusKeyword: 'esim germany',
+    metaTitle: 'eSIM Germany | Sim2Me',
+    metaDesc: 'eSIM Germany from Sim2Me — fast 4G/5G on Deutsche Telekom, Vodafone & O2 networks. Cover Berlin, Munich, Frankfurt & beyond. Instant activation. Order now!',
+    ogTitle: 'eSIM Germany — High-Speed Connectivity in the Heart of Europe',
+    ogDesc: 'Deutsche Telekom, Vodafone DE, O2. Berlin, Munich, Frankfurt, Hamburg.',
+    articleOrder: 15,
+    status: 'PUBLISHED' as const,
+    content: `
+<div class="quick-summary rounded-xl border border-emerald-100 bg-emerald-50 p-5 mb-8">
+  <h2 class="text-lg font-bold text-emerald-800 mt-0 mb-2">Quick Summary</h2>
+  <ul class="text-sm text-emerald-900 space-y-1 mb-0">
+    <li>✅ Deutsche Telekom (T-Mobile DE), Vodafone DE, O2 Germany</li>
+    <li>✅ Berlin, Munich, Frankfurt — Excellent (5G). Hamburg, Cologne — Excellent</li>
+    <li>✅ DB Navigator app, ICE trains — seamless data for rail travel</li>
+    <li>✅ Germany-only or Europe plan — choose what fits your itinerary</li>
+  </ul>
+</div>
+
+<h2>eSIM Germany for Tourists and Business Travelers</h2>
+<p>Germany hosts major trade events (IAA, IFA, Bauma). <strong>eSIM Germany</strong> from Sim2Me is essential for email, Teams/Zoom during transit, and the DB Navigator app for live train updates. Whether sightseeing in Berlin, business in Frankfurt, or Oktoberfest in Munich — order before your trip and arrive fully connected.</p>
+
+<h2>Installation Guide</h2>
+<ol>
+  <li>Browse eSIM Germany plans at Sim2Me.net</li>
+  <li>Select data amount and validity → receive QR code instantly</li>
+  <li>Settings → Cellular → Add eSIM → Scan QR code</li>
+  <li>Activate on arrival at Frankfurt (FRA), Munich (MUC), or Berlin (BER)</li>
+</ol>
+
+<div class="cta-block rounded-xl border border-emerald-200 bg-emerald-50 p-6 my-8 text-center">
+  <p class="text-xl font-bold text-emerald-900 mb-2">Order eSIM Germany before you fly</p>
+  <a href="${SITE}/destinations/de" class="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700">Browse Germany Plans →</a>
+</div>
+`,
+  },
+
   // HE ARTICLE 1
-  // ─────────────────────────────────────────────
   {
     slug: 'esim-letayel-madrich-shalem',
     locale: 'he',
@@ -1718,9 +1940,322 @@ const articles = [
 `,
   },
 
-  // ─────────────────────────────────────────────
+  // AR ARTICLE 6 — eSIM امريكا
+  {
+    slug: 'esim-amrika',
+    locale: 'ar',
+    title: 'eSIM امريكا — ابقَ متصلاً في أكبر دولة في العالم',
+    excerpt: 'eSIM امريكا من Sim2Me — اتصال فائق السرعة على شبكات T-Mobile وAT&T في جميع أنحاء الولايات المتحدة. تفعيل فوري وأسعار مناسبة.',
+    focusKeyword: 'esim امريكا',
+    metaTitle: 'eSIM امريكا | Sim2Me',
+    metaDesc: 'eSIM امريكا من Sim2Me — اتصال فائق السرعة على شبكات T-Mobile وAT&T في جميع أنحاء الولايات المتحدة. تفعيل فوري وأسعار مناسبة. اطلب الآن!',
+    ogTitle: 'eSIM امريكا — ابقَ متصلاً في أكبر دولة في العالم',
+    ogDesc: 'T-Mobile وAT&T. توفير 70-80% عن التجوال.',
+    articleOrder: 6,
+    status: 'PUBLISHED' as const,
+    content: `
+<div class="quick-summary rounded-xl border border-emerald-100 bg-emerald-50 p-5 mb-8" dir="rtl">
+  <h2 class="text-lg font-bold text-emerald-800 mt-0 mb-2">ملخص سريع</h2>
+  <ul class="text-sm text-emerald-900 space-y-1 mb-0">
+    <li>✅ توفير يصل إلى 70-80% مقارنةً بالتجوال</li>
+    <li>✅ اتصال على T-Mobile وAT&T</li>
+    <li>✅ تفعيل رقمي كامل — لا قوائم انتظار في المطار</li>
+    <li>✅ خطط 5GB أو 10GB أو 20GB+</li>
+  </ul>
+</div>
+
+<h2>التغطية من ساحل إلى ساحل</h2>
+<p><strong>eSIM امريكا</strong> من Sim2Me يغطي نيويورك، لوس أنجلوس، ميامي، شيكاغو، لاس فيغاس — والحدائق الوطنية والطرق السريعة الرئيسية.</p>
+
+<h2>كيفية التثبيت</h2>
+<ol>
+  <li>اختر خطة eSIM امريكا على Sim2Me.net</li>
+  <li>ادفع بأمان — استلم رمز QR فوراً</li>
+  <li>الإعدادات ← البيانات الخلوية ← إضافة خطة ← مسح الرمز</li>
+  <li>فعّل عند الهبوط في أمريكا</li>
+</ol>
+
+<div class="cta-block rounded-xl border border-emerald-200 bg-emerald-50 p-6 my-8 text-center" dir="rtl">
+  <p class="text-xl font-bold text-emerald-900 mb-2">اطلب eSIM امريكا قبل رحلتك</p>
+  <a href="${SITE}/ar/destinations/us" class="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700">خطط الولايات المتحدة ←</a>
+</div>
+`,
+  },
+
+  // AR ARTICLE 7 — eSIM اوروبا
+  {
+    slug: 'esim-orouba',
+    locale: 'ar',
+    title: 'eSIM اوروبا — خطة واحدة لكل رحلتك الأوروبية',
+    excerpt: 'eSIM اوروبا من Sim2Me — خطة واحدة تغطي 40+ دولة أوروبية. تفعيل فوري، شبكات محلية سريعة، وسعر يستحق كل سنت.',
+    focusKeyword: 'esim اوروبا',
+    metaTitle: 'eSIM اوروبا | Sim2Me',
+    metaDesc: 'eSIM اوروبا من Sim2Me — خطة واحدة تغطي 40+ دولة أوروبية. تفعيل فوري، شبكات محلية سريعة، وسعر يستحق كل سنت. اطلب الآن!',
+    ogTitle: 'eSIM اوروبا — خطة واحدة لكل رحلتك الأوروبية',
+    ogDesc: '40+ دولة، ألمانيا، فرنسا، إسبانيا، إيطاليا، اليونان والمزيد.',
+    articleOrder: 7,
+    status: 'PUBLISHED' as const,
+    content: `
+<div class="quick-summary rounded-xl border border-emerald-100 bg-emerald-50 p-5 mb-8" dir="rtl">
+  <h2 class="text-lg font-bold text-emerald-800 mt-0 mb-2">ملخص سريع</h2>
+  <ul class="text-sm text-emerald-900 space-y-1 mb-0">
+    <li>✅ تغطية 40+ دولة — جميع دول الاتحاد الأوروبي الرئيسية</li>
+    <li>✅ شبكات محلية سريعة في كل دولة</li>
+    <li>✅ شراء واحد، رمز QR واحد، خطة واحدة — لكامل الرحلة</li>
+    <li>✅ تحقق من صفحة المنتج — المملكة المتحدة قد لا تُدرج تلقائياً بعد Brexit</li>
+  </ul>
+</div>
+
+<h2>دليل التثبيت</h2>
+<ol>
+  <li>اختر خطة eSIM اوروبا على Sim2Me.net</li>
+  <li>أكمل الشراء — استلم رمز QR فوراً</li>
+  <li>الإعدادات ← الخلوي ← إضافة eSIM ← مسح الرمز</li>
+  <li>فعّله عند وصولك لأول وجهة أوروبية</li>
+</ol>
+
+<div class="cta-block rounded-xl border border-emerald-200 bg-emerald-50 p-6 my-8 text-center" dir="rtl">
+  <p class="text-xl font-bold text-emerald-900 mb-2">اطلب eSIM اوروبا واستمتع بالقارة العجوز بلا قيود</p>
+  <a href="${SITE}/ar/destinations/eu-30" class="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700">خطط أوروبا ←</a>
+</div>
+`,
+  },
+
+  // AR ARTICLE 8 — eSIM تركيا
+  {
+    slug: 'esim-turkiya',
+    locale: 'ar',
+    title: 'eSIM تركيا — اكتشف أرض القارتين وأنت متصل دائماً',
+    excerpt: 'eSIM تركيا من Sim2Me — اتصل على شبكة Turkcell في إسطنبول وأنطاليا وكبادوكيا. بدون تسجيل جواز سفر، تفعيل فوري وسعر مناسب.',
+    focusKeyword: 'esim تركيا',
+    metaTitle: 'eSIM تركيا | Sim2Me',
+    metaDesc: 'eSIM تركيا من Sim2Me — اتصل على شبكة Turkcell في إسطنبول وأنطاليا وكبادوكيا. بدون تسجيل جواز سفر، تفعيل فوري وسعر مناسب. اطلب الآن!',
+    ogTitle: 'eSIM تركيا — اكتشف أرض القارتين وأنت متصل دائماً',
+    ogDesc: 'Turkcell — الأكبر والأسرع. لا تسجيل جواز سفر.',
+    articleOrder: 8,
+    status: 'PUBLISHED' as const,
+    content: `
+<div class="quick-summary rounded-xl border border-emerald-100 bg-emerald-50 p-5 mb-8" dir="rtl">
+  <h2 class="text-lg font-bold text-emerald-800 mt-0 mb-2">ملخص سريع</h2>
+  <ul class="text-sm text-emerald-900 space-y-1 mb-0">
+    <li>✅ لا تسجيل لجواز السفر — فعّله وابدأ على الفور</li>
+    <li>✅ شبكة Turkcell — الأكبر والأسرع في تركيا</li>
+    <li>✅ إسطنبول، أنطاليا، كبادوكيا، بودروم، باموكالي</li>
+    <li>✅ تفعيل قبل السفر — ثبّته في المنزل وفعّله عند الهبوط</li>
+  </ul>
+</div>
+
+<h2>دليل التثبيت</h2>
+<ol>
+  <li>اختر خطة eSIM تركيا على Sim2Me.net</li>
+  <li>ادفع بأمان — استلم رمز QR فوراً</li>
+  <li>الإعدادات ← الشبكة الخلوية ← إضافة eSIM ← مسح الرمز</li>
+  <li>فعّل عند الهبوط في إسطنبول أو أنطاليا</li>
+</ol>
+
+<div class="cta-block rounded-xl border border-emerald-200 bg-emerald-50 p-6 my-8 text-center" dir="rtl">
+  <p class="text-xl font-bold text-emerald-900 mb-2">اطلب eSIM تركيا واستمتع برحلتك بلا قلق</p>
+  <a href="${SITE}/ar/destinations/tr" class="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700">خطط تركيا ←</a>
+</div>
+`,
+  },
+
+  // AR ARTICLE 9 — eSIM اليونان
+  {
+    slug: 'esim-yunan',
+    locale: 'ar',
+    title: 'eSIM اليونان — استكشف أرض الآلهة وأنت متصل بكل لحظة',
+    excerpt: 'eSIM اليونان من Sim2Me — اتصال 4G موثوق في أثينا، سانتوريني، ميكونوس، كريت وأكثر من 200 جزيرة يونانية. تفعيل فوري.',
+    focusKeyword: 'esim اليونان',
+    metaTitle: 'eSIM اليونان | Sim2Me',
+    metaDesc: 'eSIM اليونان من Sim2Me — اتصال 4G موثوق في أثينا، سانتوريني، ميكونوس، كريت وأكثر من 200 جزيرة يونانية. تفعيل فوري. اطلب الآن!',
+    ogTitle: 'eSIM اليونان — استكشف أرض الآلهة وأنت متصل بكل لحظة',
+    ogDesc: 'Cosmote، Vodafone GR، Wind. أثينا، سانتوريني، ميكونوس، كريت.',
+    articleOrder: 9,
+    status: 'PUBLISHED' as const,
+    content: `
+<div class="quick-summary rounded-xl border border-emerald-100 bg-emerald-50 p-5 mb-8" dir="rtl">
+  <h2 class="text-lg font-bold text-emerald-800 mt-0 mb-2">ملخص سريع</h2>
+  <ul class="text-sm text-emerald-900 space-y-1 mb-0">
+    <li>✅ Cosmote، Vodafone GR، Wind Hellas — أفضل تغطية في الجزر</li>
+    <li>✅ أثينا، سانتوريني، ميكونوس، كريت، رودس، كورفو</li>
+    <li>✅ متصل فور الرسو — لا بحث عن Wi-Fi العبّارة</li>
+    <li>✅ جزء من رحلة أوروبية؟ تحقق من خطة eSIM اوروبا</li>
+  </ul>
+</div>
+
+<h2>دليل التثبيت</h2>
+<ol>
+  <li>اختر خطة eSIM اليونان على Sim2Me.net</li>
+  <li>حدد كمية البيانات والمدة (7 أو 14 أو 30 يوماً)</li>
+  <li>أكمل الشراء — استلم رمز QR فوراً</li>
+  <li>فعّله عند الهبوط في مطار أثينا الدولي (ATH)</li>
+</ol>
+
+<div class="cta-block rounded-xl border border-emerald-200 bg-emerald-50 p-6 my-8 text-center" dir="rtl">
+  <p class="text-xl font-bold text-emerald-900 mb-2">اطلب eSIM اليونان وعش تجربة يونانية كاملة</p>
+  <a href="${SITE}/ar/destinations/gr" class="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700">خطط اليونان ←</a>
+</div>
+`,
+  },
+
+  // AR ARTICLE 10 — eSIM لندن
+  {
+    slug: 'esim-london-ar',
+    locale: 'ar',
+    title: 'eSIM لندن — اتصال متواصل في أكثر مدن العالم إثارةً',
+    excerpt: 'eSIM لندن من Sim2Me — اتصل على شبكات EE وVodafone وThree في لندن وكامل بريطانيا. تفعيل فوري، تغطية 4G/5G، وسعر مناسب.',
+    focusKeyword: 'esim لندن',
+    metaTitle: 'eSIM لندن | Sim2Me',
+    metaDesc: 'eSIM لندن من Sim2Me — اتصل على شبكات EE وVodafone وThree في لندن وكامل بريطانيا. تفعيل فوري، تغطية 4G/5G، وسعر مناسب. اطلب الآن!',
+    ogTitle: 'eSIM لندن — اتصال متواصل في أكثر مدن العالم إثارةً',
+    ogDesc: 'EE، Vodafone UK، Three. 5G في لندن ومانشستر وإدنبرة.',
+    articleOrder: 10,
+    status: 'PUBLISHED' as const,
+    content: `
+<div class="quick-summary rounded-xl border border-emerald-100 bg-emerald-50 p-5 mb-8" dir="rtl">
+  <h2 class="text-lg font-bold text-emerald-800 mt-0 mb-2">ملخص سريع</h2>
+  <ul class="text-sm text-emerald-900 space-y-1 mb-0">
+    <li>✅ EE، Vodafone UK، Three — من أفضل الشبكات في بريطانيا</li>
+    <li>✅ تغطية 5G في معظم أحياء لندن ومدن بريطانية كبرى</li>
+    <li>✅ لندن ما بعد Brexit — خطة بريطانية مستقلة مضمونة</li>
+    <li>✅ مترو لندن — توسع 4G داخل المحطات والأنفاق</li>
+  </ul>
+</div>
+
+<h2>دليل التثبيت</h2>
+<ol>
+  <li>اختر خطة eSIM لندن على Sim2Me.net</li>
+  <li>أكمل الشراء — استلم رمز QR فوراً</li>
+  <li>الإعدادات ← البيانات الخلوية ← إضافة eSIM ← مسح الرمز</li>
+  <li>فعّل عند الهبوط في هيثرو (LHR) أو غاتويك (LGW)</li>
+</ol>
+
+<div class="cta-block rounded-xl border border-emerald-200 bg-emerald-50 p-6 my-8 text-center" dir="rtl">
+  <p class="text-xl font-bold text-emerald-900 mb-2">اطلب eSIM لندن قبل رحلتك إلى بريطانيا</p>
+  <a href="${SITE}/ar/destinations/gb" class="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700">خطط بريطانيا ←</a>
+</div>
+`,
+  },
+
+  // AR ARTICLE 11 — eSIM تايلاند
+  {
+    slug: 'esim-thailand-ar',
+    locale: 'ar',
+    title: 'eSIM تايلاند — رحلتك إلى مملكة الابتسامة، متصلاً من البداية للنهاية',
+    excerpt: 'eSIM تايلاند من Sim2Me — ابق متصلاً على شبكتَي AIS وTrue Move في بانكوك، بوكيت، وكوه ساموي. تفعيل فوري وسعر يناسب كل ميزانية.',
+    focusKeyword: 'esim تايلاند',
+    metaTitle: 'eSIM تايلاند | Sim2Me',
+    metaDesc: 'eSIM تايلاند من Sim2Me — ابق متصلاً على شبكتَي AIS وTrue Move في بانكوك، بوكيت، وكوه ساموي. تفعيل فوري وسعر يناسب كل ميزانية. اطلب الآن!',
+    ogTitle: 'eSIM تايلاند — مملكة الابتسامة متصلاً من البداية للنهاية',
+    ogDesc: 'AIS، True Move H (DTAC). بانكوك، بوكيت، كوه ساموي.',
+    articleOrder: 11,
+    status: 'PUBLISHED' as const,
+    content: `
+<div class="quick-summary rounded-xl border border-emerald-100 bg-emerald-50 p-5 mb-8" dir="rtl">
+  <h2 class="text-lg font-bold text-emerald-800 mt-0 mb-2">ملخص سريع</h2>
+  <ul class="text-sm text-emerald-900 space-y-1 mb-0">
+    <li>✅ AIS — أكبر شبكة في تايلاند. True Move H (DTAC) — تغطية قوية في الجزر</li>
+    <li>✅ بانكوك، بوكيت، شيانغ ماي، كوه ساموي، كوه فانغان، كرابي</li>
+    <li>✅ لا طوابير في المطار — فعّل فور هبوط الطائرة</li>
+    <li>✅ تطبيق Grab وLINE — يعملان بشكل مثالي مع بيانات eSIM</li>
+  </ul>
+</div>
+
+<h2>دليل التثبيت</h2>
+<ol>
+  <li>اختر خطة eSIM تايلاند على Sim2Me.net</li>
+  <li>ادفع بأمان — استلم رمز QR فوراً</li>
+  <li>الإعدادات ← الشبكة الخلوية ← إضافة eSIM ← مسح الرمز</li>
+  <li>فعّل عند الهبوط في بانكوك أو بوكيت</li>
+</ol>
+
+<div class="cta-block rounded-xl border border-emerald-200 bg-emerald-50 p-6 my-8 text-center" dir="rtl">
+  <p class="text-xl font-bold text-emerald-900 mb-2">اطلب eSIM تايلاند واستمتع بكل ثانية في المملكة</p>
+  <a href="${SITE}/ar/destinations/th" class="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700">خطط تايلاند ←</a>
+</div>
+`,
+  },
+
+  // AR ARTICLE 12 — eSIM المانيا
+  {
+    slug: 'esim-germany-ar',
+    locale: 'ar',
+    title: 'eSIM المانيا — اتصال من الطراز الأول في قلب أوروبا',
+    excerpt: 'eSIM المانيا من Sim2Me — اتصال 4G/5G على شبكات Deutsche Telekom وVodafone وO2 في برلين وميونيخ وفرانكفورت. تفعيل فوري.',
+    focusKeyword: 'esim المانيا',
+    metaTitle: 'eSIM المانيا | Sim2Me',
+    metaDesc: 'eSIM المانيا من Sim2Me — اتصال 4G/5G على شبكات Deutsche Telekom وVodafone وO2 في برلين وميونيخ وفرانكفورت. تفعيل فوري. اطلب الآن!',
+    ogTitle: 'eSIM المانيا — اتصال من الطراز الأول في قلب أوروبا',
+    ogDesc: 'Deutsche Telekom، Vodafone DE، O2. برلين، ميونيخ، فرانكفورت، هامبورغ.',
+    articleOrder: 12,
+    status: 'PUBLISHED' as const,
+    content: `
+<div class="quick-summary rounded-xl border border-emerald-100 bg-emerald-50 p-5 mb-8" dir="rtl">
+  <h2 class="text-lg font-bold text-emerald-800 mt-0 mb-2">ملخص سريع</h2>
+  <ul class="text-sm text-emerald-900 space-y-1 mb-0">
+    <li>✅ Deutsche Telekom (T-Mobile DE)، Vodafone DE، O2 Germany</li>
+    <li>✅ برلين، ميونيخ، فرانكفورت — ممتاز (5G). هامبورغ، كولونيا — ممتاز</li>
+    <li>✅ تطبيق DB Navigator وقطارات ICE — بيانات سلسة للسكك الحديدية</li>
+    <li>✅ خطة ألمانيا فقط أو خطة أوروبا — اختر ما يناسب رحلتك</li>
+  </ul>
+</div>
+
+<h2>دليل التثبيت</h2>
+<ol>
+  <li>اختر خطة eSIM المانيا على Sim2Me.net</li>
+  <li>حدد حجم البيانات والمدة — استلم رمز QR فوراً</li>
+  <li>الإعدادات ← الخلوي ← إضافة eSIM ← مسح الرمز</li>
+  <li>فعّل عند الهبوط في فرانكفورت (FRA) أو ميونيخ (MUC) أو برلين (BER)</li>
+</ol>
+
+<div class="cta-block rounded-xl border border-emerald-200 bg-emerald-50 p-6 my-8 text-center" dir="rtl">
+  <p class="text-xl font-bold text-emerald-900 mb-2">اطلب eSIM المانيا قبل رحلتك</p>
+  <a href="${SITE}/ar/destinations/de" class="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700">خطط ألمانيا ←</a>
+</div>
+`,
+  },
+
+  // AR ARTICLE 13 — eSIM قبرص
+  {
+    slug: 'esim-cyprus-ar',
+    locale: 'ar',
+    title: 'eSIM قبرص — اكتشف جزيرة الحب وأنت متصل بالعالم',
+    excerpt: 'eSIM قبرص من Sim2Me — اتصال 4G موثوق في نيقوسيا، ليماسول، لارنكا وأيا نابا. تفعيل فوري، بدون طوابير وبأسعار تنافسية.',
+    focusKeyword: 'esim قبرص',
+    metaTitle: 'eSIM قبرص | Sim2Me',
+    metaDesc: 'eSIM قبرص من Sim2Me — اتصال 4G موثوق في نيقوسيا، ليماسول، لارنكا وأيا نابا. تفعيل فوري، بدون طوابير وبأسعار تنافسية. اطلب الآن!',
+    ogTitle: 'eSIM قبرص — اكتشف جزيرة الحب وأنت متصل بالعالم',
+    ogDesc: 'CYTA، MTN Cyprus، Epic. نيقوسيا، ليماسول، لارنكا، بافوس، أيا نابا.',
+    articleOrder: 13,
+    status: 'PUBLISHED' as const,
+    content: `
+<div class="quick-summary rounded-xl border border-emerald-100 bg-emerald-50 p-5 mb-8" dir="rtl">
+  <h2 class="text-lg font-bold text-emerald-800 mt-0 mb-2">ملخص سريع</h2>
+  <ul class="text-sm text-emerald-900 space-y-1 mb-0">
+    <li>✅ CYTA، MTN Cyprus، Epic — الشبكات الرائدة في قبرص</li>
+    <li>✅ نيقوسيا، ليماسول، لارنكا، بافوس، أيا نابا، بروتاراس</li>
+    <li>✅ الإعداد المسبق للرحلة — لا انتظار عند الوصول</li>
+    <li>✅ قبرص وجهة مثالية للعائلات — اتصال موثوق للجميع</li>
+  </ul>
+</div>
+
+<h2>دليل التثبيت خطوة بخطوة</h2>
+<ol>
+  <li>اختر خطة eSIM قبرص على Sim2Me.net</li>
+  <li>أكمل الشراء الآمن — استلم رمز QR خلال دقائق</li>
+  <li>الإعدادات ← الشبكة الخلوية ← إضافة eSIM ← مسح الرمز</li>
+  <li>فعّل عند الهبوط في مطار لارنكا (LCA) أو بافوس (PFO)</li>
+</ol>
+
+<div class="cta-block rounded-xl border border-emerald-200 bg-emerald-50 p-6 my-8 text-center" dir="rtl">
+  <p class="text-xl font-bold text-emerald-900 mb-2">اطلب eSIM قبرص وعش تجربة قبرصية لا تُنسى</p>
+  <a href="${SITE}/ar/destinations/cy" class="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700">خطط قبرص ←</a>
+</div>
+`,
+  },
+
   // HE ARTICLE 6 — איסים לקפריסין
-  // ─────────────────────────────────────────────
   {
     slug: 'esim-cyprus',
     locale: 'he',
