@@ -3,6 +3,7 @@ import { DM_Sans } from 'next/font/google';
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages } from 'next-intl/server';
 import { brandConfig } from '@/config/brand';
+import { getSiteBranding } from '@/lib/site-branding';
 import { Providers } from '@/components/providers/Providers';
 import { CookieConsentProvider } from '@/components/CookieConsentProvider';
 import { CookieBanner } from '@/components/CookieBanner';
@@ -16,75 +17,78 @@ const dmSans = DM_Sans({
 
 const siteUrl = 'https://www.sim2me.net';
 
-export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
-  title: {
-    default: `${brandConfig.name} – Buy eSIM Online for 200+ Countries | Instant Delivery`,
-    template: `%s | ${brandConfig.name}`,
-  },
-  description:
-    'Buy prepaid eSIM online for 200+ countries. Instant delivery, no physical SIM needed. Compare plans, scan QR code and get connected in minutes. Best prices for travel data.',
-  keywords: [
-    'eSIM', 'buy eSIM', 'travel eSIM', 'prepaid eSIM', 'eSIM online',
-    'international data plan', 'roaming alternative', 'travel data',
-    'eSIM for iPhone', 'eSIM for Android', 'digital SIM card',
-    'no roaming fees', 'global eSIM', 'cheap eSIM', 'eSIM QR code',
-  ],
-  openGraph: {
-    type: 'website',
-    siteName: brandConfig.name,
-    url: siteUrl,
-    title: `${brandConfig.name} – Buy eSIM Online for 200+ Countries`,
-    description: 'Instant eSIM delivery for travelers. No physical SIM, no roaming fees. Compare plans and get connected in minutes.',
-    locale: 'en_US',
-    alternateLocale: ['he_IL', 'ar_SA'],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    site: '@sim2me',
-    title: `${brandConfig.name} – Buy eSIM Online`,
-    description: 'Instant eSIM for 200+ countries. Best prices, instant delivery.',
-  },
-  alternates: {
-    canonical: siteUrl,
-    languages: {
-      'en': siteUrl,
-      'he': `${siteUrl}/he`,
-      'ar': `${siteUrl}/ar`,
+export async function generateMetadata(): Promise<Metadata> {
+  const { faviconUrl } = await getSiteBranding();
+  return {
+    metadataBase: new URL(siteUrl),
+    title: {
+      default: `${brandConfig.name} – Buy eSIM Online for 200+ Countries | Instant Delivery`,
+      template: `%s | ${brandConfig.name}`,
     },
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
+    description:
+      'Buy prepaid eSIM online for 200+ countries. Instant delivery, no physical SIM needed. Compare plans, scan QR code and get connected in minutes. Best prices for travel data.',
+    keywords: [
+      'eSIM', 'buy eSIM', 'travel eSIM', 'prepaid eSIM', 'eSIM online',
+      'international data plan', 'roaming alternative', 'travel data',
+      'eSIM for iPhone', 'eSIM for Android', 'digital SIM card',
+      'no roaming fees', 'global eSIM', 'cheap eSIM', 'eSIM QR code',
+    ],
+    openGraph: {
+      type: 'website',
+      siteName: brandConfig.name,
+      url: siteUrl,
+      title: `${brandConfig.name} – Buy eSIM Online for 200+ Countries`,
+      description: 'Instant eSIM delivery for travelers. No physical SIM, no roaming fees. Compare plans and get connected in minutes.',
+      locale: 'en_US',
+      alternateLocale: ['he_IL', 'ar_SA'],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      site: '@sim2me',
+      title: `${brandConfig.name} – Buy eSIM Online`,
+      description: 'Instant eSIM for 200+ countries. Best prices, instant delivery.',
+    },
+    alternates: {
+      canonical: siteUrl,
+      languages: {
+        'en': siteUrl,
+        'he': `${siteUrl}/he`,
+        'ar': `${siteUrl}/ar`,
+      },
+    },
+    robots: {
       index: true,
       follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-video-preview': -1,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
     },
-  },
-  icons: {
-    icon: '/favicon.svg',
-    apple: '/icons/apple-touch-icon.png',
-  },
-  manifest: '/manifest.json',
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: 'black-translucent',
-    title: 'Sim2Me',
-  },
-  formatDetection: {
-    telephone: false,
-  },
-  other: {
-    'mobile-web-app-capable': 'yes',
-  },
-  verification: {
-    // Add Google Search Console verification when available
-    // google: 'your-verification-code',
-  },
-};
+    icons: {
+      icon: faviconUrl || '/favicon.svg',
+      apple: '/icons/apple-touch-icon.png',
+    },
+    manifest: '/manifest.json',
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: 'black-translucent',
+      title: 'Sim2Me',
+    },
+    formatDetection: {
+      telephone: false,
+    },
+    other: {
+      'mobile-web-app-capable': 'yes',
+    },
+    verification: {
+      // Add Google Search Console verification when available
+      // google: 'your-verification-code',
+    },
+  };
+}
 
 export const viewport: Viewport = {
   themeColor: '#0d9f6e',
