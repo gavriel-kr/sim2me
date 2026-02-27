@@ -227,13 +227,23 @@ html.a11y-highlight-focus *:focus-visible {
   padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
-/* RTL support */
+/* RTL support — default right-align for all RTL containers */
 [dir="rtl"] {
   text-align: right;
 }
-[dir="rtl"] .text-left {
+
+/* RTL prose body: ensure all text elements align right */
+[dir="rtl"] h1,
+[dir="rtl"] h2,
+[dir="rtl"] h3,
+[dir="rtl"] h4,
+[dir="rtl"] h5,
+[dir="rtl"] h6,
+[dir="rtl"] p,
+[dir="rtl"] li,
+[dir="rtl"] td,
+[dir="rtl"] th,
+[dir="rtl"] blockquote {
   text-align: right;
-}
-[dir="rtl"] .text-right {
-  text-align: left;
+  direction: rtl;
 }

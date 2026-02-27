@@ -71,10 +71,10 @@ export function ArticleDetail({ article, locale }: Props) {
           <span className="text-gray-700 truncate max-w-xs">{article.title}</span>
         </nav>
 
-        <header className={`mb-8 ${isRTL ? 'text-right' : ''}`}>
+        <header className="mb-8">
           <h1
             ref={h1Ref}
-            className={`text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl leading-tight${isRTL ? ' text-right' : ''}`}
+            className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl leading-tight"
             dir={isRTL ? 'rtl' : 'ltr'}
           >
             {article.title}
@@ -90,12 +90,12 @@ export function ArticleDetail({ article, locale }: Props) {
         {/* Article body */}
         <div
           dir={isRTL ? 'rtl' : 'ltr'}
-          className={`prose prose-gray max-w-none prose-headings:font-bold prose-a:text-emerald-700 prose-a:no-underline hover:prose-a:underline prose-img:rounded-xl prose-table:text-sm ${isRTL ? '[&_h1]:text-right [&_h2]:text-right [&_h3]:text-right [&_h4]:text-right [&_p]:text-right [&_li]:text-right [&_blockquote]:text-right [&_td]:text-right [&_th]:text-right' : ''}`}
+          className="prose prose-gray max-w-none prose-headings:font-bold prose-a:text-emerald-700 prose-a:no-underline hover:prose-a:underline prose-img:rounded-xl prose-table:text-sm"
           dangerouslySetInnerHTML={{ __html: article.content }}
         />
 
         {/* Back nav */}
-        <div className={`mt-12 border-t border-gray-100 pt-6 ${isRTL ? 'text-right' : ''}`}>
+        <div className="mt-12 border-t border-gray-100 pt-6">
           <Link href={`${prefix}/articles`} className="inline-flex items-center gap-2 text-sm font-medium text-emerald-700 hover:text-emerald-900">
             {isRTL ? `${breadcrumbLabel} →` : `← ${breadcrumbLabel}`}
           </Link>

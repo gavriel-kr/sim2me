@@ -44,7 +44,7 @@ export function ArticlesIndexClient({ articles, locale, heading }: Props) {
 
   return (
     <div className="container mx-auto px-4 py-12 max-w-5xl" dir={isRTL ? 'rtl' : 'ltr'}>
-      <header className={`mb-10 ${isRTL ? 'text-right' : ''}`}>
+      <header className="mb-10">
         <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">{heading}</h1>
         <div className={`mt-2 h-1 w-16 rounded-full bg-emerald-500 ${isRTL ? 'mr-0 ml-auto' : ''}`} />
       </header>
@@ -70,7 +70,7 @@ export function ArticlesIndexClient({ articles, locale, heading }: Props) {
                   <CardPlaceholder bgColor={bgColor} />
                 )}
 
-                <div className={`flex flex-1 flex-col p-5 ${isRTL ? 'text-right' : ''}`} dir={isRTL ? 'rtl' : 'ltr'}>
+                <div className="flex flex-1 flex-col p-5" dir={isRTL ? 'rtl' : 'ltr'}>
                   <p className="text-xs text-gray-400 mb-2">{formatDate(a.createdAt, locale)}</p>
                   <h2 className="text-base font-bold leading-snug text-gray-900 transition-colors group-hover:text-emerald-700">
                     <Link href={`${prefix}/articles/${a.slug}`}>{a.title}</Link>
