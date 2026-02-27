@@ -6,7 +6,7 @@ import { Save } from 'lucide-react';
 const settingFields = [
   { key: 'site_name', label: 'Site Name', placeholder: 'Sim2Me' },
   { key: 'tagline', label: 'Tagline', placeholder: 'Stay connected worldwide' },
-  { key: 'support_email', label: 'Support Email', placeholder: 'support@sim2me.com' },
+  { key: 'support_email', label: 'Support Email', placeholder: 'support@sim2me.net' },
   { key: 'support_phone', label: 'Support Phone', placeholder: '+972...' },
   { key: 'whatsapp_number', label: 'WhatsApp Number', placeholder: '972501234567' },
   { key: 'twitter_url', label: 'Twitter URL', placeholder: 'https://twitter.com/sim2me' },

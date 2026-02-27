@@ -1,6 +1,7 @@
 import { getTranslations } from 'next-intl/server';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { ContactForm } from './ContactForm';
+import { EmailCopyButton } from './EmailCopyButton';
 import { Mail, Clock, HelpCircle, Smartphone, Wifi, RefreshCw, AlertCircle, Lightbulb } from 'lucide-react';
 import { getCmsPage } from '@/lib/cms';
 import { prisma } from '@/lib/prisma';
@@ -71,9 +72,7 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
                   <Mail className="h-5 w-5" />
                 </div>
                 <h3 className="mt-4 font-semibold text-foreground">{t('emailLabel')}</h3>
-                <a href={`mailto:${email}`} className="mt-1 block text-sm text-primary hover:underline">
-                  {email}
-                </a>
+                <EmailCopyButton email={email} />
               </div>
 
               {/* Response time */}

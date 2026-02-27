@@ -49,7 +49,7 @@ async function main() {
   const defaults: Record<string, string> = {
     site_name: 'Sim2Me',
     tagline: 'Stay connected worldwide',
-    support_email: 'support@sim2me.com',
+    support_email: 'support@sim2me.net',
     whatsapp_number: '972501234567',
     price_markup_percent: '30',
   };
