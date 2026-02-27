@@ -37,7 +37,7 @@ export function ArticleDetail({ article, locale, relatedArticles }: Props) {
   const isRTL = locale === 'he' || locale === 'ar';
 
   const breadcrumbLabel = locale === 'he' ? 'מדריכים' : locale === 'ar' ? 'أدلة' : 'Articles';
-  const relatedHeading = locale === 'he' ? 'מאמרים נוספים' : locale === 'ar' ? 'مقالات ذات صلة' : 'Related articles';
+  const relatedHeading = locale === 'he' ? 'עוד מדריכים מומלצים עבורך' : locale === 'ar' ? 'المزيد من الأدلة الموصى بها لك' : 'More recommended guides for you';
 
   return (
     <div className="bg-white min-h-screen" dir={isRTL ? 'rtl' : 'ltr'}>

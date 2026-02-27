@@ -1,4 +1,4 @@
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { setRequestLocale } from 'next-intl/server';
 import { routing } from '@/i18n/routing';
 import { getArticleBySlug, getArticleHreflangs, getRelatedArticles, type ArticleLocale } from '@/lib/articles';
@@ -55,7 +55,7 @@ export default async function ArticleDetailPage({ params }: Props) {
   setRequestLocale(locale);
 
   const article = await getArticleBySlug(slug, locale as ArticleLocale);
-  if (!article) notFound();
+  if (!article) redirect(locale === 'en' ? '/articles' : `/${locale}/articles`);
 
   const prefix = localePrefix(locale);
   const canonical = article.canonicalUrl || `${siteUrl}${prefix}/articles/${slug}`;
