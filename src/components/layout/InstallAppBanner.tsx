@@ -94,18 +94,17 @@ export function InstallAppBanner() {
 
   const handleInstall = useCallback(async () => {
     if (deferredPrompt) {
-      // Android (and others): trigger native install prompt only
+      // Android: trigger native install prompt
       await deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
       if (outcome === 'accepted') {
         setShowBanner(false);
       }
       setDeferredPrompt(null);
-    } else if (isIOS) {
-      // iOS has no beforeinstallprompt; show manual steps
+    } else {
+      // No native prompt (iOS or Android when beforeinstallprompt didn't fire): show manual steps
       setShowIOSGuide(true);
     }
-    // Android without deferredPrompt: do nothing (no overlay)
   }, [deferredPrompt, isIOS]);
 
   const handleDismiss = useCallback(() => {
