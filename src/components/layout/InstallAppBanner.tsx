@@ -101,9 +101,8 @@ export function InstallAppBanner() {
       setDeferredPrompt(null);
     } else if (isIOS) {
       setShowIOSGuide(true);
-    } else {
-      setShowIOSGuide(true);
     }
+    // Android without native prompt: no overlay (user can use Chrome menu → Add to Home screen)
   }, [deferredPrompt, isIOS]);
 
   const handleDismiss = useCallback(() => {
