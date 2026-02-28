@@ -6,12 +6,16 @@ import { useRef, useState, useCallback, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { ArticleFull, ArticleSummary } from '@/lib/articles';
 
+const LOCALE_LABELS: Record<string, string> = { en: 'English', he: 'עברית', ar: 'العربية' };
+
 interface Props {
   article: ArticleFull;
   locale: string;
   canonical: string;
   relatedArticles: ArticleSummary[];
   defaultImage?: { url: string; alt: string } | null;
+  /** Alternate language versions of this article (same slug in other locales) for hreflang-style linking */
+  alternateLanguages?: { locale: string; slug: string; href: string }[];
 }
 
 function formatDate(date: Date, locale: string) {
@@ -33,13 +37,14 @@ function RelatedCardPlaceholder({ bgColor }: { bgColor?: string }) {
   );
 }
 
-export function ArticleDetail({ article, locale, relatedArticles, defaultImage }: Props) {
+export function ArticleDetail({ article, locale, relatedArticles, defaultImage, alternateLanguages = [] }: Props) {
   const prefix = locale === 'en' ? '' : `/${locale}`;
   const isRTL = locale === 'he' || locale === 'ar';
 
   const breadcrumbLabel = locale === 'he' ? 'מדריכים' : locale === 'ar' ? 'أدلة' : 'Articles';
   const backToGuidesLabel = locale === 'he' ? 'חזרה למדריכים' : locale === 'ar' ? 'العودة إلى الأدلة' : 'Back to guides';
   const relatedHeading = locale === 'he' ? 'עוד מדריכים מומלצים עבורך' : locale === 'ar' ? 'المزيد من الأدلة الموصى بها لك' : 'More recommended guides for you';
+  const readInLabel = locale === 'he' ? 'קרא בשפה:' : locale === 'ar' ? 'اقرأ باللغة:' : 'Read in:';
 
   const carouselRef = useRef<HTMLDivElement>(null);
   const [canScrollPrev, setCanScrollPrev] = useState(false);
@@ -120,6 +125,19 @@ export function ArticleDetail({ article, locale, relatedArticles, defaultImage }
               <> · {locale === 'he' ? 'עודכן' : locale === 'ar' ? 'محدّث' : 'Updated'} {formatDate(article.updatedAt, locale)}</>
             )}
           </p>
+          {alternateLanguages.length > 0 && (
+            <p className={`mt-2 text-sm text-gray-500 flex flex-wrap items-center gap-x-2 ${isRTL ? 'flex-row-reverse justify-end' : ''}`}>
+              <span>{readInLabel}</span>
+              {alternateLanguages.map((alt, i) => (
+                <span key={alt.locale}>
+                  {i > 0 && <span className="text-gray-300 mx-1">|</span>}
+                  <Link href={alt.href} className="text-emerald-700 hover:text-emerald-800 font-medium" rel="alternate" hrefLang={alt.locale}>
+                    {LOCALE_LABELS[alt.locale] ?? alt.locale}
+                  </Link>
+                </span>
+              ))}
+            </p>
+          )}
         </header>
 
         {/* Article body */}

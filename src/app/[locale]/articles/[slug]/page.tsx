@@ -65,6 +65,10 @@ export default async function ArticleDetailPage({ params }: Props) {
 
   const prefix = localePrefix(locale);
   const canonical = article.canonicalUrl || `${siteUrl}${prefix}/articles/${slug}`;
+  const hreflangs = await getArticleHreflangs(slug);
+  const alternateLanguages = hreflangs
+    .filter((alt) => alt.locale !== locale)
+    .map((alt) => ({ locale: alt.locale, slug: alt.slug, href: `${localePrefix(alt.locale)}/articles/${alt.slug}` }));
 
   let relatedArticles: Awaited<ReturnType<typeof getRelatedArticlesForCarousel>> = [];
   let defaultImage: Awaited<ReturnType<typeof getArticlesDefaultImage>> = null;
@@ -97,7 +101,7 @@ export default async function ArticleDetailPage({ params }: Props) {
           ],
         })
       }} />
-      <ArticleDetail article={article} locale={locale} canonical={canonical} relatedArticles={relatedArticles} defaultImage={defaultImage} />
+      <ArticleDetail article={article} locale={locale} canonical={canonical} relatedArticles={relatedArticles} defaultImage={defaultImage} alternateLanguages={alternateLanguages} />
     </MainLayout>
   );
 }
