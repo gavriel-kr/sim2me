@@ -81,9 +81,9 @@ export function InstallAppBanner() {
   useEffect(() => {
     fetch('/api/site-branding')
       .then((res) => res.ok ? res.json() : null)
-      .then((data: { logoUrl?: string | null; brandingVersion?: number | null } | null) => {
-        if (!data?.logoUrl?.trim()) return null;
-        const url = data.logoUrl.trim();
+      .then((data: { faviconUrl?: string | null; brandingVersion?: number | null } | null) => {
+        if (!data?.faviconUrl?.trim()) return null;
+        const url = data.faviconUrl.trim();
         const version = data.brandingVersion ?? null;
         if (version != null && url.startsWith('/')) return `${url}?v=${version}`;
         return url;
@@ -175,9 +175,9 @@ export function InstallAppBanner() {
           ) : (
             /* Compact banner */
             <div className="flex items-center gap-3 p-3.5">
-              {/* App icon: use Full Logo from admin when set */}
+              {/* App icon: symbol only (favicon from admin when set) */}
               {bannerIconUrl ? (
-                <img src={bannerIconUrl} alt={brandConfig.logoAlt} className="h-12 w-12 shrink-0 rounded-xl object-contain shadow-sm" />
+                <img src={bannerIconUrl} alt="" className="h-12 w-12 shrink-0 rounded-xl object-contain shadow-sm" role="presentation" />
               ) : (
                 defaultBannerIcon
               )}

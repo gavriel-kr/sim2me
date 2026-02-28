@@ -38,21 +38,13 @@ function withCacheBust(url: string, version: number | null): string {
   return `${url}?v=${version}`;
 }
 
-/** Serves PWA manifest; uses admin favicon as primary app icon when set (so installed PWA shows updated symbol). */
+/** Serves PWA manifest. Primary icons are static files so install/Add to Home Screen works reliably. */
 export async function GET() {
   const { faviconUrl, brandingVersion } = await getSiteBranding();
-  const faviconSrc = faviconUrl && faviconUrl.startsWith('/') ? withCacheBust(faviconUrl, brandingVersion) : null;
-  const icons = faviconSrc
-    ? [
-        { src: faviconSrc, sizes: '192x192', type: 'image/png', purpose: 'any' as const },
-        { src: faviconSrc, sizes: '512x512', type: 'image/png', purpose: 'any' as const },
-        { src: faviconSrc, sizes: 'any', type: 'image/x-icon', purpose: 'any' as const },
-        ...STATIC_ICONS.filter((i) => i.purpose === 'maskable'),
-      ]
-    : [
-        { src: '/favicon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' as const },
-        ...STATIC_ICONS,
-      ];
+  const icons = [...STATIC_ICONS];
+  if (faviconUrl && faviconUrl.startsWith('/')) {
+    icons.push({ src: withCacheBust(faviconUrl, brandingVersion), sizes: 'any', type: 'image/x-icon', purpose: 'any' as const });
+  }
   return NextResponse.json({ ...BASE_MANIFEST, icons }, {
     headers: {
       'Content-Type': 'application/manifest+json',
