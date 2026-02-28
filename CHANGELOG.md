@@ -15,6 +15,9 @@
 - `getSiteBranding()` now returns `brandingVersion` and serves logo via `/api/site-branding/logo` when stored as base64 (for consistent cache busting).
 - Root layout metadata: icons and OG/twitter images driven by site branding; manifest link points to `/manifest`.
 
+- **Install App banner** – The bottom “Get the Sim2Me App” banner now shows the Full Logo from admin (same as header/footer). When a logo is set, the PWA manifest uses the admin favicon as the primary app icon so the installed app and home-screen shortcut show the updated symbol.
+- **PWA icon when installed** – Manifest icons list the dynamic favicon first when set, so “Add to Home screen” / installed PWA uses the new icon.
+
 ### Technical
 - Site settings key `branding_updated_at` stores timestamp on logo/favicon upload.
-- Files touched: `src/lib/site-branding.ts`, `src/app/api/admin/settings/upload/route.ts`, `src/app/api/site-branding/logo/route.ts`, `src/app/api/site-branding/favicon/route.ts`, `src/app/manifest/route.ts`, `src/app/layout.tsx`, `src/components/layout/Header.tsx`, `src/components/layout/Footer.tsx`, `src/lib/email.ts`, `public/sw.js`.
+- Files touched: `src/lib/site-branding.ts`, `src/app/api/admin/settings/upload/route.ts`, `src/app/api/site-branding/logo/route.ts`, `src/app/api/site-branding/favicon/route.ts`, `src/app/manifest/route.ts`, `src/app/layout.tsx`, `src/components/layout/Header.tsx`, `src/components/layout/Footer.tsx`, `src/components/layout/InstallAppBanner.tsx`, `src/lib/email.ts`, `public/sw.js`.

@@ -2,11 +2,23 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { X, Download, Share, Plus } from 'lucide-react';
+import { brandConfig } from '@/config/brand';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
+
+const defaultBannerIcon = (
+  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-sm">
+    <svg width="22" height="22" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="3" y="1" width="8" height="14" rx="1.5" fill="white" fillOpacity="0.9"/>
+      <circle cx="7" cy="12" r="1" fill="#059669"/>
+      <path d="M12 5c1.5-0.7 3 0 3.5 1.5s0 3-1.5 3.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" fill="none" opacity="0.8"/>
+      <path d="M13 3c2-1 4 0 5 2s0 4-2 5" stroke="white" strokeWidth="1.5" strokeLinecap="round" fill="none" opacity="0.5"/>
+    </svg>
+  </div>
+);
 
 export function InstallAppBanner() {
   const [showBanner, setShowBanner] = useState(false);
@@ -14,6 +26,7 @@ export function InstallAppBanner() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
+  const [bannerIconUrl, setBannerIconUrl] = useState<string | null>(null);
 
   useEffect(() => {
     // Don't show if already installed as PWA
@@ -63,6 +76,20 @@ export function InstallAppBanner() {
       clearTimeout(fallbackTimer);
       window.removeEventListener('beforeinstallprompt', handler);
     };
+  }, []);
+
+  useEffect(() => {
+    fetch('/api/site-branding')
+      .then((res) => res.ok ? res.json() : null)
+      .then((data: { logoUrl?: string | null; brandingVersion?: number | null } | null) => {
+        if (!data?.logoUrl?.trim()) return null;
+        const url = data.logoUrl.trim();
+        const version = data.brandingVersion ?? null;
+        if (version != null && url.startsWith('/')) return `${url}?v=${version}`;
+        return url;
+      })
+      .then(setBannerIconUrl)
+      .catch(() => {});
   }, []);
 
   const handleInstall = useCallback(async () => {
@@ -148,15 +175,12 @@ export function InstallAppBanner() {
           ) : (
             /* Compact banner */
             <div className="flex items-center gap-3 p-3.5">
-              {/* App icon */}
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-sm">
-                <svg width="22" height="22" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect x="3" y="1" width="8" height="14" rx="1.5" fill="white" fillOpacity="0.9"/>
-                  <circle cx="7" cy="12" r="1" fill="#059669"/>
-                  <path d="M12 5c1.5-0.7 3 0 3.5 1.5s0 3-1.5 3.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" fill="none" opacity="0.8"/>
-                  <path d="M13 3c2-1 4 0 5 2s0 4-2 5" stroke="white" strokeWidth="1.5" strokeLinecap="round" fill="none" opacity="0.5"/>
-                </svg>
-              </div>
+              {/* App icon: use Full Logo from admin when set */}
+              {bannerIconUrl ? (
+                <img src={bannerIconUrl} alt={brandConfig.logoAlt} className="h-12 w-12 shrink-0 rounded-xl object-contain shadow-sm" />
+              ) : (
+                defaultBannerIcon
+              )}
 
               {/* Text */}
               <div className="flex-1 min-w-0">
