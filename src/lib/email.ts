@@ -4,6 +4,8 @@
  * (Email verification removed — sign up works without it.)
  */
 
+import { getSiteBranding } from '@/lib/site-branding';
+
 const FROM = `Sim2Me <${process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'}>`;
 const SITE_NAME = 'Sim2Me';
 
@@ -12,10 +14,19 @@ function baseUrl(): string {
   return 'https://www.sim2me.net';
 }
 
+async function logoImgTag(): Promise<string> {
+  const { logoUrl, brandingVersion } = await getSiteBranding();
+  if (!logoUrl || !logoUrl.startsWith('/')) return '';
+  const url = `${baseUrl()}${logoUrl}${brandingVersion != null ? `?v=${brandingVersion}` : ''}`;
+  return `<p style="margin:0 0 20px 0;"><img src="${url}" alt="Sim2Me" width="160" height="48" style="display:block; max-height:48px; object-fit:contain;" /></p>`;
+}
+
 export async function sendPasswordResetEmail(to: string, token: string): Promise<boolean> {
   const resetUrl = `${baseUrl()}/account/reset-password?token=${encodeURIComponent(token)}`;
+  const logo = await logoImgTag();
   const html = `
     <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto;">
+      ${logo}
       <h2 style="color: #059669;">Reset your password</h2>
       <p>We received a request to reset your password for your ${SITE_NAME} account. Click the link below to set a new password:</p>
       <p style="margin: 24px 0;">
@@ -58,6 +69,7 @@ export async function sendPostPurchaseEmail(to: string, data: PostPurchaseEmailD
        <p style="margin:12px 0;"><img src="${data.qrCodeUrl}" alt="QR Code" width="200" height="200" style="display:block; border-radius:8px;" /></p>`
     : '<p style="margin:16px 0;"><strong>סריקת QR:</strong> קוד ה-QR זמין בעמוד ההזמנה ובחשבון שלך.</p>';
 
+  const logo = await logoImgTag();
   const html = `
 <!DOCTYPE html>
 <html dir="rtl" lang="he">
@@ -68,6 +80,7 @@ export async function sendPostPurchaseEmail(to: string, data: PostPurchaseEmailD
 </head>
 <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background: #f8fafc; color: #1e293b;">
   <div style="background: white; border-radius: 12px; padding: 28px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
+    ${logo}
     <h1 style="color: #0d9f6e; font-size: 1.5rem; margin: 0 0 16px 0;">ה-eSIM שלך מ-SIM2ME מוכן להפעלה! ✈️</h1>
     <p style="margin: 0 0 20px 0; line-height: 1.6;">שלום ${escapeHtml(name)},</p>
     <p style="margin: 0 0 20px 0; line-height: 1.6;">איזה כיף שאתה טס עם SIM2ME! החבילה שלך הופעלה בהצלחה ומוכנה לשימוש.</p>

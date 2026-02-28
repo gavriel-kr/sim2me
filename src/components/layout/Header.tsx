@@ -60,7 +60,13 @@ export function Header() {
   useEffect(() => {
     fetch('/api/site-branding')
       .then((res) => res.ok ? res.json() : null)
-      .then((data: { logoUrl?: string | null } | null) => data?.logoUrl?.trim() || null)
+      .then((data: { logoUrl?: string | null; brandingVersion?: number | null } | null) => {
+        if (!data?.logoUrl?.trim()) return null;
+        const url = data.logoUrl.trim();
+        const version = data.brandingVersion ?? null;
+        if (version != null && url.startsWith('/')) return `${url}?v=${version}`;
+        return url;
+      })
       .then(setLogoUrl)
       .catch(() => {});
   }, []);

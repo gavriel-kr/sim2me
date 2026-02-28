@@ -41,11 +41,18 @@ export async function POST(request: Request) {
     const dataUrl = `data:${mime};base64,${base64}`;
 
     const dbKey = type === 'logo' ? 'logo_url' : 'favicon_url';
+    const versionKey = 'branding_updated_at';
+    const versionValue = String(Date.now());
 
     await prisma.siteSetting.upsert({
       where: { key: dbKey },
       create: { key: dbKey, value: dataUrl },
       update: { value: dataUrl },
+    });
+    await prisma.siteSetting.upsert({
+      where: { key: versionKey },
+      create: { key: versionKey, value: versionValue },
+      update: { value: versionValue },
     });
 
     // Logo: return data URL directly (works as <img src>)

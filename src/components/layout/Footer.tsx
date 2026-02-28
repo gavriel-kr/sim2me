@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations, useLocale } from 'next-intl';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { brandConfig } from '@/config/brand';
 import { Mail, ExternalLink } from 'lucide-react';
 import { createSharedPathnamesNavigation } from 'next-intl/navigation';
@@ -32,17 +32,47 @@ const legalLinks = [
 
 const LOCALE_COOKIE = 'NEXT_LOCALE';
 
+const defaultFooterLogo = (
+  <>
+    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600" aria-hidden="true">
+      <svg width="14" height="14" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect x="3" y="1" width="8" height="14" rx="1.5" fill="white" fillOpacity="0.9"/>
+        <circle cx="7" cy="12" r="1" fill="#059669"/>
+        <path d="M12 5c1.5-0.7 3 0 3.5 1.5s0 3-1.5 3.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" fill="none" opacity="0.8"/>
+      </svg>
+    </div>
+    <span className="text-lg font-extrabold tracking-tight text-foreground">
+      Sim<span className="text-primary">2</span>Me
+    </span>
+  </>
+);
+
 export function Footer() {
   const t = useTranslations('nav');
   const tFooter = useTranslations('footer');
   const tHome = useTranslations('home');
   const { openCookieSettings } = useCookieConsent();
   const locale = useLocale();
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
     document.cookie = `${LOCALE_COOKIE}=${locale}; path=/; max-age=31536000; SameSite=Lax`;
   }, [locale]);
+
+  useEffect(() => {
+    fetch('/api/site-branding')
+      .then((res) => res.ok ? res.json() : null)
+      .then((data: { logoUrl?: string | null; brandingVersion?: number | null } | null) => {
+        if (!data?.logoUrl?.trim()) return null;
+        const url = data.logoUrl.trim();
+        const version = data.brandingVersion ?? null;
+        if (version != null && url.startsWith('/')) return `${url}?v=${version}`;
+        return url;
+      })
+      .then(setLogoUrl)
+      .catch(() => {});
+  }, []);
 
   return (
     <footer className="border-t border-border/40 bg-gray-50">
@@ -51,16 +81,11 @@ export function Footer() {
           {/* Brand */}
           <div className="lg:col-span-2 sm:col-span-2">
             <IntlLink href="/" className="inline-flex items-center gap-2.5 transition-opacity hover:opacity-80" aria-label="Sim2Me – Home">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600" aria-hidden="true">
-                <svg width="14" height="14" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                  <rect x="3" y="1" width="8" height="14" rx="1.5" fill="white" fillOpacity="0.9"/>
-                  <circle cx="7" cy="12" r="1" fill="#059669"/>
-                  <path d="M12 5c1.5-0.7 3 0 3.5 1.5s0 3-1.5 3.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" fill="none" opacity="0.8"/>
-                </svg>
-              </div>
-              <span className="text-lg font-extrabold tracking-tight text-foreground">
-                Sim<span className="text-primary">2</span>Me
-              </span>
+              {logoUrl ? (
+                <img src={logoUrl} alt={brandConfig.logoAlt} className="h-8 max-w-[180px] object-contain object-left" />
+              ) : (
+                defaultFooterLogo
+              )}
             </IntlLink>
             <p className="mt-3 max-w-xs text-sm leading-relaxed text-muted-foreground">
               {brandConfig.tagline}. Instant eSIM data plans for 200+ countries. No SIM swap, no roaming charges.

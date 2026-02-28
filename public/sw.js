@@ -3,7 +3,7 @@ const STATIC_ASSETS = [
   '/',
   '/favicon.svg',
   '/logo.svg',
-  '/manifest.json',
+  '/manifest',
 ];
 
 // Install: cache shell assets

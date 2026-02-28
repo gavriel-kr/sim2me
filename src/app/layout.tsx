@@ -17,8 +17,16 @@ const dmSans = DM_Sans({
 
 const siteUrl = 'https://www.sim2me.net';
 
+function withCacheBust(url: string, version: number | null): string {
+  if (version == null || !url.startsWith('/')) return url;
+  return `${url}?v=${version}`;
+}
+
 export async function generateMetadata(): Promise<Metadata> {
-  const { faviconUrl } = await getSiteBranding();
+  const { logoUrl, faviconUrl, brandingVersion } = await getSiteBranding();
+  const iconUrl = faviconUrl ? withCacheBust(faviconUrl, brandingVersion) : '/favicon.svg';
+  const appleIconUrl = faviconUrl && faviconUrl.startsWith('/') ? withCacheBust(faviconUrl, brandingVersion) : '/icons/apple-touch-icon.png';
+  const ogImageUrl = logoUrl && logoUrl.startsWith('/') ? `${siteUrl}${withCacheBust(logoUrl, brandingVersion)}` : undefined;
   return {
     metadataBase: new URL(siteUrl),
     title: {
@@ -41,12 +49,14 @@ export async function generateMetadata(): Promise<Metadata> {
       description: 'Instant eSIM delivery for travelers. No physical SIM, no roaming fees. Compare plans and get connected in minutes.',
       locale: 'en_US',
       alternateLocale: ['he_IL', 'ar_SA'],
+      ...(ogImageUrl && { images: [{ url: ogImageUrl, width: 1200, height: 630, alt: brandConfig.logoAlt }] }),
     },
     twitter: {
       card: 'summary_large_image',
       site: '@sim2me',
       title: `${brandConfig.name} – Buy eSIM Online`,
       description: 'Instant eSIM for 200+ countries. Best prices, instant delivery.',
+      ...(ogImageUrl && { images: [ogImageUrl] }),
     },
     alternates: {
       canonical: siteUrl,
@@ -68,10 +78,10 @@ export async function generateMetadata(): Promise<Metadata> {
       },
     },
     icons: {
-      icon: faviconUrl || '/favicon.svg',
-      apple: '/icons/apple-touch-icon.png',
+      icon: iconUrl,
+      apple: appleIconUrl,
     },
-    manifest: '/manifest.json',
+    manifest: '/manifest',
     appleWebApp: {
       capable: true,
       statusBarStyle: 'black-translucent',

@@ -3,9 +3,9 @@ import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
-/** Serves the favicon stored as a base64 data URL in site settings. */
+/** Serves the logo stored as a base64 data URL in site settings (for emails, OG, etc.). */
 export async function GET() {
-  const setting = await prisma.siteSetting.findUnique({ where: { key: 'favicon_url' } });
+  const setting = await prisma.siteSetting.findUnique({ where: { key: 'logo_url' } });
 
   if (!setting?.value?.startsWith('data:')) {
     return new NextResponse(null, { status: 404 });
