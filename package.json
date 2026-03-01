@@ -7,7 +7,7 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "npm run build:mobile && next build",
+    "build": "next build",
     "build:mobile": "cd mobile && npx expo export -p web && node ../scripts/copy-mobile.js",
     "start": "next start",
     "lint": "next lint",

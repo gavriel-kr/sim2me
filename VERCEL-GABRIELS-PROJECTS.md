@@ -14,11 +14,11 @@
 
 ## 3. התחברות ל-Vercel הנכון (Gabriel's projects)
 
-פרויקט **sim2me** תחת **Gabriel's projects** מחובר ל-GitHub (gavriel-kr/sim2me). הדיפלואים שראית (לפני ~15 שעות) נגרמו מ-push ל-main.
+פרויקט **sim2me** תחת **Gabriel's projects** מחובר ל-GitHub (gavriel-kr/sim2me). דיפלוי אחד כולל:
+- **האתר הראשי** (Next.js) – כל הדפים, checkout, account וכו'
+- **אפליקציית המובייל (PWA)** – נגישה ב-**/app/** (למשל www.sim2me.net/app/)
 
-### אופציה א': דיפלוי דרך Git (מומלץ)
-
-אם אתה רוצה דיפלוי חדש ל-Gabriel's projects:
+### דיפלוי (push ל-main)
 
 ```bash
 cd c:\sim2me
@@ -27,7 +27,7 @@ git commit -m "chore: production deploy"
 git push origin main
 ```
 
-Vercel יבנה וידפלס אוטומטית. תוך דקה–שתיים תראה דיפלוי חדש ב-**Gabriel's projects → sim2me → Deployments**.
+Vercel יבנה (כולל export של האפליקציה ל-web והעתקה ל-public/app) וידפלס אוטומטית. תוך דקה–שתיים תראה דיפלוי חדש ב-**Gabriel's projects → sim2me → Deployments**.
 
 ### אופציה ב': דיפלוי דרך CLI
 
