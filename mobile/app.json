@@ -33,7 +33,10 @@
       "favicon": "./assets/favicon.png",
       "name": "Sim2Me eSIM",
       "shortName": "Sim2Me",
-      "themeColor": "#0d9f6e", "display": "standalone", "startUrl": "/", "backgroundColor": "#f8fafc"
+      "themeColor": "#0d9f6e", "display": "standalone", "startUrl": "/app/", "backgroundColor": "#f8fafc"
+    },
+    "experiments": {
+      "baseUrl": "/app"
     },
     "extra": {
       "apiBaseUrl": "https://www.sim2me.net"
