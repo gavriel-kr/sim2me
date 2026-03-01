@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import * as SecureStore from 'expo-secure-store';
+import { storage } from './storage';
 
 const TOKEN_KEY = 'sim2me.auth.token';
 const USER_KEY = 'sim2me.auth.user';
@@ -25,14 +25,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   hydrated: false,
 
   setAuth: async (token, user) => {
-    await SecureStore.setItemAsync(TOKEN_KEY, token);
-    await SecureStore.setItemAsync(USER_KEY, JSON.stringify(user));
+    await storage.setItem(TOKEN_KEY, token);
+    await storage.setItem(USER_KEY, JSON.stringify(user));
     set({ token, user });
   },
 
   logout: async () => {
-    await SecureStore.deleteItemAsync(TOKEN_KEY);
-    await SecureStore.deleteItemAsync(USER_KEY);
+    await storage.deleteItem(TOKEN_KEY);
+    await storage.deleteItem(USER_KEY);
     set({ token: null, user: null });
   },
 
@@ -40,8 +40,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (get().hydrated) return;
     try {
       const [token, userJson] = await Promise.all([
-        SecureStore.getItemAsync(TOKEN_KEY),
-        SecureStore.getItemAsync(USER_KEY),
+        storage.getItem(TOKEN_KEY),
+        storage.getItem(USER_KEY),
       ]);
       const user = userJson ? (JSON.parse(userJson) as AuthUser) : null;
       set({ token, user, hydrated: true });

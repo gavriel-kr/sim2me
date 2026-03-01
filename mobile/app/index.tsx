@@ -4,17 +4,13 @@ import { useAuthStore } from '../src/store/authStore';
 
 export default function Index() {
   const router = useRouter();
-  const token = useAuthStore((s) => s.token);
   const hydrated = useAuthStore((s) => s.hydrated);
 
   useEffect(() => {
     if (!hydrated) return;
-    if (token) {
-      router.replace('/(main)');
-    } else {
-      router.replace('/(auth)/login');
-    }
-  }, [hydrated, token, router]);
+    // Always go to main app. My eSIMs tab handles auth gating internally.
+    router.replace('/(main)');
+  }, [hydrated, router]);
 
   return null;
 }

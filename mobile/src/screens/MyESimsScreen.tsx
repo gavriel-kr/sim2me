@@ -48,7 +48,46 @@ function maskIccid(iccid: string | null): string {
 export function MyESimsScreen() {
   const router = useRouter();
   const nav = useNavigation<Nav>();
+  const token = useAuthStore((s) => s.token);
   const logout = useAuthStore((s) => s.logout);
+
+  // Not logged in: show sign-in prompt
+  if (!token) {
+    return (
+      <SafeAreaView style={styles.safe} edges={['top']}>
+        <View style={styles.header}>
+          <Text style={styles.title}>My eSIMs</Text>
+          <Text style={styles.subtitle}>Your plans and data usage</Text>
+        </View>
+        <View style={styles.emptyContainer}>
+          <View style={styles.emptyIconWrap}>
+            <View style={styles.iconCircle}>
+              <Ionicons name="lock-closed-outline" size={48} color={colors.primary} />
+            </View>
+          </View>
+          <Text style={styles.emptyTitle}>Sign in to view your eSIMs</Text>
+          <Text style={styles.emptyDesc}>
+            Use the same account you use on sim2me.net to see your purchased eSIMs here.
+          </Text>
+          <TouchableOpacity
+            style={styles.exploreButton}
+            onPress={() => router.push('/(auth)/login')}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="log-in-outline" size={22} color={colors.white} />
+            <Text style={styles.exploreButtonText}>Sign In</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.exploreButton, { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: colors.primary, marginTop: 12 }]}
+            onPress={() => router.push('/(auth)/register')}
+            activeOpacity={0.85}
+          >
+            <Text style={[styles.exploreButtonText, { color: colors.primary }]}>Create Account</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   const {
     data: orders = [],
