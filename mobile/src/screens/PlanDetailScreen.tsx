@@ -8,9 +8,12 @@ import { useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 
 import { colors, spacing, radius, fontSize } from '../theme';
-import type { RootStackParamList } from '../types';
+import { API_BASE_URL } from '../nav';
+import type { RootStackParamList, Plan } from '../types';
 
 type Route = RouteProp<RootStackParamList, 'PlanDetail'>;
+
+const locationDisplay = (p: Plan) => p.locationName || (p as { location?: string }).location || '';
 
 export function PlanDetailScreen() {
   const { params } = useRoute<Route>();
@@ -21,18 +24,20 @@ export function PlanDetailScreen() {
     : `https://flagcdn.com/w320/${plan.locationCode.toLowerCase()}.png`;
 
   const handleBuy = () => {
-    // Open web checkout — in future, integrate in-app payment
-    const url = `https://www.sim2me.net/destinations/${plan.locationCode.toLowerCase()}`;
+    const base = API_BASE_URL.replace(/\/$/, '');
+    const url = `${base}/destinations/${plan.locationCode.toLowerCase()}/plan/${plan.packageCode}`;
     Linking.openURL(url).catch(() => {
       Alert.alert('Error', 'Could not open checkout');
     });
   };
 
+  const is5G = (plan.speed || '').toUpperCase().includes('5G');
+
   const details = [
     { icon: 'cellular-outline', label: 'Data', value: plan.dataAmount },
     { icon: 'time-outline', label: 'Validity', value: plan.duration },
     { icon: 'speedometer-outline', label: 'Speed', value: plan.speed || '4G/LTE' },
-    { icon: 'globe-outline', label: 'Coverage', value: plan.locationName },
+    { icon: 'globe-outline', label: 'Coverage', value: locationDisplay(plan) },
     { icon: 'card-outline', label: 'Price', value: `US$ ${plan.price.toFixed(2)}` },
   ];
 
@@ -41,6 +46,17 @@ export function PlanDetailScreen() {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* Hero */}
         <View style={styles.hero}>
+          <View style={styles.heroTags}>
+            {plan.featured ? (
+              <View style={styles.heroTagFeatured}><Text style={styles.heroTagText}>Recommended</Text></View>
+            ) : null}
+            {plan.saleBadge ? (
+              <View style={styles.heroTagSale}><Text style={styles.heroTagSaleText}>{plan.saleBadge}</Text></View>
+            ) : null}
+            {is5G ? (
+              <View style={styles.heroTag5G}><Text style={styles.heroTag5GText}>5G</Text></View>
+            ) : null}
+          </View>
           <Image source={{ uri: flagUri }} style={styles.flag} resizeMode="cover" />
           <Text style={styles.planName}>{plan.name}</Text>
           <View style={styles.dataBadge}>
@@ -129,6 +145,34 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: spacing.xl,
   },
+  heroTags: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 6,
+    marginBottom: spacing.sm,
+  },
+  heroTagFeatured: {
+    backgroundColor: colors.primaryBg,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 4,
+    borderRadius: radius.full,
+  },
+  heroTagText: { fontSize: 11, fontWeight: '700', color: colors.primary },
+  heroTagSale: {
+    backgroundColor: colors.error + '18',
+    paddingHorizontal: spacing.md,
+    paddingVertical: 4,
+    borderRadius: radius.full,
+  },
+  heroTagSaleText: { fontSize: 11, fontWeight: '700', color: colors.error },
+  heroTag5G: {
+    backgroundColor: colors.info + '18',
+    paddingHorizontal: spacing.md,
+    paddingVertical: 4,
+    borderRadius: radius.full,
+  },
+  heroTag5GText: { fontSize: 11, fontWeight: '700', color: colors.info },
   flag: {
     width: 72,
     height: 50,

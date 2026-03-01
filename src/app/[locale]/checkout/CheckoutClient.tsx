@@ -112,7 +112,6 @@ export function CheckoutClient() {
         });
       }
     } catch (e) {
-      console.error('[Checkout] error:', e);
       setPaymentError(t('paymentError') || 'Something went wrong. Please try again.');
     } finally {
       setPaymentLoading(false);

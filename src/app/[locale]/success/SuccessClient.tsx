@@ -170,7 +170,16 @@ export function SuccessClient({ transactionId }: { transactionId: string | null 
               </div>
             )}
 
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center flex-wrap">
+              <a
+                href="sim2me://success"
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors"
+              >
+                <span>Open in Sim2Me App</span>
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </a>
               <IntlLink
                 href="/installation-guide"
                 target="_blank"
@@ -189,7 +198,11 @@ export function SuccessClient({ transactionId }: { transactionId: string | null 
           </CardContent>
         </Card>
 
-        <p className="mt-6 text-center text-xs text-muted-foreground">
+        <p className="mt-6 text-center text-sm text-muted-foreground rounded-lg bg-muted/50 px-4 py-3 max-w-md mx-auto">
+          Ensure you use the same email as your app account to sync your eSIM in the Sim2Me app.
+        </p>
+
+        <p className="mt-4 text-center text-xs text-muted-foreground">
           {t('emailSent')} {brandConfig.supportEmail}
         </p>
       </div>

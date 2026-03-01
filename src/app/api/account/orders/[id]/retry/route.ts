@@ -1,8 +1,7 @@
 export const maxDuration = 60;
 
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getSessionForRequest, isCustomerSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { purchasePackage, getEsimProfileWithRetry } from '@/lib/esimaccess';
 import { sendPostPurchaseEmail } from '@/lib/email';
@@ -12,16 +11,14 @@ function baseUrl() {
 }
 
 export async function POST(
-  _request: Request,
+  request: Request,
   { params }: { params: { id: string } }
 ) {
-  const session = await getServerSession(authOptions);
-  const type = (session?.user as { type?: string })?.type;
-  const userId = (session?.user as { id?: string })?.id;
-
-  if (type !== 'customer' || !userId) {
+  const session = await getSessionForRequest(request);
+  if (!isCustomerSession(session)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+  const userId = session.user.id;
 
   const customer = await prisma.customer.findUnique({ where: { id: userId }, select: { id: true, email: true } });
   if (!customer) return NextResponse.json({ error: 'Not found' }, { status: 404 });

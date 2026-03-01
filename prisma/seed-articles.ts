@@ -1260,7 +1260,9 @@ const articles = [
 </script>
 
 <div class="cta-block rounded-xl border border-emerald-200 bg-emerald-50 p-6 my-8 text-center" dir="rtl">
-  <p class="mb-0 font-bold text-emerald-900">💡 CTA: <a href="${SITE}/he/destinations" class="text-emerald-700 underline hover:no-underline">לחצו לרכישת איסים ב-Sim2Me ←</a></p>
+  <p class="text-xl font-bold text-emerald-900 mb-2">מוכנים לטיול הבא? מצאו את ה-eSIM שלכם</p>
+  <p class="text-gray-600 text-sm mb-4">200+ יעדים · מ-$0.70 ליום · משלוח מיידי</p>
+  <a href="${SITE}/he/destinations" class="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700">← גלו את כל היעדים</a>
 </div>
 `,
   },
@@ -1328,7 +1330,8 @@ const articles = [
 </ul>
 
 <div class="cta-block rounded-xl border border-emerald-200 bg-emerald-50 p-6 my-8 text-center" dir="rtl">
-  <p class="mb-0 font-bold text-emerald-900">💡 CTA: <a href="${SITE}/he/destinations/us" class="text-emerald-700 underline hover:no-underline">לחצו לרכישת איסים לארה"ב ב-Sim2Me ←</a></p>
+  <p class="text-xl font-bold text-emerald-900 mb-2">קנו איסים לארצות הברית לפני הטיסה</p>
+  <a href="${SITE}/he/destinations/us" class="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700">← תוכניות eSIM לארה"ב</a>
 </div>
 `,
   },
@@ -1387,7 +1390,8 @@ const articles = [
 <p><strong>האם ה-eSIM עובד בישראל?</strong> — ה-eSIM פעיל רק ביעד הנסיעה. בישראל שמרו את ה-SIM המקומי.</p>
 
 <div class="cta-block rounded-xl border border-emerald-200 bg-emerald-50 p-6 my-8 text-center" dir="rtl">
-  <p class="mb-0 font-bold text-emerald-900">💡 CTA: <a href="${SITE}/he/destinations/eu-30" class="text-emerald-700 underline hover:no-underline">לחצו לרכישת איסים לאירופה ב-Sim2Me ←</a></p>
+  <p class="text-xl font-bold text-emerald-900 mb-2">איסים לאירופה — הזמינו עכשיו</p>
+  <a href="${SITE}/he/destinations/eu-30" class="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700">← תוכניות eSIM לאירופה</a>
 </div>
 `,
   },
@@ -1443,7 +1447,8 @@ const articles = [
 <p>כרטיסי SIM בנמל התעופה מגיעים עם כרטיס פיזי שצריך לפרוק ולשמור. eSIM לא יכול ללכת לאיבוד, לא ייכנס למים ולא ישתבש מחול — חשוב מאוד בתאילנד.</p>
 
 <div class="cta-block rounded-xl border border-emerald-200 bg-emerald-50 p-6 my-8 text-center" dir="rtl">
-  <p class="mb-0 font-bold text-emerald-900">💡 CTA: <a href="${SITE}/he/destinations/th" class="text-emerald-700 underline hover:no-underline">לחצו לרכישת איסים לתאילנד ב-Sim2Me ←</a></p>
+  <p class="text-xl font-bold text-emerald-900 mb-2">הזמינו איסים לתאילנד עוד היום</p>
+  <a href="${SITE}/he/destinations/th" class="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700">← תוכניות eSIM לתאילנד</a>
 </div>
 `,
   },
@@ -1501,7 +1506,8 @@ const articles = [
 </ol>
 
 <div class="cta-block rounded-xl border border-emerald-200 bg-emerald-50 p-6 my-8 text-center" dir="rtl">
-  <p class="mb-0 font-bold text-emerald-900">💡 CTA: <a href="${SITE}/he/destinations/ae" class="text-emerald-700 underline hover:no-underline">לחצו לרכישת איסים לדובאי ב-Sim2Me ←</a></p>
+  <p class="text-xl font-bold text-emerald-900 mb-2">איסים לדובאי — הזמינו עוד היום</p>
+  <a href="${SITE}/he/destinations/ae" class="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700">← תוכניות eSIM לדובאי</a>
 </div>
 `,
   },
@@ -2301,7 +2307,8 @@ const articles = [
 <p>אם אתם נוסעים גם לחלק אחר של אירופה לפני קפריסין — בדקו את חבילות <strong>איסים לאירופה</strong> של Sim2Me שמכסות מספר מדינות בחבילה אחת.</p>
 
 <div class="cta-block rounded-xl border border-emerald-200 bg-emerald-50 p-6 my-8 text-center" dir="rtl">
-  <p class="mb-0 font-bold text-emerald-900">💡 CTA: <a href="${SITE}/he/destinations/cy" class="text-emerald-700 underline hover:no-underline">לחצו לרכישת איסים לקפריסין ב-Sim2Me ←</a></p>
+  <p class="text-xl font-bold text-emerald-900 mb-2">הזמינו איסים לקפריסין עוד לפני שאורזים את המזוודה</p>
+  <a href="${SITE}/he/destinations/cy" class="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700">← תוכניות eSIM לקפריסין</a>
 </div>
 `,
   },
@@ -2366,7 +2373,8 @@ const articles = [
 <p><strong>איסים לבוקרשט</strong> הם השדרוג שכל מטייל ישראלי ברומניה צריך. פתרון זול, מהיר ונוח שמבטיח קישוריות מלאה לאורך כל הטיול. אל תסתמכו על ה-WiFi של המלון – היו מחוברים תמיד.</p>
 
 <div class="cta-block rounded-xl border border-emerald-200 bg-emerald-50 p-6 my-8 text-center" dir="rtl">
-  <p class="mb-0 font-bold text-emerald-900">💡 CTA: <a href="${SITE}/he/destinations/ro" class="text-emerald-700 underline hover:no-underline">לחצו לרכישת איסים לרומניה ב-Sim2Me ←</a></p>
+  <p class="text-xl font-bold text-emerald-900 mb-2">לרכישת איסים לבוקרשט – לחצו כאן</p>
+  <a href="${SITE}/he/destinations/ro" class="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700">← תוכניות eSIM לרומניה</a>
 </div>
 `,
   },
@@ -2426,7 +2434,8 @@ const articles = [
 <p>בין אם אתם טסים לשבוע בניו יורק, לחופשת דיסני בפלורידה, או לסיבוב חוצה ארה"ב, <strong>איסים לארצות הברית</strong> יבטיחו שתישארו מחוברים בכל רגע נתון – במחיר שהגיוני. זו לא הוצאה – זו השקעה בטיול מוצלח.</p>
 
 <div class="cta-block rounded-xl border border-emerald-200 bg-emerald-50 p-6 my-8 text-center" dir="rtl">
-  <p class="mb-0 font-bold text-emerald-900">💡 CTA: <a href="${SITE}/he/destinations/us" class="text-emerald-700 underline hover:no-underline">לחצו לרכישת איסים לארה"ב ב-Sim2Me ←</a></p>
+  <p class="text-xl font-bold text-emerald-900 mb-2">לרכישת איסים לארצות הברית – לחצו כאן</p>
+  <a href="${SITE}/he/destinations/us" class="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700">← תוכניות eSIM לארה"ב</a>
 </div>
 `,
   },
@@ -2487,7 +2496,8 @@ const articles = [
 <p>ביוון אפשר לקנות SIM מקומי, אך זה מצריך ביקור בחנות, הצגת דרכון ולעיתים המתנה. עם <strong>איסים ליוון</strong> של Sim2Me — הכול מוכן מראש. מגיעים, מדליקים, גולשים.</p>
 
 <div class="cta-block rounded-xl border border-emerald-200 bg-emerald-50 p-6 my-8 text-center" dir="rtl">
-  <p class="mb-0 font-bold text-emerald-900">💡 CTA: <a href="${SITE}/he/destinations/gr" class="text-emerald-700 underline hover:no-underline">לחצו לרכישת איסים ליוון ב-Sim2Me ←</a></p>
+  <p class="text-xl font-bold text-emerald-900 mb-2">הזמינו איסים ליוון עוד היום</p>
+  <a href="${SITE}/he/destinations/gr" class="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700">← תוכניות eSIM ליוון</a>
 </div>
 `,
   },
@@ -2537,7 +2547,8 @@ const articles = [
 <p>מגיעים לגרמניה כעצירה בנסיעה ארוכה? בדקו את חבילת <strong>איסים לאירופה</strong> שמכסה גם את גרמניה. אם גרמניה היא היעד העיקרי — חבילה ייעודית תנצל טוב יותר את הנפח.</p>
 
 <div class="cta-block rounded-xl border border-emerald-200 bg-emerald-50 p-6 my-8 text-center" dir="rtl">
-  <p class="mb-0 font-bold text-emerald-900">💡 CTA: <a href="${SITE}/he/destinations/de" class="text-emerald-700 underline hover:no-underline">לחצו לרכישת איסים לגרמניה ב-Sim2Me ←</a></p>
+  <p class="text-xl font-bold text-emerald-900 mb-2">הזמינו איסים לגרמניה עכשיו</p>
+  <a href="${SITE}/he/destinations/de" class="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700">← תוכניות eSIM לגרמניה</a>
 </div>
 `,
   },
@@ -2601,7 +2612,8 @@ const articles = [
 <p>בריטניה יצאה מהאיחוד האירופי, מה שאומר שחבילות "כל אירופה" לא תמיד כוללות אותה. ב-Sim2Me ניתן לרכוש <strong>איסים ללונדון</strong> כחבילה נפרדת — בדקו באתר.</p>
 
 <div class="cta-block rounded-xl border border-emerald-200 bg-emerald-50 p-6 my-8 text-center" dir="rtl">
-  <p class="mb-0 font-bold text-emerald-900">💡 CTA: <a href="${SITE}/he/destinations/gb" class="text-emerald-700 underline hover:no-underline">לחצו לרכישת איסים לבריטניה ב-Sim2Me ←</a></p>
+  <p class="text-xl font-bold text-emerald-900 mb-2">לרכישת איסים ללונדון – לחצו כאן</p>
+  <a href="${SITE}/he/destinations/gb" class="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700">← תוכניות eSIM לבריטניה</a>
 </div>
 `,
   },
@@ -2652,7 +2664,8 @@ const articles = [
 <p>מתכננים לנסוע גם לרומא, ברצלונה או ברלין? בדקו את חבילות <strong>האיסים לאירופה</strong> שמכסות עשרות מדינות בחבילה אחת.</p>
 
 <div class="cta-block rounded-xl border border-emerald-200 bg-emerald-50 p-6 my-8 text-center" dir="rtl">
-  <p class="mb-0 font-bold text-emerald-900">💡 CTA: <a href="${SITE}/he/destinations/fr" class="text-emerald-700 underline hover:no-underline">לחצו לרכישת איסים לצרפת ב-Sim2Me ←</a></p>
+  <p class="text-xl font-bold text-emerald-900 mb-2">לרכישת איסים לפריז – לחצו כאן</p>
+  <a href="${SITE}/he/destinations/fr" class="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700">← תוכניות eSIM לצרפת</a>
 </div>
 `,
   },
@@ -2710,7 +2723,8 @@ const articles = [
 </ol>
 
 <div class="cta-block rounded-xl border border-emerald-200 bg-emerald-50 p-6 my-8 text-center" dir="rtl">
-  <p class="mb-0 font-bold text-emerald-900">💡 CTA: <a href="${SITE}/he/destinations/tr" class="text-emerald-700 underline hover:no-underline">לחצו לרכישת איסים לטורקיה ב-Sim2Me ←</a></p>
+  <p class="text-xl font-bold text-emerald-900 mb-2">לרכישת איסים לטורקיה – לחצו כאן</p>
+  <a href="${SITE}/he/destinations/tr" class="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700">← תוכניות eSIM לטורקיה</a>
 </div>
 `,
   },

@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getSessionForRequest, isCustomerSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { compare, hash } from 'bcryptjs';
 import { z } from 'zod';
@@ -13,13 +12,11 @@ const schema = z.object({
 });
 
 export async function POST(request: Request) {
-  const session = await getServerSession(authOptions);
-  const type = (session?.user as { type?: string })?.type;
-  const id = (session?.user as { id?: string })?.id;
-
-  if (type !== 'customer' || !id) {
+  const session = await getSessionForRequest(request);
+  if (!isCustomerSession(session)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+  const id = session.user.id;
 
   const body = await request.json();
   const parsed = schema.safeParse(body);

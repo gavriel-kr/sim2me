@@ -9,9 +9,31 @@ interface Props {
   onPress: () => void;
 }
 
+const locationDisplay = (p: Plan) => p.locationName || (p as { location?: string }).location || '';
+
 export function PlanCard({ plan, onPress }: Props) {
+  const is5G = (plan.speed || '').toUpperCase().includes('5G');
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
+      {/* Tags: Best Seller / Sale */}
+      <View style={styles.tagsRow}>
+        {plan.featured ? (
+          <View style={styles.tagFeatured}>
+            <Text style={styles.tagFeaturedText}>Recommended</Text>
+          </View>
+        ) : null}
+        {plan.saleBadge ? (
+          <View style={styles.tagSale}>
+            <Text style={styles.tagSaleText}>{plan.saleBadge}</Text>
+          </View>
+        ) : null}
+        {is5G ? (
+          <View style={styles.tag5G}>
+            <Text style={styles.tag5GText}>5G</Text>
+          </View>
+        ) : null}
+      </View>
+
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.dataBadge}>
@@ -27,7 +49,7 @@ export function PlanCard({ plan, onPress }: Props) {
       <View style={styles.details}>
         <DetailRow icon="time-outline" label="Validity" value={plan.duration} />
         <DetailRow icon="speedometer-outline" label="Speed" value={plan.speed || '4G/LTE'} />
-        <DetailRow icon="globe-outline" label="Coverage" value={plan.locationName} />
+        <DetailRow icon="globe-outline" label="Coverage" value={locationDisplay(plan)} />
       </View>
 
       {/* Buy button */}
@@ -62,6 +84,50 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 12,
     elevation: 3,
+  },
+  tagsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginBottom: spacing.sm,
+  },
+  tagFeatured: {
+    backgroundColor: colors.primaryBg,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: radius.sm,
+  },
+  tagFeaturedText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: colors.primary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+  },
+  tagSale: {
+    backgroundColor: colors.error + '18',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: radius.sm,
+  },
+  tagSaleText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: colors.error,
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+  },
+  tag5G: {
+    backgroundColor: colors.info + '18',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: radius.sm,
+  },
+  tag5GText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: colors.info,
+    letterSpacing: 0.3,
   },
   header: {
     flexDirection: 'row',

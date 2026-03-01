@@ -11,6 +11,34 @@ const prisma = new PrismaClient();
 
 const SITE = 'https://www.sim2me.net';
 
+/** Article slug → destination path segment (for /destinations/{code}) */
+const SLUG_TO_DEST: Record<string, string> = {
+  'esim-italy': 'it',
+  'esim-spain': 'es',
+  'esim-japan': 'jp',
+  'esim-portugal': 'pt',
+  'esim-france': 'fr',
+  'esim-thailand-travel': 'th',
+  'esim-hungary': 'hu',
+  'esim-china': 'cn',
+  'esim-morocco': 'ma',
+  'esim-vietnam': 'vn',
+  'esim-switzerland': 'ch',
+  'esim-canada': 'ca',
+  'esim-australia': 'au',
+  'esim-singapore': 'sg',
+  'esim-egypt': 'eg',
+  'esim-malaysia': 'my',
+  'esim-georgia': 'ge',
+};
+
+function getCtaHref(slug: string, locale: 'he' | 'en' | 'ar'): string {
+  const code = SLUG_TO_DEST[slug];
+  if (!code) return `${SITE}/destinations`;
+  const prefix = locale === 'en' ? '' : `${locale}/`;
+  return `${SITE}/${prefix}destinations/${code}`;
+}
+
 // ─── Slug + locale for each of the 30 articles (HE 0–9, EN 10–19, AR 20–29) ───
 const SLUG_LOCALE: { slug: string; locale: 'he' | 'en' | 'ar' }[] = [
   { slug: 'esim-italy', locale: 'he' },
@@ -45,13 +73,16 @@ const SLUG_LOCALE: { slug: string; locale: 'he' | 'en' | 'ar' }[] = [
   { slug: 'esim-georgia', locale: 'ar' },
 ];
 
-/** Simple markdown to HTML (bold, links, headings, paragraphs, lists, tables, blockquotes) */
-function md2html(md: string): string {
-  let s = md.trim();
-  // Links before bold so [text](url) is not broken
-  s = s.replace(/\[([^\]]+)\]\((https?:\/[^)]+)\)/g, '<a href="$2" class="text-emerald-700 underline hover:no-underline">$1</a>');
-  s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-  const lines = s.split(/\n/);
+/** Inline markdown (bold + links) - applied per element so blockquote stays raw for CTA parsing */
+function inlineMd(t: string): string {
+  return t
+    .replace(/\[([^\]]+)\]\((https?:\/[^)]+)\)/g, '<a href="$2" class="text-emerald-700 underline hover:no-underline">$1</a>')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+}
+
+/** Simple markdown to HTML (bold, links, headings, paragraphs, lists, tables, blockquotes → CTA button) */
+function md2html(md: string, locale: 'he' | 'en' | 'ar', ctaHref: string): string {
+  const lines = md.trim().split(/\n/);
   const out: string[] = [];
   let i = 0;
   while (i < lines.length) {
@@ -62,17 +93,17 @@ function md2html(md: string): string {
       continue;
     }
     if (trimmed.startsWith('### ')) {
-      out.push('<h3 class="text-lg font-bold mt-6 mb-2">' + trimmed.slice(4).trim() + '</h3>');
+      out.push('<h3 class="text-lg font-bold mt-6 mb-2">' + inlineMd(trimmed.slice(4).trim()) + '</h3>');
       i++;
       continue;
     }
     if (trimmed.startsWith('## ')) {
-      out.push('<h2 class="text-xl font-bold mt-8 mb-3">' + trimmed.slice(3).trim() + '</h2>');
+      out.push('<h2 class="text-xl font-bold mt-8 mb-3">' + inlineMd(trimmed.slice(3).trim()) + '</h2>');
       i++;
       continue;
     }
     if (trimmed.startsWith('# ')) {
-      out.push('<h2 class="text-xl font-bold mt-8 mb-3">' + trimmed.slice(2).trim() + '</h2>');
+      out.push('<h2 class="text-xl font-bold mt-8 mb-3">' + inlineMd(trimmed.slice(2).trim()) + '</h2>');
       i++;
       continue;
     }
@@ -82,7 +113,16 @@ function md2html(md: string): string {
         blockquote.push(lines[i].trim().slice(2).trim());
         i++;
       }
-      out.push('<div class="my-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4">' + blockquote.map(p => '<p class="mb-0">' + p + '</p>').join('') + '</div>');
+      const raw = blockquote.join(' ');
+      const linkMatch = raw.match(/\[([^\]]+)\]\((https?:\/[^)]+)\)/);
+      if (linkMatch) {
+        const linkText = linkMatch[1];
+        const dirAttr = (locale === 'he' || locale === 'ar') ? ' dir="rtl"' : '';
+        out.push('<div class="cta-block rounded-xl border border-emerald-200 bg-emerald-50 p-6 my-8 text-center"' + dirAttr + '><p class="text-xl font-bold text-emerald-900 mb-2">' + (locale === 'he' ? 'לרכישת איסים – לחצו כאן' : locale === 'ar' ? 'للحصول على eSIM – اضغط هنا' : 'Ready to get your eSIM?') + '</p><a href="' + ctaHref + '" class="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700">' + linkText + '</a></div>');
+      } else {
+        const escaped = raw.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/\[([^\]]+)\]\((https?:\/[^)]+)\)/g, '<a href="$2" class="text-emerald-700 underline hover:no-underline">$1</a>');
+        out.push('<div class="my-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4"><p class="mb-0">' + escaped + '</p></div>');
+      }
       continue;
     }
     if (trimmed.startsWith('| ') && trimmed.includes('|')) {
@@ -93,8 +133,8 @@ function md2html(md: string): string {
         i++;
       }
       if (rows.length >= 1) {
-        const thead = rows[0].map(c => '<th class="p-3 text-left border border-gray-200 bg-gray-100">' + c + '</th>').join('');
-        const tbody = rows.slice(1).map(r => '<tr>' + r.map(c => '<td class="p-3 border border-gray-200">' + c + '</td>').join('') + '</tr>').join('');
+        const thead = rows[0].map(c => '<th class="p-3 text-left border border-gray-200 bg-gray-100">' + inlineMd(c) + '</th>').join('');
+        const tbody = rows.slice(1).map(r => '<tr>' + r.map(c => '<td class="p-3 border border-gray-200">' + inlineMd(c) + '</td>').join('') + '</tr>').join('');
         out.push('<table class="w-full text-sm border-collapse mb-6"><thead><tr>' + thead + '</tr></thead><tbody>' + tbody + '</tbody></table>');
       }
       continue;
@@ -105,10 +145,10 @@ function md2html(md: string): string {
         list.push(lines[i].trim().replace(/^[-]\s/, '').replace(/^\d+\.\s/, ''));
         i++;
       }
-      out.push('<ul class="list-disc pl-6 my-3 space-y-1">' + list.map(li => '<li>' + li + '</li>').join('') + '</ul>');
+      out.push('<ul class="list-disc pl-6 my-3 space-y-1">' + list.map(li => '<li>' + inlineMd(li) + '</li>').join('') + '</ul>');
       continue;
     }
-    out.push('<p class="my-3">' + trimmed + '</p>');
+    out.push('<p class="my-3">' + inlineMd(trimmed) + '</p>');
     i++;
   }
   return out.join('\n');
@@ -157,7 +197,7 @@ async function main() {
   for (let i = 0; i < 30; i++) {
     const { slug, locale } = SLUG_LOCALE[i];
     const { metaDesc, title, contentMd } = parsed[i];
-    const content = md2html(contentMd);
+    const content = md2html(contentMd, locale, getCtaHref(slug, locale));
     const excerpt = metaDesc.slice(0, 160) + (metaDesc.length > 160 ? '…' : '');
     const articleOrder = baseOrder + (locale === 'he' ? i : locale === 'en' ? i - 10 : i - 20);
 

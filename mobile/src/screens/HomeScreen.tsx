@@ -14,7 +14,8 @@ import { getPackages } from '../api/client';
 import { SearchBar } from '../components/SearchBar';
 import { DestinationCard } from '../components/DestinationCard';
 import { SectionHeader } from '../components/SectionHeader';
-import type { RootStackParamList, Destination } from '../types';
+import { PlanCard } from '../components/PlanCard';
+import type { RootStackParamList, Destination, Plan } from '../types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -36,6 +37,7 @@ export function HomeScreen() {
   });
 
   const destinations = data?.destinations ?? [];
+  const packages = data?.packages ?? [];
   const popular = useMemo(() => destinations.filter((d) => d.featured).slice(0, 10), [destinations]);
   const regions = useMemo(() => destinations.filter((d) => d.isRegional).slice(0, 8), [destinations]);
 
@@ -50,12 +52,28 @@ export function HomeScreen() {
     );
   }, [search, destinations]);
 
+  const filteredPlans = useMemo(() => {
+    if (!search.trim()) return [];
+    const q = search.toLowerCase();
+    return packages.filter(
+      (p) =>
+        p.name.toLowerCase().includes(q) ||
+        (p.locationName || '').toLowerCase().includes(q) ||
+        (p as { location?: string }).location?.toLowerCase().includes(q) ||
+        p.locationCode.toLowerCase().includes(q)
+    );
+  }, [search, packages]);
+
   const goToDestination = (d: Destination) => {
     nav.navigate('DestinationDetail', {
       locationCode: d.locationCode,
       name: d.name,
       flagCode: d.flagCode,
     });
+  };
+
+  const goToPlan = (plan: Plan) => {
+    nav.navigate('PlanDetail', { plan });
   };
 
   return (
@@ -83,20 +101,34 @@ export function HomeScreen() {
           <SearchBar value={search} onChangeText={setSearch} placeholder="Where are you traveling?" />
         </View>
 
-        {/* Search Results */}
+        {/* Search Results: Destinations + Plans */}
         {search.trim().length > 0 && (
-          <View style={styles.section}>
-            <SectionHeader title={`Results (${filtered.length})`} />
-            {filtered.length === 0 ? (
-              <Text style={styles.emptyText}>No destinations found</Text>
-            ) : (
-              filtered.slice(0, 10).map((d) => (
-                <View key={d.locationCode} style={{ paddingHorizontal: spacing.base }}>
-                  <DestinationCard destination={d} onPress={() => goToDestination(d)} />
-                </View>
-              ))
-            )}
-          </View>
+          <>
+            <View style={styles.section}>
+              <SectionHeader title={`Destinations (${filtered.length})`} />
+              {filtered.length === 0 ? (
+                <Text style={styles.emptyText}>No destinations found</Text>
+              ) : (
+                filtered.slice(0, 8).map((d) => (
+                  <View key={d.locationCode} style={{ paddingHorizontal: spacing.base }}>
+                    <DestinationCard destination={d} onPress={() => goToDestination(d)} />
+                  </View>
+                ))
+              )}
+            </View>
+            <View style={styles.section}>
+              <SectionHeader title={`Plans (${filteredPlans.length})`} />
+              {filteredPlans.length === 0 ? (
+                <Text style={styles.emptyText}>No plans found</Text>
+              ) : (
+                filteredPlans.slice(0, 10).map((p) => (
+                  <View key={p.packageCode} style={{ paddingHorizontal: spacing.base }}>
+                    <PlanCard plan={p} onPress={() => goToPlan(p)} />
+                  </View>
+                ))
+              )}
+            </View>
+          </>
         )}
 
         {/* Features */}

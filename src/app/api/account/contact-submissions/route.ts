@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getSessionForRequest } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
-  const session = await getServerSession(authOptions);
+export async function GET(request: Request) {
+  const session = await getSessionForRequest(request);
   if (!session?.user?.email) return NextResponse.json({ submissions: [] });
 
   const customer = await prisma.customer.findUnique({

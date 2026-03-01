@@ -7,6 +7,7 @@ import { TabNavigator } from './TabNavigator';
 import { DestinationDetailScreen } from '../screens/DestinationDetailScreen';
 import { PlanDetailScreen } from '../screens/PlanDetailScreen';
 import { ESimDetailScreen } from '../screens/ESimDetailScreen';
+import { InstallationGuideScreen } from '../screens/InstallationGuideScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -35,6 +36,11 @@ export function RootNavigator() {
         name="ESimDetail"
         component={ESimDetailScreen}
         options={{ title: 'eSIM Details' }}
+      />
+      <Stack.Screen
+        name="InstallationGuide"
+        component={InstallationGuideScreen}
+        options={{ title: 'Installation guide' }}
       />
     </Stack.Navigator>
   );

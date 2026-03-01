@@ -4,8 +4,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getSessionForRequest, isCustomerSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 
@@ -31,10 +30,8 @@ export async function POST(request: Request) {
     }
 
     const { items, customerEmail, customerName, deviceType } = parsed.data;
-    const session = await getServerSession(authOptions);
-    const userId = (session?.user as { id?: string; type?: string } | undefined)?.type === 'customer'
-      ? (session?.user as { id?: string })?.id ?? null
-      : null;
+    const session = await getSessionForRequest(request);
+    const userId = isCustomerSession(session) ? session.user.id : null;
 
     const planIds = items.map((i) => i.planId);
     const overrides = await prisma.packageOverride.findMany({

@@ -1,19 +1,16 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getSessionForRequest, isCustomerSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { getEsimUsage } from '@/lib/esimaccess';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
-  const session = await getServerSession(authOptions);
-  const type = (session?.user as { type?: string })?.type;
-  const userId = (session?.user as { id?: string })?.id;
-
-  if (type !== 'customer' || !userId) {
+  const session = await getSessionForRequest(request);
+  if (!isCustomerSession(session)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+  const userId = session.user.id;
 
   const { searchParams } = new URL(request.url);
   const iccid = searchParams.get('iccid');

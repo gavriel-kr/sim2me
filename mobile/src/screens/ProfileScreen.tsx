@@ -2,34 +2,58 @@ import React from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking, Alert,
 } from 'react-native';
+import { useRouter, useNavigation } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { colors, spacing, radius, fontSize } from '../theme';
+import { useAuthStore } from '../store/authStore';
+import { API_BASE_URL } from '../nav';
+import type { RootStackParamList } from '../types';
+
+const baseUrl = API_BASE_URL.replace(/\/$/, '');
 
 const MENU_SECTIONS = [
   {
     title: 'Support',
     items: [
-      { icon: 'help-circle-outline', label: 'Help Center', url: 'https://www.sim2me.net/help' },
-      { icon: 'chatbubble-outline', label: 'Contact Us', url: 'https://www.sim2me.net/contact' },
-      { icon: 'document-text-outline', label: 'How It Works', url: 'https://www.sim2me.net/how-it-works' },
-      { icon: 'phone-portrait-outline', label: 'Compatible Devices', url: 'https://www.sim2me.net/compatible-devices' },
+      { icon: 'help-circle-outline', label: 'Help Center', url: `${baseUrl}/help`, internal: false },
+      { icon: 'chatbubble-outline', label: 'Contact Us', url: `${baseUrl}/contact`, internal: false },
+      { icon: 'book-outline', label: 'Installation guide', url: 'InstallationGuide', internal: true },
+      { icon: 'document-text-outline', label: 'How It Works', url: `${baseUrl}/how-it-works`, internal: false },
+      { icon: 'phone-portrait-outline', label: 'Compatible Devices', url: `${baseUrl}/compatible-devices`, internal: false },
+      { icon: 'receipt-outline', label: 'Order history & invoices', url: `${baseUrl}/account`, internal: false },
     ],
   },
   {
     title: 'Legal',
     items: [
-      { icon: 'shield-outline', label: 'Privacy Policy', url: 'https://www.sim2me.net/privacy' },
-      { icon: 'document-outline', label: 'Terms of Service', url: 'https://www.sim2me.net/terms' },
-      { icon: 'refresh-outline', label: 'Refund Policy', url: 'https://www.sim2me.net/refund' },
+      { icon: 'shield-outline', label: 'Privacy Policy', url: `${baseUrl}/privacy`, internal: false },
+      { icon: 'document-outline', label: 'Terms of Service', url: `${baseUrl}/terms`, internal: false },
+      { icon: 'refresh-outline', label: 'Refund Policy', url: `${baseUrl}/refund`, internal: false },
     ],
   },
 ];
 
+type Nav = NativeStackNavigationProp<RootStackParamList>;
+
 export function ProfileScreen() {
-  const openLink = (url: string) => {
+  const router = useRouter();
+  const nav = useNavigation<Nav>();
+  const { user, logout } = useAuthStore();
+
+  const openLink = (url: string, internal?: boolean) => {
+    if (internal && url === 'InstallationGuide') {
+      nav.navigate('InstallationGuide');
+      return;
+    }
     Linking.openURL(url).catch(() => Alert.alert('Error', 'Could not open page'));
   };
+
+  async function handleSignOut() {
+    await logout();
+    router.replace('/(auth)/login');
+  }
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -39,23 +63,23 @@ export function ProfileScreen() {
           <View style={styles.avatar}>
             <Ionicons name="person" size={32} color={colors.white} />
           </View>
-          <Text style={styles.name}>Welcome to Sim2Me</Text>
-          <Text style={styles.email}>Sign in to sync eSIMs and view status</Text>
+          <Text style={styles.name}>{user?.name ? `Hi, ${user.name}` : 'Sim2Me'}</Text>
+          <Text style={styles.email}>{user?.email ?? 'Signed in — eSIMs synced with account'}</Text>
         </View>
 
-        {/* Connect CTA */}
+        {/* Sign out */}
         <TouchableOpacity
           style={styles.signInButton}
-          onPress={() => openLink('https://www.sim2me.net/account')}
+          onPress={handleSignOut}
           activeOpacity={0.85}
         >
           <View style={styles.signInButtonContent}>
-            <Ionicons name="log-in-outline" size={20} color={colors.white} />
-            <Text style={styles.signInText}>Sign In / Create Account</Text>
+            <Ionicons name="log-out-outline" size={20} color={colors.white} />
+            <Text style={styles.signInText}>Sign out</Text>
           </View>
         </TouchableOpacity>
         <Text style={styles.connectHint}>
-          Connect your account on the website to see your eSIMs and orders in the app.
+          Your eSIMs and orders are synced with {API_BASE_URL.replace(/^https?:\/\//, '')}.
         </Text>
 
         {/* Menu Sections */}
@@ -67,7 +91,7 @@ export function ProfileScreen() {
                 <TouchableOpacity
                   key={item.label}
                   style={[styles.menuItem, i < section.items.length - 1 && styles.menuItemBorder]}
-                  onPress={() => openLink(item.url)}
+                  onPress={() => openLink(item.url, 'internal' in item && item.internal)}
                   activeOpacity={0.6}
                 >
                   <Ionicons name={item.icon as any} size={20} color={colors.textSecondary} />

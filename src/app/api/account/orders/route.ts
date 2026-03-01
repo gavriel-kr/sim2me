@@ -1,18 +1,15 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getSessionForRequest, isCustomerSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
-  const session = await getServerSession(authOptions);
-  const type = (session?.user as { type?: string })?.type;
-  const id = (session?.user as { id?: string })?.id;
-
-  if (type !== 'customer' || !id) {
+export async function GET(request: Request) {
+  const session = await getSessionForRequest(request);
+  if (!isCustomerSession(session)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+  const id = session.user.id;
 
   const customer = await prisma.customer.findUnique({
     where: { id },

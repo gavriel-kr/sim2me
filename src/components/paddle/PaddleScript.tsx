@@ -55,7 +55,6 @@ export function usePaddle() {
       onCompleted?: (transactionId: string) => void;
     }) => {
       if (typeof window === 'undefined' || !window.Paddle?.Checkout) {
-        console.error('Paddle not loaded');
         return false;
       }
       const { onCompleted, ...rest } = opts;
