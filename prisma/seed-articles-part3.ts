@@ -1,6 +1,6 @@
 /**
- * Seed script: 45 SEO articles from Part 3 (15 HE, 15 EN, 15 AR)
- * Reads from prisma/content-part3.md, parses markdown, converts to HTML, upserts to DB.
+ * Seed script: 60 SEO articles from Part 3 (20 HE, 20 EN, 20 AR)
+ * Reads from prisma/content-part3.md, parses markdown, converts to HTML, appends CTA block, upserts to DB.
  * Run: npx tsx prisma/seed-articles-part3.ts
  */
 import { PrismaClient } from '@prisma/client';
@@ -13,31 +13,51 @@ const SITE = 'https://www.sim2me.net';
 
 /** Article slug → destination path segment (for /destinations/{code}) */
 const SLUG_TO_DEST: Record<string, string> = {
-  'esim-switzerland': 'ch',
-  'esim-czech-republic': 'cz',
-  'esim-prague': 'cz',
-  'esim-austria': 'at',
-  'esim-poland': 'pl',
-  'esim-georgia': 'ge',
-  'esim-south-korea': 'kr',
-  'esim-mexico': 'mx',
-  'esim-philippines': 'ph',
-  'esim-brazil': 'br',
-  'esim-montenegro': 'me',
-  'esim-sri-lanka': 'lk',
-  'esim-maldives': 'mv',
-  'esim-india': 'in',
-  'esim-indonesia': 'id',
-  'esim-norway': 'no',
-  'esim-sweden': 'se',
-  'esim-denmark': 'dk',
+  'esim-bulgaria': 'bg',
+  'esim-romania': 'ro',
+  'esim-belgium': 'be',
+  'esim-ireland': 'ie',
+  'esim-iceland': 'is',
+  'esim-finland': 'fi',
+  'esim-costa-rica': 'cr',
+  'esim-panama': 'pa',
+  'esim-argentina': 'ar',
+  'esim-colombia': 'co',
+  'esim-peru': 'pe',
+  'esim-chile': 'cl',
   'esim-south-africa': 'za',
-  'esim-croatia': 'hr',
-  'esim-azerbaijan': 'az',
-  'esim-bosnia-herzegovina': 'ba',
+  'esim-egypt': 'eg',
+  'esim-jordan': 'jo',
+  'esim-singapore': 'sg',
+  'esim-slovenia': 'si',
+  'esim-slovakia': 'sk',
+  'esim-estonia': 'ee',
+  'esim-latvia': 'lv',
+  'esim-new-zealand': 'nz',
+  'esim-israel': 'il',
+  'esim-saudi-arabia': 'sa',
+  'esim-qatar': 'qa',
+  'esim-kuwait': 'kw',
+  'esim-kenya': 'ke',
+  'esim-tanzania': 'tz',
+  'esim-malaysia': 'my',
+  'esim-cambodia': 'kh',
+  'esim-laos': 'la',
+  'esim-taiwan': 'tw',
+  'esim-hong-kong': 'hk',
+  'esim-russia': 'ru',
+  'esim-china': 'cn',
+  'esim-bahrain': 'bh',
+  'esim-oman': 'om',
+  'esim-tunisia': 'tn',
+  'esim-algeria': 'dz',
+  'esim-kazakhstan': 'kz',
+  'esim-uzbekistan': 'uz',
+  'esim-seychelles': 'sc',
+  'esim-mauritius': 'mu',
+  'esim-sri-lanka': 'lk',
   'esim-hungary': 'hu',
-  'esim-canada': 'ca',
-  'esim-australia': 'au',
+  'esim-poland': 'pl',
 };
 
 function getCtaHref(slug: string, locale: 'he' | 'en' | 'ar'): string {
@@ -47,53 +67,73 @@ function getCtaHref(slug: string, locale: 'he' | 'en' | 'ar'): string {
   return `${SITE}${prefix}/destinations/${code}`;
 }
 
-// 45 articles: HE 0–14, EN 15–29, AR 30–44
+/** CTA button text per locale (generic – no country name) */
+function getCtaButtonText(locale: 'he' | 'en' | 'ar'): string {
+  return locale === 'he' ? '← תוכניות eSIM' : locale === 'ar' ? 'خطط eSIM ←' : 'eSIM plans →';
+}
+
+// 60 articles: HE 0–19, EN 20–39, AR 40–59 (order matches parsePart3 output)
 const SLUG_LOCALE: { slug: string; locale: 'he' | 'en' | 'ar' }[] = [
-  { slug: 'esim-switzerland', locale: 'he' },
-  { slug: 'esim-czech-republic', locale: 'he' },
-  { slug: 'esim-prague', locale: 'he' },
-  { slug: 'esim-austria', locale: 'he' },
-  { slug: 'esim-poland', locale: 'he' },
-  { slug: 'esim-georgia', locale: 'he' },
-  { slug: 'esim-south-korea', locale: 'he' },
-  { slug: 'esim-mexico', locale: 'he' },
-  { slug: 'esim-philippines', locale: 'he' },
-  { slug: 'esim-brazil', locale: 'he' },
-  { slug: 'esim-montenegro', locale: 'he' },
-  { slug: 'esim-sri-lanka', locale: 'he' },
-  { slug: 'esim-maldives', locale: 'he' },
-  { slug: 'esim-india', locale: 'he' },
-  { slug: 'esim-indonesia', locale: 'he' },
-  { slug: 'esim-mexico', locale: 'en' },
-  { slug: 'esim-brazil', locale: 'en' },
-  { slug: 'esim-south-korea', locale: 'en' },
-  { slug: 'esim-philippines', locale: 'en' },
-  { slug: 'esim-norway', locale: 'en' },
-  { slug: 'esim-sweden', locale: 'en' },
-  { slug: 'esim-denmark', locale: 'en' },
-  { slug: 'esim-poland', locale: 'en' },
-  { slug: 'esim-czech-republic', locale: 'en' },
-  { slug: 'esim-austria', locale: 'en' },
-  { slug: 'esim-south-africa', locale: 'en' },
-  { slug: 'esim-maldives', locale: 'en' },
-  { slug: 'esim-india', locale: 'en' },
-  { slug: 'esim-indonesia', locale: 'en' },
-  { slug: 'esim-croatia', locale: 'en' },
-  { slug: 'esim-switzerland', locale: 'ar' },
-  { slug: 'esim-austria', locale: 'ar' },
-  { slug: 'esim-georgia', locale: 'ar' },
-  { slug: 'esim-azerbaijan', locale: 'ar' },
-  { slug: 'esim-bosnia-herzegovina', locale: 'ar' },
-  { slug: 'esim-indonesia', locale: 'ar' },
-  { slug: 'esim-maldives', locale: 'ar' },
-  { slug: 'esim-south-korea', locale: 'ar' },
-  { slug: 'esim-philippines', locale: 'ar' },
-  { slug: 'esim-india', locale: 'ar' },
+  { slug: 'esim-bulgaria', locale: 'he' },
+  { slug: 'esim-romania', locale: 'he' },
+  { slug: 'esim-belgium', locale: 'he' },
+  { slug: 'esim-ireland', locale: 'he' },
+  { slug: 'esim-iceland', locale: 'he' },
+  { slug: 'esim-finland', locale: 'he' },
+  { slug: 'esim-costa-rica', locale: 'he' },
+  { slug: 'esim-panama', locale: 'he' },
+  { slug: 'esim-argentina', locale: 'he' },
+  { slug: 'esim-colombia', locale: 'he' },
+  { slug: 'esim-peru', locale: 'he' },
+  { slug: 'esim-chile', locale: 'he' },
+  { slug: 'esim-south-africa', locale: 'he' },
+  { slug: 'esim-egypt', locale: 'he' },
+  { slug: 'esim-jordan', locale: 'he' },
+  { slug: 'esim-singapore', locale: 'he' },
+  { slug: 'esim-slovenia', locale: 'he' },
+  { slug: 'esim-slovakia', locale: 'he' },
+  { slug: 'esim-estonia', locale: 'he' },
+  { slug: 'esim-latvia', locale: 'he' },
+  { slug: 'esim-new-zealand', locale: 'en' },
+  { slug: 'esim-ireland', locale: 'en' },
+  { slug: 'esim-israel', locale: 'en' },
+  { slug: 'esim-saudi-arabia', locale: 'en' },
+  { slug: 'esim-qatar', locale: 'en' },
+  { slug: 'esim-kuwait', locale: 'en' },
+  { slug: 'esim-kenya', locale: 'en' },
+  { slug: 'esim-tanzania', locale: 'en' },
+  { slug: 'esim-peru', locale: 'en' },
+  { slug: 'esim-argentina', locale: 'en' },
+  { slug: 'esim-colombia', locale: 'en' },
+  { slug: 'esim-costa-rica', locale: 'en' },
+  { slug: 'esim-malaysia', locale: 'en' },
+  { slug: 'esim-cambodia', locale: 'en' },
+  { slug: 'esim-laos', locale: 'en' },
+  { slug: 'esim-taiwan', locale: 'en' },
+  { slug: 'esim-hong-kong', locale: 'en' },
+  { slug: 'esim-belgium', locale: 'en' },
+  { slug: 'esim-finland', locale: 'en' },
+  { slug: 'esim-iceland', locale: 'en' },
+  { slug: 'esim-russia', locale: 'ar' },
+  { slug: 'esim-china', locale: 'ar' },
+  { slug: 'esim-jordan', locale: 'ar' },
+  { slug: 'esim-kuwait', locale: 'ar' },
+  { slug: 'esim-qatar', locale: 'ar' },
+  { slug: 'esim-bahrain', locale: 'ar' },
+  { slug: 'esim-oman', locale: 'ar' },
+  { slug: 'esim-tunisia', locale: 'ar' },
+  { slug: 'esim-algeria', locale: 'ar' },
+  { slug: 'esim-kazakhstan', locale: 'ar' },
+  { slug: 'esim-uzbekistan', locale: 'ar' },
+  { slug: 'esim-seychelles', locale: 'ar' },
+  { slug: 'esim-mauritius', locale: 'ar' },
+  { slug: 'esim-sri-lanka', locale: 'ar' },
+  { slug: 'esim-singapore', locale: 'ar' },
+  { slug: 'esim-belgium', locale: 'ar' },
   { slug: 'esim-hungary', locale: 'ar' },
-  { slug: 'esim-norway', locale: 'ar' },
-  { slug: 'esim-canada', locale: 'ar' },
-  { slug: 'esim-australia', locale: 'ar' },
-  { slug: 'esim-brazil', locale: 'ar' },
+  { slug: 'esim-poland', locale: 'ar' },
+  { slug: 'esim-ireland', locale: 'ar' },
+  { slug: 'esim-costa-rica', locale: 'ar' },
 ];
 
 /** Inline markdown (bold + links) */
@@ -177,68 +217,69 @@ function md2html(md: string, locale: 'he' | 'en' | 'ar', ctaHref: string): strin
   return out.join('\n');
 }
 
-/** Parse content-part3.md: ## מאמר 1 / ## Article 1 / ## المقال 1 → meta, title, content */
+/** Strip lines that contain CTA placeholders (we append a proper CTA block at the end) */
+function stripPlaceholderLines(md: string): string {
+  const placeholders = ['[קישור לעמוד המוצר]', '[Link to product page]', '[رابط المنتج]'];
+  return md
+    .split(/\n/)
+    .filter((line) => !placeholders.some((p) => line.includes(p)))
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+/** Parse content-part3.md: blocks separated by ---, each with # Title and **Meta Description:** or **وصف ميتا:** */
 function parsePart3(content: string): { metaDesc: string; title: string; contentMd: string }[] {
   const articles: { metaDesc: string; title: string; contentMd: string }[] = [];
-  const re = /\n## (מאמר \d+|Article \d+|المقال \d+)\s*\n/g;
-  let m: RegExpExecArray | null;
-  const segments: { start: number; end: number }[] = [];
-  while ((m = re.exec(content)) !== null) {
-    if (segments.length) segments[segments.length - 1].end = m.index;
-    segments.push({ start: m.index, end: content.length });
-  }
-  for (const seg of segments) {
-    const block = content.slice(seg.start, seg.end).trim();
-    const metaMatch =
-      block.match(/\*\*Meta Description:\*\*\s*(.+?)(?=\n\n#\s)/s) ||
-      block.match(/\*\*وصف ميتا:\*\*\s*(.+?)(?=\n\n#\s)/s);
-    const metaDesc = metaMatch ? metaMatch[1].trim() : '';
-    const titleMatch = block.match(/\n# ([^\n]+)/);
-    const title = titleMatch ? titleMatch[1].trim() : '';
-    const titleLineMatch = block.match(/\n# [^\n]+/);
-    let contentMd = titleLineMatch ? block.slice(block.indexOf(titleLineMatch[0]) + titleLineMatch[0].length).trim() : block;
-    contentMd = contentMd.replace(/\n---\s*$/s, '').trim();
+  const blocks = content.split(/\n---\n/);
+  for (const raw of blocks) {
+    const block = raw
+      .replace(/<!-- ARTICLE \d+ -->/g, '')
+      .replace(/<div dir="rtl">/g, '')
+      .replace(/<\/div>/g, '')
+      .trim();
+    const hasMeta = block.includes('**Meta Description:**') || block.includes('**وصف ميتا:**');
+    const titleMatch = block.match(/^# ([^\n#]+)/m);
+    if (!hasMeta || !titleMatch) continue;
+    const title = titleMatch[1].trim();
+    const metaLineMatch = block.match(/\*\*Meta Description:\*\*\s*(.+?)(?=\n|$)/s) || block.match(/\*\*وصف ميتا:\*\*\s*(.+?)(?=\n|$)/s);
+    const metaDesc = metaLineMatch ? metaLineMatch[1].trim() : '';
+    let afterTitle = block.slice(block.indexOf(titleMatch[0]) + titleMatch[0].length).trim();
+    afterTitle = afterTitle.replace(/^\s*\*\*Meta Description:\*\*[^\n]*\n?/m, '').replace(/^\s*\*\*وصف ميتا:\*\*[^\n]*\n?/m, '').trim();
+    const contentMd = stripPlaceholderLines(afterTitle);
     articles.push({ metaDesc, title, contentMd });
   }
   return articles;
 }
 
-/** Replace placeholder CTA lines with blockquote and in-text placeholders with real link */
-function injectCta(contentMd: string, ctaHref: string, locale: 'he' | 'en' | 'ar'): string {
-  const linkText = locale === 'he' ? 'לחצו כאן לרכישת eSIM' : locale === 'ar' ? 'اضغط هنا لشراء eSIM' : 'Get your eSIM';
-  const ctaBlock = `\n\n> **${locale === 'he' ? 'הזמינו עכשיו' : locale === 'ar' ? 'اطلب الآن' : 'Ready to order?'}** [${linkText}](${ctaHref})\n`;
-  let out = contentMd
-    .replace(/\n👉\s*\[קישור לעמוד המוצר\]\s*\n?/g, ctaBlock)
-    .replace(/\n👉\s*\[Link to product page\]\s*\n?/g, ctaBlock)
-    .replace(/\n👉\s*\[رابط المنتج\]\s*\n?/g, ctaBlock);
-  const inTextLink = locale === 'he' ? 'לחצו כאן' : locale === 'ar' ? 'هنا' : 'here';
-  out = out
-    .replace(/\[קישור לעמוד המוצר\]/g, `[${inTextLink}](${ctaHref})`)
-    .replace(/\[Link to product page\]/g, `[${inTextLink}](${ctaHref})`)
-    .replace(/\[رابط المنتج\]/g, `[${inTextLink}](${ctaHref})`);
-  return out;
+/** Build CTA block HTML (button style, no "CTA" label) */
+function buildCtaBlockHtml(ctaHref: string, locale: 'he' | 'en' | 'ar'): string {
+  const dirAttr = locale === 'he' || locale === 'ar' ? ' dir="rtl"' : '';
+  const heading = locale === 'he' ? 'לרכישת איסים – לחצו כאן' : locale === 'ar' ? 'للحصول على eSIM – اضغط هنا' : 'Ready to get your eSIM?';
+  const buttonText = getCtaButtonText(locale);
+  return `<div class="cta-block rounded-xl border border-emerald-200 bg-emerald-50 p-6 my-8 text-center"${dirAttr}><p class="text-xl font-bold text-emerald-900 mb-2">${heading}</p><a href="${ctaHref}" class="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700">${buttonText}</a></div>`;
 }
 
 async function main() {
   const mdPath = path.join(__dirname, 'content-part3.md');
   if (!fs.existsSync(mdPath)) {
-    console.error('Missing prisma/content-part3.md. Copy sim2me-45-articles-seo.md there.');
+    console.error('Missing prisma/content-part3.md. Copy sim2me_all_60_articles.md there.');
     process.exit(1);
   }
   const raw = fs.readFileSync(mdPath, 'utf-8');
   const parsed = parsePart3(raw);
-  if (parsed.length !== 45) {
-    console.error('Expected 45 articles, got', parsed.length);
+  if (parsed.length !== 60) {
+    console.error('Expected 60 articles, got', parsed.length);
     process.exit(1);
   }
 
   const baseOrder = 80;
-  for (let i = 0; i < 45; i++) {
+  for (let i = 0; i < 60; i++) {
     const { slug, locale } = SLUG_LOCALE[i];
     const { metaDesc, title, contentMd } = parsed[i];
     const ctaHref = getCtaHref(slug, locale);
-    const contentWithCta = injectCta(contentMd, ctaHref, locale);
-    const content = md2html(contentWithCta, locale, ctaHref);
+    const bodyHtml = md2html(contentMd, locale, ctaHref);
+    const content = bodyHtml + '\n' + buildCtaBlockHtml(ctaHref, locale);
     const excerpt = metaDesc.slice(0, 160) + (metaDesc.length > 160 ? '…' : '');
     const articleOrder = baseOrder + i;
 
@@ -268,7 +309,7 @@ async function main() {
     });
     console.log(`[${locale}] ${slug}: ${title.slice(0, 45)}…`);
   }
-  console.log('Done. 45 part3 articles seeded.');
+  console.log('Done. 60 part3 articles seeded.');
 }
 
 main()
