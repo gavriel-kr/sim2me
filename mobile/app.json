@@ -33,13 +33,20 @@
       "favicon": "./assets/favicon.png",
       "name": "Sim2Me eSIM",
       "shortName": "Sim2Me",
-      "themeColor": "#0d9f6e", "display": "standalone", "startUrl": "/app/", "backgroundColor": "#f8fafc"
+      "themeColor": "#0d9f6e",
+      "display": "standalone",
+      "startUrl": "/app/",
+      "backgroundColor": "#f8fafc"
     },
     "experiments": {
       "baseUrl": "/app"
     },
     "extra": {
-      "apiBaseUrl": "https://www.sim2me.net"
+      "apiBaseUrl": "https://www.sim2me.net",
+      "router": {},
+      "eas": {
+        "projectId": "defef745-ddf1-4222-9fe7-8674cd4576ac"
+      }
     },
     "plugins": [
       "expo-router",
