@@ -42,3 +42,8 @@ next-env.d.ts
 
 /src/generated/prisma
 .cursor/debug.log
+
+# Part7: generated from docx (run extract-docx.js to regenerate)
+prisma/extracted-75*.html
+prisma/75docx
+prisma/75temp.zip
