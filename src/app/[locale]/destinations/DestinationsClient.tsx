@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { createSharedPathnamesNavigation } from 'next-intl/navigation';
 import { routing } from '@/i18n/routing';
@@ -163,6 +164,7 @@ function translateContinent(continent: string, locale: string): string {
 export function DestinationsClient({ locale = 'en' }: { locale?: string }) {
   const t = useTranslations('destinations');
   const searchRef = useRef<HTMLInputElement>(null);
+  const searchParams = useSearchParams();
 
   /* ── Localized filter labels ────────────────────────────────── */
   const PRICE_RANGES = useMemo(() => PRICE_DEFS.map((d) => ({
@@ -184,7 +186,7 @@ export function DestinationsClient({ locale = 'en' }: { locale?: string }) {
   ], [t]);
 
   /* ── State ─────────────────────────────────────────────────── */
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(() => searchParams.get('q') ?? '');
   const [tab, setTab] = useState<'countries' | 'regions'>('countries');
   const [continent, setContinent] = useState('all');
   const [priceIdx, setPriceIdx] = useState(0);
