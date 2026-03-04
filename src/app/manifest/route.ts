@@ -5,10 +5,10 @@ import { brandConfig } from '@/config/brand';
 export const dynamic = 'force-dynamic';
 
 const STATIC_ICONS = [
-  { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' as const },
-  { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' as const },
-  { src: '/icons/icon-maskable-192.png', sizes: '192x192', type: 'image/png', purpose: 'maskable' as const },
-  { src: '/icons/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' as const },
+  { src: '/icons/icon-192.png?v=2', sizes: '192x192', type: 'image/png', purpose: 'any' as const },
+  { src: '/icons/icon-512.png?v=2', sizes: '512x512', type: 'image/png', purpose: 'any' as const },
+  { src: '/icons/icon-maskable-192.png?v=2', sizes: '192x192', type: 'image/png', purpose: 'maskable' as const },
+  { src: '/icons/icon-maskable-512.png?v=2', sizes: '512x512', type: 'image/png', purpose: 'maskable' as const },
 ];
 
 const BASE_MANIFEST = {
@@ -26,8 +26,8 @@ const BASE_MANIFEST = {
   icons: STATIC_ICONS,
   screenshots: [],
   shortcuts: [
-    { name: 'Browse Destinations', short_name: 'Destinations', url: '/destinations', icons: [{ src: '/icons/icon-192.png', sizes: '192x192' }] },
-    { name: 'Get Help', short_name: 'Help', url: '/help', icons: [{ src: '/icons/icon-192.png', sizes: '192x192' }] },
+    { name: 'Browse Destinations', short_name: 'Destinations', url: '/destinations', icons: [{ src: '/icons/icon-192.png?v=2', sizes: '192x192' }] },
+    { name: 'Get Help', short_name: 'Help', url: '/help', icons: [{ src: '/icons/icon-192.png?v=2', sizes: '192x192' }] },
   ],
   related_applications: [],
   prefer_related_applications: false,
@@ -48,7 +48,7 @@ export async function GET() {
   return NextResponse.json({ ...BASE_MANIFEST, icons }, {
     headers: {
       'Content-Type': 'application/manifest+json',
-      'Cache-Control': 'public, max-age=300, stale-while-revalidate=3600',
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
     },
   });
 }
