@@ -97,6 +97,7 @@ export function InstallAppBanner() {
       const { outcome } = await deferredPrompt.userChoice;
       if (outcome === 'accepted') {
         setShowBanner(false);
+        window.location.href = '/app/';
       }
       setDeferredPrompt(null);
     } else if (isIOS) {
