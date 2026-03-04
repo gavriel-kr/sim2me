@@ -24,7 +24,7 @@ export function Hero() {
           <div className="animate-fade-up">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-sm font-medium text-primary">
               <Zap className="h-3.5 w-3.5" aria-hidden="true" />
-              Instant activation worldwide
+              {t('instantActivation')}
             </div>
             <h1 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl lg:text-6xl lg:leading-[1.1]">
               {t('heroTitle')}
@@ -40,7 +40,7 @@ export function Hero() {
                 href="/how-it-works"
                 className="inline-flex items-center justify-center rounded-xl border border-border bg-white px-8 py-3.5 text-base font-semibold text-foreground shadow-sm transition-all hover:bg-muted hover:shadow-md"
               >
-                How it works
+                {t('howItWorksButton')}
               </IntlLink>
             </div>
           </div>

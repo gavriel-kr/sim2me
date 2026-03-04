@@ -35,7 +35,11 @@
     "newsletterPlaceholder": "بريدك الإلكتروني",
     "newsletterButton": "اشترك",
     "appComingSoon": "تطبيقنا قريباً",
-    "appNotify": "أخبرني عند الإطلاق"
+    "appNotify": "أخبرني عند الإطلاق",
+    "instantActivation": "تفعيل فوري في جميع أنحاء العالم",
+    "howItWorksButton": "كيف يعمل",
+    "valueSectionTitle": "لماذا يختار المسافرون Sim2Me",
+    "valueSectionSubtitle": "أبسط طريقة للبقاء متصلاً في الخارج"
   },
   "destinations": {
     "title": "الوجهات",

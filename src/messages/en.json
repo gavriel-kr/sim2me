@@ -35,7 +35,11 @@
     "newsletterPlaceholder": "Your email",
     "newsletterButton": "Subscribe",
     "appComingSoon": "Our app is coming soon",
-    "appNotify": "Get notified when we launch"
+    "appNotify": "Get notified when we launch",
+    "instantActivation": "Instant activation worldwide",
+    "howItWorksButton": "How it works",
+    "valueSectionTitle": "Why travelers choose Sim2Me",
+    "valueSectionSubtitle": "The simplest way to stay connected abroad"
   },
   "destinations": {
     "title": "Destinations",

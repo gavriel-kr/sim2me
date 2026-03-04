@@ -35,7 +35,11 @@
     "newsletterPlaceholder": "האימייל שלך",
     "newsletterButton": "הירשם",
     "appComingSoon": " האפליקציה שלנו בקרוב",
-    "appNotify": "קבל הודעה כשנשיק"
+    "appNotify": "קבל הודעה כשנשיק",
+    "instantActivation": "הפעלה מיידית בכל העולם",
+    "howItWorksButton": "איך זה עובד",
+    "valueSectionTitle": "למה מטיילים בוחרים ב-Sim2Me",
+    "valueSectionSubtitle": "הדרך הפשוטה ביותר להישאר מחובר בחו\"ל"
   },
   "destinations": {
     "title": "יעדים",

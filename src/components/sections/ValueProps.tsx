@@ -17,10 +17,10 @@ export function ValueProps() {
       <div className="container px-4">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl lg:text-4xl">
-            Why travelers choose Sim2Me
+            {t('valueSectionTitle')}
           </h2>
           <p className="mt-3 text-muted-foreground sm:text-lg">
-            The simplest way to stay connected abroad
+            {t('valueSectionSubtitle')}
           </p>
         </div>
         <div className="mt-14 grid gap-6 sm:grid-cols-3 sm:gap-8">
