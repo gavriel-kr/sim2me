@@ -5,10 +5,44 @@ import { DestinationDetailClient } from './DestinationDetailClient';
 export const dynamic = 'force-dynamic';
 
 interface PageProps {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ locale: string; slug: string }>;
 }
 
-async function getDestinationData(slug: string) {
+const REGION_TRANSLATIONS: Record<string, Record<string, string>> = {
+  he: {
+    'Africa': 'אפריקה', 'Europe': 'אירופה', 'Asia': 'אסיה',
+    'North America': 'צפון אמריקה', 'South America': 'דרום אמריקה',
+    'Oceania': 'אוקיאניה', 'Middle East': 'המזרח התיכון', 'Caribbean': 'הקריביים',
+    'Global': 'עולמי', 'N. America': 'צפון אמריקה', 'S. America': 'דרום אמריקה',
+  },
+  ar: {
+    'Africa': 'أفريقيا', 'Europe': 'أوروبا', 'Asia': 'آسيا',
+    'North America': 'أمريكا الشمالية', 'South America': 'أمريكا الجنوبية',
+    'Oceania': 'أوقيانوسيا', 'Middle East': 'الشرق الأوسط', 'Caribbean': 'الكاريبي',
+    'Global': 'عالمي', 'N. America': 'أمريكا الشمالية', 'S. America': 'أمريكا الجنوبية',
+  },
+};
+
+function translateCountryName(name: string, isoCode: string, isRegional: boolean, locale: string): string {
+  if (locale === 'en') return name;
+  if (!isRegional && isoCode.length === 2) {
+    try {
+      const displayName = new Intl.DisplayNames([locale], { type: 'region' }).of(isoCode.toUpperCase());
+      if (displayName) return displayName;
+    } catch { /* fallback */ }
+  }
+  if (isRegional) {
+    const translations = REGION_TRANSLATIONS[locale];
+    if (translations) {
+      for (const [en, local] of Object.entries(translations)) {
+        if (name.includes(en)) return name.replace(en, local);
+      }
+    }
+  }
+  return name;
+}
+
+async function getDestinationData(slug: string, locale: string = 'en') {
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
   const locationCode = slug.toUpperCase();
 
@@ -25,14 +59,17 @@ async function getDestinationData(slug: string) {
     // Build destination info from first package
     const firstPkg = packages[0];
     const flagCode = firstPkg.flagCode || slug;
+    const isoCode = firstPkg.locationCode || slug.toUpperCase();
+    const isRegional = firstPkg.isRegional || false;
+    const englishName = firstPkg.location || slug.toUpperCase();
     const destination = {
       id: slug,
-      name: firstPkg.location || slug.toUpperCase(),
+      name: translateCountryName(englishName, isoCode, isRegional, locale),
       slug,
       region: '',
-      isoCode: firstPkg.locationCode || slug.toUpperCase(),
+      isoCode,
       flagUrl: `https://flagcdn.com/w80/${flagCode}.png`,
-      isRegional: firstPkg.isRegional || false,
+      isRegional,
       popular: packages.some((p: { featured: boolean }) => p.featured),
       operatorCount: 1,
       planCount: packages.length,
@@ -99,8 +136,8 @@ async function getDestinationData(slug: string) {
 }
 
 export async function generateMetadata({ params }: PageProps) {
-  const { slug } = await params;
-  const data = await getDestinationData(slug);
+  const { slug, locale } = await params;
+  const data = await getDestinationData(slug, locale);
   if (!data) return { title: 'Destination' };
   const { destination } = data;
   const minPrice = destination.fromPrice > 0 ? ` from $${destination.fromPrice.toFixed(2)}` : '';
@@ -112,8 +149,8 @@ export async function generateMetadata({ params }: PageProps) {
 }
 
 export default async function DestinationDetailPage({ params }: PageProps) {
-  const { slug } = await params;
-  const data = await getDestinationData(slug);
+  const { slug, locale } = await params;
+  const data = await getDestinationData(slug, locale);
   if (!data) notFound();
 
   return (
