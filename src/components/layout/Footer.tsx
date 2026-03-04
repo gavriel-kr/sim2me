@@ -50,7 +50,6 @@ const defaultFooterLogo = (
 export function Footer() {
   const t = useTranslations('nav');
   const tFooter = useTranslations('footer');
-  const tHome = useTranslations('home');
   const { openCookieSettings } = useCookieConsent();
   const locale = useLocale();
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
@@ -207,19 +206,6 @@ export function Footer() {
           </div>
         </div>
 
-        {brandConfig.appStoreComingSoon && (
-          <div className="mt-12 rounded-2xl border border-border/60 bg-white p-6 text-center shadow-card sm:p-8">
-            <p className="font-bold text-foreground">{tHome('appComingSoon')}</p>
-            <p className="mt-1 text-sm text-muted-foreground">{tHome('appNotify')}</p>
-            <IntlLink
-              href="/contact"
-              className="mt-4 inline-flex items-center gap-2 rounded-xl bg-primary/10 px-5 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/20"
-            >
-              <Mail className="h-4 w-4" />
-              Get notified
-            </IntlLink>
-          </div>
-        )}
 
         <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-border/40 pt-8 sm:flex-row">
           <p className="text-sm text-muted-foreground">
