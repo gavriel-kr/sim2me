@@ -21,7 +21,7 @@ export function CTASection() {
       <div className="relative container mx-auto max-w-3xl px-4 text-center">
         <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-sm font-medium text-white/90">
           <Plane className="h-4 w-4" />
-          Start your journey
+          {t('ctaBadge')}
         </div>
         <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-5xl">
           {t('ctaTitle')}

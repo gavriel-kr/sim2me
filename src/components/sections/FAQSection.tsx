@@ -25,13 +25,13 @@ export function FAQSection() {
         <div className="text-center">
           <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
             <HelpCircle className="h-3 w-3" />
-            Got questions?
+            {t('faqBadge')}
           </div>
           <h2 className="text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl lg:text-4xl">
             {t('faqTitle')}
           </h2>
           <p className="mt-2 text-muted-foreground">
-            Everything you need to know about eSIMs
+            {t('faqSubtitle')}
           </p>
         </div>
         <Accordion type="single" collapsible className="mt-10">

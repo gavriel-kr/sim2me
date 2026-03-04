@@ -39,7 +39,10 @@
     "instantActivation": "הפעלה מיידית בכל העולם",
     "howItWorksButton": "איך זה עובד",
     "valueSectionTitle": "למה מטיילים בוחרים ב-Sim2Me",
-    "valueSectionSubtitle": "הדרך הפשוטה ביותר להישאר מחובר בחו\"ל"
+    "valueSectionSubtitle": "הדרך הפשוטה ביותר להישאר מחובר בחו\"ל",
+    "faqBadge": "יש שאלות?",
+    "faqSubtitle": "כל מה שצריך לדעת על eSIM",
+    "ctaBadge": "התחל את המסע"
   },
   "destinations": {
     "title": "יעדים",
