@@ -90,8 +90,7 @@ export function InstallAppBanner() {
       const { outcome } = await deferredPrompt.userChoice;
       if (outcome === 'accepted') {
         setShowBanner(false);
-        const locale = window.location.pathname.split('/')[1] || 'en';
-        window.location.href = `/${locale}/app`;
+        window.location.href = '/app/';
       }
       setDeferredPrompt(null);
     } else if (isIOS) {
