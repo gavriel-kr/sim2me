@@ -23,19 +23,17 @@ export function FeaturedPlans() {
   return (
     <section className="relative bg-gradient-to-b from-muted/30 to-white py-20 sm:py-24">
       <div className="container px-4">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-              <Sparkles className="h-3 w-3" />
-              {t('featuredPlans')}
-            </div>
-            <h2 className="text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl lg:text-4xl">
-              {t('featuredPlans')}
-            </h2>
-            <p className="mt-2 text-muted-foreground sm:text-lg">
-              {tDest('subtitle')}
-            </p>
+        <div className="mx-auto max-w-2xl text-center">
+          <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+            <Sparkles className="h-3 w-3" />
+            {t('featuredPlans')}
           </div>
+          <h2 className="text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl lg:text-4xl">
+            {t('featuredPlans')}
+          </h2>
+          <p className="mt-2 text-muted-foreground sm:text-lg">
+            {tDest('subtitle')}
+          </p>
         </div>
 
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
