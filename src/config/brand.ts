@@ -25,7 +25,7 @@ export const brandConfig = {
 
   /** Social links (null = hide) */
   social: {
-    twitter: 'https://twitter.com/sim2me' as string | null,
+    twitter: null as string | null,
     facebook: 'https://facebook.com/sim2me' as string | null,
     instagram: 'https://instagram.com/sim2me' as string | null,
     linkedin: null as string | null,
