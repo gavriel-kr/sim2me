@@ -6,8 +6,6 @@ import { FeaturedPlans } from '@/components/sections/FeaturedPlans';
 import { TrustStrip } from '@/components/sections/TrustStrip';
 import { FAQSection } from '@/components/sections/FAQSection';
 import { CTASection } from '@/components/sections/CTASection';
-import { NewsletterSection } from '@/components/sections/NewsletterSection';
-
 type Props = { params: Promise<{ locale: string }> };
 
 const siteUrl = 'https://www.sim2me.net';
@@ -99,7 +97,6 @@ export default async function HomePage({ params }: Props) {
       <TrustStrip />
       <FAQSection />
       <CTASection />
-      <NewsletterSection />
     </MainLayout>
   );
 }
