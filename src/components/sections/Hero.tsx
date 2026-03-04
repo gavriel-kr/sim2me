@@ -33,15 +33,9 @@ export function Hero() {
               {t('heroSubtitle')}
             </p>
             <div className="mt-8 max-w-md">
-              <SearchDestination />
+              <SearchDestination ctaLabel={t('searchCta')} />
             </div>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <IntlLink
-                href="/destinations"
-                className="inline-flex items-center justify-center rounded-xl bg-primary px-8 py-3.5 text-base font-semibold text-primary-foreground shadow-md transition-all hover:shadow-glow hover:brightness-105"
-              >
-                {t('searchCta')}
-              </IntlLink>
+            <div className="mt-4 flex flex-wrap gap-3">
               <IntlLink
                 href="/how-it-works"
                 className="inline-flex items-center justify-center rounded-xl border border-border bg-white px-8 py-3.5 text-base font-semibold text-foreground shadow-sm transition-all hover:bg-muted hover:shadow-md"

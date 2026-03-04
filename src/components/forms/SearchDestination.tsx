@@ -2,14 +2,14 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
-import { Search, X, TrendingUp, Wifi, Zap } from 'lucide-react';
+import { Search, X, TrendingUp } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { searchDestinations } from '@/lib/api/repositories/destinationsRepository';
 import { Input } from '@/components/ui/input';
 import { createSharedPathnamesNavigation } from 'next-intl/navigation';
 import { routing } from '@/i18n/routing';
 
-const { Link: IntlLink } = createSharedPathnamesNavigation(routing);
+const { Link: IntlLink, useRouter } = createSharedPathnamesNavigation(routing);
 
 function SkeletonRow() {
   return (
@@ -24,8 +24,13 @@ function SkeletonRow() {
   );
 }
 
-export function SearchDestination() {
+interface SearchDestinationProps {
+  ctaLabel?: string;
+}
+
+export function SearchDestination({ ctaLabel }: SearchDestinationProps = {}) {
   const t = useTranslations('nav');
+  const router = useRouter();
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -53,11 +58,21 @@ export function SearchDestination() {
     inputRef.current?.focus();
   }, []);
 
+  const handleNavigate = useCallback(() => {
+    setOpen(false);
+    if (query.trim().length > 0 && destinations.length > 0) {
+      router.push(`/destinations/${destinations[0].slug}`);
+    } else {
+      router.push('/destinations');
+    }
+  }, [query, destinations, router]);
+
   const showList = open && (query.length >= 1 || destinations.length > 0);
   const displayList = query.length >= 1 ? destinations : destinations.slice(0, 8);
 
   return (
     <div ref={ref} className="relative w-full max-w-xl mx-auto">
+      {/* Input + dropdown anchored together */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
         <Input
@@ -70,6 +85,7 @@ export function SearchDestination() {
             setOpen(true);
           }}
           onFocus={() => setOpen(true)}
+          onKeyDown={(e) => { if (e.key === 'Enter') handleNavigate(); }}
           className="h-12 pl-10 pr-10 text-base rounded-xl"
           aria-label={t('searchPlaceholder')}
           aria-autocomplete="list"
@@ -86,9 +102,8 @@ export function SearchDestination() {
             <X className="h-4 w-4" />
           </button>
         )}
-      </div>
 
-      {showList && (
+        {showList && (
         <div className="absolute top-full left-0 right-0 z-50 mt-2 rounded-xl border bg-card shadow-xl overflow-hidden">
           {/* Header label */}
           {!query && (
@@ -180,6 +195,17 @@ export function SearchDestination() {
             </div>
           )}
         </div>
+        )}
+      </div>
+
+      {ctaLabel && (
+        <button
+          type="button"
+          onClick={handleNavigate}
+          className="mt-3 w-full inline-flex items-center justify-center rounded-xl bg-primary px-8 py-3.5 text-base font-semibold text-primary-foreground shadow-md transition-all hover:shadow-glow hover:brightness-105"
+        >
+          {ctaLabel}
+        </button>
       )}
     </div>
   );
