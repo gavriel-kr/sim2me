@@ -23,7 +23,6 @@ const navLinks = [
   { href: '/how-it-works', key: 'howItWorks' },
   { href: '/compatible-devices', key: 'devices' },
   { href: '/help', key: 'help' },
-  { href: '/about', key: 'about' },
   { href: '/contact', key: 'contact' },
 ] as const;
 
