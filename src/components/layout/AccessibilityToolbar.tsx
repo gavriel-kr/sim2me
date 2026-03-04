@@ -28,7 +28,7 @@ const DEFAULT: Prefs = {
   highlightLinks: false,
   highlightFocus: false,
   positionHorizontal: 'start',
-  positionVertical: 'bottom',
+  positionVertical: 'middle',
 };
 
 type BoolKey = 'textSpacing' | 'highContrast' | 'reduceMotion' | 'highlightLinks' | 'highlightFocus';
