@@ -4,7 +4,7 @@
  * These policies apply globally to all countries and customers worldwide.
  */
 
-const CONTACT = 'info.sim2me@gmail.com';
+const CONTACT = 'info@sim2me.net';
 const SITE = 'https://www.sim2me.net';
 const CONTACT_PAGE = `${SITE}/contact`;
 
