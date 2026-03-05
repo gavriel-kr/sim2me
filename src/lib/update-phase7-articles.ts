@@ -68,12 +68,14 @@ function replaceCtaLinks(html: string, ctaHref: string): string {
     .replace(/href=["']https:\/\/www\.sim2me\.net\s*["']/gi, `href="${ctaHref}"`);
 }
 
-/** Derive destination name from article title for CTA. Supports: איסים לX, eSIM for X, eSIM X (AR). */
+/** Derive only the destination name (before colon/dash), not the full title. e.g. "איסים לגיאורגיה: הישארו..." -> "גיאורגיה" */
 function getDestinationFromTitle(title: string, locale: 'he' | 'en' | 'ar'): string {
-  if (locale === 'he') return title.replace(/^איסים ל/, '').trim();
-  if (locale === 'en') return title.replace(/^eSIM for /i, '').trim();
-  if (locale === 'ar') return title.replace(/^eSIM\s+/, '').trim();
-  return '';
+  let rest = '';
+  if (locale === 'he') rest = title.replace(/^איסים ל/, '').trim();
+  else if (locale === 'en') rest = title.replace(/^eSIM for /i, '').trim();
+  else if (locale === 'ar') rest = title.replace(/^eSIM\s+/, '').trim();
+  else return '';
+  return rest.split(/[:\-–—]/)[0].trim();
 }
 
 /**
