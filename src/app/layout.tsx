@@ -6,6 +6,7 @@ import { headers } from 'next/headers';
 import { brandConfig } from '@/config/brand';
 import { getSiteBranding } from '@/lib/site-branding';
 import { getSeoOverride } from '@/lib/seo-override';
+import { getGlobalSeoSettings } from '@/lib/global-seo';
 import { Providers } from '@/components/providers/Providers';
 import { CookieConsentProvider } from '@/components/CookieConsentProvider';
 import { CookieBanner } from '@/components/CookieBanner';
@@ -17,78 +18,104 @@ const dmSans = DM_Sans({
   variable: '--font-dm-sans',
 });
 
-const siteUrl = 'https://www.sim2me.net';
-
 function withCacheBust(url: string, version: number | null): string {
   if (version == null || !url.startsWith('/')) return url;
   return `${url}?v=${version}`;
 }
 
+function makeAbsolute(url: string, domain: string): string {
+  if (!url) return '';
+  return url.startsWith('http') ? url : `${domain}${url}`;
+}
+
 export async function generateMetadata(): Promise<Metadata> {
-  const { logoUrl, faviconUrl, brandingVersion } = await getSiteBranding();
+  const [{ logoUrl, faviconUrl, brandingVersion }, globalSeo] = await Promise.all([
+    getSiteBranding(),
+    getGlobalSeoSettings(),
+  ]);
+
+  const siteUrl = globalSeo.canonicalDomain || 'https://www.sim2me.net';
   const iconUrl = faviconUrl ? withCacheBust(faviconUrl, brandingVersion) : '/favicon.svg';
   const appleIconUrl = faviconUrl && faviconUrl.startsWith('/') ? withCacheBust(faviconUrl, brandingVersion) : '/icons/apple-touch-icon.png';
-  const defaultOgImageUrl = logoUrl && logoUrl.startsWith('/') ? `${siteUrl}${withCacheBust(logoUrl, brandingVersion)}` : undefined;
 
-  // Read the current page path injected by middleware
+  // Favicon/logo from branding upload; use as OG fallback only if no global OG image is set
+  const brandingOgImage = logoUrl && logoUrl.startsWith('/') ? `${siteUrl}${withCacheBust(logoUrl, brandingVersion)}` : undefined;
+  const globalOgImage = globalSeo.ogImage ? makeAbsolute(globalSeo.ogImage, siteUrl) : brandingOgImage;
+
+  // Read the current page path injected by middleware, look up path-specific override
   const headersList = await headers();
   const pathname = headersList.get('x-pathname');
   const override = pathname ? await getSeoOverride(pathname) : null;
 
-  // Resolve OG image — override wins, must be absolute URL
+  // Layer: path override > global DB setting > code default
+  const resolvedTitle = override?.title || globalSeo.defaultTitle;
+  const resolvedDesc = override?.description || globalSeo.defaultDescription;
+  const resolvedOgTitle = override?.ogTitle || globalSeo.ogTitle || resolvedTitle;
+  const resolvedOgDesc = override?.ogDescription || globalSeo.ogDescription || resolvedDesc;
   const resolvedOgImage = override?.ogImage
-    ? (override.ogImage.startsWith('http') ? override.ogImage : `${siteUrl}${override.ogImage}`)
-    : defaultOgImageUrl;
+    ? makeAbsolute(override.ogImage, siteUrl)
+    : globalOgImage;
+  const resolvedCanonical = override?.canonicalUrl || siteUrl;
+
+  const robotsIndex = globalSeo.robotsIndex !== 'false';
+  const robotsFollow = globalSeo.robotsFollow !== 'false';
+  const maxSnippet = parseInt(globalSeo.googleMaxSnippet || '-1', 10);
+  const maxVideoPreview = parseInt(globalSeo.googleMaxVideoPreview || '-1', 10);
+  const maxImagePreview = (globalSeo.googleMaxImagePreview || 'large') as 'none' | 'standard' | 'large';
+
+  const keywords = globalSeo.defaultKeywords
+    ? globalSeo.defaultKeywords.split(',').map((k) => k.trim()).filter(Boolean)
+    : [];
+
+  const verificationObj: Record<string, string> = {};
+  if (globalSeo.googleVerification) verificationObj.google = globalSeo.googleVerification;
+  if (globalSeo.bingVerification) verificationObj.other = `msvalidate.01=${globalSeo.bingVerification}`;
+  if (globalSeo.yandexVerification) verificationObj.yandex = globalSeo.yandexVerification;
 
   return {
     metadataBase: new URL(siteUrl),
     title: {
-      default: override?.title || `${brandConfig.name} – Buy eSIM Online for 200+ Countries | Instant Delivery`,
-      template: `%s | ${brandConfig.name}`,
+      default: resolvedTitle,
+      template: globalSeo.titleTemplate || `%s | ${globalSeo.siteName}`,
     },
-    description:
-      override?.description ||
-      'Buy prepaid eSIM online for 200+ countries. Instant delivery, no physical SIM needed. Compare plans, scan QR code and get connected in minutes. Best prices for travel data.',
-    keywords: [
-      'eSIM', 'buy eSIM', 'travel eSIM', 'prepaid eSIM', 'eSIM online',
-      'international data plan', 'roaming alternative', 'travel data',
-      'eSIM for iPhone', 'eSIM for Android', 'digital SIM card',
-      'no roaming fees', 'global eSIM', 'cheap eSIM', 'eSIM QR code',
-    ],
+    description: resolvedDesc,
+    ...(keywords.length > 0 && { keywords }),
     openGraph: {
       type: 'website',
-      siteName: brandConfig.name,
+      siteName: globalSeo.siteName || brandConfig.name,
       url: siteUrl,
-      title: override?.ogTitle || `${brandConfig.name} – Buy eSIM Online for 200+ Countries`,
-      description: override?.ogDescription || 'Instant eSIM delivery for travelers. No physical SIM, no roaming fees. Compare plans and get connected in minutes.',
+      title: resolvedOgTitle,
+      description: resolvedOgDesc,
       locale: 'en_US',
       alternateLocale: ['he_IL', 'ar_SA'],
-      ...(resolvedOgImage && { images: [{ url: resolvedOgImage, width: 1200, height: 630, alt: brandConfig.logoAlt }] }),
+      ...(resolvedOgImage && {
+        images: [{ url: resolvedOgImage, width: 1200, height: 630, alt: globalSeo.siteName || brandConfig.logoAlt }],
+      }),
     },
     twitter: {
-      card: 'summary_large_image',
-      site: '@sim2me',
-      title: override?.ogTitle || `${brandConfig.name} – Buy eSIM Online`,
-      description: override?.ogDescription || 'Instant eSIM for 200+ countries. Best prices, instant delivery.',
+      card: (globalSeo.twitterCard as 'summary' | 'summary_large_image') || 'summary_large_image',
+      site: globalSeo.twitterHandle || undefined,
+      title: resolvedOgTitle,
+      description: resolvedOgDesc,
       ...(resolvedOgImage && { images: [resolvedOgImage] }),
     },
     alternates: {
-      canonical: override?.canonicalUrl || siteUrl,
+      canonical: resolvedCanonical,
       languages: {
-        'en': siteUrl,
-        'he': `${siteUrl}/he`,
-        'ar': `${siteUrl}/ar`,
+        en: siteUrl,
+        he: `${siteUrl}/he`,
+        ar: `${siteUrl}/ar`,
       },
     },
     robots: {
-      index: true,
-      follow: true,
+      index: robotsIndex,
+      follow: robotsFollow,
       googleBot: {
-        index: true,
-        follow: true,
-        'max-video-preview': -1,
-        'max-image-preview': 'large',
-        'max-snippet': -1,
+        index: robotsIndex,
+        follow: robotsFollow,
+        'max-video-preview': maxVideoPreview,
+        'max-image-preview': maxImagePreview,
+        'max-snippet': maxSnippet,
       },
     },
     icons: {
@@ -99,18 +126,11 @@ export async function generateMetadata(): Promise<Metadata> {
     appleWebApp: {
       capable: true,
       statusBarStyle: 'black-translucent',
-      title: 'Sim2Me',
+      title: globalSeo.siteName || 'Sim2Me',
     },
-    formatDetection: {
-      telephone: false,
-    },
-    other: {
-      'mobile-web-app-capable': 'yes',
-    },
-    verification: {
-      // Add Google Search Console verification when available
-      // google: 'your-verification-code',
-    },
+    formatDetection: { telephone: false },
+    other: { 'mobile-web-app-capable': 'yes' },
+    ...(Object.keys(verificationObj).length > 0 && { verification: verificationObj }),
   };
 }
 
@@ -126,6 +146,20 @@ export default async function RootLayout({
   const locale = await getLocale();
   const messages = await getMessages();
   const dir = locale === 'he' || locale === 'ar' ? 'rtl' : 'ltr';
+
+  // Fetch global SEO for Organization JSON-LD (cached — no extra DB hit)
+  const globalSeo = await getGlobalSeoSettings();
+  const siteUrl = globalSeo.canonicalDomain || 'https://www.sim2me.net';
+
+  const orgSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: globalSeo.orgName || globalSeo.siteName || 'Sim2Me',
+    url: globalSeo.orgUrl || siteUrl,
+    ...(globalSeo.orgLogo && { logo: makeAbsolute(globalSeo.orgLogo, siteUrl) }),
+    sameAs: [globalSeo.orgTwitter, globalSeo.orgFacebook, globalSeo.orgLinkedIn].filter(Boolean),
+  };
+
   return (
     <html lang={locale} dir={dir} suppressHydrationWarning className={dmSans.variable}>
       <head>
@@ -140,6 +174,11 @@ export default async function RootLayout({
             </CookieConsentProvider>
           </Providers>
         </NextIntlClientProvider>
+        {/* Organization structured data for Google Knowledge Panel */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(orgSchema) }}
+        />
         <script
           dangerouslySetInnerHTML={{
             __html: `if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('/sw.js').catch(()=>{})})}`,
