@@ -85,7 +85,17 @@ function buildCtaBlockHtml(ctaHref: string, locale: 'he' | 'en' | 'ar', destinat
   } else {
     heading = locale === 'he' ? 'לרכישת איסים – לחצו כאן' : locale === 'ar' ? 'للحصول على eSIM – اضغط هنا' : 'Ready to get your eSIM?';
   }
-  const buttonText = locale === 'he' ? '← תוכניות eSIM' : locale === 'ar' ? 'خطط eSIM ←' : 'eSIM plans →';
+  const buttonText = destination
+    ? locale === 'he'
+      ? `← תוכניות eSIM ל${destination}`
+      : locale === 'ar'
+        ? `خطط eSIM لـ ${destination} ←`
+        : `eSIM plans for ${destination} →`
+    : locale === 'he'
+      ? '← תוכניות eSIM'
+      : locale === 'ar'
+        ? 'خطط eSIM ←'
+        : 'eSIM plans →';
   const headingLinkClass = 'text-emerald-900 hover:underline focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 rounded';
   return `<div class="cta-block rounded-xl border border-emerald-200 bg-emerald-50 p-6 my-8 text-center"${dirAttr}><p class="text-xl font-bold text-emerald-900 mb-2"><a href="${ctaHref}" class="${headingLinkClass}">${heading}</a></p><a href="${ctaHref}" class="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700">${buttonText}</a></div>`;
 }
@@ -244,15 +254,34 @@ export async function runPhase7Update(
     });
   }
 
-  // Migrate all articles (any locale): make CTA heading a link too (SEO + accessibility)
-  const allArticles = await prisma.article.findMany({ select: { id: true, content: true } });
+  // Migrate all articles: (1) CTA heading as link, (2) button text includes destination
+  const allArticles = await prisma.article.findMany({ select: { id: true, content: true, title: true, locale: true } });
   const headingLinkClass = 'text-emerald-900 hover:underline focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 rounded';
+  const hasDestPattern = (title: string, locale: string) =>
+    (locale === 'he' && title.startsWith('איסים ל')) ||
+    (locale === 'en' && /^eSIM for /i.test(title)) ||
+    (locale === 'ar' && /^eSIM\s+/.test(title));
+
   for (const a of allArticles) {
-    if (!a.content || a.content.includes('text-xl font-bold text-emerald-900 mb-2"><a href=')) continue;
-    const newContent = a.content.replace(
-      /<p class="text-xl font-bold text-emerald-900 mb-2">([\s\S]*?)<\/p>\s*<a href="([^"]+)"[^>]*class="inline-block rounded-lg bg-emerald-600/g,
-      `<p class="text-xl font-bold text-emerald-900 mb-2"><a href="$2" class="${headingLinkClass}">$1</a></p><a href="$2" class="inline-block rounded-lg bg-emerald-600`
-    );
+    if (!a.content) continue;
+    let newContent = a.content;
+    if (!newContent.includes('text-xl font-bold text-emerald-900 mb-2"><a href=')) {
+      newContent = newContent.replace(
+        /<p class="text-xl font-bold text-emerald-900 mb-2">([\s\S]*?)<\/p>\s*<a href="([^"]+)"[^>]*class="inline-block rounded-lg bg-emerald-600/g,
+        `<p class="text-xl font-bold text-emerald-900 mb-2"><a href="$2" class="${headingLinkClass}">$1</a></p><a href="$2" class="inline-block rounded-lg bg-emerald-600`
+      );
+    }
+    if (hasDestPattern(a.title, a.locale)) {
+      const dest = getDestinationFromTitle(a.title, a.locale as 'he' | 'en' | 'ar');
+      if (dest) {
+        if (a.locale === 'he' && newContent.includes('← תוכניות eSIM</a>'))
+          newContent = newContent.replace(/← תוכניות eSIM<\/a>/g, `← תוכניות eSIM ל${dest}</a>`);
+        else if (a.locale === 'en' && newContent.includes('eSIM plans →</a>'))
+          newContent = newContent.replace(/eSIM plans →<\/a>/g, `eSIM plans for ${dest} →</a>`);
+        else if (a.locale === 'ar' && newContent.includes('خطط eSIM ←</a>'))
+          newContent = newContent.replace(/خطط eSIM ←<\/a>/g, `خطط eSIM لـ ${dest} ←</a>`);
+      }
+    }
     if (newContent !== a.content) {
       await prisma.article.update({ where: { id: a.id }, data: { content: newContent } });
     }
