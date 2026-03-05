@@ -98,6 +98,35 @@ function SerpPreview({ title, description, domain }: { title: string; descriptio
   );
 }
 
+// ── Locale tab switcher (EN / HE / AR) ───────────────────────────────────────
+
+type SnippetLocale = 'en' | 'he' | 'ar';
+
+const LOCALE_LABELS: { id: SnippetLocale; flag: string; label: string; dir: 'ltr' | 'rtl' }[] = [
+  { id: 'en', flag: '🇬🇧', label: 'EN', dir: 'ltr' },
+  { id: 'he', flag: '🇮🇱', label: 'HE', dir: 'rtl' },
+  { id: 'ar', flag: '🇸🇦', label: 'AR', dir: 'rtl' },
+];
+
+function LocaleTabs({ active, onChange }: { active: SnippetLocale; onChange: (l: SnippetLocale) => void }) {
+  return (
+    <div className="flex gap-1 rounded-lg border border-gray-200 bg-gray-50 p-0.5 w-fit">
+      {LOCALE_LABELS.map(({ id, flag, label }) => (
+        <button
+          key={id}
+          type="button"
+          onClick={() => onChange(id)}
+          className={`flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-semibold transition-colors ${
+            active === id ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          {flag} {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 // ── Global SEO Tab ────────────────────────────────────────────────────────────
 
 function GlobalSeoTab({ initial }: { initial: GlobalSeoSettings }) {
@@ -105,6 +134,7 @@ function GlobalSeoTab({ initial }: { initial: GlobalSeoSettings }) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [snippetLocale, setSnippetLocale] = useState<SnippetLocale>('en');
 
   const set = (key: keyof GlobalSeoSettings, value: string) =>
     setForm((f) => ({ ...f, [key]: value }));
@@ -131,6 +161,12 @@ function GlobalSeoTab({ initial }: { initial: GlobalSeoSettings }) {
 
   const handleReset = () => setForm(GLOBAL_SEO_DEFAULTS);
 
+  // Resolve the active locale's keys for title / description / keywords
+  const titleKey = snippetLocale === 'he' ? 'defaultTitleHe' : snippetLocale === 'ar' ? 'defaultTitleAr' : 'defaultTitle';
+  const descKey  = snippetLocale === 'he' ? 'defaultDescriptionHe' : snippetLocale === 'ar' ? 'defaultDescriptionAr' : 'defaultDescription';
+  const kwKey    = snippetLocale === 'he' ? 'defaultKeywordsHe' : snippetLocale === 'ar' ? 'defaultKeywordsAr' : 'defaultKeywords';
+  const inputDir = LOCALE_LABELS.find((l) => l.id === snippetLocale)?.dir ?? 'ltr';
+
   return (
     <div className="space-y-4">
       {/* 1. Search Snippet */}
@@ -141,29 +177,71 @@ function GlobalSeoTab({ initial }: { initial: GlobalSeoSettings }) {
         <Field label="Title Template" hint='Use %s for the page title. Example: "%s | Sim2Me"'>
           <input className={inputCls} value={form.titleTemplate} onChange={(e) => set('titleTemplate', e.target.value)} placeholder="%s | Sim2Me" />
         </Field>
+
+        {/* Language switcher for per-locale fields */}
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-semibold text-gray-500">Per-language snippet</p>
+          <LocaleTabs active={snippetLocale} onChange={setSnippetLocale} />
+        </div>
+
         <Field label="Default Title">
           <div className="flex items-center justify-between mb-1">
             <span />
-            <CharCounter value={form.defaultTitle} limit={60} />
+            <CharCounter value={form[titleKey]} limit={60} />
           </div>
-          <input className={inputCls} value={form.defaultTitle} onChange={(e) => set('defaultTitle', e.target.value)} placeholder="Sim2Me – Buy eSIM Online for 200+ Countries" />
+          <input
+            className={inputCls}
+            dir={inputDir}
+            value={form[titleKey]}
+            onChange={(e) => set(titleKey, e.target.value)}
+            placeholder={
+              snippetLocale === 'he' ? 'Sim2Me – קנה eSIM אונליין ל-200+ מדינות'
+              : snippetLocale === 'ar' ? 'Sim2Me – اشترِ eSIM لأكثر من 200 دولة'
+              : 'Sim2Me – Buy eSIM Online for 200+ Countries'
+            }
+          />
         </Field>
         <Field label="Default Meta Description">
           <div className="flex items-center justify-between mb-1">
             <span />
-            <CharCounter value={form.defaultDescription} limit={155} />
+            <CharCounter value={form[descKey]} limit={155} />
           </div>
-          <textarea className={`${inputCls} resize-none`} rows={3} value={form.defaultDescription} onChange={(e) => set('defaultDescription', e.target.value)} placeholder="Short summary of your site (ideal: 120–155 chars)." />
+          <textarea
+            className={`${inputCls} resize-none`}
+            dir={inputDir}
+            rows={3}
+            value={form[descKey]}
+            onChange={(e) => set(descKey, e.target.value)}
+            placeholder={
+              snippetLocale === 'he' ? 'תיאור קצר של האתר (120–155 תווים בצורה אידיאלית).'
+              : snippetLocale === 'ar' ? 'وصف مختصر للموقع (120–155 حرفاً بشكل مثالي).'
+              : 'Short summary of your site (ideal: 120–155 chars).'
+            }
+          />
         </Field>
-        <Field label="Default Keywords" hint="Comma-separated. Used as fallback meta keywords (minor ranking signal).">
-          <textarea className={`${inputCls} resize-none`} rows={2} value={form.defaultKeywords} onChange={(e) => set('defaultKeywords', e.target.value)} placeholder="eSIM, buy eSIM, travel eSIM, ..." />
+        <Field
+          label="Default Keywords"
+          hint={snippetLocale === 'en' ? 'Comma-separated. Fallback meta keywords.' : 'מופרד בפסיקים. מילות מפתח לגיבוי.'}
+        >
+          <textarea
+            className={`${inputCls} resize-none`}
+            dir={inputDir}
+            rows={2}
+            value={form[kwKey]}
+            onChange={(e) => set(kwKey, e.target.value)}
+            placeholder={
+              snippetLocale === 'he' ? 'eSIM, קנה eSIM, eSIM לנסיעות, ...'
+              : snippetLocale === 'ar' ? 'eSIM, شراء eSIM, eSIM للسفر, ...'
+              : 'eSIM, buy eSIM, travel eSIM, ...'
+            }
+          />
         </Field>
       </Section>
 
-      {/* SERP Preview */}
+      {/* SERP Preview — updates with active locale */}
       <SerpPreview
-        title={form.defaultTitle}
-        description={form.defaultDescription}
+        title={form[titleKey]}
+        description={form[descKey]}
         domain={form.canonicalDomain}
       />
 

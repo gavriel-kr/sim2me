@@ -47,9 +47,23 @@ export async function generateMetadata(): Promise<Metadata> {
   const pathname = headersList.get('x-pathname');
   const override = pathname ? await getSeoOverride(pathname) : null;
 
-  // Layer: path override > global DB setting > code default
-  const resolvedTitle = override?.title || globalSeo.defaultTitle;
-  const resolvedDesc = override?.description || globalSeo.defaultDescription;
+  // Determine locale from the URL path injected by middleware (/he/... or /ar/...)
+  const locale = pathname?.startsWith('/he') ? 'he' : pathname?.startsWith('/ar') ? 'ar' : 'en';
+
+  // Pick locale-specific snippet (title, description, keywords) with EN fallback
+  const localeTitle = locale === 'he' ? globalSeo.defaultTitleHe || globalSeo.defaultTitle
+    : locale === 'ar' ? globalSeo.defaultTitleAr || globalSeo.defaultTitle
+    : globalSeo.defaultTitle;
+  const localeDesc = locale === 'he' ? globalSeo.defaultDescriptionHe || globalSeo.defaultDescription
+    : locale === 'ar' ? globalSeo.defaultDescriptionAr || globalSeo.defaultDescription
+    : globalSeo.defaultDescription;
+  const localeKeywords = locale === 'he' ? globalSeo.defaultKeywordsHe || globalSeo.defaultKeywords
+    : locale === 'ar' ? globalSeo.defaultKeywordsAr || globalSeo.defaultKeywords
+    : globalSeo.defaultKeywords;
+
+  // Layer: path override > locale-specific DB setting > code default
+  const resolvedTitle = override?.title || localeTitle;
+  const resolvedDesc = override?.description || localeDesc;
   const resolvedOgTitle = override?.ogTitle || globalSeo.ogTitle || resolvedTitle;
   const resolvedOgDesc = override?.ogDescription || globalSeo.ogDescription || resolvedDesc;
   const resolvedOgImage = override?.ogImage
@@ -63,8 +77,8 @@ export async function generateMetadata(): Promise<Metadata> {
   const maxVideoPreview = parseInt(globalSeo.googleMaxVideoPreview || '-1', 10);
   const maxImagePreview = (globalSeo.googleMaxImagePreview || 'large') as 'none' | 'standard' | 'large';
 
-  const keywords = globalSeo.defaultKeywords
-    ? globalSeo.defaultKeywords.split(',').map((k) => k.trim()).filter(Boolean)
+  const keywords = localeKeywords
+    ? localeKeywords.split(',').map((k) => k.trim()).filter(Boolean)
     : [];
 
   const verificationObj: Record<string, string> = {};
