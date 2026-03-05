@@ -68,7 +68,7 @@ function replaceCtaLinks(html: string, ctaHref: string): string {
     .replace(/href=["']https:\/\/www\.sim2me\.net\s*["']/gi, `href="${ctaHref}"`);
 }
 
-/** Derive destination name from article title for CTA heading */
+/** Derive destination name from article title for CTA. Supports: איסים לX, eSIM for X, eSIM X (AR). */
 function getDestinationFromTitle(title: string, locale: 'he' | 'en' | 'ar'): string {
   if (locale === 'he') return title.replace(/^איסים ל/, '').trim();
   if (locale === 'en') return title.replace(/^eSIM for /i, '').trim();
@@ -76,26 +76,37 @@ function getDestinationFromTitle(title: string, locale: 'he' | 'en' | 'ar'): str
   return '';
 }
 
-/** CTA block: heading and button both link to ctaHref (SEO + accessibility: descriptive link text, focus ring) */
+/**
+ * Canonical CTA block for all articles, all languages.
+ * Text line: "לרכישת איסים ל(יעד) – לחצו כאן" (HE) / equivalent in EN/AR.
+ * Button: "לרכישת איסים ל(יעד)" (HE) / equivalent in EN/AR.
+ */
 function buildCtaBlockHtml(ctaHref: string, locale: 'he' | 'en' | 'ar', destination?: string): string {
   const dirAttr = locale === 'he' || locale === 'ar' ? ' dir="rtl"' : '';
-  let heading: string;
-  if (destination) {
-    heading = locale === 'he' ? `לרכישת איסים ל${destination} – לחצו כאן` : locale === 'ar' ? `للحصول على eSIM لـ ${destination} – اضغط هنا` : `Ready to get your eSIM for ${destination}?`;
-  } else {
-    heading = locale === 'he' ? 'לרכישת איסים – לחצו כאן' : locale === 'ar' ? 'للحصول على eSIM – اضغط هنا' : 'Ready to get your eSIM?';
-  }
-  const buttonText = destination
-    ? locale === 'he'
-      ? `← תוכניות eSIM ל${destination}`
-      : locale === 'ar'
-        ? `خطط eSIM لـ ${destination} ←`
-        : `eSIM plans for ${destination} →`
-    : locale === 'he'
-      ? '← תוכניות eSIM'
-      : locale === 'ar'
-        ? 'خطط eSIM ←'
-        : 'eSIM plans →';
+  const heading =
+    destination !== undefined && destination !== ''
+      ? locale === 'he'
+        ? `לרכישת איסים ל${destination} – לחצו כאן`
+        : locale === 'ar'
+          ? `لרכישת eSIM لـ ${destination} – اضغط هنا`
+          : `Get eSIM for ${destination} – Click here`
+      : locale === 'he'
+        ? 'לרכישת איסים – לחצו כאן'
+        : locale === 'ar'
+          ? 'لרכישת eSIM – اضغط هنا'
+          : 'Get eSIM – Click here';
+  const buttonText =
+    destination !== undefined && destination !== ''
+      ? locale === 'he'
+        ? `לרכישת איסים ל${destination}`
+        : locale === 'ar'
+          ? `لרכישת eSIM لـ ${destination}`
+          : `Get eSIM for ${destination}`
+      : locale === 'he'
+        ? 'לרכישת איסים'
+        : locale === 'ar'
+          ? 'لרכישת eSIM'
+          : 'Get eSIM';
   const headingLinkClass = 'text-emerald-900 hover:underline focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 rounded';
   return `<div class="cta-block rounded-xl border border-emerald-200 bg-emerald-50 p-6 my-8 text-center"${dirAttr}><p class="text-xl font-bold text-emerald-900 mb-2"><a href="${ctaHref}" class="${headingLinkClass}">${heading}</a></p><a href="${ctaHref}" class="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700">${buttonText}</a></div>`;
 }
@@ -254,34 +265,35 @@ export async function runPhase7Update(
     });
   }
 
-  // Migrate all articles: (1) CTA heading as link, (2) button text includes destination
+  // Migrate ALL articles: replace every cta-block with canonical format (heading + button with destination in all languages)
   const allArticles = await prisma.article.findMany({ select: { id: true, content: true, title: true, locale: true } });
   const headingLinkClass = 'text-emerald-900 hover:underline focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 rounded';
-  const hasDestPattern = (title: string, locale: string) =>
+
+  const titleIsDestination = (title: string, locale: string) =>
     (locale === 'he' && title.startsWith('איסים ל')) ||
     (locale === 'en' && /^eSIM for /i.test(title)) ||
     (locale === 'ar' && /^eSIM\s+/.test(title));
 
   for (const a of allArticles) {
     if (!a.content) continue;
+    const locale = a.locale as 'he' | 'en' | 'ar';
+    const dest = titleIsDestination(a.title, a.locale) ? getDestinationFromTitle(a.title, locale) : '';
     let newContent = a.content;
+
     if (!newContent.includes('text-xl font-bold text-emerald-900 mb-2"><a href=')) {
       newContent = newContent.replace(
         /<p class="text-xl font-bold text-emerald-900 mb-2">([\s\S]*?)<\/p>\s*<a href="([^"]+)"[^>]*class="inline-block rounded-lg bg-emerald-600/g,
         `<p class="text-xl font-bold text-emerald-900 mb-2"><a href="$2" class="${headingLinkClass}">$1</a></p><a href="$2" class="inline-block rounded-lg bg-emerald-600`
       );
     }
-    if (hasDestPattern(a.title, a.locale)) {
-      const dest = getDestinationFromTitle(a.title, a.locale as 'he' | 'en' | 'ar');
-      if (dest) {
-        if (a.locale === 'he' && newContent.includes('← תוכניות eSIM</a>'))
-          newContent = newContent.replace(/← תוכניות eSIM<\/a>/g, `← תוכניות eSIM ל${dest}</a>`);
-        else if (a.locale === 'en' && newContent.includes('eSIM plans →</a>'))
-          newContent = newContent.replace(/eSIM plans →<\/a>/g, `eSIM plans for ${dest} →</a>`);
-        else if (a.locale === 'ar' && newContent.includes('خطط eSIM ←</a>'))
-          newContent = newContent.replace(/خطط eSIM ←<\/a>/g, `خطط eSIM لـ ${dest} ←</a>`);
-      }
-    }
+
+    // Replace every cta-block with canonical block (same structure in all articles, all languages)
+    newContent = newContent.replace(/<div class="cta-block[^"]*"[^>]*>[\s\S]*?<\/div>/g, (block) => {
+      const hrefMatch = block.match(/href="(https?:\/\/[^"]+)"/);
+      const ctaHref = hrefMatch ? hrefMatch[1] : 'https://www.sim2me.net/';
+      return buildCtaBlockHtml(ctaHref, locale, dest || undefined);
+    });
+
     if (newContent !== a.content) {
       await prisma.article.update({ where: { id: a.id }, data: { content: newContent } });
     }
