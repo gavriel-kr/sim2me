@@ -68,26 +68,51 @@ function replaceCtaLinks(html: string, ctaHref: string): string {
     .replace(/href=["']https:\/\/www\.sim2me\.net\s*["']/gi, `href="${ctaHref}"`);
 }
 
-/** Parse Hebrew HTML: <article id="h1"> or <article class="card" id="h1"> ... h25 */
-export function parseHeHtml(html: string): { title: string; metaDesc: string; content: string }[] {
+function decodeHtml(s: string): string {
+  return s.replace(/&amp;/g, '&').replace(/&#x27;/g, "'").replace(/&#39;/g, "'").trim();
+}
+
+/** Parse Hebrew "plain" HTML: <article dir="rtl"> with first <p><strong>Meta Description:</strong>...</p> */
+function parseHeHtmlPlain(html: string): { title: string; metaDesc: string; content: string }[] {
   const out: { title: string; metaDesc: string; content: string }[] = [];
-  const re = /<article[^>]*id="h(\d+)"[^>]*>([\s\S]*?)<\/article>/gi;
+  const re = /<article[^>]*>([\s\S]*?)<\/article>/gi;
   let m: RegExpExecArray | null;
-  const byIndex: Record<number, string> = {};
-  while ((m = re.exec(html)) !== null) {
-    const i = parseInt(m[1], 10);
-    if (i >= 1 && i <= 25) byIndex[i] = m[2];
-  }
-  for (let i = 1; i <= 25; i++) {
-    const inner = byIndex[i] || '';
+  const inners: string[] = [];
+  while ((m = re.exec(html)) !== null) inners.push(m[1]);
+  for (const inner of inners.slice(0, 25)) {
     const titleMatch = inner.match(/<h1[^>]*>([\s\S]*?)<\/h1>/);
-    const title = titleMatch ? titleMatch[1].replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').trim() : '';
-    const metaMatch = inner.match(/<p\s+class="meta"[^>]*>\s*<b>Meta Description:<\/b>\s*([\s\S]*?)<\/p>/);
-    const metaDesc = metaMatch ? metaMatch[1].replace(/&amp;/g, '&').trim() : '';
-    const content = inner.trim();
+    const title = titleMatch ? decodeHtml(titleMatch[1].replace(/<[^>]+>/g, '')) : '';
+    const metaMatch = inner.match(/<p[^>]*>\s*<strong>Meta Description:<\/strong>\s*([\s\S]*?)<\/p>/i);
+    const metaDesc = metaMatch ? decodeHtml(metaMatch[1].replace(/<[^>]+>/g, '')) : '';
+    const content = inner.trim().replace(/&#x27;/g, "'").replace(/&#39;/g, "'");
     out.push({ title, metaDesc, content });
   }
   return out;
+}
+
+/** Parse Hebrew HTML: id="h1".."h25" format, or plain <article> format */
+export function parseHeHtml(html: string): { title: string; metaDesc: string; content: string }[] {
+  const reId = /<article[^>]*id="h(\d+)"[^>]*>([\s\S]*?)<\/article>/gi;
+  const byIndex: Record<number, string> = {};
+  let m: RegExpExecArray | null;
+  while ((m = reId.exec(html)) !== null) {
+    const i = parseInt(m[1], 10);
+    if (i >= 1 && i <= 25) byIndex[i] = m[2];
+  }
+  if (Object.keys(byIndex).length >= 25) {
+    const out: { title: string; metaDesc: string; content: string }[] = [];
+    for (let i = 1; i <= 25; i++) {
+      const inner = byIndex[i] || '';
+      const titleMatch = inner.match(/<h1[^>]*>([\s\S]*?)<\/h1>/);
+      const title = titleMatch ? decodeHtml(titleMatch[1].replace(/<[^>]+>/g, '')) : '';
+      const metaMatch = inner.match(/<p\s+class="meta"[^>]*>\s*<b>Meta Description:<\/b>\s*([\s\S]*?)<\/p>/);
+      const metaDesc = metaMatch ? decodeHtml(metaMatch[1].replace(/<[^>]+>/g, '')) : '';
+      const content = inner.trim().replace(/&#x27;/g, "'").replace(/&#39;/g, "'");
+      out.push({ title, metaDesc, content });
+    }
+    return out;
+  }
+  return parseHeHtmlPlain(html);
 }
 
 /** Parse EN+AR HTML: first 25 <article class="card" id="..."> are EN, next 25 are AR */
