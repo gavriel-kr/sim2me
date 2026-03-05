@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react';
 import {
   Plus, Pencil, Trash2, Search, Globe, X, Check, AlertCircle,
   Settings, FileSearch, ChevronDown, ChevronUp, Save, RotateCcw,
+  Loader2, ShieldCheck, ShieldAlert,
 } from 'lucide-react';
 import type { GlobalSeoSettings } from '@/lib/global-seo';
 import { GLOBAL_SEO_DEFAULTS } from '@/lib/global-seo';
@@ -123,6 +124,68 @@ function LocaleTabs({ active, onChange }: { active: SnippetLocale; onChange: (l:
           {flag} {label}
         </button>
       ))}
+    </div>
+  );
+}
+
+// ── Live meta-tag verifier ────────────────────────────────────────────────────
+
+type VerifyStatus = 'idle' | 'checking' | 'found' | 'not-found' | 'error';
+
+function VerifyMetaTag({
+  code, metaName, saved,
+}: {
+  code: string;
+  metaName: string;  // e.g. "google-site-verification"
+  saved: boolean;    // whether settings have been saved
+}) {
+  const [status, setStatus] = useState<VerifyStatus>('idle');
+
+  const run = async () => {
+    if (!code.trim()) return;
+    setStatus('checking');
+    try {
+      // Fetch homepage with no-cache so we see the latest HTML
+      const res = await fetch('/en', { cache: 'no-store' });
+      const html = await res.text();
+      const needle = `name="${metaName}" content="${code}"`;
+      const needleAlt = `name='${metaName}' content='${code}'`;
+      setStatus(html.includes(needle) || html.includes(needleAlt) ? 'found' : 'not-found');
+    } catch {
+      setStatus('error');
+    }
+  };
+
+  if (!code.trim()) return null;
+
+  return (
+    <div className="mt-2 flex items-center gap-2">
+      <button
+        type="button"
+        onClick={run}
+        disabled={status === 'checking'}
+        className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+      >
+        {status === 'checking'
+          ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          : <ShieldCheck className="h-3.5 w-3.5" />}
+        {status === 'checking' ? 'Checking…' : 'Test Live Tag'}
+      </button>
+
+      {status === 'found' && (
+        <span className="flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+          <Check className="h-3 w-3" /> Tag detected on live site ✓
+        </span>
+      )}
+      {status === 'not-found' && (
+        <span className="flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-1 text-xs font-semibold text-red-600">
+          <ShieldAlert className="h-3 w-3" />
+          {saved ? 'Tag not found — wait for deployment' : 'Save settings first, then test'}
+        </span>
+      )}
+      {status === 'error' && (
+        <span className="text-xs text-gray-400">Could not fetch page</span>
+      )}
     </div>
   );
 }
@@ -335,16 +398,19 @@ function GlobalSeoTab({ initial }: { initial: GlobalSeoSettings }) {
       {/* 5. Search Console Verification */}
       <Section title="Search Console Verification" icon={FileSearch} defaultOpen={false}>
         <p className="text-xs text-gray-500 -mt-1">
-          Paste the content value from your verification meta tag (not the full tag). Leave blank if using file-based verification.
+          Paste the content value from your verification meta tag (not the full tag). Save settings, then click <strong>Test Live Tag</strong> to confirm the tag is active on the site.
         </p>
         <Field label="Google Search Console" hint='From: <meta name="google-site-verification" content="PASTE_THIS" />'>
           <input className={inputCls} value={form.googleVerification} onChange={(e) => set('googleVerification', e.target.value)} placeholder="abc123XYZ..." />
+          <VerifyMetaTag code={form.googleVerification} metaName="google-site-verification" saved={saved} />
         </Field>
         <Field label="Bing Webmaster Tools" hint='From: <meta name="msvalidate.01" content="PASTE_THIS" />'>
           <input className={inputCls} value={form.bingVerification} onChange={(e) => set('bingVerification', e.target.value)} placeholder="abc123XYZ..." />
+          <VerifyMetaTag code={form.bingVerification} metaName="msvalidate.01" saved={saved} />
         </Field>
         <Field label="Yandex Webmaster">
           <input className={inputCls} value={form.yandexVerification} onChange={(e) => set('yandexVerification', e.target.value)} placeholder="abc123XYZ..." />
+          <VerifyMetaTag code={form.yandexVerification} metaName="yandex-verification" saved={saved} />
         </Field>
       </Section>
 
