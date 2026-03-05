@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
-import { Plus, Pencil, Trash2, Eye, EyeOff, GripVertical, Globe, Upload, ImageIcon } from 'lucide-react';
+import { Plus, Pencil, Trash2, Eye, EyeOff, GripVertical, Globe, Upload, Wand2, AlertCircle, Loader2, Check } from 'lucide-react';
 import { RichTextEditor } from './RichTextEditor';
 
 type ArticleStatus = 'DRAFT' | 'PUBLISHED';
@@ -34,6 +34,83 @@ const BLANK: Omit<ArticleRow, 'id' | 'createdAt' | 'updatedAt'> = {
 };
 
 const LOCALE_LABELS: Record<string, string> = { en: '🇬🇧 EN', he: '🇮🇱 HE', ar: '🇸🇦 AR' };
+
+const SITE_URL = 'https://www.sim2me.net';
+
+// ── SEO helpers ───────────────────────────────────────────────────────────────
+
+/**
+ * Extract destination from title/slug and build the standard focus keyword:
+ *   HE "איסים למאוריטניה"  → "eSIM למאוריטניה"
+ *   AR "eSIM لموريتانيا"   → "eSIM لموريتانيا"
+ *   EN / slug              → "eSIM for Mauritania"
+ */
+function generateFocusKeyword(title: string, slug: string, locale: string): string | null {
+  if (locale === 'he') {
+    const match = title.match(/ל(\S{2,}(?:\s+\S+)*)$/u);
+    if (match) return `eSIM ל${match[1].trim()}`;
+    const cleaned = title.replace(/^(איסים|esim)\s*/iu, '').trim();
+    if (cleaned) return `eSIM ${cleaned}`;
+  }
+  if (locale === 'ar') {
+    const match = title.match(/ل[ـ]?(\S{2,}(?:\s+\S+)*)$/u);
+    if (match) return `eSIM لـ${match[1].trim()}`;
+    const cleaned = title.replace(/^(esim|إيسيم)\s*/iu, '').trim();
+    if (cleaned) return `eSIM ${cleaned}`;
+  }
+  // English / fallback from slug
+  const destFromSlug = slug
+    .replace(/^esim[-_](for[-_])?/i, '')
+    .replace(/[-_](esim|sim|card|plan|data|travel|guide|prepaid).*$/i, '')
+    .replace(/[-_]/g, ' ')
+    .trim();
+  if (destFromSlug && destFromSlug.length > 2) {
+    return `eSIM for ${destFromSlug.split(' ').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}`;
+  }
+  return null;
+}
+
+function articleUrl(slug: string, locale: string) {
+  const prefix = locale === 'en' ? '' : `/${locale}`;
+  return `${SITE_URL}${prefix}/articles/${slug}`;
+}
+
+// ── Article SERP Preview ──────────────────────────────────────────────────────
+
+function ArticleSerpPreview({ title, description, slug, locale }: {
+  title: string; description: string; slug: string; locale: string;
+}) {
+  const TITLE_LIMIT = 60;
+  const DESC_LIMIT = 155;
+  const url = articleUrl(slug, locale).replace(/^https?:\/\//, '');
+  const titleOver = title.length > TITLE_LIMIT;
+  const descOver = description.length > DESC_LIMIT;
+  return (
+    <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+      <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-gray-400">SERP Preview</p>
+      <div className="rounded-lg border border-gray-200 bg-white p-4 space-y-1 shadow-sm">
+        <p className="flex items-center gap-1.5 text-xs text-gray-500">
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gray-100 text-[9px] font-bold">G</span>
+          {url}
+        </p>
+        <p className={`text-base font-medium leading-snug truncate ${titleOver ? 'text-red-600' : 'text-blue-700'}`}>
+          {title || 'Meta title will appear here'}
+        </p>
+        <p className="text-sm leading-relaxed text-gray-600">
+          {(description || 'Meta description will appear here.').slice(0, 160)}
+          {description.length > 160 ? '…' : ''}
+        </p>
+      </div>
+      {(titleOver || descOver) && (
+        <p className="mt-2 flex items-center gap-1 text-xs text-amber-600">
+          <AlertCircle className="h-3 w-3 shrink-0" />
+          {titleOver ? `Title ${title.length - TITLE_LIMIT} chars over 60. ` : ''}
+          {descOver ? `Description ${description.length - DESC_LIMIT} chars over 155.` : ''}
+        </p>
+      )}
+    </div>
+  );
+}
 
 // ── Featured Image Field ──────────────────────────────────────────────────────
 function FeaturedImageField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
@@ -148,10 +225,38 @@ export function ArticlesClient({
   const [search, setSearch] = useState('');
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest' | 'az' | 'za'>('newest');
   const [msg, setMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
+  const [bulkFilling, setBulkFilling] = useState(false);
 
   const flash = (type: 'ok' | 'err', text: string) => {
     setMsg({ type, text });
-    setTimeout(() => setMsg(null), 4000);
+    setTimeout(() => setMsg(null), 5000);
+  };
+
+  const bulkFillKeywords = async (overwrite = false) => {
+    if (!confirm(overwrite
+      ? 'This will overwrite ALL focus keywords with auto-generated values. Continue?'
+      : 'Auto-fill focus keywords for articles that have none. Continue?'
+    )) return;
+    setBulkFilling(true);
+    try {
+      const res = await fetch('/api/admin/articles/bulk-fill-keywords', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ overwrite }),
+      });
+      const data = await res.json();
+      if (!res.ok) { flash('err', data.error || 'Bulk fill failed'); return; }
+      // Update local state so the list shows new keywords immediately
+      if (data.details?.length > 0) {
+        const kwMap = Object.fromEntries(data.details.map((d: { id: string; keyword: string }) => [d.id, d.keyword]));
+        setArticles((prev) => prev.map((a) => kwMap[a.id] ? { ...a, focusKeyword: kwMap[a.id] } : a));
+      }
+      flash('ok', `✅ ${data.updated} articles updated, ${data.skipped} skipped.`);
+    } catch {
+      flash('err', 'Network error');
+    } finally {
+      setBulkFilling(false);
+    }
   };
 
   const startNew = () => {
@@ -398,26 +503,131 @@ export function ArticlesClient({
             )}
 
             {tab === 'seo' && (
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-5">
+                {/* Focus Keyword with auto-fill */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className={labelCls}>Focus Keyword</label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const kw = generateFocusKeyword(form.title, form.slug, form.locale);
+                        if (kw) setForm({ ...form, focusKeyword: kw });
+                        else flash('err', 'Could not detect destination from title/slug.');
+                      }}
+                      className="flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors"
+                    >
+                      <Wand2 className="h-3 w-3" />
+                      Auto-fill from title
+                    </button>
+                  </div>
+                  <input
+                    className={inputCls}
+                    dir={form.locale === 'he' || form.locale === 'ar' ? 'rtl' : 'ltr'}
+                    value={form.focusKeyword || ''}
+                    onChange={(e) => setForm({ ...form, focusKeyword: e.target.value || null })}
+                    placeholder={
+                      form.locale === 'he' ? 'eSIM למאוריטניה'
+                      : form.locale === 'ar' ? 'eSIM لموريتانيا'
+                      : 'eSIM for Mauritania'
+                    }
+                  />
+                  <p className="mt-1 text-xs text-gray-400">
+                    Format: <code className="font-mono">
+                      {form.locale === 'he' ? 'eSIM ל[יעד]' : form.locale === 'ar' ? 'eSIM لـ[وجهة]' : 'eSIM for [Destination]'}
+                    </code>
+                  </p>
+                </div>
+
+                {/* Meta Title */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className={labelCls}>Meta Title</label>
+                    <span className={`text-xs tabular-nums ${(form.metaTitle || '').length > 60 ? 'text-red-500 font-semibold' : (form.metaTitle || '').length > 51 ? 'text-amber-500' : 'text-gray-400'}`}>
+                      {(form.metaTitle || '').length}/60
+                    </span>
+                  </div>
+                  <input
+                    className={inputCls}
+                    dir={form.locale === 'he' || form.locale === 'ar' ? 'rtl' : 'ltr'}
+                    value={form.metaTitle || ''}
+                    onChange={(e) => setForm({ ...form, metaTitle: e.target.value || null })}
+                    placeholder={form.title || 'Meta title (ideal ≤60 chars)'}
+                  />
+                </div>
+
+                {/* Meta Description */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className={labelCls}>Meta Description</label>
+                    <span className={`text-xs tabular-nums ${(form.metaDesc || '').length > 155 ? 'text-red-500 font-semibold' : (form.metaDesc || '').length > 131 ? 'text-amber-500' : 'text-gray-400'}`}>
+                      {(form.metaDesc || '').length}/155
+                    </span>
+                  </div>
+                  <textarea
+                    className={`${inputCls} resize-none`}
+                    dir={form.locale === 'he' || form.locale === 'ar' ? 'rtl' : 'ltr'}
+                    rows={3}
+                    value={form.metaDesc || ''}
+                    onChange={(e) => setForm({ ...form, metaDesc: e.target.value || null })}
+                    placeholder="Meta description (ideal: 120–155 chars)"
+                  />
+                </div>
+
+                {/* SERP Preview */}
+                <ArticleSerpPreview
+                  title={form.metaTitle || form.title}
+                  description={form.metaDesc || form.excerpt || ''}
+                  slug={form.slug}
+                  locale={form.locale}
+                />
+
+                {/* Open Graph */}
+                <fieldset className="space-y-3 rounded-xl border border-gray-200 p-4">
+                  <legend className="px-1 text-xs font-semibold text-gray-500">Open Graph (Social Sharing)</legend>
                   <div>
-                    <label className={labelCls}>Meta Title (≤60 chars)</label>
-                    <input className={inputCls} value={form.metaTitle || ''} maxLength={60} onChange={(e) => setForm({ ...form, metaTitle: e.target.value || null })} />
-                    <p className="mt-1 text-xs text-gray-400">{(form.metaTitle || '').length}/60</p>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className={labelCls}>OG Title</label>
+                      <span className={`text-xs tabular-nums ${(form.ogTitle || '').length > 60 ? 'text-red-500 font-semibold' : 'text-gray-400'}`}>
+                        {(form.ogTitle || '').length}/60
+                      </span>
+                    </div>
+                    <input
+                      className={inputCls}
+                      dir={form.locale === 'he' || form.locale === 'ar' ? 'rtl' : 'ltr'}
+                      value={form.ogTitle || ''}
+                      onChange={(e) => setForm({ ...form, ogTitle: e.target.value || null })}
+                      placeholder="Social share title (defaults to Meta Title)"
+                    />
                   </div>
                   <div>
-                    <label className={labelCls}>OG Title</label>
-                    <input className={inputCls} value={form.ogTitle || ''} onChange={(e) => setForm({ ...form, ogTitle: e.target.value || null })} />
+                    <div className="flex items-center justify-between mb-1">
+                      <label className={labelCls}>OG Description</label>
+                      <span className={`text-xs tabular-nums ${(form.ogDesc || '').length > 155 ? 'text-red-500 font-semibold' : 'text-gray-400'}`}>
+                        {(form.ogDesc || '').length}/155
+                      </span>
+                    </div>
+                    <textarea
+                      className={`${inputCls} resize-none`}
+                      dir={form.locale === 'he' || form.locale === 'ar' ? 'rtl' : 'ltr'}
+                      rows={2}
+                      value={form.ogDesc || ''}
+                      onChange={(e) => setForm({ ...form, ogDesc: e.target.value || null })}
+                      placeholder="Social share description"
+                    />
                   </div>
-                </div>
+                </fieldset>
+
+                {/* Canonical URL */}
                 <div>
-                  <label className={labelCls}>Meta Description (≤155 chars)</label>
-                  <textarea className={inputCls} rows={3} value={form.metaDesc || ''} maxLength={155} onChange={(e) => setForm({ ...form, metaDesc: e.target.value || null })} />
-                  <p className="mt-1 text-xs text-gray-400">{(form.metaDesc || '').length}/155</p>
-                </div>
-                <div>
-                  <label className={labelCls}>OG Description</label>
-                  <textarea className={inputCls} rows={2} value={form.ogDesc || ''} onChange={(e) => setForm({ ...form, ogDesc: e.target.value || null })} />
+                  <label className={labelCls}>Canonical URL</label>
+                  <input
+                    className={inputCls}
+                    value={form.canonicalUrl || ''}
+                    onChange={(e) => setForm({ ...form, canonicalUrl: e.target.value || null })}
+                    placeholder={articleUrl(form.slug || 'slug', form.locale)}
+                  />
+                  <p className="mt-1 text-xs text-gray-400">Leave blank to auto-generate from slug.</p>
                 </div>
               </div>
             )}
@@ -440,9 +650,20 @@ export function ArticlesClient({
                 />
                 <svg className="absolute left-2.5 top-2 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
               </div>
-              <button onClick={startNew} className="flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 shrink-0">
-                <Plus className="h-4 w-4" /> New Article
-              </button>
+              <div className="flex gap-2 shrink-0">
+                <button
+                  onClick={() => bulkFillKeywords(false)}
+                  disabled={bulkFilling}
+                  title="Auto-fill focus keywords for articles that have none"
+                  className="flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-100 disabled:opacity-60 transition-colors"
+                >
+                  {bulkFilling ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+                  Auto-fill keywords
+                </button>
+                <button onClick={startNew} className="flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
+                  <Plus className="h-4 w-4" /> New Article
+                </button>
+              </div>
             </div>
             <div className="flex flex-wrap gap-2 items-center">
               {/* Language */}
