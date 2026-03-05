@@ -76,7 +76,7 @@ function getDestinationFromTitle(title: string, locale: 'he' | 'en' | 'ar'): str
   return '';
 }
 
-/** CTA block like other articles: heading + button; heading includes destination name when provided */
+/** CTA block: heading and button both link to ctaHref (SEO + accessibility: descriptive link text, focus ring) */
 function buildCtaBlockHtml(ctaHref: string, locale: 'he' | 'en' | 'ar', destination?: string): string {
   const dirAttr = locale === 'he' || locale === 'ar' ? ' dir="rtl"' : '';
   let heading: string;
@@ -86,7 +86,8 @@ function buildCtaBlockHtml(ctaHref: string, locale: 'he' | 'en' | 'ar', destinat
     heading = locale === 'he' ? 'לרכישת איסים – לחצו כאן' : locale === 'ar' ? 'للحصول على eSIM – اضغط هنا' : 'Ready to get your eSIM?';
   }
   const buttonText = locale === 'he' ? '← תוכניות eSIM' : locale === 'ar' ? 'خطط eSIM ←' : 'eSIM plans →';
-  return `<div class="cta-block rounded-xl border border-emerald-200 bg-emerald-50 p-6 my-8 text-center"${dirAttr}><p class="text-xl font-bold text-emerald-900 mb-2">${heading}</p><a href="${ctaHref}" class="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700">${buttonText}</a></div>`;
+  const headingLinkClass = 'text-emerald-900 hover:underline focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 rounded';
+  return `<div class="cta-block rounded-xl border border-emerald-200 bg-emerald-50 p-6 my-8 text-center"${dirAttr}><p class="text-xl font-bold text-emerald-900 mb-2"><a href="${ctaHref}" class="${headingLinkClass}">${heading}</a></p><a href="${ctaHref}" class="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700">${buttonText}</a></div>`;
 }
 
 /**
@@ -241,6 +242,20 @@ export async function runPhase7Update(
         status: 'PUBLISHED',
       },
     });
+  }
+
+  // Migrate all articles (any locale): make CTA heading a link too (SEO + accessibility)
+  const allArticles = await prisma.article.findMany({ select: { id: true, content: true } });
+  const headingLinkClass = 'text-emerald-900 hover:underline focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 rounded';
+  for (const a of allArticles) {
+    if (!a.content || a.content.includes('text-xl font-bold text-emerald-900 mb-2"><a href=')) continue;
+    const newContent = a.content.replace(
+      /<p class="text-xl font-bold text-emerald-900 mb-2">([\s\S]*?)<\/p>\s*<a href="([^"]+)"[^>]*class="inline-block rounded-lg bg-emerald-600/g,
+      `<p class="text-xl font-bold text-emerald-900 mb-2"><a href="$2" class="${headingLinkClass}">$1</a></p><a href="$2" class="inline-block rounded-lg bg-emerald-600`
+    );
+    if (newContent !== a.content) {
+      await prisma.article.update({ where: { id: a.id }, data: { content: newContent } });
+    }
   }
 
   return { updated: endIdx - startIdx };
