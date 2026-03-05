@@ -90,24 +90,24 @@ function buildCtaBlockHtml(ctaHref: string, locale: 'he' | 'en' | 'ar', destinat
       ? locale === 'he'
         ? `לרכישת איסים ל${destination} – לחצו כאן`
         : locale === 'ar'
-          ? `لרכישת eSIM لـ ${destination} – اضغط هنا`
+          ? `لشراء eSIM لـ ${destination} – اضغط هنا`
           : `Get eSIM for ${destination} – Click here`
       : locale === 'he'
         ? 'לרכישת איסים – לחצו כאן'
         : locale === 'ar'
-          ? 'لרכישת eSIM – اضغط هنا'
+          ? 'لشراء eSIM – اضغط هنا'
           : 'Get eSIM – Click here';
   const buttonText =
     destination !== undefined && destination !== ''
       ? locale === 'he'
         ? `לרכישת איסים ל${destination}`
         : locale === 'ar'
-          ? `لרכישת eSIM لـ ${destination}`
+          ? `لشراء eSIM لـ ${destination}`
           : `Get eSIM for ${destination}`
       : locale === 'he'
         ? 'לרכישת איסים'
         : locale === 'ar'
-          ? 'لרכישת eSIM'
+          ? 'لشراء eSIM'
           : 'Get eSIM';
   const headingLinkClass = 'text-emerald-900 hover:underline focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 rounded';
   return `<div class="cta-block rounded-xl border border-emerald-200 bg-emerald-50 p-6 my-8 text-center"${dirAttr}><p class="text-xl font-bold text-emerald-900 mb-2"><a href="${ctaHref}" class="${headingLinkClass}">${heading}</a></p><a href="${ctaHref}" class="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700">${buttonText}</a></div>`;
