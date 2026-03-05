@@ -68,6 +68,29 @@ function replaceCtaLinks(html: string, ctaHref: string): string {
     .replace(/href=["']https:\/\/www\.sim2me\.net\s*["']/gi, `href="${ctaHref}"`);
 }
 
+/** CTA block like other articles: heading + button, no "CTA #1" label visible */
+function buildCtaBlockHtml(ctaHref: string, locale: 'he' | 'en' | 'ar'): string {
+  const dirAttr = locale === 'he' || locale === 'ar' ? ' dir="rtl"' : '';
+  const heading = locale === 'he' ? 'לרכישת איסים – לחצו כאן' : locale === 'ar' ? 'للحصول على eSIM – اضغط هنا' : 'Ready to get your eSIM?';
+  const buttonText = locale === 'he' ? '← תוכניות eSIM' : locale === 'ar' ? 'خطط eSIM ←' : 'eSIM plans →';
+  return `<div class="cta-block rounded-xl border border-emerald-200 bg-emerald-50 p-6 my-8 text-center"${dirAttr}><p class="text-xl font-bold text-emerald-900 mb-2">${heading}</p><a href="${ctaHref}" class="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700">${buttonText}</a></div>`;
+}
+
+/**
+ * Normalize plain-format content: remove Meta Description paragraph from body, replace CTA #1/#2 with proper button blocks.
+ * So readers don't see "Meta Description" or "CTA #1" text; they see proper CTA boxes like other articles.
+ */
+function normalizePhase7Content(html: string, ctaHref: string, locale: 'he' | 'en' | 'ar'): string {
+  let out = html;
+  // Remove first paragraph that contains "Meta Description:" (used only for metaDesc, not for display)
+  out = out.replace(/<p[^>]*>\s*<strong>Meta Description:<\/strong>[\s\S]*?<\/p>\s*/i, '');
+  // Replace CTA #1 paragraph with proper cta-block (no "CTA #1" label)
+  out = out.replace(/<p[^>]*>\s*<strong>CTA #1:<\/strong>[\s\S]*?<\/p>/i, buildCtaBlockHtml(ctaHref, locale));
+  // Replace CTA #2 paragraph with proper cta-block
+  out = out.replace(/<p[^>]*>\s*<strong>CTA #2:<\/strong>[\s\S]*?<\/p>/i, buildCtaBlockHtml(ctaHref, locale));
+  return out;
+}
+
 function decodeHtml(s: string): string {
   return s.replace(/&amp;/g, '&').replace(/&#x27;/g, "'").replace(/&#39;/g, "'").trim();
 }
@@ -173,7 +196,10 @@ export async function runPhase7Update(
     const parsedIdx = heArticles.length === 25 ? i : i - 25;
     const { title, metaDesc, content } = allParsed[parsedIdx];
     const ctaHref = getCtaHref(slug, locale);
-    const contentWithCta = replaceCtaLinks(content, ctaHref);
+    const contentWithCta =
+      content.includes('Meta Description:') && content.includes('CTA #1:')
+        ? normalizePhase7Content(content, ctaHref, locale)
+        : replaceCtaLinks(content, ctaHref);
     const excerpt = metaDesc.slice(0, 160) + (metaDesc.length > 160 ? '…' : '');
     const articleOrder = baseOrder + i;
 
