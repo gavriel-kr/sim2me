@@ -267,3 +267,20 @@ enum ArticleStatus {
   DRAFT
   PUBLISHED
 }
+
+// ─── Path-based SEO Overrides ────────────────────────────────
+model SeoSetting {
+  id            String   @id @default(cuid())
+  path          String   @unique
+  title         String?
+  description   String?  @db.Text
+  ogTitle       String?
+  ogDescription String?  @db.Text
+  ogImage       String?
+  canonicalUrl  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([path])
+  @@map("seo_settings")
+}

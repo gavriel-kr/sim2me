@@ -2,8 +2,10 @@ import type { Metadata, Viewport } from 'next';
 import { DM_Sans } from 'next/font/google';
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages } from 'next-intl/server';
+import { headers } from 'next/headers';
 import { brandConfig } from '@/config/brand';
 import { getSiteBranding } from '@/lib/site-branding';
+import { getSeoOverride } from '@/lib/seo-override';
 import { Providers } from '@/components/providers/Providers';
 import { CookieConsentProvider } from '@/components/CookieConsentProvider';
 import { CookieBanner } from '@/components/CookieBanner';
@@ -26,14 +28,26 @@ export async function generateMetadata(): Promise<Metadata> {
   const { logoUrl, faviconUrl, brandingVersion } = await getSiteBranding();
   const iconUrl = faviconUrl ? withCacheBust(faviconUrl, brandingVersion) : '/favicon.svg';
   const appleIconUrl = faviconUrl && faviconUrl.startsWith('/') ? withCacheBust(faviconUrl, brandingVersion) : '/icons/apple-touch-icon.png';
-  const ogImageUrl = logoUrl && logoUrl.startsWith('/') ? `${siteUrl}${withCacheBust(logoUrl, brandingVersion)}` : undefined;
+  const defaultOgImageUrl = logoUrl && logoUrl.startsWith('/') ? `${siteUrl}${withCacheBust(logoUrl, brandingVersion)}` : undefined;
+
+  // Read the current page path injected by middleware
+  const headersList = await headers();
+  const pathname = headersList.get('x-pathname');
+  const override = pathname ? await getSeoOverride(pathname) : null;
+
+  // Resolve OG image — override wins, must be absolute URL
+  const resolvedOgImage = override?.ogImage
+    ? (override.ogImage.startsWith('http') ? override.ogImage : `${siteUrl}${override.ogImage}`)
+    : defaultOgImageUrl;
+
   return {
     metadataBase: new URL(siteUrl),
     title: {
-      default: `${brandConfig.name} – Buy eSIM Online for 200+ Countries | Instant Delivery`,
+      default: override?.title || `${brandConfig.name} – Buy eSIM Online for 200+ Countries | Instant Delivery`,
       template: `%s | ${brandConfig.name}`,
     },
     description:
+      override?.description ||
       'Buy prepaid eSIM online for 200+ countries. Instant delivery, no physical SIM needed. Compare plans, scan QR code and get connected in minutes. Best prices for travel data.',
     keywords: [
       'eSIM', 'buy eSIM', 'travel eSIM', 'prepaid eSIM', 'eSIM online',
@@ -45,21 +59,21 @@ export async function generateMetadata(): Promise<Metadata> {
       type: 'website',
       siteName: brandConfig.name,
       url: siteUrl,
-      title: `${brandConfig.name} – Buy eSIM Online for 200+ Countries`,
-      description: 'Instant eSIM delivery for travelers. No physical SIM, no roaming fees. Compare plans and get connected in minutes.',
+      title: override?.ogTitle || `${brandConfig.name} – Buy eSIM Online for 200+ Countries`,
+      description: override?.ogDescription || 'Instant eSIM delivery for travelers. No physical SIM, no roaming fees. Compare plans and get connected in minutes.',
       locale: 'en_US',
       alternateLocale: ['he_IL', 'ar_SA'],
-      ...(ogImageUrl && { images: [{ url: ogImageUrl, width: 1200, height: 630, alt: brandConfig.logoAlt }] }),
+      ...(resolvedOgImage && { images: [{ url: resolvedOgImage, width: 1200, height: 630, alt: brandConfig.logoAlt }] }),
     },
     twitter: {
       card: 'summary_large_image',
       site: '@sim2me',
-      title: `${brandConfig.name} – Buy eSIM Online`,
-      description: 'Instant eSIM for 200+ countries. Best prices, instant delivery.',
-      ...(ogImageUrl && { images: [ogImageUrl] }),
+      title: override?.ogTitle || `${brandConfig.name} – Buy eSIM Online`,
+      description: override?.ogDescription || 'Instant eSIM for 200+ countries. Best prices, instant delivery.',
+      ...(resolvedOgImage && { images: [resolvedOgImage] }),
     },
     alternates: {
-      canonical: siteUrl,
+      canonical: override?.canonicalUrl || siteUrl,
       languages: {
         'en': siteUrl,
         'he': `${siteUrl}/he`,
