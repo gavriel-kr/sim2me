@@ -61,6 +61,12 @@ After the first deploy (or after adding new articles to the repo), run the artic
 
 This creates/updates all articles in the DB. The app and admin panel read from the same DB, so no further deploy is needed.
 
+### Updating Phase 7 articles (75 articles) on the live site
+
+**Easiest:** After each deploy, open **Admin** → **Articles** and click **"Update Phase 7 (75)"**. That runs the update on the **current** database (production when you're on sim2me.net), so the live site gets the 75 articles from the HTML files in the repo. No need to run anything locally.
+
+**Alternative (CLI):** Run the script with the production database URL so the live DB is updated from your machine: set `DATABASE_URL` to the production Postgres URL, then run `npm run db:update-articles-phase7`.
+
 ## 5. Notes
 
 - **i18n:** The app uses `next-intl` with locales `en`, `he`, `ar`. No extra Vercel config is required.

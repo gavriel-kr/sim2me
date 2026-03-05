@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
-import { Plus, Pencil, Trash2, Eye, EyeOff, GripVertical, Globe, Upload, ImageIcon } from 'lucide-react';
+import { Plus, Pencil, Trash2, Eye, EyeOff, GripVertical, Globe, Upload, ImageIcon, RefreshCw } from 'lucide-react';
 import { RichTextEditor } from './RichTextEditor';
 
 type ArticleStatus = 'DRAFT' | 'PUBLISHED';
@@ -144,6 +144,7 @@ export function ArticlesClient({
   const [saving, setSaving] = useState(false);
   const [tab, setTab] = useState<'main' | 'seo' | 'content'>('main');
   const [filterLocale, setFilterLocale] = useState<string>('all');
+  const [phase7Loading, setPhase7Loading] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [search, setSearch] = useState('');
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest' | 'az' | 'za'>('newest');
@@ -442,6 +443,31 @@ export function ArticlesClient({
               </div>
               <button onClick={startNew} className="flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 shrink-0">
                 <Plus className="h-4 w-4" /> New Article
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  setPhase7Loading(true);
+                  try {
+                    const res = await fetch('/api/admin/update-phase7-articles', { method: 'POST' });
+                    const data = await res.json();
+                    if (res.ok) {
+                      flash('ok', `Phase 7: ${data.updated} articles updated. Refresh the list or the site.`);
+                      window.location.reload();
+                    } else {
+                      flash('err', data.error || 'Update failed');
+                    }
+                  } catch {
+                    flash('err', 'Network error');
+                  } finally {
+                    setPhase7Loading(false);
+                  }
+                }}
+                disabled={phase7Loading}
+                className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-800 hover:bg-amber-100 disabled:opacity-60 shrink-0"
+                title="Update 75 Phase 7 articles from HTML files (HE+EN+AR) in this database"
+              >
+                <RefreshCw className={`h-4 w-4 ${phase7Loading ? 'animate-spin' : ''}`} /> {phase7Loading ? 'Updating…' : 'Update Phase 7 (75)'}
               </button>
             </div>
             <div className="flex flex-wrap gap-2 items-center">

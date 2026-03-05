@@ -19,6 +19,7 @@
     "db:seed-articles-part3": "npx tsx prisma/seed-articles-part3.ts",
     "db:seed-articles-part6": "npx tsx prisma/seed-articles-part6.ts",
     "db:seed-articles-part7": "npx tsx prisma/seed-articles-part7.ts",
+    "db:update-articles-phase7": "npx tsx prisma/update-articles-phase7.ts",
     "db:ready": "prisma db push && npx tsx prisma/seed.ts",
     "db:studio": "prisma studio",
     "scripts:update-policies": "tsx scripts/update-policy-pages.ts",
