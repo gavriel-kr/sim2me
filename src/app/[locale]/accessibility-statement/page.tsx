@@ -11,7 +11,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: 'accessibilityStatement' });
-  const prefix = locale === 'en' ? '' : `/${locale}`;
+  const prefix = `/${locale}`;
   return {
     title: `${t('title')} – Sim2Me`,
     description:

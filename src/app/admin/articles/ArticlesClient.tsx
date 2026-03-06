@@ -71,8 +71,7 @@ function generateFocusKeyword(title: string, slug: string, locale: string): stri
 }
 
 function articleUrl(slug: string, locale: string) {
-  const prefix = locale === 'en' ? '' : `/${locale}`;
-  return `${SITE_URL}${prefix}/articles/${slug}`;
+  return `${SITE_URL}/${locale}/articles/${slug}`;
 }
 
 // ── Article SERP Preview ──────────────────────────────────────────────────────

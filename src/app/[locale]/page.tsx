@@ -28,13 +28,18 @@ const seoByLocale: Record<string, { title: string; description: string }> = {
 export async function generateMetadata({ params }: Props) {
   const { locale } = await params;
   const seo = seoByLocale[locale] || seoByLocale.en;
-  const prefix = locale === 'en' ? '' : `/${locale}`;
+  const prefix = `/${locale}`;
   return {
     title: seo.title,
     description: seo.description,
     alternates: {
       canonical: `${siteUrl}${prefix}`,
-      languages: { en: siteUrl, he: `${siteUrl}/he`, ar: `${siteUrl}/ar` },
+      languages: {
+        en:        `${siteUrl}/en`,
+        he:        `${siteUrl}/he`,
+        ar:        `${siteUrl}/ar`,
+        'x-default': `${siteUrl}/en`,
+      },
     },
     openGraph: {
       title: seo.title,

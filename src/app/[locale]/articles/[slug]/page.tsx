@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic';
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.sim2me.net';
 
 function localePrefix(locale: string) {
-  return locale === 'en' ? '' : `/${locale}`;
+  return `/${locale}`;
 }
 
 type Props = { params: Promise<{ locale: string; slug: string }> };

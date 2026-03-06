@@ -10,7 +10,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const { locale } = await params;
   const cms = await getCmsPage('cookies', locale as 'en' | 'he' | 'ar');
   const t = await getTranslations('footer');
-  const prefix = locale === 'en' ? '' : `/${locale}`;
+  const prefix = `/${locale}`;
   return {
     title: cms?.seoTitle || `${t('cookieSettings')} – Sim2Me`,
     description:

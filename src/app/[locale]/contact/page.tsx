@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const { locale } = await params;
   const cms = await getCmsPage('contact', locale as 'en' | 'he' | 'ar');
   const t = await getTranslations('contact');
-  const prefix = locale === 'en' ? '' : `/${locale}`;
+  const prefix = `/${locale}`;
   return {
     title: cms?.seoTitle || `${t('title')} – Sim2Me eSIM Support`,
     description: cms?.seoDesc || 'Need help with your eSIM? Contact Sim2Me support for installation help, activation issues, connectivity problems or refund requests.',

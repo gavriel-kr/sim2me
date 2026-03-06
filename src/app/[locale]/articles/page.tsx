@@ -29,7 +29,7 @@ type Props = { params: Promise<{ locale: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const meta = INDEX_META[locale] || INDEX_META.en;
-  const prefix = locale === 'en' ? '' : `/${locale}`;
+  const prefix = `/${locale}`;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.sim2me.net';
   return {
     title: meta.title,
@@ -37,9 +37,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     alternates: {
       canonical: `${siteUrl}${prefix}/articles`,
       languages: {
-        en: `${siteUrl}/articles`,
-        he: `${siteUrl}/he/articles`,
-        ar: `${siteUrl}/ar/articles`,
+        en:          `${siteUrl}/en/articles`,
+        he:          `${siteUrl}/he/articles`,
+        ar:          `${siteUrl}/ar/articles`,
+        'x-default': `${siteUrl}/en/articles`,
       },
     },
     openGraph: { title: meta.title, description: meta.desc },

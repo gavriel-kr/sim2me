@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: PageProps) {
   const destination = await getDestinationBySlug(slug);
   const plan = await getPlanById(planId);
   if (!destination || !plan) return { title: 'Plan' };
-  const prefix = locale === 'en' ? '' : `/${locale}`;
+  const prefix = `/${locale}`;
   return {
     title: `${plan.name} – eSIM ${destination.name}`,
     description: `Buy ${plan.name} eSIM for ${destination.name}. ${plan.networkType}, ${plan.dataDisplay} data, ${plan.days} days.`,

@@ -10,7 +10,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const { locale } = await params;
   const cms = await getCmsPage('refund', locale as 'en' | 'he' | 'ar');
   const t = await getTranslations('footer');
-  const prefix = locale === 'en' ? '' : `/${locale}`;
+  const prefix = `/${locale}`;
   return {
     title: cms?.seoTitle || `${t('refund')} – Sim2Me`,
     description: cms?.seoDesc || 'Sim2Me refund policy. Unused eSIMs can be refunded within 14 days. Learn about eligibility, the refund process, and how to request a refund.',

@@ -10,7 +10,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const { locale } = await params;
   const cms = await getCmsPage('privacy', locale as 'en' | 'he' | 'ar');
   const t = await getTranslations('footer');
-  const prefix = locale === 'en' ? '' : `/${locale}`;
+  const prefix = `/${locale}`;
   return {
     title: cms?.seoTitle || `${t('privacy')} – Sim2Me`,
     description: cms?.seoDesc || 'Read the Sim2Me Privacy Policy. Learn how we collect, use and protect your personal data when you purchase and use our eSIM services.',

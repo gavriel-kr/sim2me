@@ -6,7 +6,7 @@ const siteUrl = 'https://www.sim2me.net';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  const prefix = locale === 'en' ? '' : `/${locale}`;
+  const prefix = `/${locale}`;
   return {
     title: 'App – Sim2Me eSIM',
     description: 'Get the Sim2Me app. Manage your eSIMs, browse plans, and stay connected anywhere.',

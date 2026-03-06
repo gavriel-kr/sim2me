@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const { locale } = await params;
   const cms = await getCmsPage('how-it-works', locale as 'en' | 'he' | 'ar');
   const seo = seoByLocale[locale] || seoByLocale.en;
-  const prefix = locale === 'en' ? '' : `/${locale}`;
+  const prefix = `/${locale}`;
   return {
     title: cms?.seoTitle || seo.title,
     description: cms?.seoDesc || seo.desc,

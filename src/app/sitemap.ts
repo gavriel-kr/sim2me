@@ -71,7 +71,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
 
   for (const locale of routing.locales) {
-    const prefix = locale === routing.defaultLocale ? '' : `/${locale}`;
+    const prefix = `/${locale}`;
 
     for (const page of staticPages) {
       entries.push({
@@ -93,7 +93,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }
 
   for (const article of articles) {
-    const prefix = article.locale === routing.defaultLocale ? '' : `/${article.locale}`;
+    const prefix = `/${article.locale}`;
     entries.push({
       url: `${baseUrl}${prefix}/articles/${article.slug}`,
       lastModified: article.updatedAt,

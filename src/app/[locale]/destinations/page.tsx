@@ -14,7 +14,7 @@ type Props = { params: Promise<{ locale: string }> };
 export async function generateMetadata({ params }: Props) {
   const { locale } = await params;
   const seo = seoByLocale[locale] || seoByLocale.en;
-  const prefix = locale === 'en' ? '' : `/${locale}`;
+  const prefix = `/${locale}`;
   return {
     title: seo.title,
     description: seo.desc,
