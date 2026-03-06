@@ -17,6 +17,14 @@ export default function middleware(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-pathname', request.nextUrl.pathname);
 
+  // Re-inject the locale header that intlMiddleware set internally —
+  // creating a new NextResponse.next() would otherwise lose it, causing
+  // getTranslations() to fall back to the default (English) locale.
+  const pathLocale = request.nextUrl.pathname.split('/')[1];
+  if (routing.locales.includes(pathLocale as 'en' | 'he' | 'ar')) {
+    requestHeaders.set('x-next-intl-locale', pathLocale);
+  }
+
   const response = NextResponse.next({ request: { headers: requestHeaders } });
 
   // Preserve locale cookie and any other response headers set by next-intl
