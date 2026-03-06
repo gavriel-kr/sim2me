@@ -135,16 +135,27 @@ async function getDestinationData(slug: string, locale: string = 'en') {
   }
 }
 
+const SITE_URL = 'https://www.sim2me.net';
+
 export async function generateMetadata({ params }: PageProps) {
   const { slug, locale } = await params;
   const data = await getDestinationData(slug, locale);
   if (!data) return { title: 'Destination' };
   const { destination } = data;
   const minPrice = destination.fromPrice > 0 ? ` from $${destination.fromPrice.toFixed(2)}` : '';
+  const prefix = locale === 'en' ? '' : `/${locale}`;
   return {
     title: `Buy eSIM for ${destination.name} – ${destination.planCount} Plans${minPrice}`,
     description: `Buy prepaid eSIM for ${destination.name}. ${destination.planCount} data plans available${minPrice}. Instant delivery, no physical SIM needed. Compare plans and connect in minutes.`,
-    alternates: { canonical: `https://www.sim2me.net/destinations/${slug}` },
+    alternates: {
+      canonical: `${SITE_URL}${prefix}/destinations/${slug}`,
+      languages: {
+        'en':        `${SITE_URL}/destinations/${slug}`,
+        'he':        `${SITE_URL}/he/destinations/${slug}`,
+        'ar':        `${SITE_URL}/ar/destinations/${slug}`,
+        'x-default': `${SITE_URL}/destinations/${slug}`,
+      },
+    },
   };
 }
 
