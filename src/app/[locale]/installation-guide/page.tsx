@@ -4,10 +4,16 @@ import { routing } from '@/i18n/routing';
 
 const { Link: IntlLink } = createSharedPathnamesNavigation(routing);
 
-export const metadata = {
-  title: 'eSIM installation guide',
-  description: 'How to install your SIM2ME eSIM on iPhone or Android.',
-};
+const SITE_URL = 'https://www.sim2me.net';
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  return {
+    title: 'eSIM installation guide',
+    description: 'How to install your SIM2ME eSIM on iPhone or Android.',
+    alternates: { canonical: `${SITE_URL}/${locale}/installation-guide` },
+  };
+}
 
 export default function InstallationGuidePage() {
   return (
