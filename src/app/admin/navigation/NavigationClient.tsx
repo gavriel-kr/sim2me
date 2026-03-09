@@ -5,7 +5,6 @@ import { Save, Plus, Trash2, GripVertical } from 'lucide-react';
 import type { NavLink } from '@/lib/navigation';
 
 const NAV_KEYS = ['home', 'destinations', 'app', 'howItWorks', 'devices', 'help', 'about', 'contact'];
-const FOOTER_NAV_KEYS = ['destinations', 'app', 'howItWorks', 'devices', 'about', 'contact', 'help'];
 const FOOTER_LEGAL_KEYS = ['terms', 'privacy', 'refund', 'accessibilityStatement'];
 const FOOTER_GUIDES_KEYS = ['guidesAll', 'guidesEurope', 'guidesHowTo', 'guidesVsRoaming'];
 
@@ -69,16 +68,40 @@ function LinkRow({
   defaultHrefs,
   onChange,
   onRemove,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  onDragEnd,
+  isDragging,
 }: {
   link: NavLink;
   keys: string[];
   defaultHrefs: Record<string, string>;
   onChange: (link: NavLink) => void;
   onRemove: () => void;
+  onDragStart: (e: React.DragEvent) => void;
+  onDragOver: (e: React.DragEvent) => void;
+  onDrop: (e: React.DragEvent) => void;
+  onDragEnd: () => void;
+  isDragging: boolean;
 }) {
   return (
-    <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white p-2">
-      <GripVertical className="h-4 w-4 shrink-0 text-gray-400" aria-hidden />
+    <div
+      className={`flex items-center gap-2 rounded-lg border border-gray-200 bg-white p-2 transition-opacity ${isDragging ? 'opacity-50' : ''}`}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
+    >
+      <div
+        draggable
+        onDragStart={onDragStart}
+        onDragEnd={onDragEnd}
+        className="cursor-grab active:cursor-grabbing touch-none"
+        role="button"
+        tabIndex={0}
+        aria-label="Drag to reorder"
+      >
+        <GripVertical className="h-4 w-4 shrink-0 text-gray-400" aria-hidden />
+      </div>
       <select
         value={link.key}
         onChange={(e) => onChange({ ...link, key: e.target.value, href: defaultHrefs[e.target.value] ?? link.href })}
@@ -109,10 +132,13 @@ function LinkRow({
   );
 }
 
+type DragState = { sectionKey: SectionKey; index: number } | null;
+
 export function NavigationClient({ initial }: Props) {
   const [sections, setSections] = useState(initial);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [dragging, setDragging] = useState<DragState>(null);
 
   function updateSection(key: SectionKey, links: NavLink[]) {
     setSections((s) => ({ ...s, [key]: links }));
@@ -136,6 +162,14 @@ export function NavigationClient({ initial }: Props) {
       key,
       sections[key].map((l, i) => (i === index ? link : l))
     );
+  }
+
+  function moveLink(key: SectionKey, fromIndex: number, toIndex: number) {
+    if (fromIndex === toIndex) return;
+    const links = [...sections[key]];
+    const [removed] = links.splice(fromIndex, 1);
+    links.splice(toIndex, 0, removed);
+    updateSection(key, links);
   }
 
   async function handleSave() {
@@ -172,12 +206,30 @@ export function NavigationClient({ initial }: Props) {
           <div className="mt-3 space-y-2">
             {sections[key].map((link, i) => (
               <LinkRow
-                key={`${key}-${i}`}
+                key={`${key}-${link.key}-${i}`}
                 link={link}
                 keys={KEY_OPTIONS[key]}
                 defaultHrefs={DEFAULT_HREFS[key]}
                 onChange={(l) => changeLink(key, i, l)}
                 onRemove={() => removeLink(key, i)}
+                onDragStart={(e) => {
+                  setDragging({ sectionKey: key, index: i });
+                  e.dataTransfer.effectAllowed = 'move';
+                  e.dataTransfer.setData('text/plain', `${key}:${i}`);
+                  e.dataTransfer.setData('application/json', JSON.stringify({ sectionKey: key, index: i }));
+                }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = 'move';
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  if (!dragging || dragging.sectionKey !== key) return;
+                  moveLink(key, dragging.index, i);
+                  setDragging(null);
+                }}
+                onDragEnd={() => setDragging(null)}
+                isDragging={dragging?.sectionKey === key && dragging?.index === i}
               />
             ))}
           </div>
