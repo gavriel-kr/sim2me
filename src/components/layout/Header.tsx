@@ -111,8 +111,8 @@ export function Header() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="min-w-[160px]">
               {locales.map(({ code, label, flag }) => {
-                const strippedPath = pathname.replace(/^\/(en|he|ar)/, '') || '/';
-                const localePath = `/${code}${strippedPath === '/' ? '' : strippedPath}`;
+                const strippedPath = pathname.replace(/^\/(en|he|ar)(?:\/|$)/, '') || '/';
+                const localePath = `/${code}${strippedPath === '/' ? '' : '/' + strippedPath}`;
                 return (
                   <DropdownMenuItem
                     key={code}
@@ -197,8 +197,8 @@ export function Header() {
               <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Language</p>
               <div className="flex gap-1.5 px-3">
                 {locales.map(({ code, label, flag }) => {
-                  const strippedPath = pathname.replace(/^\/(en|he|ar)/, '') || '/';
-                  const localePath = `/${code}${strippedPath === '/' ? '' : strippedPath}`;
+                  const strippedPath = pathname.replace(/^\/(en|he|ar)(?:\/|$)/, '') || '/';
+                  const localePath = `/${code}${strippedPath === '/' ? '' : '/' + strippedPath}`;
                   return (
                     <a
                       key={code}
