@@ -35,7 +35,8 @@ export async function generateMetadata(): Promise<Metadata> {
   ]);
 
   const siteUrl = globalSeo.canonicalDomain || 'https://www.sim2me.net';
-  const iconUrl = faviconUrl ? withCacheBust(faviconUrl, brandingVersion) : '/favicon.svg';
+  // Use /favicon.ico (rewritten to API) as canonical URL for Google search results
+  const iconUrl = '/favicon.ico';
   const appleIconUrl = faviconUrl && faviconUrl.startsWith('/') ? withCacheBust(faviconUrl, brandingVersion) : '/icons/apple-touch-icon.png';
 
   // Favicon/logo from branding upload; use as OG fallback only if no global OG image is set

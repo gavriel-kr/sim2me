@@ -33,17 +33,12 @@ const BASE_MANIFEST = {
   prefer_related_applications: false,
 };
 
-function withCacheBust(url: string, version: number | null): string {
-  if (version == null || !url.startsWith('/')) return url;
-  return `${url}?v=${version}`;
-}
-
 /** Serves PWA manifest. Primary icons are static files so install/Add to Home Screen works reliably. */
 export async function GET() {
-  const { faviconUrl, brandingVersion } = await getSiteBranding();
+  const { faviconUrl } = await getSiteBranding();
   const icons = [...STATIC_ICONS];
-  if (faviconUrl && faviconUrl.startsWith('/')) {
-    icons.push({ src: withCacheBust(faviconUrl, brandingVersion), sizes: 'any', type: 'image/x-icon', purpose: 'any' as const });
+  if (faviconUrl) {
+    icons.push({ src: '/favicon.ico', sizes: 'any', type: 'image/x-icon', purpose: 'any' as const });
   }
   return NextResponse.json({ ...BASE_MANIFEST, icons }, {
     headers: {

@@ -11,6 +11,9 @@ const nextConfig = {
   },
   eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: true },
+  async rewrites() {
+    return [{ source: '/favicon.ico', destination: '/api/site-branding/favicon' }];
+  },
   async headers() {
     return [
       {
