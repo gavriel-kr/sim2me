@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import {
   LayoutDashboard, FileText, Settings, Users, UserCircle, ShoppingCart,
-  Globe, Search, LogOut, Package, BarChart3, Menu, X, DollarSign, MessageSquare,
+  Globe, Search, LogOut, Package, BarChart3, Menu, X, DollarSign, MessageSquare, MenuSquare,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -24,6 +24,7 @@ const navItems = [
   { href: '/admin/pages', label: 'Pages (CMS)', icon: FileText },
   { href: '/admin/articles', label: 'Articles (SEO)', icon: Globe },
   { href: '/admin/seo', label: 'SEO Settings', icon: Search },
+  { href: '/admin/navigation', label: 'Navigation', icon: MenuSquare },
   { href: '/admin/users', label: 'Admin Users', icon: Users },
   { href: '/admin/settings', label: 'Site Settings', icon: Settings },
 ];

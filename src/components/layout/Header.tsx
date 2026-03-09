@@ -17,7 +17,7 @@ import { buildLocalePath } from '@/lib/locale-path';
 
 const { usePathname: useIntlPathname, Link: IntlLink } = createSharedPathnamesNavigation(routing);
 
-const navLinks = [
+const defaultNavLinks = [
   { href: '/', key: 'home' },
   { href: '/destinations', key: 'destinations' },
   { href: '/app', key: 'app' },
@@ -25,7 +25,7 @@ const navLinks = [
   { href: '/compatible-devices', key: 'devices' },
   { href: '/help', key: 'help' },
   { href: '/contact', key: 'contact' },
-] as const;
+];
 
 const locales = [
   { code: 'en', label: 'English', flag: '🇬🇧' },
@@ -55,7 +55,19 @@ export function Header() {
   const count = useCartStore((s) => s.count());
   const [mobileOpen, setMobileOpen] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [navLinks, setNavLinks] = useState<{ href: string; key: string }[]>(defaultNavLinks);
   const currentLocale = useLocale();
+
+  useEffect(() => {
+    fetch('/api/navigation')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { navMenu?: { href: string; key: string }[] | null } | null) => {
+        if (data?.navMenu && Array.isArray(data.navMenu) && data.navMenu.length > 0) {
+          setNavLinks(data.navMenu);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     fetch('/api/site-branding')

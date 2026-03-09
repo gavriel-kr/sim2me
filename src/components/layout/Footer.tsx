@@ -10,24 +10,31 @@ import { useCookieConsent } from '@/components/CookieConsentProvider';
 
 const { Link: IntlLink } = createSharedPathnamesNavigation(routing);
 
-const productLinks = [
+const defaultProductLinks = [
   { href: '/destinations', key: 'destinations' },
   { href: '/app', key: 'app' },
   { href: '/how-it-works', key: 'howItWorks' },
   { href: '/compatible-devices', key: 'devices' },
 ];
 
-const companyLinks = [
+const defaultCompanyLinks = [
   { href: '/about', key: 'about' },
   { href: '/contact', key: 'contact' },
   { href: '/help', key: 'help' },
 ];
 
-const legalLinks = [
+const defaultLegalLinks = [
   { href: '/terms', key: 'terms' },
   { href: '/privacy', key: 'privacy' },
   { href: '/refund', key: 'refund' },
   { href: '/accessibility-statement', key: 'accessibilityStatement' },
+];
+
+const defaultGuidesLinks = [
+  { href: '/articles', key: 'guidesAll' },
+  { href: '/articles/esim-europe-guide', key: 'guidesEurope' },
+  { href: '/articles/how-does-esim-work', key: 'guidesHowTo' },
+  { href: '/articles/esim-vs-physical-sim-vs-roaming', key: 'guidesVsRoaming' },
 ];
 
 const LOCALE_COOKIE = 'NEXT_LOCALE';
@@ -53,6 +60,30 @@ export function Footer() {
   const { openCookieSettings } = useCookieConsent();
   const locale = useLocale();
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [productLinks, setProductLinks] = useState(defaultProductLinks);
+  const [companyLinks, setCompanyLinks] = useState(defaultCompanyLinks);
+  const [legalLinks, setLegalLinks] = useState(defaultLegalLinks);
+  const [guidesLinks, setGuidesLinks] = useState(defaultGuidesLinks);
+
+  useEffect(() => {
+    fetch('/api/navigation')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: {
+        footer?: {
+          product?: { href: string; key: string }[] | null;
+          company?: { href: string; key: string }[] | null;
+          legal?: { href: string; key: string }[] | null;
+          guides?: { href: string; key: string }[] | null;
+        };
+      } | null) => {
+        if (!data?.footer) return;
+        if (data.footer.product && data.footer.product.length > 0) setProductLinks(data.footer.product);
+        if (data.footer.company && data.footer.company.length > 0) setCompanyLinks(data.footer.company);
+        if (data.footer.legal && data.footer.legal.length > 0) setLegalLinks(data.footer.legal);
+        if (data.footer.guides && data.footer.guides.length > 0) setGuidesLinks(data.footer.guides);
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
@@ -158,26 +189,13 @@ export function Footer() {
           <div>
             <h3 className="text-sm font-bold text-foreground">{tFooter('guides')}</h3>
             <ul className="mt-4 space-y-2.5">
-              <li>
-                <IntlLink href="/articles" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-                  {tFooter('guidesAll')}
-                </IntlLink>
-              </li>
-              <li>
-                <IntlLink href="/articles/esim-europe-guide" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-                  {tFooter('guidesEurope')}
-                </IntlLink>
-              </li>
-              <li>
-                <IntlLink href="/articles/how-does-esim-work" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-                  {tFooter('guidesHowTo')}
-                </IntlLink>
-              </li>
-              <li>
-                <IntlLink href="/articles/esim-vs-physical-sim-vs-roaming" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-                  {tFooter('guidesVsRoaming')}
-                </IntlLink>
-              </li>
+              {guidesLinks.map(({ href, key }) => (
+                <li key={key}>
+                  <IntlLink href={href} className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+                    {tFooter(key)}
+                  </IntlLink>
+                </li>
+              ))}
             </ul>
           </div>
 
