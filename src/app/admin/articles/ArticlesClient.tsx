@@ -457,7 +457,7 @@ export function ArticlesClient({
     })
     .filter((a) => {
       if (filterLocales.size === 0) return true;
-      return [...filterLocales].some((loc) => {
+      return [...filterLocales].every((loc) => {
         const title = a[`title${loc.charAt(0).toUpperCase() + loc.slice(1)}` as keyof ArticleRow] as string | undefined;
         return title?.trim()?.length ? true : false;
       });
