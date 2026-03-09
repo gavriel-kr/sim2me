@@ -23,7 +23,8 @@
     "db:ready": "prisma db push && npx tsx prisma/seed.ts",
     "db:studio": "prisma studio",
     "scripts:update-policies": "tsx scripts/update-policy-pages.ts",
-    "test:profit": "tsx src/lib/profit.test.ts"
+    "test:profit": "tsx src/lib/profit.test.ts",
+    "test:locale-path": "tsx src/lib/locale-path.test.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",

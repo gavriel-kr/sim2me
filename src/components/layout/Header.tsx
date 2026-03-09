@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { createSharedPathnamesNavigation } from 'next-intl/navigation';
 import { routing } from '@/i18n/routing';
+import { buildLocalePath } from '@/lib/locale-path';
 
 const { usePathname: useIntlPathname, Link: IntlLink } = createSharedPathnamesNavigation(routing);
 
@@ -111,8 +112,7 @@ export function Header() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="min-w-[160px]">
               {locales.map(({ code, label, flag }) => {
-                const strippedPath = pathname.replace(/^\/(en|he|ar)(?:\/|$)/, '') || '/';
-                const localePath = `/${code}${strippedPath === '/' ? '' : '/' + strippedPath}`;
+                const localePath = buildLocalePath(pathname, code);
                 return (
                   <DropdownMenuItem
                     key={code}
@@ -197,8 +197,7 @@ export function Header() {
               <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Language</p>
               <div className="flex gap-1.5 px-3">
                 {locales.map(({ code, label, flag }) => {
-                  const strippedPath = pathname.replace(/^\/(en|he|ar)(?:\/|$)/, '') || '/';
-                  const localePath = `/${code}${strippedPath === '/' ? '' : '/' + strippedPath}`;
+                  const localePath = buildLocalePath(pathname, code);
                   return (
                     <a
                       key={code}
