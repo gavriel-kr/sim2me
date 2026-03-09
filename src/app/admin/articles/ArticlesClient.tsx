@@ -253,6 +253,7 @@ export function ArticlesClient({
   const [saving, setSaving] = useState(false);
   const [localeTab, setLocaleTab] = useState<Locale>('en');
   const [sectionTab, setSectionTab] = useState<'main' | 'content' | 'seo'>('main');
+  const [filterLocale, setFilterLocale] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [search, setSearch] = useState('');
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest' | 'az' | 'za'>('newest');
@@ -453,6 +454,11 @@ export function ArticlesClient({
         (a.titleAr || '').toLowerCase().includes(searchLower) ||
         (a.slug || '').toLowerCase().includes(searchLower)
       );
+    })
+    .filter((a) => {
+      if (filterLocale === 'all') return true;
+      const title = a[`title${filterLocale.charAt(0).toUpperCase() + filterLocale.slice(1)}` as keyof ArticleRow] as string | undefined;
+      return title?.trim()?.length ? true : false;
     })
     .filter((a) => {
       if (filterStatus === 'all') return true;
@@ -793,6 +799,14 @@ export function ArticlesClient({
               </div>
             </div>
             <div className="flex flex-wrap gap-2 items-center">
+              <div className="flex gap-1">
+                {['all', 'en', 'he', 'ar'].map((loc) => (
+                  <button key={loc} onClick={() => setFilterLocale(loc)}
+                    className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${filterLocale === loc ? 'bg-emerald-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-100'}`}>
+                    {loc === 'all' ? 'All langs' : LOCALE_LABELS[loc]}
+                  </button>
+                ))}
+              </div>
               <div className="flex gap-1">
                 {[
                   { v: 'all', l: 'All' },
