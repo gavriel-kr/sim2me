@@ -253,7 +253,7 @@ export function ArticlesClient({
   const [saving, setSaving] = useState(false);
   const [localeTab, setLocaleTab] = useState<Locale>('en');
   const [sectionTab, setSectionTab] = useState<'main' | 'content' | 'seo'>('main');
-  const [filterLocale, setFilterLocale] = useState<string>('all');
+  const [filterLocales, setFilterLocales] = useState<Set<string>>(() => new Set());
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [search, setSearch] = useState('');
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest' | 'az' | 'za'>('newest');
@@ -456,9 +456,11 @@ export function ArticlesClient({
       );
     })
     .filter((a) => {
-      if (filterLocale === 'all') return true;
-      const title = a[`title${filterLocale.charAt(0).toUpperCase() + filterLocale.slice(1)}` as keyof ArticleRow] as string | undefined;
-      return title?.trim()?.length ? true : false;
+      if (filterLocales.size === 0) return true;
+      return [...filterLocales].some((loc) => {
+        const title = a[`title${loc.charAt(0).toUpperCase() + loc.slice(1)}` as keyof ArticleRow] as string | undefined;
+        return title?.trim()?.length ? true : false;
+      });
     })
     .filter((a) => {
       if (filterStatus === 'all') return true;
@@ -800,10 +802,24 @@ export function ArticlesClient({
             </div>
             <div className="flex flex-wrap gap-2 items-center">
               <div className="flex gap-1">
-                {['all', 'en', 'he', 'ar'].map((loc) => (
-                  <button key={loc} onClick={() => setFilterLocale(loc)}
-                    className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${filterLocale === loc ? 'bg-emerald-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-100'}`}>
-                    {loc === 'all' ? 'All langs' : LOCALE_LABELS[loc]}
+                <button
+                  onClick={() => setFilterLocales(new Set())}
+                  className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${filterLocales.size === 0 ? 'bg-emerald-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-100'}`}
+                >
+                  All langs
+                </button>
+                {LOCALES.map((loc) => (
+                  <button
+                    key={loc}
+                    onClick={() => setFilterLocales((prev) => {
+                      const next = new Set(prev);
+                      if (next.has(loc)) next.delete(loc);
+                      else next.add(loc);
+                      return next;
+                    })}
+                    className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${filterLocales.has(loc) ? 'bg-emerald-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-100'}`}
+                  >
+                    {LOCALE_LABELS[loc]}
                   </button>
                 ))}
               </div>
