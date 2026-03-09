@@ -4,10 +4,6 @@ import { useState } from 'react';
 import { Save, Plus, Trash2, GripVertical } from 'lucide-react';
 import type { NavLink } from '@/lib/navigation';
 
-const NAV_KEYS = ['home', 'destinations', 'app', 'howItWorks', 'devices', 'help', 'about', 'contact'];
-const FOOTER_LEGAL_KEYS = ['terms', 'privacy', 'refund', 'accessibilityStatement'];
-const FOOTER_GUIDES_KEYS = ['guidesAll', 'guidesEurope', 'guidesHowTo', 'guidesVsRoaming'];
-
 const SECTION_LABELS: Record<string, string> = {
   navMenu: 'Main menu (header)',
   footerProduct: 'Footer – Products',
@@ -16,44 +12,13 @@ const SECTION_LABELS: Record<string, string> = {
   footerGuides: 'Footer – eSIM Guides',
 };
 
-const KEY_OPTIONS: Record<string, string[]> = {
-  navMenu: NAV_KEYS,
+/** Suggestions for translation keys (user can type any value) */
+const KEY_SUGGESTIONS: Record<string, string[]> = {
+  navMenu: ['home', 'destinations', 'app', 'howItWorks', 'devices', 'help', 'about', 'contact'],
   footerProduct: ['destinations', 'app', 'howItWorks', 'devices'],
   footerCompany: ['about', 'contact', 'help'],
-  footerLegal: FOOTER_LEGAL_KEYS,
-  footerGuides: FOOTER_GUIDES_KEYS,
-};
-
-const DEFAULT_HREFS: Record<string, Record<string, string>> = {
-  navMenu: {
-    home: '/',
-    destinations: '/destinations',
-    app: '/app',
-    howItWorks: '/how-it-works',
-    devices: '/compatible-devices',
-    help: '/help',
-    about: '/about',
-    contact: '/contact',
-  },
-  footerProduct: {
-    destinations: '/destinations',
-    app: '/app',
-    howItWorks: '/how-it-works',
-    devices: '/compatible-devices',
-  },
-  footerCompany: { about: '/about', contact: '/contact', help: '/help' },
-  footerLegal: {
-    terms: '/terms',
-    privacy: '/privacy',
-    refund: '/refund',
-    accessibilityStatement: '/accessibility-statement',
-  },
-  footerGuides: {
-    guidesAll: '/articles',
-    guidesEurope: '/articles/esim-europe-guide',
-    guidesHowTo: '/articles/how-does-esim-work',
-    guidesVsRoaming: '/articles/esim-vs-physical-sim-vs-roaming',
-  },
+  footerLegal: ['terms', 'privacy', 'refund', 'accessibilityStatement'],
+  footerGuides: ['guidesAll', 'guidesEurope', 'guidesHowTo', 'guidesVsRoaming'],
 };
 
 type SectionKey = keyof typeof SECTION_LABELS;
@@ -64,8 +29,7 @@ interface Props {
 
 function LinkRow({
   link,
-  keys,
-  defaultHrefs,
+  sectionKey,
   onChange,
   onRemove,
   onDragStart,
@@ -75,8 +39,7 @@ function LinkRow({
   isDragging,
 }: {
   link: NavLink;
-  keys: string[];
-  defaultHrefs: Record<string, string>;
+  sectionKey: SectionKey;
   onChange: (link: NavLink) => void;
   onRemove: () => void;
   onDragStart: (e: React.DragEvent) => void;
@@ -85,45 +48,63 @@ function LinkRow({
   onDragEnd: () => void;
   isDragging: boolean;
 }) {
+  const suggestions = KEY_SUGGESTIONS[sectionKey] ?? [];
+  const keyListId = `key-suggest-${sectionKey}`;
   return (
     <div
-      className={`flex items-center gap-2 rounded-lg border border-gray-200 bg-white p-2 transition-opacity ${isDragging ? 'opacity-50' : ''}`}
+      className={`flex flex-col gap-2 rounded-lg border border-gray-200 bg-white p-2 transition-opacity sm:flex-row sm:items-center sm:gap-2 ${isDragging ? 'opacity-50' : ''}`}
       onDragOver={onDragOver}
       onDrop={onDrop}
     >
-      <div
-        draggable
-        onDragStart={onDragStart}
-        onDragEnd={onDragEnd}
-        className="cursor-grab active:cursor-grabbing touch-none"
-        role="button"
-        tabIndex={0}
-        aria-label="Drag to reorder"
-      >
-        <GripVertical className="h-4 w-4 shrink-0 text-gray-400" aria-hidden />
+      <div className="flex items-center gap-2">
+        <div
+          draggable
+          onDragStart={onDragStart}
+          onDragEnd={onDragEnd}
+          className="cursor-grab active:cursor-grabbing touch-none shrink-0"
+          role="button"
+          tabIndex={0}
+          aria-label="Drag to reorder"
+        >
+          <GripVertical className="h-4 w-4 text-gray-400" aria-hidden />
+        </div>
+        <input
+          type="text"
+          value={link.label ?? ''}
+          onChange={(e) => onChange({ ...link, label: e.target.value || undefined })}
+          placeholder="Label (custom text, or leave empty for translation)"
+          className="min-w-0 flex-1 rounded border border-gray-300 px-2 py-1.5 text-sm sm:max-w-[200px]"
+          title="Custom label – leave empty to use translation key"
+        />
       </div>
-      <select
-        value={link.key}
-        onChange={(e) => onChange({ ...link, key: e.target.value, href: defaultHrefs[e.target.value] ?? link.href })}
-        className="flex-1 min-w-0 rounded border border-gray-300 px-2 py-1.5 text-sm"
-      >
-        {keys.map((k) => (
-          <option key={k} value={k}>
-            {k}
-          </option>
-        ))}
-      </select>
-      <input
-        type="text"
-        value={link.href}
-        onChange={(e) => onChange({ ...link, href: e.target.value })}
-        placeholder="/path"
-        className="flex-1 min-w-0 rounded border border-gray-300 px-2 py-1.5 text-sm"
-      />
+      <div className="flex flex-1 items-center gap-2">
+        <input
+          type="text"
+          list={keyListId}
+          value={link.key}
+          onChange={(e) => onChange({ ...link, key: e.target.value })}
+          placeholder="Translation key (or leave empty if using custom label)"
+          className="min-w-0 flex-1 rounded border border-gray-300 px-2 py-1.5 text-sm"
+          title="Translation key – used when label is empty"
+        />
+        <datalist id={keyListId}>
+          {suggestions.map((k) => (
+            <option key={k} value={k} />
+          ))}
+        </datalist>
+        <input
+          type="text"
+          value={link.href}
+          onChange={(e) => onChange({ ...link, href: e.target.value })}
+          placeholder="/path or https://..."
+          className="min-w-0 flex-1 rounded border border-gray-300 px-2 py-1.5 text-sm"
+          title="URL – path or full URL"
+        />
+      </div>
       <button
         type="button"
         onClick={onRemove}
-        className="rounded p-1.5 text-gray-500 hover:bg-red-50 hover:text-red-600"
+        className="rounded p-1.5 text-gray-500 hover:bg-red-50 hover:text-red-600 shrink-0"
         aria-label="Remove"
       >
         <Trash2 className="h-4 w-4" />
@@ -145,11 +126,7 @@ export function NavigationClient({ initial }: Props) {
   }
 
   function addLink(key: SectionKey) {
-    const keys = KEY_OPTIONS[key];
-    const defaults = DEFAULT_HREFS[key];
-    const used = new Set(sections[key].map((l) => l.key));
-    const firstUnused = keys.find((k) => !used.has(k)) ?? keys[0];
-    const newLink: NavLink = { href: defaults[firstUnused] ?? '/', key: firstUnused };
+    const newLink: NavLink = { href: '/', key: '' };
     updateSection(key, [...sections[key], newLink]);
   }
 
@@ -206,10 +183,9 @@ export function NavigationClient({ initial }: Props) {
           <div className="mt-3 space-y-2">
             {sections[key].map((link, i) => (
               <LinkRow
-                key={`${key}-${link.key}-${i}`}
+                key={`${key}-${link.href}-${link.key}-${i}`}
                 link={link}
-                keys={KEY_OPTIONS[key]}
-                defaultHrefs={DEFAULT_HREFS[key]}
+                sectionKey={key}
                 onChange={(l) => changeLink(key, i, l)}
                 onRemove={() => removeLink(key, i)}
                 onDragStart={(e) => {

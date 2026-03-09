@@ -8,7 +8,7 @@ export const NAV_KEYS = {
   footerGuides: 'footer_guides',
 } as const;
 
-export type NavLink = { href: string; key: string };
+export type NavLink = { href: string; key: string; label?: string };
 
 export type NavigationConfig = {
   navMenu: NavLink[] | null;

@@ -55,13 +55,13 @@ export function Header() {
   const count = useCartStore((s) => s.count());
   const [mobileOpen, setMobileOpen] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
-  const [navLinks, setNavLinks] = useState<{ href: string; key: string }[]>(defaultNavLinks);
+  const [navLinks, setNavLinks] = useState<{ href: string; key: string; label?: string }[]>(defaultNavLinks);
   const currentLocale = useLocale();
 
   useEffect(() => {
     fetch('/api/navigation')
       .then((res) => (res.ok ? res.json() : null))
-      .then((data: { navMenu?: { href: string; key: string }[] | null } | null) => {
+      .then((data: { navMenu?: { href: string; key: string; label?: string }[] | null } | null) => {
         if (data?.navMenu && Array.isArray(data.navMenu) && data.navMenu.length > 0) {
           setNavLinks(data.navMenu);
         }
@@ -86,6 +86,10 @@ export function Header() {
   const isActive = (href: string) =>
     pathname === href || (href !== '/' && pathname?.startsWith(href));
 
+  const isExternal = (href: string) => href.startsWith('http://') || href.startsWith('https://');
+  const linkText = (link: { key: string; label?: string }) =>
+    link.label?.trim() || (link.key?.trim() ? t(link.key) : '');
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-white/80 backdrop-blur-lg">
       <div className="container flex h-16 items-center justify-between gap-4 px-4">
@@ -100,19 +104,24 @@ export function Header() {
 
         {/* Desktop nav */}
         <nav className="hidden items-center gap-1 lg:flex" aria-label="Main navigation">
-          {navLinks.map(({ href, key }) => (
-            <IntlLink
-              key={key}
-              href={href}
-              className={`rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ${
-                isActive(href)
-                  ? 'bg-primary/10 text-primary'
-                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-              }`}
-            >
-              {t(key)}
-            </IntlLink>
-          ))}
+          {navLinks.filter((l) => l.href?.trim()).map((link, idx) => {
+            const { href, key } = link;
+            const text = linkText(link);
+            const cn = `rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ${
+              !isExternal(href) && isActive(href)
+                ? 'bg-primary/10 text-primary'
+                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+            }`;
+            return isExternal(href) ? (
+              <a key={`${key}-${idx}`} href={href} target="_blank" rel="noopener noreferrer" className={cn}>
+                {text || href}
+              </a>
+            ) : (
+              <IntlLink key={`${key}-${idx}`} href={href} className={cn}>
+                {text || key}
+              </IntlLink>
+            );
+          })}
         </nav>
 
         {/* Right side */}
@@ -184,20 +193,31 @@ export function Header() {
       {mobileOpen && (
         <div className="border-t border-border/40 bg-white lg:hidden animate-fade-up">
           <nav className="container flex flex-col gap-0.5 px-4 py-3" aria-label="Mobile navigation">
-            {navLinks.map(({ href, key }) => (
-              <IntlLink
-                key={key}
-                href={href}
-                className={`rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                  isActive(href)
-                    ? 'bg-primary/10 text-primary'
-                    : 'text-foreground hover:bg-muted'
-                }`}
-                onClick={() => setMobileOpen(false)}
-              >
-                {t(key)}
-              </IntlLink>
-            ))}
+            {navLinks.filter((l) => l.href?.trim()).map((link, idx) => {
+              const { href, key } = link;
+              const text = linkText(link);
+              const cn = `rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                !isExternal(href) && isActive(href)
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-foreground hover:bg-muted'
+              }`;
+              return isExternal(href) ? (
+                <a
+                  key={`${key}-${idx}`}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={cn}
+                  onClick={() => setMobileOpen(false)}
+                >
+                  {text || href}
+                </a>
+              ) : (
+                <IntlLink key={`${key}-${idx}`} href={href} className={cn} onClick={() => setMobileOpen(false)}>
+                  {text || key}
+                </IntlLink>
+              );
+            })}
             <IntlLink
               href="/account"
               className="mt-1 rounded-lg px-3 py-2.5 text-sm font-medium text-foreground hover:bg-muted"

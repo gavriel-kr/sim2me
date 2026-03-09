@@ -70,10 +70,10 @@ export function Footer() {
       .then((res) => (res.ok ? res.json() : null))
       .then((data: {
         footer?: {
-          product?: { href: string; key: string }[] | null;
-          company?: { href: string; key: string }[] | null;
-          legal?: { href: string; key: string }[] | null;
-          guides?: { href: string; key: string }[] | null;
+          product?: { href: string; key: string; label?: string }[] | null;
+          company?: { href: string; key: string; label?: string }[] | null;
+          legal?: { href: string; key: string; label?: string }[] | null;
+          guides?: { href: string; key: string; label?: string }[] | null;
         };
       } | null) => {
         if (!data?.footer) return;
@@ -84,6 +84,12 @@ export function Footer() {
       })
       .catch(() => {});
   }, []);
+
+  const isExternal = (href: string) => href.startsWith('http://') || href.startsWith('https://');
+  const linkText = (
+    link: { key: string; label?: string },
+    getT: (k: string) => string
+  ) => link.label?.trim() || (link.key?.trim() ? getT(link.key) : '');
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
@@ -161,13 +167,24 @@ export function Footer() {
           <div>
             <h3 className="text-sm font-bold text-foreground">{tFooter('products')}</h3>
             <ul className="mt-4 space-y-2.5">
-              {productLinks.map(({ href, key }) => (
-                <li key={key}>
-                  <IntlLink href={href} className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-                    {t(key)}
-                  </IntlLink>
-                </li>
-              ))}
+              {productLinks.filter((l) => l.href?.trim()).map((link, idx) => {
+                const { href, key } = link;
+                const text = linkText(link, t);
+                const cls = "text-sm text-muted-foreground transition-colors hover:text-foreground";
+                return (
+                  <li key={`${key}-${idx}`}>
+                    {isExternal(href) ? (
+                      <a href={href} target="_blank" rel="noopener noreferrer" className={cls}>
+                        {text || href}
+                      </a>
+                    ) : (
+                      <IntlLink href={href} className={cls}>
+                        {text || key}
+                      </IntlLink>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           </div>
 
@@ -175,13 +192,24 @@ export function Footer() {
           <div>
             <h3 className="text-sm font-bold text-foreground">{tFooter('company')}</h3>
             <ul className="mt-4 space-y-2.5">
-              {companyLinks.map(({ href, key }) => (
-                <li key={key}>
-                  <IntlLink href={href} className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-                    {t(key)}
-                  </IntlLink>
-                </li>
-              ))}
+              {companyLinks.filter((l) => l.href?.trim()).map((link, idx) => {
+                const { href, key } = link;
+                const text = linkText(link, t);
+                const cls = "text-sm text-muted-foreground transition-colors hover:text-foreground";
+                return (
+                  <li key={`${key}-${idx}`}>
+                    {isExternal(href) ? (
+                      <a href={href} target="_blank" rel="noopener noreferrer" className={cls}>
+                        {text || href}
+                      </a>
+                    ) : (
+                      <IntlLink href={href} className={cls}>
+                        {text || key}
+                      </IntlLink>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           </div>
 
@@ -189,13 +217,24 @@ export function Footer() {
           <div>
             <h3 className="text-sm font-bold text-foreground">{tFooter('guides')}</h3>
             <ul className="mt-4 space-y-2.5">
-              {guidesLinks.map(({ href, key }) => (
-                <li key={key}>
-                  <IntlLink href={href} className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-                    {tFooter(key)}
-                  </IntlLink>
-                </li>
-              ))}
+              {guidesLinks.filter((l) => l.href?.trim()).map((link, idx) => {
+                const { href, key } = link;
+                const text = linkText(link, tFooter);
+                const cls = "text-sm text-muted-foreground transition-colors hover:text-foreground";
+                return (
+                  <li key={`${key}-${idx}`}>
+                    {isExternal(href) ? (
+                      <a href={href} target="_blank" rel="noopener noreferrer" className={cls}>
+                        {text || href}
+                      </a>
+                    ) : (
+                      <IntlLink href={href} className={cls}>
+                        {text || key}
+                      </IntlLink>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           </div>
 
@@ -203,13 +242,24 @@ export function Footer() {
           <div>
             <h3 className="text-sm font-bold text-foreground">{tFooter('legal')}</h3>
             <ul className="mt-4 space-y-2.5">
-              {legalLinks.map(({ href, key }) => (
-                <li key={key}>
-                  <IntlLink href={href} className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-                    {tFooter(key)}
-                  </IntlLink>
-                </li>
-              ))}
+              {legalLinks.filter((l) => l.href?.trim()).map((link, idx) => {
+                const { href, key } = link;
+                const text = linkText(link, tFooter);
+                const cls = "text-sm text-muted-foreground transition-colors hover:text-foreground";
+                return (
+                  <li key={`${key}-${idx}`}>
+                    {isExternal(href) ? (
+                      <a href={href} target="_blank" rel="noopener noreferrer" className={cls}>
+                        {text || href}
+                      </a>
+                    ) : (
+                      <IntlLink href={href} className={cls}>
+                        {text || key}
+                      </IntlLink>
+                    )}
+                  </li>
+                );
+              })}
               <li>
                 <button
                   type="button"
