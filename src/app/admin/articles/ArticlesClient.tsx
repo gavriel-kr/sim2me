@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
-import { Plus, Pencil, Trash2, Eye, EyeOff, GripVertical, Globe, Upload, Wand2, AlertCircle, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Eye, EyeOff, GripVertical, Globe, Upload, Wand2, AlertCircle, Loader2, ExternalLink } from 'lucide-react';
 import { RichTextEditor } from './RichTextEditor';
 
 type ArticleStatus = 'DRAFT' | 'PUBLISHED';
@@ -259,6 +259,8 @@ export function ArticlesClient({
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest' | 'az' | 'za'>('newest');
   const [msg, setMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
   const [bulkFilling, setBulkFilling] = useState(false);
+  const [editingSlugId, setEditingSlugId] = useState<string | null>(null);
+  const [editingSlugValue, setEditingSlugValue] = useState('');
 
   const flash = (type: 'ok' | 'err', text: string) => {
     setMsg({ type, text });
@@ -407,6 +409,37 @@ export function ArticlesClient({
     } else {
       flash('err', 'Delete failed');
     }
+  };
+
+  const startEditSlug = (a: ArticleRow) => {
+    setEditingSlugId(a.id);
+    setEditingSlugValue(a.slug);
+  };
+
+  const saveSlug = async (id: string) => {
+    const slug = editingSlugValue.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-');
+    if (!slug) {
+      flash('err', 'Slug cannot be empty.');
+      return;
+    }
+    const res = await fetch(`/api/admin/articles/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ slug }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      flash('err', data.error || 'Failed to update slug');
+      return;
+    }
+    setArticles((prev) => prev.map((a) => (a.id === id ? { ...a, slug: data.article.slug } : a)));
+    setEditingSlugId(null);
+    flash('ok', 'Slug updated.');
+  };
+
+  const cancelEditSlug = () => {
+    setEditingSlugId(null);
+    setEditingSlugValue('');
   };
 
   const saveDefaultImage = async () => {
@@ -916,43 +949,93 @@ export function ArticlesClient({
                     <th className="px-4 py-3 text-left">Title</th>
                     <th className="px-4 py-3 text-left hidden md:table-cell">Slug</th>
                     <th className="px-4 py-3 text-center">EN / HE / AR</th>
+                    <th className="px-4 py-3 text-left hidden lg:table-cell">Links</th>
                     <th className="px-4 py-3 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {displayed.map((a) => (
-                    <tr key={a.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 text-gray-300"><GripVertical className="h-4 w-4" /></td>
-                      <td className="px-4 py-3 font-medium text-gray-900 max-w-xs truncate">{getDisplayTitle(a)}</td>
-                      <td className="px-4 py-3 text-gray-400 hidden md:table-cell font-mono text-xs">{a.slug}</td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center justify-center gap-1.5 flex-wrap">
-                          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${a.statusEn === 'PUBLISHED' ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>
-                            {a.statusEn === 'PUBLISHED' ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
-                            EN
-                          </span>
-                          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${a.statusHe === 'PUBLISHED' ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>
-                            {a.statusHe === 'PUBLISHED' ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
-                            HE
-                          </span>
-                          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${a.statusAr === 'PUBLISHED' ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>
-                            {a.statusAr === 'PUBLISHED' ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
-                            AR
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <button onClick={() => startEdit(a)} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700" title="Edit">
-                            <Pencil className="h-4 w-4" />
-                          </button>
-                          <button onClick={() => deleteArticle(a.id, getDisplayTitle(a))} className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600" title="Delete">
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                  {displayed.map((a) => {
+                    const enUrl = a.titleEn?.trim() ? `${SITE_URL}/en/articles/${a.slug}` : null;
+                    const heUrl = a.titleHe?.trim() ? `${SITE_URL}/he/articles/${a.slug}` : null;
+                    const arUrl = a.titleAr?.trim() ? `${SITE_URL}/ar/articles/${a.slug}` : null;
+                    return (
+                      <tr key={a.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 text-gray-300"><GripVertical className="h-4 w-4" /></td>
+                        <td className="px-4 py-3 font-medium text-gray-900 max-w-xs truncate">{getDisplayTitle(a)}</td>
+                        <td className="px-4 py-3 hidden md:table-cell">
+                          {editingSlugId === a.id ? (
+                            <div className="flex items-center gap-1">
+                              <input
+                                value={editingSlugValue}
+                                onChange={(e) => setEditingSlugValue(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') saveSlug(a.id);
+                                  if (e.key === 'Escape') cancelEditSlug();
+                                }}
+                                onBlur={() => saveSlug(a.id)}
+                                className="flex-1 min-w-0 rounded border border-gray-200 px-2 py-1 font-mono text-xs focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                                autoFocus
+                              />
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => startEditSlug(a)}
+                              className="font-mono text-xs text-gray-400 hover:text-emerald-600 hover:underline text-left truncate max-w-[180px] block"
+                              title="Click to edit slug"
+                            >
+                              {a.slug}
+                            </button>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${a.statusEn === 'PUBLISHED' ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>
+                              {a.statusEn === 'PUBLISHED' ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                              EN
+                            </span>
+                            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${a.statusHe === 'PUBLISHED' ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>
+                              {a.statusHe === 'PUBLISHED' ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                              HE
+                            </span>
+                            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${a.statusAr === 'PUBLISHED' ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>
+                              {a.statusAr === 'PUBLISHED' ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                              AR
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 hidden lg:table-cell">
+                          <div className="flex items-center gap-2">
+                            {enUrl && (
+                              <a href={enUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-emerald-600 hover:bg-emerald-50" title={enUrl}>
+                                <ExternalLink className="h-3 w-3" /> EN
+                              </a>
+                            )}
+                            {heUrl && (
+                              <a href={heUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-emerald-600 hover:bg-emerald-50" title={heUrl}>
+                                <ExternalLink className="h-3 w-3" /> HE
+                              </a>
+                            )}
+                            {arUrl && (
+                              <a href={arUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-emerald-600 hover:bg-emerald-50" title={arUrl}>
+                                <ExternalLink className="h-3 w-3" /> AR
+                              </a>
+                            )}
+                            {!enUrl && !heUrl && !arUrl && <span className="text-xs text-gray-400">—</span>}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <button onClick={() => startEdit(a)} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700" title="Edit">
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                            <button onClick={() => deleteArticle(a.id, getDisplayTitle(a))} className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600" title="Delete">
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
