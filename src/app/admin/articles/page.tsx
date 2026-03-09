@@ -15,25 +15,20 @@ export default async function ArticlesAdminPage() {
   const defaultImage = await getArticlesDefaultImage();
 
   const articles = await prisma.article.findMany({
-    orderBy: [{ locale: 'asc' }, { articleOrder: 'asc' }, { createdAt: 'desc' }],
+    orderBy: [{ articleOrder: 'asc' }, { createdAt: 'desc' }],
     select: {
-      id: true,
-      slug: true,
-      locale: true,
-      title: true,
-      excerpt: true,
-      featuredImage: true,
-      focusKeyword: true,
-      metaTitle: true,
-      metaDesc: true,
-      ogTitle: true,
-      ogDesc: true,
-      canonicalUrl: true,
-      articleOrder: true,
-      status: true,
-      showRelatedArticles: true,
-      createdAt: true,
-      updatedAt: true,
+      id: true, slug: true,
+      titleEn: true, titleHe: true, titleAr: true,
+      excerptEn: true, excerptHe: true, excerptAr: true,
+      focusKeywordEn: true, focusKeywordHe: true, focusKeywordAr: true,
+      metaTitleEn: true, metaTitleHe: true, metaTitleAr: true,
+      metaDescEn: true, metaDescHe: true, metaDescAr: true,
+      ogTitleEn: true, ogTitleHe: true, ogTitleAr: true,
+      ogDescEn: true, ogDescHe: true, ogDescAr: true,
+      canonicalUrlEn: true, canonicalUrlHe: true, canonicalUrlAr: true,
+      statusEn: true, statusHe: true, statusAr: true,
+      featuredImage: true, articleOrder: true, showRelatedArticles: true,
+      createdAt: true, updatedAt: true,
     },
   });
 

@@ -56,12 +56,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Gracefully handle - sitemap will just have static pages
   }
 
-  // Fetch published articles only (no noindex/draft)
-  let articles: { slug: string; locale: string; updatedAt: Date }[] = [];
+  // Fetch published articles (one row per article; emit URL per locale where status is PUBLISHED)
+  let articles: { slug: string; statusEn: string; statusHe: string; statusAr: string; updatedAt: Date }[] = [];
   try {
     articles = await prisma.article.findMany({
-      where: { status: 'PUBLISHED' },
-      select: { slug: true, locale: true, updatedAt: true },
+      select: { slug: true, statusEn: true, statusHe: true, statusAr: true, updatedAt: true },
     });
   } catch {
     // graceful fallback
@@ -92,14 +91,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   }
 
+  const statusByLocale = { en: 'statusEn' as const, he: 'statusHe' as const, ar: 'statusAr' as const };
   for (const article of articles) {
-    const prefix = `/${article.locale}`;
-    entries.push({
-      url: `${baseUrl}${prefix}/articles/${article.slug}`,
-      lastModified: article.updatedAt,
-      changeFrequency: 'monthly',
-      priority: 0.6,
-    });
+    for (const locale of routing.locales) {
+      if (article[statusByLocale[locale]] === 'PUBLISHED') {
+        const prefix = `/${locale}`;
+        entries.push({
+          url: `${baseUrl}${prefix}/articles/${article.slug}`,
+          lastModified: article.updatedAt,
+          changeFrequency: 'monthly',
+          priority: 0.6,
+        });
+      }
+    }
   }
 
   return entries;

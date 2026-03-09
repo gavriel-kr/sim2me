@@ -13,23 +13,19 @@ export const dynamic = 'force-dynamic';
  */
 function generateFocusKeyword(title: string, slug: string, locale: string): string | null {
   if (locale === 'he') {
-    // Find "ל[destination]" — the directional lamed attached to the destination
     const match = title.match(/ל(\S{2,}(?:\s+\S+)*)$/u);
     if (match) return `eSIM ל${match[1].trim()}`;
-    // Fallback: strip "איסים" and prepend "eSIM"
     const cleaned = title.replace(/^(איסים|esim)\s*/iu, '').trim();
     if (cleaned) return `eSIM ${cleaned}`;
   }
 
   if (locale === 'ar') {
-    // Find "لـ[dest]" or "ل[dest]"
     const match = title.match(/ل[ـ]?(\S{2,}(?:\s+\S+)*)$/u);
     if (match) return `eSIM لـ${match[1].trim()}`;
     const cleaned = title.replace(/^(esim|إيسيم)\s*/iu, '').trim();
     if (cleaned) return `eSIM ${cleaned}`;
   }
 
-  // English / fallback: extract from slug
   const destFromSlug = slug
     .replace(/^esim[-_](for[-_])?/i, '')
     .replace(/[-_](esim|sim|card|plan|data|travel|guide|prepaid|sim-card).*$/i, '')
@@ -49,7 +45,7 @@ function generateFocusKeyword(title: string, slug: string, locale: string): stri
 
 /**
  * POST /api/admin/articles/bulk-fill-keywords
- * Auto-fills focusKeyword for articles that currently have none.
+ * Auto-fills focusKeywordEn/He/Ar for articles that have none (per locale).
  * Returns { updated: number, skipped: number, details: [...] }
  */
 export async function POST(request: Request) {
@@ -57,31 +53,59 @@ export async function POST(request: Request) {
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const body = await request.json().catch(() => ({}));
-  const overwrite = body?.overwrite === true; // if true, also overwrite existing keywords
+  const overwrite = body?.overwrite === true;
 
   const articles = await prisma.article.findMany({
-    select: { id: true, title: true, slug: true, locale: true, focusKeyword: true },
+    select: {
+      id: true,
+      slug: true,
+      titleEn: true,
+      titleHe: true,
+      titleAr: true,
+      focusKeywordEn: true,
+      focusKeywordHe: true,
+      focusKeywordAr: true,
+    },
   });
 
   let updated = 0;
   let skipped = 0;
-  const details: { id: string; title: string; keyword: string }[] = [];
+  const details: { id: string; locale: string; title: string; keyword: string }[] = [];
 
-  const ops = articles
-    .filter((a) => overwrite || !a.focusKeyword?.trim())
-    .map((a) => {
-      const keyword = generateFocusKeyword(a.title, a.slug, a.locale);
-      if (!keyword) { skipped++; return null; }
+  const ops: ReturnType<typeof prisma.article.update>[] = [];
+
+  for (const a of articles) {
+    const data: { focusKeywordEn?: string; focusKeywordHe?: string; focusKeywordAr?: string } = {};
+    let changed = false;
+
+    for (const locale of ['en', 'he', 'ar'] as const) {
+      const title = a[`title${locale.charAt(0).toUpperCase() + locale.slice(1)}` as 'titleEn' | 'titleHe' | 'titleAr'];
+      const currentKw = a[`focusKeyword${locale.charAt(0).toUpperCase() + locale.slice(1)}` as 'focusKeywordEn' | 'focusKeywordHe' | 'focusKeywordAr'];
+      if (!title?.trim()) continue;
+      if (!overwrite && currentKw?.trim()) {
+        skipped++;
+        continue;
+      }
+      const keyword = generateFocusKeyword(title, a.slug, locale);
+      if (!keyword) {
+        skipped++;
+        continue;
+      }
+      data[`focusKeyword${locale.charAt(0).toUpperCase() + locale.slice(1)}` as 'focusKeywordEn' | 'focusKeywordHe' | 'focusKeywordAr'] = keyword;
+      details.push({ id: a.id, locale, title, keyword });
       updated++;
-      details.push({ id: a.id, title: a.title, keyword });
-      return prisma.article.update({
-        where: { id: a.id },
-        data: { focusKeyword: keyword },
-      });
-    })
-    .filter(Boolean) as ReturnType<typeof prisma.article.update>[];
+      changed = true;
+    }
 
-  skipped += articles.filter((a) => !overwrite && a.focusKeyword?.trim()).length;
+    if (changed) {
+      ops.push(
+        prisma.article.update({
+          where: { id: a.id },
+          data,
+        })
+      );
+    }
+  }
 
   if (ops.length > 0) {
     await prisma.$transaction(ops);

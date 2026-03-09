@@ -25,56 +25,169 @@ export interface ArticleFull extends ArticleSummary {
   showRelatedArticles: boolean;
 }
 
+const LOCALE_SUFFIX = { en: 'En', he: 'He', ar: 'Ar' } as const;
+
+function pickLocaleFields<T extends Record<string, unknown>>(
+  row: T,
+  locale: ArticleLocale
+): { title: string; excerpt: string | null; metaTitle: string | null; metaDesc: string | null } {
+  const s = LOCALE_SUFFIX[locale];
+  return {
+    title: (row[`title${s}`] as string) ?? '',
+    excerpt: (row[`excerpt${s}`] as string | null) ?? null,
+    metaTitle: (row[`metaTitle${s}`] as string | null) ?? null,
+    metaDesc: (row[`metaDesc${s}`] as string | null) ?? null,
+  };
+}
+
+function pickLocaleFieldsFull<T extends Record<string, unknown>>(
+  row: T,
+  locale: ArticleLocale
+): ArticleFull {
+  const s = LOCALE_SUFFIX[locale];
+  const base = pickLocaleFields(row, locale);
+  return {
+    id: row.id as string,
+    slug: row.slug as string,
+    locale,
+    title: base.title,
+    excerpt: base.excerpt,
+    featuredImage: row.featuredImage as string | null,
+    metaTitle: base.metaTitle,
+    metaDesc: base.metaDesc,
+    articleOrder: row.articleOrder as number,
+    createdAt: row.createdAt as Date,
+    updatedAt: row.updatedAt as Date,
+    content: (row[`content${s}`] as string) ?? '',
+    focusKeyword: (row[`focusKeyword${s}`] as string | null) ?? null,
+    ogTitle: (row[`ogTitle${s}`] as string | null) ?? null,
+    ogDesc: (row[`ogDesc${s}`] as string | null) ?? null,
+    canonicalUrl: (row[`canonicalUrl${s}`] as string | null) ?? null,
+    showRelatedArticles: (row.showRelatedArticles as boolean) ?? true,
+  } as ArticleFull;
+}
+
 export async function getPublishedArticles(locale: ArticleLocale): Promise<ArticleSummary[]> {
-  return prisma.article.findMany({
-    where: { locale, status: 'PUBLISHED' },
+  const statusKey = `status${LOCALE_SUFFIX[locale]}` as 'statusEn' | 'statusHe' | 'statusAr';
+  const rows = await prisma.article.findMany({
+    where: { [statusKey]: 'PUBLISHED' },
     orderBy: [{ articleOrder: 'asc' }, { createdAt: 'desc' }],
     select: {
-      id: true, slug: true, locale: true, title: true,
-      excerpt: true, featuredImage: true,
-      metaTitle: true, metaDesc: true,
-      articleOrder: true, createdAt: true, updatedAt: true,
+      id: true,
+      slug: true,
+      titleEn: true,
+      titleHe: true,
+      titleAr: true,
+      excerptEn: true,
+      excerptHe: true,
+      excerptAr: true,
+      featuredImage: true,
+      metaTitleEn: true,
+      metaTitleHe: true,
+      metaTitleAr: true,
+      metaDescEn: true,
+      metaDescHe: true,
+      metaDescAr: true,
+      articleOrder: true,
+      createdAt: true,
+      updatedAt: true,
     },
+  });
+
+  return rows.map((r) => {
+    const base = pickLocaleFields(r, locale);
+    return {
+      id: r.id,
+      slug: r.slug,
+      locale,
+      title: base.title,
+      excerpt: base.excerpt,
+      featuredImage: r.featuredImage,
+      metaTitle: base.metaTitle,
+      metaDesc: base.metaDesc,
+      articleOrder: r.articleOrder,
+      createdAt: r.createdAt,
+      updatedAt: r.updatedAt,
+    } as ArticleSummary;
   });
 }
 
 export async function getArticleBySlug(slug: string, locale: ArticleLocale): Promise<ArticleFull | null> {
+  const statusKey = `status${LOCALE_SUFFIX[locale]}` as 'statusEn' | 'statusHe' | 'statusAr';
   const article = await prisma.article.findFirst({
-    where: { slug, locale, status: 'PUBLISHED' },
+    where: { slug, [statusKey]: 'PUBLISHED' },
   });
   if (!article) return null;
-  return {
-    ...article,
-    showRelatedArticles: article.showRelatedArticles ?? true,
-  } as ArticleFull;
+  return pickLocaleFieldsFull(article, locale);
 }
 
-/** Same locale, exclude current article — all for carousel (ordered by articleOrder, then date) */
+/** Same locale, exclude current article — all for carousel */
 export async function getRelatedArticlesForCarousel(
   excludeArticleId: string,
   locale: ArticleLocale
 ): Promise<ArticleSummary[]> {
-  return prisma.article.findMany({
+  const statusKey = `status${LOCALE_SUFFIX[locale]}` as 'statusEn' | 'statusHe' | 'statusAr';
+  const rows = await prisma.article.findMany({
     where: {
-      locale,
-      status: 'PUBLISHED',
+      [statusKey]: 'PUBLISHED',
       id: { not: excludeArticleId },
     },
     orderBy: [{ articleOrder: 'asc' }, { createdAt: 'desc' }],
     select: {
-      id: true, slug: true, locale: true, title: true,
-      excerpt: true, featuredImage: true,
-      metaTitle: true, metaDesc: true,
-      articleOrder: true, createdAt: true, updatedAt: true,
+      id: true,
+      slug: true,
+      titleEn: true,
+      titleHe: true,
+      titleAr: true,
+      excerptEn: true,
+      excerptHe: true,
+      excerptAr: true,
+      featuredImage: true,
+      metaTitleEn: true,
+      metaTitleHe: true,
+      metaTitleAr: true,
+      metaDescEn: true,
+      metaDescHe: true,
+      metaDescAr: true,
+      articleOrder: true,
+      createdAt: true,
+      updatedAt: true,
     },
-  }) as Promise<ArticleSummary[]>;
+  });
+
+  return rows.map((r) => {
+    const base = pickLocaleFields(r, locale);
+    return {
+      id: r.id,
+      slug: r.slug,
+      locale,
+      title: base.title,
+      excerpt: base.excerpt,
+      featuredImage: r.featuredImage,
+      metaTitle: base.metaTitle,
+      metaDesc: base.metaDesc,
+      articleOrder: r.articleOrder,
+      createdAt: r.createdAt,
+      updatedAt: r.updatedAt,
+    } as ArticleSummary;
+  });
 }
 
 /** Returns alternate hreflangs for a given slug across all locales */
 export async function getArticleHreflangs(slug: string): Promise<{ locale: string; slug: string }[]> {
-  const alts = await prisma.article.findMany({
-    where: { slug, status: 'PUBLISHED' },
-    select: { locale: true, slug: true },
+  const article = await prisma.article.findUnique({
+    where: { slug },
+    select: { statusEn: true, statusHe: true, statusAr: true, titleEn: true, titleHe: true, titleAr: true },
   });
-  return alts;
+  if (!article) return [];
+
+  const result: { locale: string; slug: string }[] = [];
+  for (const loc of ['en', 'he', 'ar'] as const) {
+    const status = article[`status${LOCALE_SUFFIX[loc]}`];
+    const title = article[`title${LOCALE_SUFFIX[loc]}`];
+    if (status === 'PUBLISHED' && title && title.trim()) {
+      result.push({ locale: loc, slug });
+    }
+  }
+  return result;
 }

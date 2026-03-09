@@ -10,23 +10,7 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const articles = await prisma.article.findMany({
-    orderBy: [{ locale: 'asc' }, { articleOrder: 'asc' }, { createdAt: 'desc' }],
-    select: {
-      id: true,
-      slug: true,
-      locale: true,
-      title: true,
-      excerpt: true,
-      featuredImage: true,
-      focusKeyword: true,
-      metaTitle: true,
-      metaDesc: true,
-      articleOrder: true,
-      status: true,
-      showRelatedArticles: true,
-      createdAt: true,
-      updatedAt: true,
-    },
+    orderBy: [{ articleOrder: 'asc' }, { createdAt: 'desc' }],
   });
 
   return NextResponse.json({ articles });
@@ -38,29 +22,64 @@ export async function POST(request: Request) {
 
   const body = await request.json();
   const {
-    slug, locale, title, content, excerpt, featuredImage,
-    focusKeyword, metaTitle, metaDesc, ogTitle, ogDesc,
-    canonicalUrl, articleOrder, status, showRelatedArticles,
+    slug,
+    titleEn, titleHe, titleAr,
+    contentEn, contentHe, contentAr,
+    excerptEn, excerptHe, excerptAr,
+    focusKeywordEn, focusKeywordHe, focusKeywordAr,
+    metaTitleEn, metaTitleHe, metaTitleAr,
+    metaDescEn, metaDescHe, metaDescAr,
+    ogTitleEn, ogTitleHe, ogTitleAr,
+    ogDescEn, ogDescHe, ogDescAr,
+    canonicalUrlEn, canonicalUrlHe, canonicalUrlAr,
+    statusEn, statusHe, statusAr,
+    featuredImage, articleOrder, showRelatedArticles,
   } = body;
 
-  if (!slug || !locale || !title) {
-    return NextResponse.json({ error: 'slug, locale, and title are required' }, { status: 400 });
+  if (!slug?.trim()) {
+    return NextResponse.json({ error: 'slug is required' }, { status: 400 });
   }
 
-  // Check duplicate slug+locale
-  const existing = await prisma.article.findUnique({ where: { slug_locale: { slug, locale } } });
+  const existing = await prisma.article.findUnique({ where: { slug: slug.trim().toLowerCase() } });
   if (existing) {
-    return NextResponse.json({ error: 'An article with this slug and locale already exists' }, { status: 409 });
+    return NextResponse.json({ error: 'An article with this slug already exists' }, { status: 409 });
   }
 
   const article = await prisma.article.create({
     data: {
-      slug, locale, title, content: content || '',
-      excerpt, featuredImage, focusKeyword,
-      metaTitle, metaDesc, ogTitle, ogDesc,
-      canonicalUrl,
+      slug: slug.trim().toLowerCase(),
+      titleEn: titleEn ?? '',
+      titleHe: titleHe ?? '',
+      titleAr: titleAr ?? '',
+      contentEn: contentEn ?? '',
+      contentHe: contentHe ?? '',
+      contentAr: contentAr ?? '',
+      excerptEn: excerptEn ?? null,
+      excerptHe: excerptHe ?? null,
+      excerptAr: excerptAr ?? null,
+      focusKeywordEn: focusKeywordEn ?? null,
+      focusKeywordHe: focusKeywordHe ?? null,
+      focusKeywordAr: focusKeywordAr ?? null,
+      metaTitleEn: metaTitleEn ?? null,
+      metaTitleHe: metaTitleHe ?? null,
+      metaTitleAr: metaTitleAr ?? null,
+      metaDescEn: metaDescEn ?? null,
+      metaDescHe: metaDescHe ?? null,
+      metaDescAr: metaDescAr ?? null,
+      ogTitleEn: ogTitleEn ?? null,
+      ogTitleHe: ogTitleHe ?? null,
+      ogTitleAr: ogTitleAr ?? null,
+      ogDescEn: ogDescEn ?? null,
+      ogDescHe: ogDescHe ?? null,
+      ogDescAr: ogDescAr ?? null,
+      canonicalUrlEn: canonicalUrlEn ?? null,
+      canonicalUrlHe: canonicalUrlHe ?? null,
+      canonicalUrlAr: canonicalUrlAr ?? null,
+      statusEn: statusEn ?? 'DRAFT',
+      statusHe: statusHe ?? 'DRAFT',
+      statusAr: statusAr ?? 'DRAFT',
+      featuredImage: featuredImage ?? null,
       articleOrder: articleOrder ?? 0,
-      status: status || 'DRAFT',
       showRelatedArticles: showRelatedArticles !== false,
     },
   });

@@ -114,18 +114,29 @@ function buildCtaBlockHtml(ctaHref: string, locale: 'he' | 'en' | 'ar', destinat
 }
 
 /**
- * Normalize plain-format content: remove Meta Description paragraph from body, replace CTA #1/#2 with proper button blocks.
- * Heading includes destination name (e.g. "לרכישת איסים לפולינזיה הצרפתית – לחצו כאן").
+ * Normalize plain-format content: remove Meta Description from body, replace CTA #1/#2 with canonical cta-block.
+ * Supports: HE <p><strong>CTA #1:</strong>; EN/AR <div class='cta'><strong>CTA #1 (mid-article):</strong> and CTA #2 (final):.
+ * Removes duplicate leading <h1> if it matches the article title.
  */
 function normalizePhase7Content(html: string, ctaHref: string, locale: 'he' | 'en' | 'ar', title: string): string {
   const destination = getDestinationFromTitle(title, locale);
   const ctaBlock = buildCtaBlockHtml(ctaHref, locale, destination);
   let out = html;
-  // Remove first paragraph that contains "Meta Description:" (used only for metaDesc, not for display)
+  // Remove Meta Description (HE: <p><strong>; EN/AR: <p class="meta"><b>)
   out = out.replace(/<p[^>]*>\s*<strong>Meta Description:<\/strong>[\s\S]*?<\/p>\s*/i, '');
-  // Replace CTA #1 and CTA #2 paragraphs with proper cta-block
+  out = out.replace(/<p\s+class="meta"[^>]*>\s*<b>Meta Description:<\/b>[\s\S]*?<\/p>\s*/i, '');
+  // Hebrew: CTA in <p>
   out = out.replace(/<p[^>]*>\s*<strong>CTA #1:<\/strong>[\s\S]*?<\/p>/i, ctaBlock);
   out = out.replace(/<p[^>]*>\s*<strong>CTA #2:<\/strong>[\s\S]*?<\/p>/i, ctaBlock);
+  // EN: CTA in <div class='cta'>
+  out = out.replace(/<div\s+class=['"]cta['"][^>]*>\s*<strong>CTA #1 \(mid-article\):<\/strong>[\s\S]*?<\/div>/gi, ctaBlock);
+  out = out.replace(/<div\s+class=['"]cta['"][^>]*>\s*<strong>CTA #2 \(final\):<\/strong>[\s\S]*?<\/div>/gi, ctaBlock);
+  // AR: CTA in <div class='cta'> with Arabic labels (في منتصف المقال / ختاماً)
+  out = out.replace(/<div\s+class=['"]cta['"][^>]*>\s*<strong>CTA #1 \(في منتصف المقال\):<\/strong>[\s\S]*?<\/div>/gi, ctaBlock);
+  out = out.replace(/<div\s+class=['"]cta['"][^>]*>\s*<strong>CTA #2 \(ختاماً\):<\/strong>[\s\S]*?<\/div>/gi, ctaBlock);
+  // Remove duplicate title: leading <h1> that matches article title (avoid showing title twice on page)
+  const escapedTitle = title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  out = out.replace(new RegExp(`^\\s*<h1[^>]*>\\s*${escapedTitle}\\s*<\\/h1>\\s*`, 'i'), '');
   return out;
 }
 
@@ -229,6 +240,10 @@ export async function runPhase7Update(
   const endIdx = 75;
   const baseOrder = 200;
 
+  // Group by slug (new schema: one row per slug with contentEn/He/Ar)
+  type LocaleData = { title: string; metaDesc: string; content: string; excerpt: string };
+  const bySlug = new Map<string, { en?: LocaleData; he?: LocaleData; ar?: LocaleData; articleOrder: number }>();
+
   for (let i = startIdx; i < endIdx; i++) {
     const { slug, locale } = SLUG_LOCALE[i];
     const parsedIdx = heArticles.length === 25 ? i : i - 25;
@@ -241,34 +256,73 @@ export async function runPhase7Update(
     const excerpt = metaDesc.slice(0, 160) + (metaDesc.length > 160 ? '…' : '');
     const articleOrder = baseOrder + i;
 
+    const cur = bySlug.get(slug) ?? { articleOrder };
+    cur[locale] = { title, metaDesc, content: contentWithCta, excerpt };
+    cur.articleOrder = articleOrder;
+    bySlug.set(slug, cur);
+  }
+
+  for (const [slug, data] of bySlug) {
+    const en = data.en ?? data.he ?? data.ar!;
     await prisma.article.upsert({
-      where: { slug_locale: { slug, locale } },
+      where: { slug },
       create: {
         slug,
-        locale,
-        title,
-        content: contentWithCta,
-        excerpt,
-        metaTitle: title.slice(0, 60),
-        metaDesc,
-        articleOrder,
-        status: 'PUBLISHED',
+        titleEn: data.en?.title ?? '',
+        titleHe: data.he?.title ?? '',
+        titleAr: data.ar?.title ?? '',
+        contentEn: data.en?.content ?? '',
+        contentHe: data.he?.content ?? '',
+        contentAr: data.ar?.content ?? '',
+        excerptEn: data.en?.excerpt ?? null,
+        excerptHe: data.he?.excerpt ?? null,
+        excerptAr: data.ar?.excerpt ?? null,
+        metaTitleEn: data.en ? data.en.title.slice(0, 60) : null,
+        metaTitleHe: data.he ? data.he.title.slice(0, 60) : null,
+        metaTitleAr: data.ar ? data.ar.title.slice(0, 60) : null,
+        metaDescEn: data.en?.metaDesc ?? null,
+        metaDescHe: data.he?.metaDesc ?? null,
+        metaDescAr: data.ar?.metaDesc ?? null,
+        statusEn: data.en ? 'PUBLISHED' : 'DRAFT',
+        statusHe: data.he ? 'PUBLISHED' : 'DRAFT',
+        statusAr: data.ar ? 'PUBLISHED' : 'DRAFT',
+        articleOrder: data.articleOrder,
         showRelatedArticles: true,
       },
       update: {
-        title,
-        content: contentWithCta,
-        excerpt,
-        metaTitle: title.slice(0, 60),
-        metaDesc,
-        articleOrder,
-        status: 'PUBLISHED',
+        ...(data.en && {
+          titleEn: data.en.title,
+          contentEn: data.en.content,
+          excerptEn: data.en.excerpt,
+          metaTitleEn: data.en.title.slice(0, 60),
+          metaDescEn: data.en.metaDesc,
+          statusEn: 'PUBLISHED' as const,
+        }),
+        ...(data.he && {
+          titleHe: data.he.title,
+          contentHe: data.he.content,
+          excerptHe: data.he.excerpt,
+          metaTitleHe: data.he.title.slice(0, 60),
+          metaDescHe: data.he.metaDesc,
+          statusHe: 'PUBLISHED' as const,
+        }),
+        ...(data.ar && {
+          titleAr: data.ar.title,
+          contentAr: data.ar.content,
+          excerptAr: data.ar.excerpt,
+          metaTitleAr: data.ar.title.slice(0, 60),
+          metaDescAr: data.ar.metaDesc,
+          statusAr: 'PUBLISHED' as const,
+        }),
+        articleOrder: data.articleOrder,
       },
     });
   }
 
-  // Migrate ALL articles: replace every cta-block with canonical format (heading + button with destination in all languages)
-  const allArticles = await prisma.article.findMany({ select: { id: true, content: true, title: true, locale: true } });
+  // Migrate ALL articles: canonical CTA, remove placeholder CTAs/Meta Description/duplicate title
+  const allArticles = await prisma.article.findMany({
+    select: { id: true, slug: true, titleEn: true, titleHe: true, titleAr: true, contentEn: true, contentHe: true, contentAr: true },
+  });
   const headingLinkClass = 'text-emerald-900 hover:underline focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 rounded';
 
   const titleIsDestination = (title: string, locale: string) =>
@@ -277,27 +331,45 @@ export async function runPhase7Update(
     (locale === 'ar' && /^eSIM\s+/.test(title));
 
   for (const a of allArticles) {
-    if (!a.content) continue;
-    const locale = a.locale as 'he' | 'en' | 'ar';
-    const dest = titleIsDestination(a.title, a.locale) ? getDestinationFromTitle(a.title, locale) : '';
-    let newContent = a.content;
+    const updateData: { contentEn?: string; contentHe?: string; contentAr?: string } = {};
+    for (const locale of ['en', 'he', 'ar'] as const) {
+      const content = a[`content${locale.charAt(0).toUpperCase() + locale.slice(1)}` as 'contentEn' | 'contentHe' | 'contentAr'];
+      const title = a[`title${locale.charAt(0).toUpperCase() + locale.slice(1)}` as 'titleEn' | 'titleHe' | 'titleAr'];
+      if (!content) continue;
+      const dest = title && titleIsDestination(title, locale) ? getDestinationFromTitle(title, locale) : '';
+      const ctaHref = getCtaHref(a.slug, locale);
+      let newContent = content;
 
-    if (!newContent.includes('text-xl font-bold text-emerald-900 mb-2"><a href=')) {
-      newContent = newContent.replace(
-        /<p class="text-xl font-bold text-emerald-900 mb-2">([\s\S]*?)<\/p>\s*<a href="([^"]+)"[^>]*class="inline-block rounded-lg bg-emerald-600/g,
-        `<p class="text-xl font-bold text-emerald-900 mb-2"><a href="$2" class="${headingLinkClass}">$1</a></p><a href="$2" class="inline-block rounded-lg bg-emerald-600`
-      );
+      newContent = newContent.replace(/<p\s+class="meta"[^>]*>\s*<b>Meta Description:<\/b>[\s\S]*?<\/p>\s*/gi, '');
+      newContent = newContent.replace(/<div\s+class=['"]cta['"][^>]*>\s*<strong>CTA #1 \(mid-article\):<\/strong>[\s\S]*?<\/div>/gi, buildCtaBlockHtml(ctaHref, locale, dest || undefined));
+      newContent = newContent.replace(/<div\s+class=['"]cta['"][^>]*>\s*<strong>CTA #2 \(final\):<\/strong>[\s\S]*?<\/div>/gi, buildCtaBlockHtml(ctaHref, locale, dest || undefined));
+      newContent = newContent.replace(/<div\s+class=['"]cta['"][^>]*>\s*<strong>CTA #1 \(في منتصف المقال\):<\/strong>[\s\S]*?<\/div>/gi, buildCtaBlockHtml(ctaHref, locale, dest || undefined));
+      newContent = newContent.replace(/<div\s+class=['"]cta['"][^>]*>\s*<strong>CTA #2 \(ختاماً\):<\/strong>[\s\S]*?<\/div>/gi, buildCtaBlockHtml(ctaHref, locale, dest || undefined));
+
+      if (!newContent.includes('text-xl font-bold text-emerald-900 mb-2"><a href=')) {
+        newContent = newContent.replace(
+          /<p class="text-xl font-bold text-emerald-900 mb-2">([\s\S]*?)<\/p>\s*<a href="([^"]+)"[^>]*class="inline-block rounded-lg bg-emerald-600/g,
+          `<p class="text-xl font-bold text-emerald-900 mb-2"><a href="$2" class="${headingLinkClass}">$1</a></p><a href="$2" class="inline-block rounded-lg bg-emerald-600`
+        );
+      }
+
+      newContent = newContent.replace(/<div class="cta-block[^"]*"[^>]*>[\s\S]*?<\/div>/g, (block) => {
+        const hrefMatch = block.match(/href="(https?:\/\/[^"]+)"/);
+        const href = hrefMatch ? hrefMatch[1] : ctaHref;
+        return buildCtaBlockHtml(href, locale, dest || undefined);
+      });
+
+      if (title) {
+        const escapedTitle = title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        newContent = newContent.replace(new RegExp(`^\\s*<h1[^>]*>\\s*${escapedTitle}\\s*<\\/h1>\\s*`, 'i'), '');
+      }
+
+      if (newContent !== content) {
+        updateData[`content${locale.charAt(0).toUpperCase() + locale.slice(1)}` as 'contentEn' | 'contentHe' | 'contentAr'] = newContent;
+      }
     }
-
-    // Replace every cta-block with canonical block (same structure in all articles, all languages)
-    newContent = newContent.replace(/<div class="cta-block[^"]*"[^>]*>[\s\S]*?<\/div>/g, (block) => {
-      const hrefMatch = block.match(/href="(https?:\/\/[^"]+)"/);
-      const ctaHref = hrefMatch ? hrefMatch[1] : 'https://www.sim2me.net/';
-      return buildCtaBlockHtml(ctaHref, locale, dest || undefined);
-    });
-
-    if (newContent !== a.content) {
-      await prisma.article.update({ where: { id: a.id }, data: { content: newContent } });
+    if (Object.keys(updateData).length > 0) {
+      await prisma.article.update({ where: { id: a.id }, data: updateData });
     }
   }
 

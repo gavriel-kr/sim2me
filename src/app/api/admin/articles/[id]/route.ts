@@ -16,6 +16,19 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   return NextResponse.json({ article });
 }
 
+const LOCALE_FIELDS = [
+  'titleEn', 'titleHe', 'titleAr',
+  'contentEn', 'contentHe', 'contentAr',
+  'excerptEn', 'excerptHe', 'excerptAr',
+  'focusKeywordEn', 'focusKeywordHe', 'focusKeywordAr',
+  'metaTitleEn', 'metaTitleHe', 'metaTitleAr',
+  'metaDescEn', 'metaDescHe', 'metaDescAr',
+  'ogTitleEn', 'ogTitleHe', 'ogTitleAr',
+  'ogDescEn', 'ogDescHe', 'ogDescAr',
+  'canonicalUrlEn', 'canonicalUrlHe', 'canonicalUrlAr',
+  'statusEn', 'statusHe', 'statusAr',
+] as const;
+
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -24,40 +37,34 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const body = await request.json();
 
   const {
-    slug, locale, title, content, excerpt, featuredImage,
-    focusKeyword, metaTitle, metaDesc, ogTitle, ogDesc,
-    canonicalUrl, articleOrder, status, showRelatedArticles,
+    slug, featuredImage, articleOrder, showRelatedArticles,
+    ...localeFields
   } = body;
 
-  // If slug+locale changed, check for conflicts
-  if (slug && locale) {
+  if (slug !== undefined) {
     const conflict = await prisma.article.findFirst({
-      where: { slug, locale, NOT: { id } },
+      where: { slug: slug.trim().toLowerCase(), NOT: { id } },
     });
     if (conflict) {
-      return NextResponse.json({ error: 'An article with this slug and locale already exists' }, { status: 409 });
+      return NextResponse.json({ error: 'An article with this slug already exists' }, { status: 409 });
+    }
+  }
+
+  const data: Record<string, unknown> = {};
+  if (slug !== undefined) data.slug = slug.trim().toLowerCase();
+  if (featuredImage !== undefined) data.featuredImage = featuredImage;
+  if (articleOrder !== undefined) data.articleOrder = articleOrder;
+  if (showRelatedArticles !== undefined) data.showRelatedArticles = Boolean(showRelatedArticles);
+
+  for (const key of LOCALE_FIELDS) {
+    if (localeFields[key] !== undefined) {
+      data[key] = localeFields[key];
     }
   }
 
   const article = await prisma.article.update({
     where: { id },
-    data: {
-      ...(slug !== undefined && { slug }),
-      ...(locale !== undefined && { locale }),
-      ...(title !== undefined && { title }),
-      ...(content !== undefined && { content }),
-      ...(excerpt !== undefined && { excerpt }),
-      ...(featuredImage !== undefined && { featuredImage }),
-      ...(focusKeyword !== undefined && { focusKeyword }),
-      ...(metaTitle !== undefined && { metaTitle }),
-      ...(metaDesc !== undefined && { metaDesc }),
-      ...(ogTitle !== undefined && { ogTitle }),
-      ...(ogDesc !== undefined && { ogDesc }),
-      ...(canonicalUrl !== undefined && { canonicalUrl }),
-      ...(articleOrder !== undefined && { articleOrder }),
-      ...(status !== undefined && { status }),
-      ...(showRelatedArticles !== undefined && { showRelatedArticles: Boolean(showRelatedArticles) }),
-    },
+    data,
   });
 
   return NextResponse.json({ article });

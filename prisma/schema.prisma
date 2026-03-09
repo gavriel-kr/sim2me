@@ -239,27 +239,50 @@ enum ContactStatus {
 }
 
 // ─── Articles (SEO blog / guides) ────────────────────────────
+// One row per topic; all languages in same row (like Page model)
 model Article {
-  id                  String        @id @default(cuid())
-  slug                String
-  locale              String        // 'en' | 'he' | 'ar'
-  title               String
-  content             String        @db.Text
-  excerpt             String?       @db.Text
+  id                  String   @id @default(cuid())
+  slug                String   @unique // canonical slug
+  // Content per locale
+  titleEn             String   @default("")
+  titleHe             String   @default("")
+  titleAr             String   @default("")
+  contentEn            String   @default("") @db.Text
+  contentHe            String   @default("") @db.Text
+  contentAr            String   @default("") @db.Text
+  excerptEn           String?   @db.Text
+  excerptHe           String?   @db.Text
+  excerptAr           String?   @db.Text
+  // SEO per locale
+  focusKeywordEn      String?
+  focusKeywordHe      String?
+  focusKeywordAr      String?
+  metaTitleEn         String?
+  metaTitleHe         String?
+  metaTitleAr         String?
+  metaDescEn          String?   @db.Text
+  metaDescHe          String?   @db.Text
+  metaDescAr          String?   @db.Text
+  ogTitleEn           String?
+  ogTitleHe           String?
+  ogTitleAr           String?
+  ogDescEn            String?   @db.Text
+  ogDescHe            String?   @db.Text
+  ogDescAr            String?   @db.Text
+  canonicalUrlEn      String?
+  canonicalUrlHe      String?
+  canonicalUrlAr      String?
+  // Status per locale
+  statusEn            ArticleStatus @default(DRAFT)
+  statusHe            ArticleStatus @default(DRAFT)
+  statusAr            ArticleStatus @default(DRAFT)
+  // Shared
   featuredImage       String?
-  focusKeyword        String?
-  metaTitle           String?
-  metaDesc            String?
-  ogTitle             String?
-  ogDesc              String?
-  canonicalUrl        String?
-  articleOrder        Int           @default(0)
-  status              ArticleStatus @default(DRAFT)
-  showRelatedArticles Boolean       @default(true) // show 2–3 related articles at end (carousel)
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
+  articleOrder        Int      @default(0)
+  showRelatedArticles Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
-  @@unique([slug, locale])
   @@map("articles")
 }
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
-import { Plus, Pencil, Trash2, Eye, EyeOff, GripVertical, Globe, Upload, Wand2, AlertCircle, Loader2, Check } from 'lucide-react';
+import { Plus, Pencil, Trash2, Eye, EyeOff, GripVertical, Globe, Upload, Wand2, AlertCircle, Loader2 } from 'lucide-react';
 import { RichTextEditor } from './RichTextEditor';
 
 type ArticleStatus = 'DRAFT' | 'PUBLISHED';
@@ -9,30 +9,62 @@ type ArticleStatus = 'DRAFT' | 'PUBLISHED';
 interface ArticleRow {
   id: string;
   slug: string;
-  locale: string;
-  title: string;
-  excerpt: string | null;
+  titleEn: string;
+  titleHe: string;
+  titleAr: string;
+  contentEn?: string;
+  contentHe?: string;
+  contentAr?: string;
+  excerptEn: string | null;
+  excerptHe: string | null;
+  excerptAr: string | null;
+  focusKeywordEn: string | null;
+  focusKeywordHe: string | null;
+  focusKeywordAr: string | null;
+  metaTitleEn: string | null;
+  metaTitleHe: string | null;
+  metaTitleAr: string | null;
+  metaDescEn: string | null;
+  metaDescHe: string | null;
+  metaDescAr: string | null;
+  ogTitleEn: string | null;
+  ogTitleHe: string | null;
+  ogTitleAr: string | null;
+  ogDescEn: string | null;
+  ogDescHe: string | null;
+  ogDescAr: string | null;
+  canonicalUrlEn: string | null;
+  canonicalUrlHe: string | null;
+  canonicalUrlAr: string | null;
+  statusEn: ArticleStatus;
+  statusHe: ArticleStatus;
+  statusAr: ArticleStatus;
   featuredImage: string | null;
-  focusKeyword: string | null;
-  metaTitle: string | null;
-  metaDesc: string | null;
-  ogTitle: string | null;
-  ogDesc: string | null;
-  canonicalUrl: string | null;
   articleOrder: number;
-  status: ArticleStatus;
   showRelatedArticles: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
 
-const BLANK: Omit<ArticleRow, 'id' | 'createdAt' | 'updatedAt'> = {
-  slug: '', locale: 'en', title: '', excerpt: null,
-  featuredImage: null, focusKeyword: null,
-  metaTitle: null, metaDesc: null, ogTitle: null, ogDesc: null,
-  canonicalUrl: null, articleOrder: 0, status: 'DRAFT', showRelatedArticles: true,
+type ArticleForm = Omit<ArticleRow, 'id' | 'createdAt' | 'updatedAt'>;
+
+const BLANK: ArticleForm = {
+  slug: '',
+  titleEn: '', titleHe: '', titleAr: '',
+  contentEn: '', contentHe: '', contentAr: '',
+  excerptEn: null, excerptHe: null, excerptAr: null,
+  focusKeywordEn: null, focusKeywordHe: null, focusKeywordAr: null,
+  metaTitleEn: null, metaTitleHe: null, metaTitleAr: null,
+  metaDescEn: null, metaDescHe: null, metaDescAr: null,
+  ogTitleEn: null, ogTitleHe: null, ogTitleAr: null,
+  ogDescEn: null, ogDescHe: null, ogDescAr: null,
+  canonicalUrlEn: null, canonicalUrlHe: null, canonicalUrlAr: null,
+  statusEn: 'DRAFT', statusHe: 'DRAFT', statusAr: 'DRAFT',
+  featuredImage: null, articleOrder: 0, showRelatedArticles: true,
 };
 
+const LOCALES = ['en', 'he', 'ar'] as const;
+type Locale = (typeof LOCALES)[number];
 const LOCALE_LABELS: Record<string, string> = { en: '🇬🇧 EN', he: '🇮🇱 HE', ar: '🇸🇦 AR' };
 
 const SITE_URL = 'https://www.sim2me.net';
@@ -72,6 +104,10 @@ function generateFocusKeyword(title: string, slug: string, locale: string): stri
 
 function articleUrl(slug: string, locale: string) {
   return `${SITE_URL}/${locale}/articles/${slug}`;
+}
+
+function getDisplayTitle(a: ArticleRow): string {
+  return a.titleEn || a.titleHe || a.titleAr || a.slug;
 }
 
 // ── Article SERP Preview ──────────────────────────────────────────────────────
@@ -120,14 +156,12 @@ function FeaturedImageField({ value, onChange }: { value: string; onChange: (v: 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    // In production, upload to CDN. For now, generate a data-URL preview.
     const reader = new FileReader();
     reader.onload = (ev) => onChange(ev.target?.result as string);
     reader.readAsDataURL(file);
     e.target.value = '';
   };
 
-  // Detect if it's a bg-color special value
   const isBgColor = value.startsWith('bg:');
   const bgColor = isBgColor ? value.slice(3) : '';
 
@@ -139,7 +173,6 @@ function FeaturedImageField({ value, onChange }: { value: string; onChange: (v: 
         Leave empty to use a placeholder card.
       </p>
 
-      {/* Image URL or file upload */}
       {!isBgColor && (
         <div className="flex gap-2 mb-2">
           <input
@@ -159,7 +192,6 @@ function FeaturedImageField({ value, onChange }: { value: string; onChange: (v: 
         </div>
       )}
 
-      {/* Preview */}
       {value && !isBgColor && (
         <div className="mb-2 h-24 w-40 overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -167,7 +199,6 @@ function FeaturedImageField({ value, onChange }: { value: string; onChange: (v: 
         </div>
       )}
 
-      {/* Background color option (for card placeholder) */}
       <div className="mt-2 flex items-center gap-3">
         <label className="flex items-center gap-2 cursor-pointer text-xs text-gray-600">
           <input
@@ -214,12 +245,14 @@ export function ArticlesClient({
   const [defaultImageDraft, setDefaultImageDraft] = useState({ url: initialDefaultImage?.url ?? '', alt: initialDefaultImage?.alt ?? '' });
   const [savingDefault, setSavingDefault] = useState(false);
   const defaultImageFileRef = useRef<HTMLInputElement>(null);
-  const [editing, setEditing] = useState<string | null>(null); // id or 'new'
-  const [form, setForm] = useState<Omit<ArticleRow, 'id' | 'createdAt' | 'updatedAt'> & { content?: string }>(BLANK);
-  const [content, setContent] = useState('');
+  const [editing, setEditing] = useState<string | null>(null);
+  const [form, setForm] = useState<ArticleForm>(BLANK);
+  const [contentEn, setContentEn] = useState('');
+  const [contentHe, setContentHe] = useState('');
+  const [contentAr, setContentAr] = useState('');
   const [saving, setSaving] = useState(false);
-  const [tab, setTab] = useState<'main' | 'seo' | 'content'>('main');
-  const [filterLocale, setFilterLocale] = useState<string>('all');
+  const [localeTab, setLocaleTab] = useState<Locale>('en');
+  const [sectionTab, setSectionTab] = useState<'main' | 'content' | 'seo'>('main');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [search, setSearch] = useState('');
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest' | 'az' | 'za'>('newest');
@@ -245,10 +278,18 @@ export function ArticlesClient({
       });
       const data = await res.json();
       if (!res.ok) { flash('err', data.error || 'Bulk fill failed'); return; }
-      // Update local state so the list shows new keywords immediately
       if (data.details?.length > 0) {
-        const kwMap = Object.fromEntries(data.details.map((d: { id: string; keyword: string }) => [d.id, d.keyword]));
-        setArticles((prev) => prev.map((a) => kwMap[a.id] ? { ...a, focusKeyword: kwMap[a.id] } : a));
+        const byId = new Map<string, { focusKeywordEn?: string; focusKeywordHe?: string; focusKeywordAr?: string }>();
+        for (const d of data.details as { id: string; locale: string; keyword: string }[]) {
+          const key = `focusKeyword${d.locale.charAt(0).toUpperCase() + d.locale.slice(1)}` as 'focusKeywordEn' | 'focusKeywordHe' | 'focusKeywordAr';
+          const cur = byId.get(d.id) ?? {};
+          cur[key] = d.keyword;
+          byId.set(d.id, cur);
+        }
+        setArticles((prev) => prev.map((a) => {
+          const upd = byId.get(a.id);
+          return upd ? { ...a, ...upd } : a;
+        }));
       }
       flash('ok', `✅ ${data.updated} articles updated, ${data.skipped} skipped.`);
     } catch {
@@ -260,31 +301,64 @@ export function ArticlesClient({
 
   const startNew = () => {
     setForm({ ...BLANK });
-    setContent('');
+    setContentEn('');
+    setContentHe('');
+    setContentAr('');
     setEditing('new');
-    setTab('main');
+    setLocaleTab('en');
+    setSectionTab('main');
   };
 
   const startEdit = (a: ArticleRow) => {
+    setLocaleTab('en');
+    setSectionTab('main');
     setForm({
-      slug: a.slug, locale: a.locale, title: a.title,
-      excerpt: a.excerpt, featuredImage: a.featuredImage,
-      focusKeyword: a.focusKeyword, metaTitle: a.metaTitle,
-      metaDesc: a.metaDesc, ogTitle: a.ogTitle, ogDesc: a.ogDesc,
-      canonicalUrl: a.canonicalUrl, articleOrder: a.articleOrder, status: a.status,
-      showRelatedArticles: a.showRelatedArticles !== false,
+      slug: a.slug,
+      titleEn: a.titleEn ?? '', titleHe: a.titleHe ?? '', titleAr: a.titleAr ?? '',
+      contentEn: a.contentEn ?? '', contentHe: a.contentHe ?? '', contentAr: a.contentAr ?? '',
+      excerptEn: a.excerptEn, excerptHe: a.excerptHe, excerptAr: a.excerptAr,
+      focusKeywordEn: a.focusKeywordEn, focusKeywordHe: a.focusKeywordHe, focusKeywordAr: a.focusKeywordAr,
+      metaTitleEn: a.metaTitleEn, metaTitleHe: a.metaTitleHe, metaTitleAr: a.metaTitleAr,
+      metaDescEn: a.metaDescEn, metaDescHe: a.metaDescHe, metaDescAr: a.metaDescAr,
+      ogTitleEn: a.ogTitleEn, ogTitleHe: a.ogTitleHe, ogTitleAr: a.ogTitleAr,
+      ogDescEn: a.ogDescEn, ogDescHe: a.ogDescHe, ogDescAr: a.ogDescAr,
+      canonicalUrlEn: a.canonicalUrlEn, canonicalUrlHe: a.canonicalUrlHe, canonicalUrlAr: a.canonicalUrlAr,
+      statusEn: a.statusEn ?? 'DRAFT', statusHe: a.statusHe ?? 'DRAFT', statusAr: a.statusAr ?? 'DRAFT',
+      featuredImage: a.featuredImage, articleOrder: a.articleOrder, showRelatedArticles: a.showRelatedArticles !== false,
     });
-    // Fetch full content
+    setContentEn(a.contentEn ?? '');
+    setContentHe(a.contentHe ?? '');
+    setContentAr(a.contentAr ?? '');
+    setEditing(a.id);
     fetch(`/api/admin/articles/${a.id}`)
       .then((r) => r.json())
-      .then((d) => setContent(d.article?.content || ''));
-    setEditing(a.id);
-    setTab('main');
+      .then((d) => {
+        const art = d.article;
+        if (!art) return;
+        setForm({
+          slug: art.slug,
+          titleEn: art.titleEn ?? '', titleHe: art.titleHe ?? '', titleAr: art.titleAr ?? '',
+          contentEn: art.contentEn ?? '', contentHe: art.contentHe ?? '', contentAr: art.contentAr ?? '',
+          excerptEn: art.excerptEn, excerptHe: art.excerptHe, excerptAr: art.excerptAr,
+          focusKeywordEn: art.focusKeywordEn, focusKeywordHe: art.focusKeywordHe, focusKeywordAr: art.focusKeywordAr,
+          metaTitleEn: art.metaTitleEn, metaTitleHe: art.metaTitleHe, metaTitleAr: art.metaTitleAr,
+          metaDescEn: art.metaDescEn, metaDescHe: art.metaDescHe, metaDescAr: art.metaDescAr,
+          ogTitleEn: art.ogTitleEn, ogTitleHe: art.ogTitleHe, ogTitleAr: art.ogTitleAr,
+          ogDescEn: art.ogDescEn, ogDescHe: art.ogDescHe, ogDescAr: art.ogDescAr,
+          canonicalUrlEn: art.canonicalUrlEn, canonicalUrlHe: art.canonicalUrlHe, canonicalUrlAr: art.canonicalUrlAr,
+          statusEn: art.statusEn ?? 'DRAFT', statusHe: art.statusHe ?? 'DRAFT', statusAr: art.statusAr ?? 'DRAFT',
+          featuredImage: art.featuredImage, articleOrder: art.articleOrder, showRelatedArticles: art.showRelatedArticles !== false,
+        });
+        setContentEn(art.contentEn ?? '');
+        setContentHe(art.contentHe ?? '');
+        setContentAr(art.contentAr ?? '');
+      })
+      .catch(() => flash('err', 'Failed to load article'));
   };
 
   const save = useCallback(async () => {
-    if (!form.title || !form.slug || !form.locale) {
-      flash('err', 'Title, slug, and locale are required.');
+    if (!form.slug?.trim()) {
+      flash('err', 'Slug is required.');
       return;
     }
     setSaving(true);
@@ -292,10 +366,16 @@ export function ArticlesClient({
       const isNew = editing === 'new';
       const url = isNew ? '/api/admin/articles' : `/api/admin/articles/${editing}`;
       const method = isNew ? 'POST' : 'PATCH';
+      const payload = {
+        ...form,
+        contentEn: contentEn,
+        contentHe: contentHe,
+        contentAr: contentAr,
+      };
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, content }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -314,7 +394,7 @@ export function ArticlesClient({
     } finally {
       setSaving(false);
     }
-  }, [editing, form, content]);
+  }, [editing, form, contentEn, contentHe, contentAr]);
 
   const deleteArticle = async (id: string, title: string) => {
     if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
@@ -325,18 +405,6 @@ export function ArticlesClient({
       flash('ok', 'Article deleted.');
     } else {
       flash('err', 'Delete failed');
-    }
-  };
-
-  const toggleStatus = async (a: ArticleRow) => {
-    const newStatus: ArticleStatus = a.status === 'PUBLISHED' ? 'DRAFT' : 'PUBLISHED';
-    const res = await fetch(`/api/admin/articles/${a.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: newStatus }),
-    });
-    if (res.ok) {
-      setArticles((prev) => prev.map((x) => (x.id === a.id ? { ...x, status: newStatus } : x)));
     }
   };
 
@@ -375,23 +443,58 @@ export function ArticlesClient({
     e.target.value = '';
   };
 
+  const searchLower = search.toLowerCase();
   const displayed = articles
-    .filter((a) => filterLocale === 'all' || a.locale === filterLocale)
-    .filter((a) => filterStatus === 'all' || a.status === filterStatus)
-    .filter((a) => !search || a.title.toLowerCase().includes(search.toLowerCase()) || a.slug.includes(search.toLowerCase()) || (a.focusKeyword || '').toLowerCase().includes(search.toLowerCase()))
+    .filter((a) => {
+      if (!searchLower) return true;
+      return (
+        (a.titleEn || '').toLowerCase().includes(searchLower) ||
+        (a.titleHe || '').toLowerCase().includes(searchLower) ||
+        (a.titleAr || '').toLowerCase().includes(searchLower) ||
+        (a.slug || '').toLowerCase().includes(searchLower)
+      );
+    })
+    .filter((a) => {
+      if (filterStatus === 'all') return true;
+      if (filterStatus === 'has_published') {
+        return a.statusEn === 'PUBLISHED' || a.statusHe === 'PUBLISHED' || a.statusAr === 'PUBLISHED';
+      }
+      if (filterStatus === 'all_draft') {
+        return a.statusEn === 'DRAFT' && a.statusHe === 'DRAFT' && a.statusAr === 'DRAFT';
+      }
+      return true;
+    })
     .sort((a, b) => {
+      const titleA = getDisplayTitle(a);
+      const titleB = getDisplayTitle(b);
       if (sortOrder === 'newest') return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       if (sortOrder === 'oldest') return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-      if (sortOrder === 'az') return a.title.localeCompare(b.title);
-      return b.title.localeCompare(a.title);
+      if (sortOrder === 'az') return titleA.localeCompare(titleB);
+      return titleB.localeCompare(titleA);
     });
 
   const inputCls = 'w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500';
   const labelCls = 'block text-xs font-medium text-gray-700 mb-1';
 
+  // Helper to get/set locale-specific fields
+  const getTitle = (loc: Locale) => form[`title${loc.charAt(0).toUpperCase() + loc.slice(1)}` as keyof ArticleForm] as string;
+  const getExcerpt = (loc: Locale) => (form[`excerpt${loc.charAt(0).toUpperCase() + loc.slice(1)}` as keyof ArticleForm] as string | null) ?? '';
+  const getStatus = (loc: Locale) => form[`status${loc.charAt(0).toUpperCase() + loc.slice(1)}` as keyof ArticleForm] as ArticleStatus;
+  const getFocusKeyword = (loc: Locale) => (form[`focusKeyword${loc.charAt(0).toUpperCase() + loc.slice(1)}` as keyof ArticleForm] as string | null) ?? '';
+  const getMetaTitle = (loc: Locale) => (form[`metaTitle${loc.charAt(0).toUpperCase() + loc.slice(1)}` as keyof ArticleForm] as string | null) ?? '';
+  const getMetaDesc = (loc: Locale) => (form[`metaDesc${loc.charAt(0).toUpperCase() + loc.slice(1)}` as keyof ArticleForm] as string | null) ?? '';
+  const getOgTitle = (loc: Locale) => (form[`ogTitle${loc.charAt(0).toUpperCase() + loc.slice(1)}` as keyof ArticleForm] as string | null) ?? '';
+  const getOgDesc = (loc: Locale) => (form[`ogDesc${loc.charAt(0).toUpperCase() + loc.slice(1)}` as keyof ArticleForm] as string | null) ?? '';
+  const getCanonicalUrl = (loc: Locale) => (form[`canonicalUrl${loc.charAt(0).toUpperCase() + loc.slice(1)}` as keyof ArticleForm] as string | null) ?? '';
+
+  const setLocaleField = <K extends keyof ArticleForm>(key: K, value: ArticleForm[K]) => {
+    setForm((f) => ({ ...f, [key]: value }));
+  };
+
+  const editorTitle = editing === 'new' ? 'New Article' : `Edit: ${getDisplayTitle(form as ArticleRow) || '(untitled)'}`;
+
   return (
     <div className="mt-6">
-      {/* Flash message */}
       {msg && (
         <div className={`mb-4 rounded-lg px-4 py-3 text-sm font-medium ${msg.type === 'ok' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
           {msg.text}
@@ -402,9 +505,7 @@ export function ArticlesClient({
         /* ── Editor ── */
         <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
           <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
-            <h2 className="text-base font-semibold text-gray-900">
-              {editing === 'new' ? 'New Article' : `Edit: ${form.title || '(untitled)'}`}
-            </h2>
+            <h2 className="text-base font-semibold text-gray-900">{editorTitle}</h2>
             <div className="flex gap-2">
               <button onClick={() => setEditing(null)} className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
               <button onClick={save} disabled={saving} className="rounded-lg bg-emerald-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60">
@@ -413,42 +514,34 @@ export function ArticlesClient({
             </div>
           </div>
 
-          {/* Tabs */}
+          {/* Locale tabs */}
+          <div className="flex gap-0 border-b border-gray-200 px-6">
+            {LOCALES.map((loc) => (
+              <button key={loc} onClick={() => setLocaleTab(loc)}
+                className={`px-4 py-3 text-sm font-medium transition-colors border-b-2 -mb-px ${localeTab === loc ? 'border-emerald-600 text-emerald-700' : 'border-transparent text-gray-500 hover:text-gray-800'}`}>
+                {LOCALE_LABELS[loc]}
+              </button>
+            ))}
+          </div>
+
+          {/* Section tabs */}
           <div className="flex gap-0 border-b border-gray-200 px-6">
             {(['main', 'content', 'seo'] as const).map((t) => (
-              <button key={t} onClick={() => setTab(t)}
-                className={`px-4 py-3 text-sm font-medium capitalize transition-colors border-b-2 -mb-px ${tab === t ? 'border-emerald-600 text-emerald-700' : 'border-transparent text-gray-500 hover:text-gray-800'}`}>
-                {t === 'main' ? 'Main Info' : t === 'content' ? 'Content (HTML)' : 'SEO & Meta'}
+              <button key={t} onClick={() => setSectionTab(t)}
+                className={`px-4 py-3 text-sm font-medium capitalize transition-colors border-b-2 -mb-px ${sectionTab === t ? 'border-emerald-600 text-emerald-700' : 'border-transparent text-gray-500 hover:text-gray-800'}`}>
+                {t === 'main' ? 'Main' : t === 'content' ? 'Content' : 'SEO'}
               </button>
             ))}
           </div>
 
           <div className="p-6 space-y-4">
-            {tab === 'main' && (
+            {sectionTab === 'main' && (
               <>
+                {/* Shared fields */}
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div>
-                    <label className={labelCls}>Title *</label>
-                    <input className={inputCls} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Article title" />
-                  </div>
                   <div>
                     <label className={labelCls}>Slug * (URL-safe)</label>
                     <input className={inputCls} value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-') })} placeholder="e.g. best-esim-for-travel" />
-                  </div>
-                  <div>
-                    <label className={labelCls}>Language *</label>
-                    <select className={inputCls} value={form.locale} onChange={(e) => setForm({ ...form, locale: e.target.value })}>
-                      <option value="en">English (EN)</option>
-                      <option value="he">Hebrew (HE)</option>
-                      <option value="ar">Arabic (AR)</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className={labelCls}>Status</label>
-                    <select className={inputCls} value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as ArticleStatus })}>
-                      <option value="DRAFT">Draft (noindex)</option>
-                      <option value="PUBLISHED">Published (indexed)</option>
-                    </select>
                   </div>
                   <div>
                     <label className={labelCls}>Article Order</label>
@@ -466,52 +559,94 @@ export function ArticlesClient({
                       Show related articles at end of post (2–3 same language, random order)
                     </label>
                   </div>
+                </div>
+
+                {/* Locale-specific fields for current locale */}
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
-                    <label className={labelCls}>Focus Keyword</label>
-                    <input className={inputCls} value={form.focusKeyword || ''} onChange={(e) => setForm({ ...form, focusKeyword: e.target.value || null })} placeholder="e.g. best esim for travel" />
+                    <label className={labelCls}>Title ({LOCALE_LABELS[localeTab]})</label>
+                    <input
+                      className={inputCls}
+                      dir={localeTab === 'he' || localeTab === 'ar' ? 'rtl' : 'ltr'}
+                      value={getTitle(localeTab)}
+                      onChange={(e) => setLocaleField(`title${localeTab.charAt(0).toUpperCase() + localeTab.slice(1)}` as keyof ArticleForm, e.target.value)}
+                      placeholder="Article title"
+                    />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Status ({LOCALE_LABELS[localeTab]})</label>
+                    <select
+                      className={inputCls}
+                      value={getStatus(localeTab)}
+                      onChange={(e) => setLocaleField(`status${localeTab.charAt(0).toUpperCase() + localeTab.slice(1)}` as keyof ArticleForm, e.target.value as ArticleStatus)}
+                    >
+                      <option value="DRAFT">Draft (noindex)</option>
+                      <option value="PUBLISHED">Published (indexed)</option>
+                    </select>
                   </div>
                 </div>
                 <div>
-                  <label className={labelCls}>Excerpt (shown in index/listing)</label>
-                  <textarea className={inputCls} rows={3} value={form.excerpt || ''} onChange={(e) => setForm({ ...form, excerpt: e.target.value || null })} placeholder="Short summary for article index page…" />
+                  <label className={labelCls}>Excerpt ({LOCALE_LABELS[localeTab]})</label>
+                  <textarea
+                    className={inputCls}
+                    dir={localeTab === 'he' || localeTab === 'ar' ? 'rtl' : 'ltr'}
+                    rows={3}
+                    value={getExcerpt(localeTab)}
+                    onChange={(e) => setLocaleField(`excerpt${localeTab.charAt(0).toUpperCase() + localeTab.slice(1)}` as keyof ArticleForm, e.target.value || null)}
+                    placeholder="Short summary for article index page…"
+                  />
                 </div>
+
                 <FeaturedImageField
                   value={form.featuredImage || ''}
                   onChange={(v) => setForm({ ...form, featuredImage: v || null })}
                 />
-                <div>
-                  <label className={labelCls}>Canonical URL (leave blank to auto-generate)</label>
-                  <input className={inputCls} value={form.canonicalUrl || ''} onChange={(e) => setForm({ ...form, canonicalUrl: e.target.value || null })} placeholder="https://www.sim2me.net/articles/…" />
-                </div>
               </>
             )}
 
-            {tab === 'content' && (
+            {sectionTab === 'content' && (
               <div>
                 <p className="mb-2 text-xs text-gray-500">
                   Full rich-text editor — fonts, colors, direction, tables, images, YouTube and more.
                   Click <code className="rounded bg-gray-100 px-1">&lt;/&gt;</code> to switch to raw HTML mode.
                 </p>
-                <RichTextEditor
-                  key={editing ?? 'new'}
-                  value={content}
-                  onChange={setContent}
-                  isRTL={form.locale === 'ar' || form.locale === 'he'}
-                />
+                {localeTab === 'en' && (
+                  <RichTextEditor
+                    key={editing ? `en-${editing}` : 'en-new'}
+                    value={contentEn}
+                    onChange={setContentEn}
+                    isRTL={false}
+                  />
+                )}
+                {localeTab === 'he' && (
+                  <RichTextEditor
+                    key={editing ? `he-${editing}` : 'he-new'}
+                    value={contentHe}
+                    onChange={setContentHe}
+                    isRTL={true}
+                  />
+                )}
+                {localeTab === 'ar' && (
+                  <RichTextEditor
+                    key={editing ? `ar-${editing}` : 'ar-new'}
+                    value={contentAr}
+                    onChange={setContentAr}
+                    isRTL={true}
+                  />
+                )}
               </div>
             )}
 
-            {tab === 'seo' && (
+            {sectionTab === 'seo' && (
               <div className="space-y-5">
-                {/* Focus Keyword with auto-fill */}
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className={labelCls}>Focus Keyword</label>
+                    <label className={labelCls}>Focus Keyword ({LOCALE_LABELS[localeTab]})</label>
                     <button
                       type="button"
                       onClick={() => {
-                        const kw = generateFocusKeyword(form.title, form.slug, form.locale);
-                        if (kw) setForm({ ...form, focusKeyword: kw });
+                        const kw = generateFocusKeyword(getTitle(localeTab), form.slug, localeTab);
+                        if (kw) setLocaleField(`focusKeyword${localeTab.charAt(0).toUpperCase() + localeTab.slice(1)}` as keyof ArticleForm, kw);
                         else flash('err', 'Could not detect destination from title/slug.');
                       }}
                       className="flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors"
@@ -522,109 +657,104 @@ export function ArticlesClient({
                   </div>
                   <input
                     className={inputCls}
-                    dir={form.locale === 'he' || form.locale === 'ar' ? 'rtl' : 'ltr'}
-                    value={form.focusKeyword || ''}
-                    onChange={(e) => setForm({ ...form, focusKeyword: e.target.value || null })}
+                    dir={localeTab === 'he' || localeTab === 'ar' ? 'rtl' : 'ltr'}
+                    value={getFocusKeyword(localeTab)}
+                    onChange={(e) => setLocaleField(`focusKeyword${localeTab.charAt(0).toUpperCase() + localeTab.slice(1)}` as keyof ArticleForm, e.target.value || null)}
                     placeholder={
-                      form.locale === 'he' ? 'eSIM למאוריטניה'
-                      : form.locale === 'ar' ? 'eSIM لموريتانيا'
+                      localeTab === 'he' ? 'eSIM למאוריטניה'
+                      : localeTab === 'ar' ? 'eSIM لموريتانيا'
                       : 'eSIM for Mauritania'
                     }
                   />
                   <p className="mt-1 text-xs text-gray-400">
                     Format: <code className="font-mono">
-                      {form.locale === 'he' ? 'eSIM ל[יעד]' : form.locale === 'ar' ? 'eSIM لـ[وجهة]' : 'eSIM for [Destination]'}
+                      {localeTab === 'he' ? 'eSIM ל[יעד]' : localeTab === 'ar' ? 'eSIM لـ[وجهة]' : 'eSIM for [Destination]'}
                     </code>
                   </p>
                 </div>
 
-                {/* Meta Title */}
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className={labelCls}>Meta Title</label>
-                    <span className={`text-xs tabular-nums ${(form.metaTitle || '').length > 60 ? 'text-red-500 font-semibold' : (form.metaTitle || '').length > 51 ? 'text-amber-500' : 'text-gray-400'}`}>
-                      {(form.metaTitle || '').length}/60
+                    <label className={labelCls}>Meta Title ({LOCALE_LABELS[localeTab]})</label>
+                    <span className={`text-xs tabular-nums ${getMetaTitle(localeTab).length > 60 ? 'text-red-500 font-semibold' : getMetaTitle(localeTab).length > 51 ? 'text-amber-500' : 'text-gray-400'}`}>
+                      {getMetaTitle(localeTab).length}/60
                     </span>
                   </div>
                   <input
                     className={inputCls}
-                    dir={form.locale === 'he' || form.locale === 'ar' ? 'rtl' : 'ltr'}
-                    value={form.metaTitle || ''}
-                    onChange={(e) => setForm({ ...form, metaTitle: e.target.value || null })}
-                    placeholder={form.title || 'Meta title (ideal ≤60 chars)'}
+                    dir={localeTab === 'he' || localeTab === 'ar' ? 'rtl' : 'ltr'}
+                    value={getMetaTitle(localeTab)}
+                    onChange={(e) => setLocaleField(`metaTitle${localeTab.charAt(0).toUpperCase() + localeTab.slice(1)}` as keyof ArticleForm, e.target.value || null)}
+                    placeholder={getTitle(localeTab) || 'Meta title (ideal ≤60 chars)'}
                   />
                 </div>
 
-                {/* Meta Description */}
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className={labelCls}>Meta Description</label>
-                    <span className={`text-xs tabular-nums ${(form.metaDesc || '').length > 155 ? 'text-red-500 font-semibold' : (form.metaDesc || '').length > 131 ? 'text-amber-500' : 'text-gray-400'}`}>
-                      {(form.metaDesc || '').length}/155
+                    <label className={labelCls}>Meta Description ({LOCALE_LABELS[localeTab]})</label>
+                    <span className={`text-xs tabular-nums ${getMetaDesc(localeTab).length > 155 ? 'text-red-500 font-semibold' : getMetaDesc(localeTab).length > 131 ? 'text-amber-500' : 'text-gray-400'}`}>
+                      {getMetaDesc(localeTab).length}/155
                     </span>
                   </div>
                   <textarea
                     className={`${inputCls} resize-none`}
-                    dir={form.locale === 'he' || form.locale === 'ar' ? 'rtl' : 'ltr'}
+                    dir={localeTab === 'he' || localeTab === 'ar' ? 'rtl' : 'ltr'}
                     rows={3}
-                    value={form.metaDesc || ''}
-                    onChange={(e) => setForm({ ...form, metaDesc: e.target.value || null })}
+                    value={getMetaDesc(localeTab)}
+                    onChange={(e) => setLocaleField(`metaDesc${localeTab.charAt(0).toUpperCase() + localeTab.slice(1)}` as keyof ArticleForm, e.target.value || null)}
                     placeholder="Meta description (ideal: 120–155 chars)"
                   />
                 </div>
 
-                {/* SERP Preview */}
                 <ArticleSerpPreview
-                  title={form.metaTitle || form.title}
-                  description={form.metaDesc || form.excerpt || ''}
+                  title={getMetaTitle(localeTab) || getTitle(localeTab)}
+                  description={getMetaDesc(localeTab) || getExcerpt(localeTab)}
                   slug={form.slug}
-                  locale={form.locale}
+                  locale={localeTab}
                 />
 
-                {/* Open Graph */}
                 <fieldset className="space-y-3 rounded-xl border border-gray-200 p-4">
-                  <legend className="px-1 text-xs font-semibold text-gray-500">Open Graph (Social Sharing)</legend>
+                  <legend className="px-1 text-xs font-semibold text-gray-500">Open Graph (Social Sharing) ({LOCALE_LABELS[localeTab]})</legend>
                   <div>
                     <div className="flex items-center justify-between mb-1">
                       <label className={labelCls}>OG Title</label>
-                      <span className={`text-xs tabular-nums ${(form.ogTitle || '').length > 60 ? 'text-red-500 font-semibold' : 'text-gray-400'}`}>
-                        {(form.ogTitle || '').length}/60
+                      <span className={`text-xs tabular-nums ${getOgTitle(localeTab).length > 60 ? 'text-red-500 font-semibold' : 'text-gray-400'}`}>
+                        {getOgTitle(localeTab).length}/60
                       </span>
                     </div>
                     <input
                       className={inputCls}
-                      dir={form.locale === 'he' || form.locale === 'ar' ? 'rtl' : 'ltr'}
-                      value={form.ogTitle || ''}
-                      onChange={(e) => setForm({ ...form, ogTitle: e.target.value || null })}
+                      dir={localeTab === 'he' || localeTab === 'ar' ? 'rtl' : 'ltr'}
+                      value={getOgTitle(localeTab)}
+                      onChange={(e) => setLocaleField(`ogTitle${localeTab.charAt(0).toUpperCase() + localeTab.slice(1)}` as keyof ArticleForm, e.target.value || null)}
                       placeholder="Social share title (defaults to Meta Title)"
                     />
                   </div>
                   <div>
                     <div className="flex items-center justify-between mb-1">
                       <label className={labelCls}>OG Description</label>
-                      <span className={`text-xs tabular-nums ${(form.ogDesc || '').length > 155 ? 'text-red-500 font-semibold' : 'text-gray-400'}`}>
-                        {(form.ogDesc || '').length}/155
+                      <span className={`text-xs tabular-nums ${getOgDesc(localeTab).length > 155 ? 'text-red-500 font-semibold' : 'text-gray-400'}`}>
+                        {getOgDesc(localeTab).length}/155
                       </span>
                     </div>
                     <textarea
                       className={`${inputCls} resize-none`}
-                      dir={form.locale === 'he' || form.locale === 'ar' ? 'rtl' : 'ltr'}
+                      dir={localeTab === 'he' || localeTab === 'ar' ? 'rtl' : 'ltr'}
                       rows={2}
-                      value={form.ogDesc || ''}
-                      onChange={(e) => setForm({ ...form, ogDesc: e.target.value || null })}
+                      value={getOgDesc(localeTab)}
+                      onChange={(e) => setLocaleField(`ogDesc${localeTab.charAt(0).toUpperCase() + localeTab.slice(1)}` as keyof ArticleForm, e.target.value || null)}
                       placeholder="Social share description"
                     />
                   </div>
                 </fieldset>
 
-                {/* Canonical URL */}
                 <div>
-                  <label className={labelCls}>Canonical URL</label>
+                  <label className={labelCls}>Canonical URL ({LOCALE_LABELS[localeTab]})</label>
                   <input
                     className={inputCls}
-                    value={form.canonicalUrl || ''}
-                    onChange={(e) => setForm({ ...form, canonicalUrl: e.target.value || null })}
-                    placeholder={articleUrl(form.slug || 'slug', form.locale)}
+                    value={getCanonicalUrl(localeTab)}
+                    onChange={(e) => setLocaleField(`canonicalUrl${localeTab.charAt(0).toUpperCase() + localeTab.slice(1)}` as keyof ArticleForm, e.target.value || null)}
+                    placeholder={articleUrl(form.slug || 'slug', localeTab)}
                   />
                   <p className="mt-1 text-xs text-gray-400">Leave blank to auto-generate from slug.</p>
                 </div>
@@ -635,14 +765,12 @@ export function ArticlesClient({
       ) : (
         /* ── List ── */
         <>
-          {/* Filter toolbar */}
           <div className="mb-4 rounded-xl border border-gray-200 bg-gray-50 p-3 space-y-3">
             <div className="flex flex-wrap gap-2 items-center justify-between">
-              {/* Search */}
               <div className="relative flex-1 min-w-[180px]">
                 <input
                   type="text"
-                  placeholder="Search title, slug, keyword…"
+                  placeholder="Search title, slug…"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="w-full rounded-lg border border-gray-200 bg-white pl-8 pr-3 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
@@ -665,25 +793,18 @@ export function ArticlesClient({
               </div>
             </div>
             <div className="flex flex-wrap gap-2 items-center">
-              {/* Language */}
               <div className="flex gap-1">
-                {['all', 'en', 'he', 'ar'].map((loc) => (
-                  <button key={loc} onClick={() => setFilterLocale(loc)}
-                    className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${filterLocale === loc ? 'bg-emerald-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-100'}`}>
-                    {loc === 'all' ? 'All langs' : LOCALE_LABELS[loc]}
-                  </button>
-                ))}
-              </div>
-              {/* Status */}
-              <div className="flex gap-1">
-                {[{ v: 'all', l: 'All status' }, { v: 'PUBLISHED', l: '✅ Live' }, { v: 'DRAFT', l: '🟡 Draft' }].map(({ v, l }) => (
+                {[
+                  { v: 'all', l: 'All' },
+                  { v: 'has_published', l: 'Any published' },
+                  { v: 'all_draft', l: 'All draft' },
+                ].map(({ v, l }) => (
                   <button key={v} onClick={() => setFilterStatus(v)}
                     className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${filterStatus === v ? 'bg-emerald-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-100'}`}>
                     {l}
                   </button>
                 ))}
               </div>
-              {/* Sort */}
               <select
                 value={sortOrder}
                 onChange={(e) => setSortOrder(e.target.value as typeof sortOrder)}
@@ -694,12 +815,10 @@ export function ArticlesClient({
                 <option value="az">Title A→Z</option>
                 <option value="za">Title Z→A</option>
               </select>
-              {/* Result count */}
               <span className="text-xs text-gray-400 ml-auto">{displayed.length} article{displayed.length !== 1 ? 's' : ''}</span>
             </div>
           </div>
 
-          {/* Default image for articles (when no featured image set) */}
           <div className="mb-4 rounded-xl border border-gray-200 bg-white p-4">
             <h3 className="text-sm font-semibold text-gray-900 mb-2">Default article image</h3>
             <p className="text-xs text-gray-500 mb-3">
@@ -765,10 +884,8 @@ export function ArticlesClient({
                   <tr>
                     <th className="px-4 py-3 text-left w-8"></th>
                     <th className="px-4 py-3 text-left">Title</th>
-                    <th className="px-4 py-3 text-left">Lang</th>
                     <th className="px-4 py-3 text-left hidden md:table-cell">Slug</th>
-                    <th className="px-4 py-3 text-left hidden lg:table-cell">Focus KW</th>
-                    <th className="px-4 py-3 text-center">Status</th>
+                    <th className="px-4 py-3 text-center">EN / HE / AR</th>
                     <th className="px-4 py-3 text-right">Actions</th>
                   </tr>
                 </thead>
@@ -776,23 +893,30 @@ export function ArticlesClient({
                   {displayed.map((a) => (
                     <tr key={a.id} className="hover:bg-gray-50">
                       <td className="px-4 py-3 text-gray-300"><GripVertical className="h-4 w-4" /></td>
-                      <td className="px-4 py-3 font-medium text-gray-900 max-w-xs truncate">{a.title}</td>
-                      <td className="px-4 py-3 text-gray-500">{LOCALE_LABELS[a.locale] || a.locale}</td>
+                      <td className="px-4 py-3 font-medium text-gray-900 max-w-xs truncate">{getDisplayTitle(a)}</td>
                       <td className="px-4 py-3 text-gray-400 hidden md:table-cell font-mono text-xs">{a.slug}</td>
-                      <td className="px-4 py-3 text-gray-400 hidden lg:table-cell text-xs">{a.focusKeyword || '—'}</td>
-                      <td className="px-4 py-3 text-center">
-                        <button onClick={() => toggleStatus(a)}
-                          className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${a.status === 'PUBLISHED' ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>
-                          {a.status === 'PUBLISHED' ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
-                          {a.status === 'PUBLISHED' ? 'Live' : 'Draft'}
-                        </button>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${a.statusEn === 'PUBLISHED' ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>
+                            {a.statusEn === 'PUBLISHED' ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                            EN
+                          </span>
+                          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${a.statusHe === 'PUBLISHED' ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>
+                            {a.statusHe === 'PUBLISHED' ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                            HE
+                          </span>
+                          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${a.statusAr === 'PUBLISHED' ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>
+                            {a.statusAr === 'PUBLISHED' ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                            AR
+                          </span>
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-1">
                           <button onClick={() => startEdit(a)} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700" title="Edit">
                             <Pencil className="h-4 w-4" />
                           </button>
-                          <button onClick={() => deleteArticle(a.id, a.title)} className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600" title="Delete">
+                          <button onClick={() => deleteArticle(a.id, getDisplayTitle(a))} className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600" title="Delete">
                             <Trash2 className="h-4 w-4" />
                           </button>
                         </div>
