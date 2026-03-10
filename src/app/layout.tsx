@@ -35,7 +35,7 @@ export async function generateMetadata(): Promise<Metadata> {
   ]);
 
   const siteUrl = globalSeo.canonicalDomain || 'https://www.sim2me.net';
-  // Use /favicon.ico (rewritten to API) as canonical URL for Google search results
+  // Use /favicon.ico (rewritten to static favicon.svg) as canonical URL for Google search results
   const iconUrl = '/favicon.ico';
   const appleIconUrl = faviconUrl && faviconUrl.startsWith('/') ? withCacheBust(faviconUrl, brandingVersion) : '/icons/apple-touch-icon.png';
 
