@@ -34,11 +34,7 @@ const BASE_MANIFEST = {
 
 /** Serves PWA manifest. All icons are static files – single source, no DB. */
 export async function GET() {
-  const icons = [
-    { src: '/favicon.ico?v=2', sizes: 'any', type: 'image/png', purpose: 'any' as const },
-    ...STATIC_ICONS,
-  ];
-  return NextResponse.json({ ...BASE_MANIFEST, icons }, {
+  return NextResponse.json(BASE_MANIFEST, {
     headers: {
       'Content-Type': 'application/manifest+json',
       'Cache-Control': 'no-cache, no-store, must-revalidate',
