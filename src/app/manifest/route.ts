@@ -1,14 +1,13 @@
 import { NextResponse } from 'next/server';
-import { getSiteBranding } from '@/lib/site-branding';
 import { brandConfig } from '@/config/brand';
 
 export const dynamic = 'force-dynamic';
 
 const STATIC_ICONS = [
-  { src: '/icons/icon-192.png?v=3', sizes: '192x192', type: 'image/png', purpose: 'any' as const },
-  { src: '/icons/icon-512.png?v=3', sizes: '512x512', type: 'image/png', purpose: 'any' as const },
-  { src: '/icons/icon-maskable-192.png?v=3', sizes: '192x192', type: 'image/png', purpose: 'maskable' as const },
-  { src: '/icons/icon-maskable-512.png?v=3', sizes: '512x512', type: 'image/png', purpose: 'maskable' as const },
+  { src: '/icons/icon-192.png?v=4', sizes: '192x192', type: 'image/png', purpose: 'any' as const },
+  { src: '/icons/icon-512.png?v=4', sizes: '512x512', type: 'image/png', purpose: 'any' as const },
+  { src: '/icons/icon-maskable-192.png?v=4', sizes: '192x192', type: 'image/png', purpose: 'maskable' as const },
+  { src: '/icons/icon-maskable-512.png?v=4', sizes: '512x512', type: 'image/png', purpose: 'maskable' as const },
 ];
 
 const BASE_MANIFEST = {
@@ -26,20 +25,19 @@ const BASE_MANIFEST = {
   icons: STATIC_ICONS,
   screenshots: [],
   shortcuts: [
-    { name: 'Browse Destinations', short_name: 'Destinations', url: '/destinations', icons: [{ src: '/icons/icon-192.png?v=3', sizes: '192x192' }] },
-    { name: 'Get Help', short_name: 'Help', url: '/help', icons: [{ src: '/icons/icon-192.png?v=3', sizes: '192x192' }] },
+    { name: 'Browse Destinations', short_name: 'Destinations', url: '/destinations', icons: [{ src: '/icons/icon-192.png?v=4', sizes: '192x192' }] },
+    { name: 'Get Help', short_name: 'Help', url: '/help', icons: [{ src: '/icons/icon-192.png?v=4', sizes: '192x192' }] },
   ],
   related_applications: [],
   prefer_related_applications: false,
 };
 
-/** Serves PWA manifest. Primary icons are static files so install/Add to Home Screen works reliably. */
+/** Serves PWA manifest. All icons are static files – single source, no DB. */
 export async function GET() {
-  const { faviconUrl } = await getSiteBranding();
-  const icons = [...STATIC_ICONS];
-  if (faviconUrl) {
-    icons.push({ src: '/favicon.ico', sizes: 'any', type: 'image/x-icon', purpose: 'any' as const });
-  }
+  const icons = [
+    { src: '/favicon.ico?v=2', sizes: 'any', type: 'image/png', purpose: 'any' as const },
+    ...STATIC_ICONS,
+  ];
   return NextResponse.json({ ...BASE_MANIFEST, icons }, {
     headers: {
       'Content-Type': 'application/manifest+json',

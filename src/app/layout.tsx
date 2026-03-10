@@ -29,15 +29,15 @@ function makeAbsolute(url: string, domain: string): string {
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const [{ logoUrl, faviconUrl, brandingVersion }, globalSeo] = await Promise.all([
+  const [{ logoUrl, brandingVersion }, globalSeo] = await Promise.all([
     getSiteBranding(),
     getGlobalSeoSettings(),
   ]);
 
   const siteUrl = globalSeo.canonicalDomain || 'https://www.sim2me.net';
-  // Use /favicon.ico (static file from public/) as canonical URL for Google search results
-  const iconUrl = '/favicon.ico';
-  const appleIconUrl = faviconUrl && faviconUrl.startsWith('/') ? withCacheBust(faviconUrl, brandingVersion) : '/icons/apple-touch-icon.png';
+  // Single static favicon everywhere – /favicon.ico rewrites to /favicon.png
+  const iconUrl = '/favicon.ico?v=2';
+  const appleIconUrl = '/icons/apple-touch-icon.png?v=2';
 
   // Favicon/logo from branding upload; use as OG fallback only if no global OG image is set
   const brandingOgImage = logoUrl && logoUrl.startsWith('/') ? `${siteUrl}${withCacheBust(logoUrl, brandingVersion)}` : undefined;

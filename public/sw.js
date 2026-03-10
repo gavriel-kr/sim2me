@@ -1,7 +1,7 @@
-const CACHE_NAME = 'sim2me-v1';
+const CACHE_NAME = 'sim2me-v2';
 const STATIC_ASSETS = [
   '/',
-  '/favicon.svg',
+  '/favicon.png',
   '/logo.svg',
   '/manifest',
 ];

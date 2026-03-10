@@ -71,17 +71,7 @@ export function InstallAppBanner() {
   }, []);
 
   useEffect(() => {
-    fetch('/api/site-branding')
-      .then((res) => res.ok ? res.json() : null)
-      .then((data: { faviconUrl?: string | null; brandingVersion?: number | null } | null) => {
-        if (!data?.faviconUrl?.trim()) return null;
-        const url = data.faviconUrl.trim();
-        const version = data.brandingVersion ?? null;
-        if (version != null && url.startsWith('/')) return `${url}?v=${version}`;
-        return url;
-      })
-      .then(setBannerIconUrl)
-      .catch(() => {});
+    setBannerIconUrl('/icons/icon-192.png');
   }, []);
 
   const handleInstall = useCallback(async () => {
