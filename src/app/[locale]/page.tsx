@@ -72,7 +72,7 @@ export default async function HomePage({ params }: Props) {
     '@type': 'Organization',
     name: 'Sim2Me',
     url: siteUrl,
-    logo: `${siteUrl}/logo.svg`,
+    logo: `${siteUrl}/logo.png`,
     contactPoint: {
       '@type': 'ContactPoint',
       email: 'gavriel.kr@gmail.com',

@@ -9,7 +9,7 @@ export const brandConfig = {
   /** Short tagline used in hero and meta */
   tagline: 'Stay connected worldwide',
   /** Logo: use path to image in /public or leave null for text logo */
-  logoUrl: '/logo.svg' as string | null,
+  logoUrl: '/logo.png' as string | null,
   /** Fallback text when logo is not available */
   logoAlt: 'Sim2Me',
 

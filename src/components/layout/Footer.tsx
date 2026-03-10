@@ -40,18 +40,7 @@ const defaultGuidesLinks = [
 const LOCALE_COOKIE = 'NEXT_LOCALE';
 
 const defaultFooterLogo = (
-  <>
-    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600" aria-hidden="true">
-      <svg width="14" height="14" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <rect x="3" y="1" width="8" height="14" rx="1.5" fill="white" fillOpacity="0.9"/>
-        <circle cx="7" cy="12" r="1" fill="#059669"/>
-        <path d="M12 5c1.5-0.7 3 0 3.5 1.5s0 3-1.5 3.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" fill="none" opacity="0.8"/>
-      </svg>
-    </div>
-    <span className="text-lg font-extrabold tracking-tight text-foreground">
-      Sim<span className="text-primary">2</span>Me
-    </span>
-  </>
+  <img src="/logo.png" alt={brandConfig.logoAlt} className="h-8 max-w-[180px] object-contain object-left" />
 );
 
 export function Footer() {

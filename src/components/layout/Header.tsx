@@ -34,19 +34,7 @@ const locales = [
 ] as const;
 
 const defaultLogo = (
-  <>
-    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 shadow-sm" aria-hidden="true">
-      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <rect x="3" y="1" width="8" height="14" rx="1.5" fill="white" fillOpacity="0.9"/>
-        <circle cx="7" cy="12" r="1" fill="#059669"/>
-        <path d="M12 5c1.5-0.7 3 0 3.5 1.5s0 3-1.5 3.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" fill="none" opacity="0.8"/>
-        <path d="M13 3c2-1 4 0 5 2s0 4-2 5" stroke="white" strokeWidth="1.5" strokeLinecap="round" fill="none" opacity="0.5"/>
-      </svg>
-    </div>
-    <span className="text-lg font-extrabold tracking-tight text-foreground">
-      Sim<span className="text-primary">2</span>Me
-    </span>
-  </>
+  <img src="/logo.png" alt={brandConfig.logoAlt} className="h-9 max-w-[180px] object-contain object-left" />
 );
 
 export function Header() {

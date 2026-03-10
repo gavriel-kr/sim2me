@@ -16,8 +16,8 @@ function baseUrl(): string {
 
 async function logoImgTag(): Promise<string> {
   const { logoUrl, brandingVersion } = await getSiteBranding();
-  if (!logoUrl || !logoUrl.startsWith('/')) return '';
-  const url = `${baseUrl()}${logoUrl}${brandingVersion != null ? `?v=${brandingVersion}` : ''}`;
+  const src = logoUrl?.startsWith('/') ? logoUrl : '/logo.png';
+  const url = `${baseUrl()}${src}${brandingVersion != null && logoUrl ? `?v=${brandingVersion}` : ''}`;
   return `<p style="margin:0 0 20px 0;"><img src="${url}" alt="Sim2Me" width="160" height="48" style="display:block; max-height:48px; object-fit:contain;" /></p>`;
 }
 

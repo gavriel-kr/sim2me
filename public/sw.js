@@ -2,7 +2,7 @@ const CACHE_NAME = 'sim2me-v2';
 const STATIC_ASSETS = [
   '/',
   '/favicon.png',
-  '/logo.svg',
+  '/logo.png',
   '/manifest',
 ];
 
