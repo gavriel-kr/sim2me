@@ -43,9 +43,7 @@ export function AdminSidebar({ user }: Props) {
   const navContent = (
     <>
       <div className="flex items-center gap-3 border-b border-gray-200 px-5 py-5">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-600 text-white text-xs font-bold">
-          S2M
-        </div>
+        <img src="/favicon.png?v=3" alt="" className="h-9 w-9 shrink-0 rounded-lg object-contain" />
         <div className="min-w-0">
           <p className="text-sm font-bold text-gray-900 truncate">Sim2Me Admin</p>
           <p className="text-xs text-gray-500 truncate">{user.email}</p>
