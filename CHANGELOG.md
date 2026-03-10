@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Fixed
+- **500 on /admin/articles and other pages** – `getSiteBranding()` now catches DB errors and returns fallback values (null logo/favicon) so the site renders when the database is temporarily unreachable. Previously, any Prisma failure in metadata generation crashed the entire page.
+
 ### Added
 - **Logo & Favicon sync from Admin** – Full Logo and Favicon set in `/admin/settings` now apply across the site:
   - **Header & Footer** – Both use dynamic logo from site settings with cache busting (`?v=timestamp`).

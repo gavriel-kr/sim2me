@@ -15,37 +15,40 @@ export type SiteBranding = {
 
 /**
  * Get logo and favicon URLs from site settings (for header and metadata).
+ * Returns nulls when DB is unreachable so the site can still render.
  */
 export async function getSiteBranding(): Promise<SiteBranding> {
-  const settings = await prisma.siteSetting.findMany({
-    where: {
-      key: {
-        in: [
-          SITE_BRANDING_KEYS.logoUrl,
-          SITE_BRANDING_KEYS.faviconUrl,
-          SITE_BRANDING_KEYS.brandingUpdatedAt,
-        ],
+  try {
+    const settings = await prisma.siteSetting.findMany({
+      where: {
+        key: {
+          in: [
+            SITE_BRANDING_KEYS.logoUrl,
+            SITE_BRANDING_KEYS.faviconUrl,
+            SITE_BRANDING_KEYS.brandingUpdatedAt,
+          ],
+        },
       },
-    },
-  });
-  const map = Object.fromEntries(settings.map((s) => [s.key, s.value]));
-  const rawLogo = map[SITE_BRANDING_KEYS.logoUrl]?.trim() || null;
-  const rawFavicon = map[SITE_BRANDING_KEYS.faviconUrl]?.trim() || null;
-  const rawVersion = map[SITE_BRANDING_KEYS.brandingUpdatedAt]?.trim();
-  const brandingVersion = rawVersion ? parseInt(rawVersion, 10) : null;
-  return {
-    // If logo is stored as base64, serve via API route so we can cache-bust with ?v=
-    logoUrl: rawLogo
-      ? rawLogo.startsWith('data:')
-        ? '/api/site-branding/logo'
-        : rawLogo
-      : null,
-    // If favicon is stored as base64 data URL, serve via API route for browser compatibility
-    faviconUrl: rawFavicon
-      ? rawFavicon.startsWith('data:')
-        ? '/api/site-branding/favicon'
-        : rawFavicon
-      : null,
-    brandingVersion: Number.isNaN(brandingVersion) ? null : brandingVersion,
-  };
+    });
+    const map = Object.fromEntries(settings.map((s) => [s.key, s.value]));
+    const rawLogo = map[SITE_BRANDING_KEYS.logoUrl]?.trim() || null;
+    const rawFavicon = map[SITE_BRANDING_KEYS.faviconUrl]?.trim() || null;
+    const rawVersion = map[SITE_BRANDING_KEYS.brandingUpdatedAt]?.trim();
+    const brandingVersion = rawVersion ? parseInt(rawVersion, 10) : null;
+    return {
+      logoUrl: rawLogo
+        ? rawLogo.startsWith('data:')
+          ? '/api/site-branding/logo'
+          : rawLogo
+        : null,
+      faviconUrl: rawFavicon
+        ? rawFavicon.startsWith('data:')
+          ? '/api/site-branding/favicon'
+          : rawFavicon
+        : null,
+      brandingVersion: Number.isNaN(brandingVersion) ? null : brandingVersion,
+    };
+  } catch {
+    return { logoUrl: null, faviconUrl: null, brandingVersion: null };
+  }
 }
