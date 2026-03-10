@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Changed
+- **Unified favicon** – Replaced all site icons (favicon, apple-touch, PWA icons) with the official Sim2Me logo (Wi‑Fi + globe + SIM). Removed legacy favicon.svg; API fallback now serves favicon.png. Cache versions bumped (v3/v5) so browsers and Google fetch the new icon.
+
 ### Fixed
 - **500 on /admin/articles and other pages** – `getSiteBranding()` now catches DB errors and returns fallback values (null logo/favicon) so the site renders when the database is temporarily unreachable. Previously, any Prisma failure in metadata generation crashed the entire page.
 

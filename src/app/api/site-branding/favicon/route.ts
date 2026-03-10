@@ -5,7 +5,7 @@ import { join } from 'path';
 
 export const dynamic = 'force-dynamic';
 
-/** Serves the favicon from admin, or fallback to static favicon.svg. Used at /favicon.ico for Google. */
+/** Serves the favicon from admin, or fallback to static favicon.png. Used at /favicon.ico for Google. */
 export async function GET() {
   const setting = await prisma.siteSetting.findUnique({ where: { key: 'favicon_url' } });
 
@@ -23,13 +23,13 @@ export async function GET() {
     }
   }
 
-  // Fallback: serve static favicon.svg when no admin favicon
+  // Fallback: serve static favicon.png when no admin favicon
   try {
-    const svgPath = join(process.cwd(), 'public', 'favicon.svg');
-    const buffer = await readFile(svgPath);
+    const pngPath = join(process.cwd(), 'public', 'favicon.png');
+    const buffer = await readFile(pngPath);
     return new NextResponse(buffer, {
       headers: {
-        'Content-Type': 'image/svg+xml',
+        'Content-Type': 'image/png',
         'Cache-Control': 'public, max-age=0, must-revalidate',
       },
     });

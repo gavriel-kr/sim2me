@@ -71,7 +71,7 @@ export function InstallAppBanner() {
   }, []);
 
   useEffect(() => {
-    setBannerIconUrl('/icons/icon-192.png');
+    setBannerIconUrl('/icons/icon-192.png?v=5');
   }, []);
 
   const handleInstall = useCallback(async () => {

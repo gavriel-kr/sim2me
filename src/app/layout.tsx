@@ -36,8 +36,8 @@ export async function generateMetadata(): Promise<Metadata> {
 
   const siteUrl = globalSeo.canonicalDomain || 'https://www.sim2me.net';
   // Single static favicon everywhere – /favicon.ico rewrites to /favicon.png
-  const iconUrl = '/favicon.ico?v=2';
-  const appleIconUrl = '/icons/apple-touch-icon.png?v=2';
+  const iconUrl = '/favicon.ico?v=3';
+  const appleIconUrl = '/icons/apple-touch-icon.png?v=3';
 
   // Favicon/logo from branding upload; use as OG fallback only if no global OG image is set
   const brandingOgImage = logoUrl && logoUrl.startsWith('/') ? `${siteUrl}${withCacheBust(logoUrl, brandingVersion)}` : undefined;
