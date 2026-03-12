@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { DestinationDetailClient } from './DestinationDetailClient';
+import { translatePlanName } from '@/lib/translate-plan-name';
 
 export const dynamic = 'force-dynamic';
 
@@ -90,6 +91,8 @@ async function getDestinationData(slug: string, locale: string = 'en') {
       featured: boolean;
       saleBadge: string | null;
       locationCode: string;
+      location: string;
+      isRegional: boolean;
     }) => {
       let networkType: '4G' | '5G' | '3G' = '4G';
       if (pkg.speed?.includes('5G')) networkType = '5G';
@@ -113,7 +116,13 @@ async function getDestinationData(slug: string, locale: string = 'en') {
       return {
         id: pkg.packageCode,
         destinationId: slug,
-        name: pkg.name,
+        name: translatePlanName(
+          pkg.name,
+          pkg.location || firstPkg.location || slug,
+          pkg.locationCode || isoCode,
+          pkg.isRegional ?? isRegional,
+          locale,
+        ),
         dataAmount: dataAmountMb,
         dataDisplay,
         days: pkg.duration,
