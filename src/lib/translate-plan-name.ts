@@ -61,5 +61,12 @@ export function translatePlanName(
       out = out.replace(new RegExp(en, 'gi'), local);
     }
   }
+  // Replace any remaining region names (Europe, Global, etc.) that appear as standalone words
+  const regionTerms = REGION_TRANSLATIONS[locale];
+  if (regionTerms) {
+    for (const [en, local] of Object.entries(regionTerms)) {
+      out = out.replace(new RegExp(`\\b${en}\\b`, 'g'), local);
+    }
+  }
   return out;
 }
