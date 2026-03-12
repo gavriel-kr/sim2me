@@ -7,20 +7,30 @@ const REGION_TRANSLATIONS: Record<string, Record<string, string>> = {
   he: {
     'Africa': 'אפריקה', 'Europe': 'אירופה', 'Asia': 'אסיה',
     'North America': 'צפון אמריקה', 'South America': 'דרום אמריקה',
+    'North Africa': 'צפון אפריקה',
     'Oceania': 'אוקיאניה', 'Middle East': 'המזרח התיכון', 'Caribbean': 'הקריביים',
     'Global': 'עולמי', 'N. America': 'צפון אמריקה', 'S. America': 'דרום אמריקה',
   },
   ar: {
     'Africa': 'أفريقيا', 'Europe': 'أوروبا', 'Asia': 'آسيا',
     'North America': 'أمريكا الشمالية', 'South America': 'أمريكا الجنوبية',
+    'North Africa': 'شمال أفريقيا',
     'Oceania': 'أوقيانوسيا', 'Middle East': 'الشرق الأوسط', 'Caribbean': 'الكاريبي',
     'Global': 'عالمي', 'N. America': 'أمريكا الشمالية', 'S. America': 'أمريكا الجنوبية',
   },
 };
 
+/** Country names that appear in multi-country package names (e.g. "Europe & Morocco") */
+const COUNTRY_ISO: Record<string, string> = {
+  Morocco: 'MA', Spain: 'ES', Tunisia: 'TN', Turkey: 'TR', Israel: 'IL',
+  Egypt: 'EG', UAE: 'AE', 'Hong Kong': 'HK', Singapore: 'SG', Thailand: 'TH',
+  Malaysia: 'MY', Japan: 'JP', Korea: 'KR', China: 'CN', Australia: 'AU',
+  'New Zealand': 'NZ', Canada: 'CA', Mexico: 'MX', Brazil: 'BR',
+};
+
 const PLAN_TERMS: Record<string, Record<string, string>> = {
-  he: { 'Days': 'ימים', 'Day': 'ליום', 'areas': 'אזורים', 'countries': 'מדינות' },
-  ar: { 'Days': 'أيام', 'Day': 'لليوم', 'areas': 'مناطق', 'countries': 'دول' },
+  he: { 'Days': ' ימים', 'Day': 'ליום', 'areas': 'אזורים', 'countries': 'מדינות' },
+  ar: { 'Days': ' أيام', 'Day': 'لليوم', 'areas': 'مناطق', 'countries': 'دول' },
 };
 
 function translateCountryPart(name: string, isoCode: string, isRegional: boolean, locale: string): string {
@@ -61,12 +71,28 @@ export function translatePlanName(
       out = out.replace(new RegExp(en, 'gi'), local);
     }
   }
-  // Replace any remaining region names (Europe, Global, etc.) that appear as standalone words
+  // Replace Global+digits (Global139, Global120) - no word boundary between Global and number
   const regionTerms = REGION_TRANSLATIONS[locale];
+  if (regionTerms?.Global) {
+    out = out.replace(/\bGlobal(\d+)\b/g, (_, num) => regionTerms.Global + num);
+  }
+  // Replace region names (longest first: North Africa before Africa)
   if (regionTerms) {
-    for (const [en, local] of Object.entries(regionTerms)) {
-      out = out.replace(new RegExp(`\\b${en}\\b`, 'g'), local);
+    const sorted = Object.entries(regionTerms).sort((a, b) => b[0].length - a[0].length);
+    for (const [en, local] of sorted) {
+      if (en === 'Global') continue; // already handled above
+      out = out.replace(new RegExp(`\\b${en.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g'), local);
     }
   }
+  // Replace country names in "X & Country" format (Morocco, Spain, etc.)
+  try {
+    const displayNames = new Intl.DisplayNames([locale], { type: 'region' });
+    for (const [enName, isoCode] of Object.entries(COUNTRY_ISO)) {
+      const translated = displayNames.of(isoCode);
+      if (translated && translated !== enName) {
+        out = out.replace(new RegExp(`\\b${enName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g'), translated);
+      }
+    }
+  } catch { /* fallback */ }
   return out;
 }
