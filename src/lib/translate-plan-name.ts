@@ -77,10 +77,10 @@ export function translatePlanName(
     out = out.replace(/\bGlobal(\d+)\b/g, (_, num) => regionTerms.Global + num);
   }
   // Replace region names (longest first: North Africa before Africa)
+  // Global is included - Global+digits above only handles "Global139"/"Global120"; "Global (120+...)" needs this
   if (regionTerms) {
     const sorted = Object.entries(regionTerms).sort((a, b) => b[0].length - a[0].length);
     for (const [en, local] of sorted) {
-      if (en === 'Global') continue; // already handled above
       out = out.replace(new RegExp(`\\b${en.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g'), local);
     }
   }
