@@ -26,9 +26,11 @@ async function getDbCachedPackages(): Promise<EsimPackage[] | null> {
   }
 }
 
-/** Write all-packages to persistent DB cache (fire-and-forget). */
+/** Write all-packages to persistent DB cache (fire-and-forget). Strip locationNetworkList to keep JSON small. */
 function setDbCachedPackages(packageList: EsimPackage[]): void {
-  const value = JSON.stringify({ ts: Date.now(), packageList });
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const slim = packageList.map(({ locationNetworkList: _, ...rest }) => rest);
+  const value = JSON.stringify({ ts: Date.now(), packageList: slim });
   prisma.siteSetting.upsert({
     where: { key: ALL_PACKAGES_DB_CACHE_KEY },
     create: { key: ALL_PACKAGES_DB_CACHE_KEY, value },
