@@ -1,28 +1,10 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { getPackages, getBalance, type EsimPackage } from '@/lib/esimaccess';
-import { prisma } from '@/lib/prisma';
+import { getPackages, getBalance } from '@/lib/esimaccess';
+import { setDbCachedPackages } from '@/lib/packagesCache';
 
 export const dynamic = 'force-dynamic';
-
-const ALL_PACKAGES_DB_CACHE_KEY = 'packages_all_cache';
-
-/**
- * Persist slim package list to DB cache so the public /api/packages route can serve them.
- * Strips locationNetworkList to keep JSON small. Fire-and-forget.
- */
-function persistToPublicCache(packageList: EsimPackage[]): void {
-  if (packageList.length < 500) return;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const slim = packageList.map(({ locationNetworkList: _, ...rest }) => rest);
-  const value = JSON.stringify({ ts: Date.now(), packageList: slim });
-  prisma.siteSetting.upsert({
-    where: { key: ALL_PACKAGES_DB_CACHE_KEY },
-    create: { key: ALL_PACKAGES_DB_CACHE_KEY, value },
-    update: { value },
-  }).catch(() => {});
-}
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -37,7 +19,8 @@ export async function GET() {
     ]);
 
     const packageList = packagesData.packageList || [];
-    persistToPublicCache(packageList);
+    // Automatically update the public packages DB cache whenever admin fetches fresh data
+    if (packageList.length >= 500) setDbCachedPackages(packageList);
 
     return NextResponse.json({
       packageList,

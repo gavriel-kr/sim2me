@@ -2,46 +2,13 @@ import { NextResponse, NextRequest } from 'next/server';
 import { getPackages, type EsimPackage } from '@/lib/esimaccess';
 import { prisma } from '@/lib/prisma';
 import { getContinent } from '@/lib/continents';
+import { getDbCachedPackages, setDbCachedPackages } from '@/lib/packagesCache';
 
 export const dynamic = 'force-dynamic';
 
 // In-memory stale cache: short-lived, used when DB is unavailable
 const STALE_CACHE_MS = 15 * 60 * 1000;
 const packagesCache = new Map<string, { packages: unknown[]; destinations: unknown[]; total: number; ts: number }>();
-
-// DB cache key for all-packages in SiteSetting table
-const ALL_PACKAGES_DB_CACHE_KEY = 'packages_all_cache';
-const DB_CACHE_REFRESH_MS = 60 * 60 * 1000; // refresh in background after 1 hour
-
-/**
- * Read all-packages from persistent DB cache.
- * Returns { packageList, stale } — always returns data if available (stale-while-revalidate).
- * Returns null only if cache is completely missing.
- */
-async function getDbCachedPackages(): Promise<{ packageList: EsimPackage[]; stale: boolean } | null> {
-  try {
-    const setting = await prisma.siteSetting.findUnique({ where: { key: ALL_PACKAGES_DB_CACHE_KEY } });
-    if (!setting) return null;
-    const cached = JSON.parse(setting.value) as { ts: number; packageList: EsimPackage[] };
-    if (!cached.packageList?.length) return null;
-    const stale = Date.now() - cached.ts > DB_CACHE_REFRESH_MS;
-    return { packageList: cached.packageList, stale };
-  } catch {
-    return null;
-  }
-}
-
-/** Write all-packages to persistent DB cache (fire-and-forget). Strip locationNetworkList to keep JSON small. */
-function setDbCachedPackages(packageList: EsimPackage[]): void {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const slim = packageList.map(({ locationNetworkList: _, ...rest }) => rest);
-  const value = JSON.stringify({ ts: Date.now(), packageList: slim });
-  prisma.siteSetting.upsert({
-    where: { key: ALL_PACKAGES_DB_CACHE_KEY },
-    create: { key: ALL_PACKAGES_DB_CACHE_KEY, value },
-    update: { value },
-  }).catch(() => {}); // non-critical
-}
 
 // eSIMaccess sometimes returns "system busy" for empty locationCode.
 // Strategy: check DB cache first, then try empty locationCode, then curated seeds.
