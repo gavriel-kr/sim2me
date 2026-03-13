@@ -195,15 +195,13 @@ export function DestinationsClient({ locale = 'en' }: { locale?: string }) {
   const [sortBy, setSortBy] = useState<string>('name');
 
   /* ── Data fetching ─────────────────────────────────────────── */
-  const { data: destinations = [], isLoading, isError, refetch } = useQuery<DestItem[]>({
+  const { data: destinations = [], isLoading } = useQuery<DestItem[]>({
     queryKey: ['destinations', locale],
-    queryFn: async () => {
-      const r = await fetch('/api/packages');
-      const data = await r.json();
-      if (!r.ok || data?.error) {
-        throw new Error(data?.error || `HTTP ${r.status}`);
-      }
-      return (data.destinations || []).map(
+    queryFn: () =>
+      fetch('/api/packages')
+        .then((r) => r.json())
+        .then((data) =>
+          (data.destinations || []).map(
             (d: {
               locationCode: string;
               name: string;
@@ -228,12 +226,10 @@ export function DestinationsClient({ locale = 'en' }: { locale?: string }) {
               speeds: d.speeds || [],
               featured: d.featured,
             })
-          );
-    },
+          )
+        ),
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
-    retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1500 * 2 ** attemptIndex, 8000),
   });
 
   /* ── Derived lists ─────────────────────────────────────────── */
@@ -569,29 +565,14 @@ export function DestinationsClient({ locale = 'en' }: { locale?: string }) {
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
             <Search className="h-7 w-7 text-gray-400" />
           </div>
-          {isError ? (
-            <>
-              <p className="mt-5 text-lg font-semibold text-gray-700">{t('loadError')}</p>
-              <p className="mt-1 text-sm text-gray-400">{t('loadErrorHint')}</p>
-              <button
-                onClick={() => refetch()}
-                className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 transition-colors"
-              >
-                <Zap className="h-3.5 w-3.5" /> {t('retry')}
-              </button>
-            </>
-          ) : (
-            <>
-              <p className="mt-5 text-lg font-semibold text-gray-700">{t('noResults')}</p>
-              <p className="mt-1 text-sm text-gray-400">{t('noResultsHint')}</p>
-              <button
-                onClick={clearAll}
-                className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 transition-colors"
-              >
-                <X className="h-3.5 w-3.5" /> {t('clearAllFilters')}
-              </button>
-            </>
-          )}
+          <p className="mt-5 text-lg font-semibold text-gray-700">{t('noResults')}</p>
+          <p className="mt-1 text-sm text-gray-400">{t('noResultsHint')}</p>
+          <button
+            onClick={clearAll}
+            className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 transition-colors"
+          >
+            <X className="h-3.5 w-3.5" /> {t('clearAllFilters')}
+          </button>
         </div>
       )}
     </div>
