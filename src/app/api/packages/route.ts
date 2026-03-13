@@ -11,16 +11,21 @@ const packagesCache = new Map<string, { packages: unknown[]; destinations: unkno
 
 // DB cache key for all-packages in SiteSetting table
 const ALL_PACKAGES_DB_CACHE_KEY = 'packages_all_cache';
-const DB_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+const DB_CACHE_REFRESH_MS = 60 * 60 * 1000; // refresh in background after 1 hour
 
-/** Read all-packages from persistent DB cache. Returns null if missing or stale. */
-async function getDbCachedPackages(): Promise<EsimPackage[] | null> {
+/**
+ * Read all-packages from persistent DB cache.
+ * Returns { packageList, stale } — always returns data if available (stale-while-revalidate).
+ * Returns null only if cache is completely missing.
+ */
+async function getDbCachedPackages(): Promise<{ packageList: EsimPackage[]; stale: boolean } | null> {
   try {
     const setting = await prisma.siteSetting.findUnique({ where: { key: ALL_PACKAGES_DB_CACHE_KEY } });
     if (!setting) return null;
     const cached = JSON.parse(setting.value) as { ts: number; packageList: EsimPackage[] };
-    if (Date.now() - cached.ts > DB_CACHE_TTL_MS) return null;
-    return cached.packageList;
+    if (!cached.packageList?.length) return null;
+    const stale = Date.now() - cached.ts > DB_CACHE_REFRESH_MS;
+    return { packageList: cached.packageList, stale };
   } catch {
     return null;
   }
@@ -149,26 +154,32 @@ export async function GET(req: NextRequest) {
       locationCode
         ? getPackages(locationCode)
         : (async () => {
-            // 1. Try persistent DB cache first (fastest, survives cold starts)
+            // 1. Try persistent DB cache (stale-while-revalidate: always serve if available)
             const dbCached = await getDbCachedPackages();
-            if (dbCached && dbCached.length > 0) {
+            if (dbCached) {
               // #region agent log
-              fetch('http://127.0.0.1:7242/ingest/c0f3d6c5-f7a1-48de-976d-653a33f6597b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f7158f'},body:JSON.stringify({sessionId:'f7158f',location:'route.ts:db-cache-hit',message:'served from DB cache',data:{count:dbCached.length},timestamp:Date.now(),hypothesisId:'A',runId:'run1'})}).catch(()=>{});
+              fetch('http://127.0.0.1:7242/ingest/c0f3d6c5-f7a1-48de-976d-653a33f6597b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f7158f'},body:JSON.stringify({sessionId:'f7158f',location:'route.ts:db-cache-hit',message:'served from DB cache',data:{count:dbCached.packageList.length,stale:dbCached.stale},timestamp:Date.now(),hypothesisId:'A',runId:'run1'})}).catch(()=>{});
               // #endregion
-              return { packageList: dbCached };
+              // If stale, refresh in background without blocking response
+              if (dbCached.stale) {
+                getPackages('').then(r => {
+                  if (r?.packageList?.length >= 500) setDbCachedPackages(r.packageList);
+                }).catch(() => {});
+              }
+              return { packageList: dbCached.packageList };
             }
 
-            // 2. Try empty locationCode — returns ALL packages (25s timeout)
+            // 2. Cache missing — try empty locationCode to get ALL packages (25s timeout)
             const allPkgs = await getPackages('').catch(() => null);
             if (allPkgs && allPkgs.packageList.length >= 500) {
               // #region agent log
               fetch('http://127.0.0.1:7242/ingest/c0f3d6c5-f7a1-48de-976d-653a33f6597b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f7158f'},body:JSON.stringify({sessionId:'f7158f',location:'route.ts:empty-call-hit',message:'empty locationCode succeeded',data:{count:allPkgs.packageList.length},timestamp:Date.now(),hypothesisId:'A',runId:'run1'})}).catch(()=>{});
               // #endregion
-              setDbCachedPackages(allPkgs.packageList); // persist for next requests
+              setDbCachedPackages(allPkgs.packageList);
               return allPkgs;
             }
 
-            // 3. Fallback: fetch from curated seeds in parallel
+            // 3. Last resort: fetch from curated seeds in parallel
             const seedStart = Date.now();
             const results = await Promise.all(
               FALLBACK_SEEDS.map((seed) => getPackages(seed).catch(() => ({ packageList: [] as EsimPackage[] })))
