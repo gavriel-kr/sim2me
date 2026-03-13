@@ -195,41 +195,42 @@ export function DestinationsClient({ locale = 'en' }: { locale?: string }) {
   const [sortBy, setSortBy] = useState<string>('name');
 
   /* ── Data fetching ─────────────────────────────────────────── */
-  const { data: destinations = [], isLoading } = useQuery<DestItem[]>({
+  const { data: destinations = [], isLoading, isError, refetch } = useQuery<DestItem[]>({
     queryKey: ['destinations', locale],
-    queryFn: () =>
-      fetch('/api/packages')
-        .then((r) => r.json())
-        .then((data) =>
-          (data.destinations || []).map(
-            (d: {
-              locationCode: string;
-              name: string;
-              flagCode: string;
-              isRegional: boolean;
-              continent: string;
-              planCount: number;
-              minPrice: number;
-              maxDataMB: number;
-              speeds: string[];
-              featured: boolean;
-            }) => ({
-              id: d.locationCode.toLowerCase(),
-              name: translateName(d.name, d.locationCode, d.isRegional, locale),
-              slug: d.locationCode.toLowerCase(),
-              flagCode: d.flagCode,
-              isRegional: d.isRegional,
-              continent: translateContinent(d.continent || 'Other', locale),
-              planCount: d.planCount,
-              fromPrice: d.minPrice,
-              maxDataMB: d.maxDataMB || 0,
-              speeds: d.speeds || [],
-              featured: d.featured,
-            })
-          )
-        ),
+    queryFn: async () => {
+      const r = await fetch('/api/packages');
+      const data = await r.json();
+      if (!r.ok || data?.error) throw new Error(data?.error || `HTTP ${r.status}`);
+      return (data.destinations || []).map(
+        (d: {
+          locationCode: string;
+          name: string;
+          flagCode: string;
+          isRegional: boolean;
+          continent: string;
+          planCount: number;
+          minPrice: number;
+          maxDataMB: number;
+          speeds: string[];
+          featured: boolean;
+        }) => ({
+          id: d.locationCode.toLowerCase(),
+          name: translateName(d.name, d.locationCode, d.isRegional, locale),
+          slug: d.locationCode.toLowerCase(),
+          flagCode: d.flagCode,
+          isRegional: d.isRegional,
+          continent: translateContinent(d.continent || 'Other', locale),
+          planCount: d.planCount,
+          fromPrice: d.minPrice,
+          maxDataMB: d.maxDataMB || 0,
+          speeds: d.speeds || [],
+          featured: d.featured,
+        })
+      );
+    },
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
+    retry: 2,
   });
 
   /* ── Derived lists ─────────────────────────────────────────── */
@@ -357,6 +358,27 @@ export function DestinationsClient({ locale = 'en' }: { locale?: string }) {
             <div key={i} className="h-[88px] animate-pulse rounded-xl bg-muted" />
           ))}
         </div>
+      </div>
+    );
+  }
+
+  /* ── Error state ────────────────────────────────────────────── */
+  if (isError) {
+    return (
+      <div className="container px-4 py-24 text-center">
+        <Globe className="mx-auto h-12 w-12 text-muted-foreground/50" />
+        <p className="mt-4 text-lg font-semibold text-gray-700">
+          {locale === 'he' ? 'לא הצלחנו לטעון את היעדים' : locale === 'ar' ? 'تعذر تحميل الوجهات' : 'Could not load destinations'}
+        </p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {locale === 'he' ? 'אנא נסה שוב' : locale === 'ar' ? 'يرجى المحاولة مرة أخرى' : 'Please try again'}
+        </p>
+        <button
+          onClick={() => refetch()}
+          className="mt-6 rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors"
+        >
+          {locale === 'he' ? 'נסה שוב' : locale === 'ar' ? 'حاول مجدداً' : 'Try again'}
+        </button>
       </div>
     );
   }

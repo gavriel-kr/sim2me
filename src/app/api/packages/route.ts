@@ -100,14 +100,21 @@ export async function GET(req: NextRequest) {
   const locationCode = req.nextUrl.searchParams.get('location') || '';
 
   try {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/c0f3d6c5-f7a1-48de-976d-653a33f6597b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f7158f'},body:JSON.stringify({sessionId:'f7158f',location:'route.ts:GET-start',message:'packages API called',data:{locationCode,ts:Date.now()},timestamp:Date.now(),hypothesisId:'A',runId:'run1'})}).catch(()=>{});
+    // #endregion
     const [overrides, apiData] = await Promise.all([
       prisma.packageOverride.findMany(),
       locationCode
         ? getPackages(locationCode)
         : (async () => {
+            const seedStart = Date.now();
             const results = await Promise.all(
               ALL_PACKAGES_SEEDS.map((seed) => getPackages(seed).catch(() => ({ packageList: [] as EsimPackage[] })))
             );
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/c0f3d6c5-f7a1-48de-976d-653a33f6597b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f7158f'},body:JSON.stringify({sessionId:'f7158f',location:'route.ts:seeds-done',message:'all seed fetches completed',data:{durationMs:Date.now()-seedStart,packageCounts:results.map(r=>r.packageList?.length??0)},timestamp:Date.now(),hypothesisId:'A',runId:'run1'})}).catch(()=>{});
+            // #endregion
             const seen = new Set<string>();
             const merged: EsimPackage[] = [];
             for (const r of results) {
@@ -211,6 +218,9 @@ export async function GET(req: NextRequest) {
     const payload = { packages, destinations, total: packages.length };
     packagesCache.set(locationCode, { ...payload, ts: Date.now() });
 
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/c0f3d6c5-f7a1-48de-976d-653a33f6597b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f7158f'},body:JSON.stringify({sessionId:'f7158f',location:'route.ts:success',message:'packages API returning data',data:{pkgCount:packages.length,destCount:destinations.length},timestamp:Date.now(),hypothesisId:'A',runId:'run1'})}).catch(()=>{});
+    // #endregion
     return NextResponse.json(payload);
   } catch (error) {
     const errMsg = (error as Error).message;

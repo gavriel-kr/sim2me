@@ -25,6 +25,7 @@ async function apiCall<T>(endpoint: string, body?: Record<string, unknown>): Pro
     method: 'POST',
     headers: getHeaders(),
     body: body ? JSON.stringify(body) : '',
+    signal: AbortSignal.timeout(10000), // 10s timeout — prevents hanging when eSIMaccess is unresponsive
   });
 
   const json = await res.json() as ApiResponse<T>;
@@ -92,7 +93,7 @@ export async function getBalance(): Promise<EsimBalance> {
 /** List all available packages (optionally filter by location) */
 export async function getPackages(locationCode?: string): Promise<{ packageList: EsimPackage[] }> {
   const body = { locationCode: locationCode || '', type: '' };
-  const maxRetries = 4;
+  const maxRetries = 2;
   let lastError: Error | null = null;
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
@@ -100,9 +101,12 @@ export async function getPackages(locationCode?: string): Promise<{ packageList:
     } catch (e) {
       lastError = e instanceof Error ? e : new Error(String(e));
       const msg = lastError.message.toLowerCase();
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/c0f3d6c5-f7a1-48de-976d-653a33f6597b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f7158f'},body:JSON.stringify({sessionId:'f7158f',location:'esimaccess.ts:getPackages-catch',message:'getPackages error',data:{locationCode,attempt,error:msg.substring(0,100)},timestamp:Date.now(),hypothesisId:'B',runId:'run1'})}).catch(()=>{});
+      // #endregion
       const isRetryable = msg.includes('system is busy') || msg.includes('try again') || msg.includes('busy');
       if (!isRetryable || attempt === maxRetries) throw lastError;
-      await new Promise((r) => setTimeout(r, 2000 * attempt));
+      await new Promise((r) => setTimeout(r, 1000 * attempt)); // 1s, 2s — short delays for fast fallback
     }
   }
   throw lastError ?? new Error('eSIMaccess API unavailable');
