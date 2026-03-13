@@ -20,12 +20,12 @@ interface ApiResponse<T> {
   obj: T;
 }
 
-async function apiCall<T>(endpoint: string, body?: Record<string, unknown>): Promise<T> {
+async function apiCall<T>(endpoint: string, body?: Record<string, unknown>, timeoutMs = 10000): Promise<T> {
   const res = await fetch(`${BASE_URL}${endpoint}`, {
     method: 'POST',
     headers: getHeaders(),
     body: body ? JSON.stringify(body) : '',
-    signal: AbortSignal.timeout(10000), // 10s timeout — prevents hanging when eSIMaccess is unresponsive
+    signal: AbortSignal.timeout(timeoutMs), // prevents hanging when eSIMaccess is unresponsive
   });
 
   const json = await res.json() as ApiResponse<T>;
@@ -91,13 +91,15 @@ export async function getBalance(): Promise<EsimBalance> {
 }
 
 /** List all available packages (optionally filter by location) */
-export async function getPackages(locationCode?: string): Promise<{ packageList: EsimPackage[] }> {
+export async function getPackages(locationCode?: string, timeoutMs?: number): Promise<{ packageList: EsimPackage[] }> {
   const body = { locationCode: locationCode || '', type: '' };
+  // All-packages query gets 25s timeout (larger response); per-country gets 10s
+  const callTimeoutMs = timeoutMs ?? (locationCode ? 10000 : 25000);
   const maxRetries = 2;
   let lastError: Error | null = null;
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      return await apiCall<{ packageList: EsimPackage[] }>('/open/package/list', body);
+      return await apiCall<{ packageList: EsimPackage[] }>('/open/package/list', body, callTimeoutMs);
     } catch (e) {
       lastError = e instanceof Error ? e : new Error(String(e));
       const msg = lastError.message.toLowerCase();
