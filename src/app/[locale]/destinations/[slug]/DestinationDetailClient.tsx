@@ -6,38 +6,29 @@ import type { Destination, Plan } from '@/types';
 import { PlanCard } from '@/components/sections/PlanCard';
 import { X, SlidersHorizontal, ArrowUpDown, Zap, Wifi, Database, Clock, DollarSign, LayoutGrid } from 'lucide-react';
 
-/* ─── Filter presets ────────────────────────────────────────── */
-const DATA_PRESETS = [
-  { label: 'Any', minMB: 0 },
-  { label: '1 GB+', minMB: 1024 },
-  { label: '3 GB+', minMB: 3072 },
-  { label: '5 GB+', minMB: 5120 },
-  { label: '10 GB+', minMB: 10240 },
-  { label: '20 GB+', minMB: 20480 },
-];
+/* ─── Filter preset keys (labels come from t()) ──────────────── */
+const DATA_PRESET_KEYS = ['filterAny', 'filter1GB', 'filter3GB', 'filter5GB', 'filter10GB', 'filter20GB'] as const;
+const DATA_PRESET_MB = [0, 1024, 3072, 5120, 10240, 20480];
 
-const DAYS_PRESETS = [
-  { label: 'Any', minDays: 0 },
-  { label: '7+ days', minDays: 7 },
-  { label: '14+ days', minDays: 14 },
-  { label: '30+ days', minDays: 30 },
-];
+const DAYS_PRESET_KEYS = ['filterAny', 'filter7Days', 'filter14Days', 'filter30Days'] as const;
+const DAYS_PRESET_DAYS = [0, 7, 14, 30];
 
-const PRICE_PRESETS = [
-  { label: 'Any price', max: Infinity },
-  { label: 'Under $10', max: 10 },
-  { label: '$10–$25', min: 10, max: 25 },
-  { label: '$25–$50', min: 25, max: 50 },
-  { label: '$50+', min: 50, max: Infinity },
+const PRICE_PRESET_KEYS = ['anyPrice', 'filterUnder10', 'filter10to25', 'filter25to50', 'filter50Plus'] as const;
+const PRICE_PRESET_CONFIG = [
+  { max: Infinity },
+  { max: 10 },
+  { min: 10, max: 25 },
+  { min: 25, max: 50 },
+  { min: 50, max: Infinity },
 ];
 
 const SORT_OPTIONS = [
-  { value: 'price_asc', label: 'Price: Low to High' },
-  { value: 'price_desc', label: 'Price: High to Low' },
-  { value: 'data_desc', label: 'Most Data' },
-  { value: 'days_desc', label: 'Longest Duration' },
-  { value: 'popular', label: 'Most Popular' },
-];
+  { value: 'price_asc' as const, key: 'sortPriceLow' },
+  { value: 'price_desc' as const, key: 'sortPriceHigh' },
+  { value: 'data_desc' as const, key: 'sortData' },
+  { value: 'days_desc' as const, key: 'sortDays' },
+  { value: 'popular' as const, key: 'sortPopular' },
+] as const;
 
 type NetworkFilter = 'all' | '4G' | '5G';
 type SortKey = 'price_asc' | 'price_desc' | 'data_desc' | 'days_desc' | 'popular';
@@ -97,22 +88,22 @@ export function DestinationDetailClient({
     let list = [...initialPlans];
 
     // Data filter
-    const dataPreset = DATA_PRESETS[dataIdx];
-    if (dataIdx !== 0 && dataPreset) {
-      list = list.filter((p) => p.dataAmount < 0 || p.dataAmount >= dataPreset.minMB);
+    const dataMinMB = DATA_PRESET_MB[dataIdx];
+    if (dataIdx !== 0 && dataMinMB > 0) {
+      list = list.filter((p) => p.dataAmount < 0 || p.dataAmount >= dataMinMB);
     }
 
     // Days filter
-    const daysPreset = DAYS_PRESETS[daysIdx];
-    if (daysIdx !== 0 && daysPreset) {
-      list = list.filter((p) => p.days >= daysPreset.minDays);
+    const daysMin = DAYS_PRESET_DAYS[daysIdx];
+    if (daysIdx !== 0 && daysMin > 0) {
+      list = list.filter((p) => p.days >= daysMin);
     }
 
     // Price filter
-    const pricePreset = PRICE_PRESETS[priceIdx];
-    if (priceIdx !== 0 && pricePreset) {
-      const min = pricePreset.min ?? 0;
-      list = list.filter((p) => p.price >= min && p.price <= pricePreset.max);
+    const priceConfig = PRICE_PRESET_CONFIG[priceIdx];
+    if (priceIdx !== 0 && priceConfig) {
+      const min = priceConfig.min ?? 0;
+      list = list.filter((p) => p.price >= min && p.price <= priceConfig.max);
     }
 
     // Network filter
@@ -178,7 +169,7 @@ export function DestinationDetailClient({
         <div className="flex items-center justify-between gap-3 border-b border-gray-100 px-4 py-3">
           <div className="flex items-center gap-2">
             <SlidersHorizontal className="h-4 w-4 text-gray-400" />
-            <span className="text-sm font-semibold text-gray-700">Filters</span>
+            <span className="text-sm font-semibold text-gray-700">{t('filters')}</span>
             {hasActiveFilters && (
               <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-[10px] font-bold text-white">
                 {[dataIdx !== 0, daysIdx !== 0, priceIdx !== 0, network !== 'all'].filter(Boolean).length}
@@ -193,7 +184,7 @@ export function DestinationDetailClient({
               className="appearance-none rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-colors hover:border-emerald-400"
             >
               {SORT_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
+                <option key={o.value} value={o.value}>{t(o.key)}</option>
               ))}
             </select>
           </div>
@@ -203,12 +194,12 @@ export function DestinationDetailClient({
         <div className="border-b border-gray-100 px-4 py-3">
           <div className="mb-2 flex items-center gap-1.5">
             <Database className="h-3.5 w-3.5 text-gray-400" />
-            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Data</span>
+            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t('filterDataLabel')}</span>
           </div>
           <div className="flex flex-wrap gap-2">
-            {DATA_PRESETS.map((p, i) => (
-              <Pill key={p.label} active={dataIdx === i} onClick={() => setDataIdx(i)}>
-                {p.label}
+            {DATA_PRESET_KEYS.map((key, i) => (
+              <Pill key={key} active={dataIdx === i} onClick={() => setDataIdx(i)}>
+                {t(key)}
               </Pill>
             ))}
           </div>
@@ -218,12 +209,12 @@ export function DestinationDetailClient({
         <div className="border-b border-gray-100 px-4 py-3">
           <div className="mb-2 flex items-center gap-1.5">
             <Clock className="h-3.5 w-3.5 text-gray-400" />
-            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Duration</span>
+            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t('filterDuration')}</span>
           </div>
           <div className="flex flex-wrap gap-2">
-            {DAYS_PRESETS.map((p, i) => (
-              <Pill key={p.label} active={daysIdx === i} onClick={() => setDaysIdx(i)}>
-                {p.label}
+            {DAYS_PRESET_KEYS.map((key, i) => (
+              <Pill key={key} active={daysIdx === i} onClick={() => setDaysIdx(i)}>
+                {t(key)}
               </Pill>
             ))}
           </div>
@@ -233,12 +224,12 @@ export function DestinationDetailClient({
         <div className={`px-4 py-3 ${has5G ? 'border-b border-gray-100' : ''}`}>
           <div className="mb-2 flex items-center gap-1.5">
             <DollarSign className="h-3.5 w-3.5 text-gray-400" />
-            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Price</span>
+            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t('filterPriceLabel')}</span>
           </div>
           <div className="flex flex-wrap gap-2">
-            {PRICE_PRESETS.map((p, i) => (
-              <Pill key={p.label} active={priceIdx === i} onClick={() => setPriceIdx(i)}>
-                {p.label}
+            {PRICE_PRESET_KEYS.map((key, i) => (
+              <Pill key={key} active={priceIdx === i} onClick={() => setPriceIdx(i)}>
+                {t(key)}
               </Pill>
             ))}
           </div>
@@ -249,13 +240,13 @@ export function DestinationDetailClient({
           <div className="px-4 py-3">
             <div className="mb-2 flex items-center gap-1.5">
               <Zap className="h-3.5 w-3.5 text-gray-400" />
-              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Network</span>
+              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t('filterNetwork')}</span>
             </div>
             <div className="flex flex-wrap gap-2">
               {(['all', '4G', '5G'] as NetworkFilter[]).map((v) => (
                 <Pill key={v} active={network === v} onClick={() => setNetwork(v)}>
                   {v === 'all' ? (
-                    'Any'
+                    t('filterAny')
                   ) : v === '5G' ? (
                     <span className="flex items-center gap-1">
                       <Zap className="h-3 w-3" /> 5G
@@ -278,7 +269,7 @@ export function DestinationDetailClient({
               onClick={clearAll}
               className="flex items-center gap-1 text-xs font-medium text-red-500 hover:text-red-700 transition-colors"
             >
-              <X className="h-3.5 w-3.5" /> Clear all filters
+              <X className="h-3.5 w-3.5" /> {t('clearAllFilters')}
             </button>
           </div>
         )}
@@ -287,8 +278,8 @@ export function DestinationDetailClient({
       {/* ─── Result count ────────────────────────────────────── */}
       <div className="mt-4 flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          <strong>{plans.length}</strong> {plans.length === 1 ? 'plan' : 'plans'} available
-          {hasActiveFilters && <span className="text-gray-400"> (filtered)</span>}
+          <strong>{plans.length}</strong> {plans.length === 1 ? t('planAvailable') : t('plansAvailable')}
+          {hasActiveFilters && <span className="text-gray-400"> ({t('filtered')})</span>}
         </p>
       </div>
 
@@ -310,13 +301,13 @@ export function DestinationDetailClient({
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
             <SlidersHorizontal className="h-7 w-7 text-gray-400" />
           </div>
-          <p className="mt-4 text-lg font-semibold text-gray-700">No plans match your filters</p>
-          <p className="mt-1 text-sm text-gray-400">Try adjusting or clearing the filters above</p>
+          <p className="mt-4 text-lg font-semibold text-gray-700">{t('noPlansMatch')}</p>
+          <p className="mt-1 text-sm text-gray-400">{t('tryAdjusting')}</p>
           <button
             onClick={clearAll}
             className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 transition-colors"
           >
-            <X className="h-3.5 w-3.5" /> Clear filters
+            <X className="h-3.5 w-3.5" /> {t('clearFilters')}
           </button>
         </div>
       )}

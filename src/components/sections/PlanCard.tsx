@@ -37,14 +37,17 @@ export function PlanCard({ plan, destinationName, destinationSlug }: PlanCardPro
     });
     if (plan.price < MIN_PURCHASE) {
       toast({
-        title: 'Added to cart — minimum order notice',
-        description: `This plan costs $${plan.price.toFixed(2)}. Minimum purchase is $${MIN_PURCHASE.toFixed(2)}.`,
+        title: t('toastMinOrder'),
+        description: t('toastMinDesc', {
+          price: `$${plan.price.toFixed(2)}`,
+          min: `$${MIN_PURCHASE.toFixed(2)}`,
+        }),
         variant: 'warning',
       });
     } else {
       toast({
-        title: 'Added to cart',
-        description: `${plan.dataDisplay} / ${plan.days} days for ${destinationName}`,
+        title: t('toastAdded'),
+        description: `${plan.dataDisplay} / ${plan.days} ${t('days')} ${t('forDestination')} ${destinationName}`,
         variant: 'success',
       });
     }
@@ -53,7 +56,7 @@ export function PlanCard({ plan, destinationName, destinationSlug }: PlanCardPro
   const perDay = plan.days > 0 ? (plan.price / plan.days).toFixed(2) : plan.price;
 
   return (
-    <Card className={`flex flex-col ${plan.popular ? 'ring-2 ring-primary' : ''}`}>
+    <Card className={`flex flex-col overflow-hidden transition-all hover:shadow-lg ${plan.popular ? 'ring-2 ring-primary bg-gradient-to-br from-white to-emerald-50/50 shadow-md' : 'bg-white shadow-sm hover:shadow-md border-emerald-100'}`}>
       {plan.popular && (
         <div className="rounded-t-xl bg-primary/10 px-4 py-1.5 text-center text-sm font-medium text-primary">
           {tDest('mostPopular')}
@@ -79,7 +82,7 @@ export function PlanCard({ plan, destinationName, destinationSlug }: PlanCardPro
             <span className="font-medium text-foreground">{t('data')}:</span> {plan.dataDisplay}
           </li>
           <li>
-            <span className="font-medium text-foreground">{t('validity')}:</span> {plan.days} days
+            <span className="font-medium text-foreground">{t('validity')}:</span> {plan.days} {t('days')}
           </li>
           <li>
             <span className="font-medium text-foreground">{t('network')}:</span> {plan.networkType}
@@ -89,12 +92,12 @@ export function PlanCard({ plan, destinationName, destinationSlug }: PlanCardPro
           </li>
           {plan.tethering && (
             <li>
-              <span className="font-medium text-foreground">{t('tethering')}:</span> Yes
+              <span className="font-medium text-foreground">{t('tethering')}:</span> {t('yes')}
             </li>
           )}
           {plan.topUps && (
             <li>
-              <span className="font-medium text-foreground">{t('topUps')}:</span> Available
+              <span className="font-medium text-foreground">{t('topUps')}:</span> {t('available')}
             </li>
           )}
         </ul>
@@ -104,7 +107,7 @@ export function PlanCard({ plan, destinationName, destinationSlug }: PlanCardPro
           {t('addToCart')}
         </Button>
         <IntlLink href={`/destinations/${destinationSlug}/plan/${plan.id}`}>
-          <Button variant="outline">View details</Button>
+          <Button variant="outline">{t('viewDetails')}</Button>
         </IntlLink>
       </CardFooter>
     </Card>

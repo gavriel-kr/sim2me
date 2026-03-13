@@ -35,14 +35,17 @@ export function PlanDetailClient({ destination, plan }: PlanDetailClientProps) {
     });
     if (plan.price < MIN_PURCHASE) {
       toast({
-        title: 'Added to cart — minimum order notice',
-        description: `This plan costs $${plan.price.toFixed(2)}. Minimum purchase is $${MIN_PURCHASE.toFixed(2)}.`,
+        title: t('toastMinOrder'),
+        description: t('toastMinDesc', {
+          price: `$${plan.price.toFixed(2)}`,
+          min: `$${MIN_PURCHASE.toFixed(2)}`,
+        }),
         variant: 'warning',
       });
     } else {
       toast({
-        title: 'Added to cart',
-        description: `${plan.dataDisplay} / ${plan.days} days for ${destination.name}`,
+        title: t('toastAdded'),
+        description: `${plan.dataDisplay} / ${plan.days} ${t('days')} ${t('forDestination')} ${destination.name}`,
         variant: 'success',
       });
     }
@@ -54,7 +57,7 @@ export function PlanDetailClient({ destination, plan }: PlanDetailClientProps) {
         href={`/destinations/${destination.slug}`}
         className="text-sm font-medium text-primary hover:underline"
       >
-        ← Back to {destination.name}
+        ← {t('backTo')}{destination.name}
       </IntlLink>
 
       <div className="mt-6 grid gap-8 lg:grid-cols-3">
@@ -76,7 +79,7 @@ export function PlanDetailClient({ destination, plan }: PlanDetailClientProps) {
                 </div>
                 <div>
                   <dt className="text-sm text-muted-foreground">{t('validity')}</dt>
-                  <dd className="font-medium">{plan.days} days</dd>
+                  <dd className="font-medium">{plan.days} {t('days')}</dd>
                 </div>
                 <div>
                   <dt className="text-sm text-muted-foreground">{t('network')}</dt>
@@ -84,11 +87,11 @@ export function PlanDetailClient({ destination, plan }: PlanDetailClientProps) {
                 </div>
                 <div>
                   <dt className="text-sm text-muted-foreground">{t('tethering')}</dt>
-                  <dd className="font-medium">{plan.tethering ? 'Yes' : 'No'}</dd>
+                  <dd className="font-medium">{plan.tethering ? t('yes') : t('no')}</dd>
                 </div>
                 <div>
                   <dt className="text-sm text-muted-foreground">{t('topUps')}</dt>
-                  <dd className="font-medium">{plan.topUps ? 'Available' : 'No'}</dd>
+                  <dd className="font-medium">{plan.topUps ? t('available') : t('no')}</dd>
                 </div>
               </dl>
             </CardContent>
