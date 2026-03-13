@@ -14,7 +14,7 @@ import {
   type FilterRule,
   type FilterField,
   type FilterOperator,
-} from './contactFilters';
+} from './contactFilterState';
 
 const FILTER_FIELDS: { value: FilterField; label: string }[] = [
   { value: 'name', label: 'Name' },

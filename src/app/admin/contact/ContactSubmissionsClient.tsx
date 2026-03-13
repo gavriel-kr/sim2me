@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { Download, Upload, Mail, CheckCheck, Circle, Pencil, X, Plus, Trash2 } from 'lucide-react';
-import { applyContactFilters, type ContactFiltersState } from './contactFilters';
+import { applyContactFilters, type ContactFiltersState } from './contactFilterState';
 import { ContactFilters } from './ContactFilters';
 import { exportContactsToExcel, parseContactExcelFile } from './contactExcel';
 import { CONTACT_SUBJECTS } from '@/lib/validation/schemas';

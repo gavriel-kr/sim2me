@@ -7,7 +7,7 @@ import {
   CheckCheck, Globe, Bell,
 } from 'lucide-react';
 import { AccountFilters } from './AccountFilters';
-import { applyAccountFilters, type AccountFiltersState } from './accountFilters';
+import { applyAccountFilters, type AccountFiltersState } from './accountFilterState';
 import { exportAccountsToExcel } from './accountExcel';
 import { CONTACT_SUBJECTS } from '@/lib/validation/schemas';
 
