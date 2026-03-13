@@ -9,8 +9,20 @@ export const dynamic = 'force-dynamic';
 const STALE_CACHE_MS = 15 * 60 * 1000;
 const packagesCache = new Map<string, { packages: unknown[]; destinations: unknown[]; total: number; ts: number }>();
 
-// eSIMaccess returns "system busy" for empty locationCode (all packages). Use seed locations instead.
-const ALL_PACKAGES_SEEDS = ['US', 'GB', 'IL', 'JP', 'AU', 'BR', 'TH', 'MA', 'ZA', 'EU-42', 'AS-20'];
+// eSIMaccess sometimes returns "system busy" for empty locationCode.
+// Strategy: try empty first (gets ALL packages in one call). If it fails, use curated seeds.
+const FALLBACK_SEEDS = [
+  // Americas
+  'US', 'CA', 'MX', 'BR', 'AR', 'CO', 'CL',
+  // Europe
+  'GB', 'FR', 'DE', 'IT', 'ES', 'NL', 'PT', 'GR', 'PL', 'SE', 'TR', 'CH',
+  // Asia-Pacific
+  'JP', 'KR', 'CN', 'TH', 'VN', 'SG', 'MY', 'ID', 'IN', 'AU', 'NZ',
+  // Middle East & Africa
+  'AE', 'IL', 'SA', 'EG', 'MA', 'ZA',
+  // Regional bundles
+  'EU-42', 'AS-20', 'NA-3',
+];
 
 // ─── Regional code → friendly name & flag ────────────────────
 const REGION_NAMES: Record<string, { name: string; flag: string }> = {
@@ -108,12 +120,21 @@ export async function GET(req: NextRequest) {
       locationCode
         ? getPackages(locationCode)
         : (async () => {
+            // Try empty locationCode first — returns ALL packages in one call when API cooperates
+            const allPkgs = await getPackages('').catch(() => null);
+            if (allPkgs && allPkgs.packageList.length > 0) {
+              // #region agent log
+              fetch('http://127.0.0.1:7242/ingest/c0f3d6c5-f7a1-48de-976d-653a33f6597b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f7158f'},body:JSON.stringify({sessionId:'f7158f',location:'route.ts:all-pkgs',message:'empty locationCode succeeded',data:{count:allPkgs.packageList.length},timestamp:Date.now(),hypothesisId:'A',runId:'run1'})}).catch(()=>{});
+              // #endregion
+              return allPkgs;
+            }
+            // Fallback: fetch from curated seeds in parallel
             const seedStart = Date.now();
             const results = await Promise.all(
-              ALL_PACKAGES_SEEDS.map((seed) => getPackages(seed).catch(() => ({ packageList: [] as EsimPackage[] })))
+              FALLBACK_SEEDS.map((seed) => getPackages(seed).catch(() => ({ packageList: [] as EsimPackage[] })))
             );
             // #region agent log
-            fetch('http://127.0.0.1:7242/ingest/c0f3d6c5-f7a1-48de-976d-653a33f6597b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f7158f'},body:JSON.stringify({sessionId:'f7158f',location:'route.ts:seeds-done',message:'all seed fetches completed',data:{durationMs:Date.now()-seedStart,packageCounts:results.map(r=>r.packageList?.length??0)},timestamp:Date.now(),hypothesisId:'A',runId:'run1'})}).catch(()=>{});
+            fetch('http://127.0.0.1:7242/ingest/c0f3d6c5-f7a1-48de-976d-653a33f6597b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f7158f'},body:JSON.stringify({sessionId:'f7158f',location:'route.ts:seeds-done',message:'seed fallback completed',data:{durationMs:Date.now()-seedStart,pkgCounts:results.map(r=>r.packageList?.length??0)},timestamp:Date.now(),hypothesisId:'A',runId:'run1'})}).catch(()=>{});
             // #endregion
             const seen = new Set<string>();
             const merged: EsimPackage[] = [];
