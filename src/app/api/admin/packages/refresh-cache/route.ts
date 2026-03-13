@@ -26,7 +26,9 @@ export async function POST() {
       return NextResponse.json({ error: 'eSIMaccess returned too few packages — may be "system busy". Try again.', count: packageList.length }, { status: 503 });
     }
 
-    const value = JSON.stringify({ ts: Date.now(), packageList });
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const slim = packageList.map(({ locationNetworkList: _, ...rest }) => rest);
+    const value = JSON.stringify({ ts: Date.now(), packageList: slim });
     await prisma.siteSetting.upsert({
       where: { key: ALL_PACKAGES_DB_CACHE_KEY },
       create: { key: ALL_PACKAGES_DB_CACHE_KEY, value },
