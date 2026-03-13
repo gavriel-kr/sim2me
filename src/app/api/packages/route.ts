@@ -5,6 +5,11 @@ import { getContinent } from '@/lib/continents';
 
 export const dynamic = 'force-dynamic';
 
+// ─── Stale-while-revalidate: serve cached response when eSIMaccess returns "system busy" ───
+const CACHE_TTL_MS = 10 * 60 * 1000;       // 10 min fresh
+const STALE_SERVE_MS = 20 * 60 * 1000;     // serve stale up to 20 min when API fails
+const responseCache = new Map<string, { packages: unknown[]; destinations: unknown[]; total: number; timestamp: number }>();
+
 // ─── Regional code → friendly name & flag ────────────────────
 const REGION_NAMES: Record<string, { name: string; flag: string }> = {
   'EU-42': { name: 'Europe (42 countries)', flag: 'eu' },
@@ -185,15 +190,27 @@ export async function GET(req: NextRequest) {
         return a.name.localeCompare(b.name);
       });
 
-    return NextResponse.json({
-      packages,
-      destinations,
-      total: packages.length,
-    });
+    const payload = { packages, destinations, total: packages.length };
+    responseCache.set(locationCode, { ...payload, timestamp: Date.now() });
+
+    return NextResponse.json(payload);
   } catch (error) {
+    const errMsg = (error as Error).message;
+    const isBusy = /system is busy|try again|busy/i.test(errMsg);
+
+    if (isBusy) {
+      const cached = responseCache.get(locationCode);
+      if (cached && Date.now() - cached.timestamp < STALE_SERVE_MS && cached.destinations.length > 0) {
+        return NextResponse.json(
+          { packages: cached.packages, destinations: cached.destinations, total: cached.total },
+          { headers: { 'X-Cache': 'stale' } }
+        );
+      }
+    }
+
     console.error('[Public packages error]', error);
     return NextResponse.json(
-      { error: (error as Error).message, packages: [], destinations: [] },
+      { error: errMsg, packages: [], destinations: [] },
       { status: 500 }
     );
   }

@@ -92,7 +92,7 @@ export async function getBalance(): Promise<EsimBalance> {
 /** List all available packages (optionally filter by location) */
 export async function getPackages(locationCode?: string): Promise<{ packageList: EsimPackage[] }> {
   const body = { locationCode: locationCode || '', type: '' };
-  const maxRetries = 3;
+  const maxRetries = 5;
   let lastError: Error | null = null;
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
@@ -100,9 +100,11 @@ export async function getPackages(locationCode?: string): Promise<{ packageList:
     } catch (e) {
       lastError = e instanceof Error ? e : new Error(String(e));
       const msg = lastError.message.toLowerCase();
-      const isRetryable = msg.includes('system is busy') || msg.includes('try again');
+      const isRetryable = msg.includes('system is busy') || msg.includes('try again') || msg.includes('busy');
       if (!isRetryable || attempt === maxRetries) throw lastError;
-      await new Promise((r) => setTimeout(r, 1500 * attempt));
+      const baseDelay = Math.min(2000 * 2 ** (attempt - 1), 30000);
+      const jitter = Math.random() * 1000;
+      await new Promise((r) => setTimeout(r, baseDelay + jitter));
     }
   }
   throw lastError ?? new Error('eSIMaccess API unavailable');
