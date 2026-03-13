@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Info } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useCartStore } from '@/stores/cartStore';
 import { useToast } from '@/hooks/useToast';
 import { createSharedPathnamesNavigation } from 'next-intl/navigation';
@@ -93,9 +94,16 @@ export function PlanDetailClient({ destination, plan }: PlanDetailClientProps) {
                 <div>
                   <dt className="flex items-center gap-1 text-sm text-muted-foreground">
                     {t('topUps')}
-                    <span title={t('topUpsTooltip')} className="inline-flex cursor-help hover:text-foreground">
-                      <Info className="h-3.5 w-3.5" />
-                    </span>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="inline-flex cursor-help hover:text-emerald-600 transition-colors">
+                          <Info className="h-3.5 w-3.5" />
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="border-emerald-100 bg-emerald-50/95 text-gray-800">
+                        <p>{t('topUpsTooltip')}</p>
+                      </TooltipContent>
+                    </Tooltip>
                   </dt>
                   <dd className="font-medium">{plan.topUps ? t('available') : t('no')}</dd>
                 </div>

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Info } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useCartStore } from '@/stores/cartStore';
 import { useToast } from '@/hooks/useToast';
 import { createSharedPathnamesNavigation } from 'next-intl/navigation';
@@ -99,9 +100,16 @@ export function PlanCard({ plan, destinationName, destinationSlug }: PlanCardPro
           {plan.topUps && (
             <li className="flex items-center gap-1">
               <span className="font-medium text-foreground">{t('topUps')}:</span> {t('available')}
-              <span title={t('topUpsTooltip')} className="inline-flex cursor-help text-muted-foreground hover:text-foreground">
-                <Info className="h-3.5 w-3.5" />
-              </span>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex cursor-help text-muted-foreground hover:text-emerald-600 transition-colors">
+                    <Info className="h-3.5 w-3.5" />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="border-emerald-100 bg-emerald-50/95 text-gray-800">
+                  <p>{t('topUpsTooltip')}</p>
+                </TooltipContent>
+              </Tooltip>
             </li>
           )}
         </ul>
