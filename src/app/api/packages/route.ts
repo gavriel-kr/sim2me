@@ -1,5 +1,5 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { getPackages } from '@/lib/esimaccess';
+import { getPackages, type EsimPackage } from '@/lib/esimaccess';
 import { prisma } from '@/lib/prisma';
 import { getContinent } from '@/lib/continents';
 
@@ -8,6 +8,9 @@ export const dynamic = 'force-dynamic';
 // Stale cache: when eSIMaccess returns "system busy", serve last good response (up to 15 min)
 const STALE_CACHE_MS = 15 * 60 * 1000;
 const packagesCache = new Map<string, { packages: unknown[]; destinations: unknown[]; total: number; ts: number }>();
+
+// eSIMaccess returns "system busy" for empty locationCode (all packages). Use seed locations instead.
+const ALL_PACKAGES_SEEDS = ['US', 'GB', 'IL', 'JP', 'AU', 'BR', 'TH', 'MA', 'ZA', 'EU-42', 'AS-20'];
 
 // ─── Regional code → friendly name & flag ────────────────────
 const REGION_NAMES: Record<string, { name: string; flag: string }> = {
@@ -97,10 +100,26 @@ export async function GET(req: NextRequest) {
   const locationCode = req.nextUrl.searchParams.get('location') || '';
 
   try {
-    // Fetch packages from eSIMaccess + overrides from DB in parallel
-    const [apiData, overrides] = await Promise.all([
-      getPackages(locationCode || undefined),
+    const [overrides, apiData] = await Promise.all([
       prisma.packageOverride.findMany(),
+      locationCode
+        ? getPackages(locationCode)
+        : (async () => {
+            const results = await Promise.all(
+              ALL_PACKAGES_SEEDS.map((seed) => getPackages(seed).catch(() => ({ packageList: [] as EsimPackage[] })))
+            );
+            const seen = new Set<string>();
+            const merged: EsimPackage[] = [];
+            for (const r of results) {
+              for (const p of r.packageList || []) {
+                if (!seen.has(p.packageCode)) {
+                  seen.add(p.packageCode);
+                  merged.push(p);
+                }
+              }
+            }
+            return { packageList: merged };
+          })(),
     ]);
 
     const overrideMap = new Map(overrides.map((o) => [o.packageCode, o]));
