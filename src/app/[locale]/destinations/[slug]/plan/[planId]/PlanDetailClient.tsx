@@ -80,7 +80,19 @@ export function PlanDetailClient({ destination, plan }: PlanDetailClientProps) {
                   <dd className="font-medium">{plan.dataDisplay}</dd>
                 </div>
                 <div>
-                  <dt className="text-sm text-muted-foreground">{t('validity')}</dt>
+                  <dt className="flex items-center gap-1 text-sm text-muted-foreground">
+                    {t('validity')}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="inline-flex cursor-help hover:text-emerald-600 transition-colors">
+                          <Info className="h-3.5 w-3.5" />
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="border-emerald-100 bg-emerald-50/95 text-gray-800">
+                        <p>{t('validityTooltip')}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </dt>
                   <dd className="font-medium">{plan.days} {t('days')}</dd>
                 </div>
                 <div>
@@ -88,7 +100,19 @@ export function PlanDetailClient({ destination, plan }: PlanDetailClientProps) {
                   <dd className="font-medium">{plan.networkType}</dd>
                 </div>
                 <div>
-                  <dt className="text-sm text-muted-foreground">{t('tethering')}</dt>
+                  <dt className="flex items-center gap-1 text-sm text-muted-foreground">
+                    {t('tethering')}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="inline-flex cursor-help hover:text-emerald-600 transition-colors">
+                          <Info className="h-3.5 w-3.5" />
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="border-emerald-100 bg-emerald-50/95 text-gray-800">
+                        <p>{t('tetheringTooltip')}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </dt>
                   <dd className="font-medium">{plan.tethering ? t('yes') : t('no')}</dd>
                 </div>
                 <div>

@@ -83,8 +83,18 @@ export function PlanCard({ plan, destinationName, destinationSlug }: PlanCardPro
           <li>
             <span className="font-medium text-foreground">{t('data')}:</span> {plan.dataDisplay}
           </li>
-          <li>
+          <li className="flex items-center gap-1">
             <span className="font-medium text-foreground">{t('validity')}:</span> {plan.days} {t('days')}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-flex cursor-help text-muted-foreground hover:text-emerald-600 transition-colors">
+                  <Info className="h-3.5 w-3.5" />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="border-emerald-100 bg-emerald-50/95 text-gray-800">
+                <p>{t('validityTooltip')}</p>
+              </TooltipContent>
+            </Tooltip>
           </li>
           <li>
             <span className="font-medium text-foreground">{t('network')}:</span> {plan.networkType}
@@ -93,8 +103,18 @@ export function PlanCard({ plan, destinationName, destinationSlug }: PlanCardPro
             )}
           </li>
           {plan.tethering && (
-            <li>
+            <li className="flex items-center gap-1">
               <span className="font-medium text-foreground">{t('tethering')}:</span> {t('yes')}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex cursor-help text-muted-foreground hover:text-emerald-600 transition-colors">
+                    <Info className="h-3.5 w-3.5" />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="border-emerald-100 bg-emerald-50/95 text-gray-800">
+                  <p>{t('tetheringTooltip')}</p>
+                </TooltipContent>
+              </Tooltip>
             </li>
           )}
           {plan.topUps && (

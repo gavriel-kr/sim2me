@@ -109,8 +109,10 @@
   "plan": {
     "data": "Data",
     "validity": "Validity",
+    "validityTooltip": "The number of days the plan is active. Validity starts from first use at your destination, not from purchase.",
     "network": "Network",
     "tethering": "Tethering",
+    "tetheringTooltip": "You can use your phone as a hotspot and share the internet with other devices.",
     "topUps": "Top-ups",
     "topUpsTooltip": "You can buy more data for this eSIM after it runs out, without installing a new one.",
     "addToCart": "Add to cart",
