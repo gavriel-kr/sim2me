@@ -6,6 +6,7 @@ import { formatPrice } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Info } from 'lucide-react';
 import { useCartStore } from '@/stores/cartStore';
 import { useToast } from '@/hooks/useToast';
 import { createSharedPathnamesNavigation } from 'next-intl/navigation';
@@ -96,8 +97,11 @@ export function PlanCard({ plan, destinationName, destinationSlug }: PlanCardPro
             </li>
           )}
           {plan.topUps && (
-            <li>
+            <li className="flex items-center gap-1">
               <span className="font-medium text-foreground">{t('topUps')}:</span> {t('available')}
+              <span title={t('topUpsTooltip')} className="inline-flex cursor-help text-muted-foreground hover:text-foreground">
+                <Info className="h-3.5 w-3.5" />
+              </span>
             </li>
           )}
         </ul>

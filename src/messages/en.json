@@ -112,6 +112,7 @@
     "network": "Network",
     "tethering": "Tethering",
     "topUps": "Top-ups",
+    "topUpsTooltip": "You can buy more data for this eSIM after it runs out, without installing a new one.",
     "addToCart": "Add to cart",
     "perDay": "per day",
     "yes": "Yes",

@@ -6,6 +6,7 @@ import { formatPrice } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Info } from 'lucide-react';
 import { useCartStore } from '@/stores/cartStore';
 import { useToast } from '@/hooks/useToast';
 import { createSharedPathnamesNavigation } from 'next-intl/navigation';
@@ -90,7 +91,12 @@ export function PlanDetailClient({ destination, plan }: PlanDetailClientProps) {
                   <dd className="font-medium">{plan.tethering ? t('yes') : t('no')}</dd>
                 </div>
                 <div>
-                  <dt className="text-sm text-muted-foreground">{t('topUps')}</dt>
+                  <dt className="flex items-center gap-1 text-sm text-muted-foreground">
+                    {t('topUps')}
+                    <span title={t('topUpsTooltip')} className="inline-flex cursor-help hover:text-foreground">
+                      <Info className="h-3.5 w-3.5" />
+                    </span>
+                  </dt>
                   <dd className="font-medium">{plan.topUps ? t('available') : t('no')}</dd>
                 </div>
               </dl>
