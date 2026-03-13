@@ -91,10 +91,21 @@ export async function getBalance(): Promise<EsimBalance> {
 
 /** List all available packages (optionally filter by location) */
 export async function getPackages(locationCode?: string): Promise<{ packageList: EsimPackage[] }> {
-  return apiCall<{ packageList: EsimPackage[] }>('/open/package/list', {
-    locationCode: locationCode || '',
-    type: '',
-  });
+  const body = { locationCode: locationCode || '', type: '' };
+  const maxRetries = 4;
+  let lastError: Error | null = null;
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await apiCall<{ packageList: EsimPackage[] }>('/open/package/list', body);
+    } catch (e) {
+      lastError = e instanceof Error ? e : new Error(String(e));
+      const msg = lastError.message.toLowerCase();
+      const isRetryable = msg.includes('system is busy') || msg.includes('try again') || msg.includes('busy');
+      if (!isRetryable || attempt === maxRetries) throw lastError;
+      await new Promise((r) => setTimeout(r, 2000 * attempt));
+    }
+  }
+  throw lastError ?? new Error('eSIMaccess API unavailable');
 }
 
 /** Get packages for a specific location */

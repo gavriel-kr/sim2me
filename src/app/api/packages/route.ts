@@ -5,6 +5,10 @@ import { getContinent } from '@/lib/continents';
 
 export const dynamic = 'force-dynamic';
 
+// Stale cache: when eSIMaccess returns "system busy", serve last good response (up to 15 min)
+const STALE_CACHE_MS = 15 * 60 * 1000;
+const packagesCache = new Map<string, { packages: unknown[]; destinations: unknown[]; total: number; ts: number }>();
+
 // ─── Regional code → friendly name & flag ────────────────────
 const REGION_NAMES: Record<string, { name: string; flag: string }> = {
   'EU-42': { name: 'Europe (42 countries)', flag: 'eu' },
@@ -185,15 +189,22 @@ export async function GET(req: NextRequest) {
         return a.name.localeCompare(b.name);
       });
 
-    return NextResponse.json({
-      packages,
-      destinations,
-      total: packages.length,
-    });
+    const payload = { packages, destinations, total: packages.length };
+    packagesCache.set(locationCode, { ...payload, ts: Date.now() });
+
+    return NextResponse.json(payload);
   } catch (error) {
+    const errMsg = (error as Error).message;
+    const isBusy = /system is busy|try again|busy/i.test(errMsg);
+    if (isBusy) {
+      const cached = packagesCache.get(locationCode);
+      if (cached && Date.now() - cached.ts < STALE_CACHE_MS && cached.destinations.length > 0) {
+        return NextResponse.json({ packages: cached.packages, destinations: cached.destinations, total: cached.total });
+      }
+    }
     console.error('[Public packages error]', error);
     return NextResponse.json(
-      { error: (error as Error).message, packages: [], destinations: [] },
+      { error: errMsg, packages: [], destinations: [] },
       { status: 500 }
     );
   }
