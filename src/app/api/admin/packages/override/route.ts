@@ -7,11 +7,28 @@ export const dynamic = 'force-dynamic';
 
 /** GET all overrides */
 export async function GET() {
-  const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/c0f3d6c5-f7a1-48de-976d-653a33f6597b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'2055d3'},body:JSON.stringify({sessionId:'2055d3',location:'override/route.ts:GET',message:'GET override called',data:{},timestamp:Date.now()})}).catch(()=>{});
+  // #endregion
+  try {
+    const session = await getServerSession(authOptions);
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/c0f3d6c5-f7a1-48de-976d-653a33f6597b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'2055d3'},body:JSON.stringify({sessionId:'2055d3',location:'override/route.ts:GET',message:'session result',data:{hasSession:!!session,user:session?.user?.email},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const overrides = await prisma.packageOverride.findMany();
-  return NextResponse.json({ overrides });
+    const overrides = await prisma.packageOverride.findMany();
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/c0f3d6c5-f7a1-48de-976d-653a33f6597b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'2055d3'},body:JSON.stringify({sessionId:'2055d3',location:'override/route.ts:GET',message:'findMany success',data:{count:overrides.length},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
+    return NextResponse.json({ overrides });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/c0f3d6c5-f7a1-48de-976d-653a33f6597b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'2055d3'},body:JSON.stringify({sessionId:'2055d3',location:'override/route.ts:GET',message:'ERROR caught',data:{error:msg},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
 }
 
 /** POST - create or update an override */
