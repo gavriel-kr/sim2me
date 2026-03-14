@@ -74,6 +74,7 @@ export function FeaturedPlans() {
                     <span className="font-bold text-primary">
                       {formatPrice(d.fromPrice, d.fromCurrency ?? 'USD')}
                     </span>
+                    <span className="text-muted-foreground">{tDest('perDay')}</span>
                   </p>
                 ) : (
                   <p className="mt-0.5 text-sm text-muted-foreground">

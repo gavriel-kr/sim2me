@@ -552,7 +552,7 @@ export function DestinationsClient({ locale = 'en' }: { locale?: string }) {
                       <>
                         <span className="text-gray-300">·</span>
                         <span className="text-xs font-bold text-emerald-600">
-                          {t('from')} ${d.fromPrice.toFixed(2)}
+                          {t('from')} ${d.fromPrice.toFixed(2)} {t('perDay')}
                         </span>
                       </>
                     )}

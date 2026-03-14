@@ -9,7 +9,7 @@ const siteUrl = 'https://www.sim2me.net';
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const cms = await getCmsPage('refund', locale as 'en' | 'he' | 'ar');
-  const t = await getTranslations('footer');
+  const t = await getTranslations({ locale, namespace: 'footer' });
   const prefix = `/${locale}`;
   return {
     title: cms?.seoTitle || `${t('refund')} – Sim2Me`,
@@ -20,14 +20,19 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 
 export default async function RefundPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
+  const isRTL = locale === 'he' || locale === 'ar';
   const cms = await getCmsPage('refund', locale as 'en' | 'he' | 'ar');
+  const t = await getTranslations({ locale, namespace: 'legalPages' });
+
+  const title = cms?.title || t('refundTitle');
+  const content = cms?.content || t('refundContent');
 
   return (
     <MainLayout>
-      <div className="container mx-auto max-w-2xl px-4 py-12">
-        <h1 className="text-2xl font-bold sm:text-3xl">{cms?.title || 'Refund Policy'}</h1>
+      <div className="container mx-auto max-w-2xl px-4 py-12" dir={isRTL ? 'rtl' : 'ltr'}>
+        <h1 className="text-2xl font-bold sm:text-3xl">{title}</h1>
         <div className="prose prose-sm mt-6 text-muted-foreground whitespace-pre-line">
-          {cms?.content || 'This Refund Policy applies globally to all countries and customers worldwide.\n\nUnused eSIMs can be refunded within 14 days of purchase. Once the eSIM is installed or activated, the plan is non-refundable. Contact support with your order ID to request a refund.'}
+          {content}
         </div>
       </div>
     </MainLayout>

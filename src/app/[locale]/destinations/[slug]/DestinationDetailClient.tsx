@@ -155,7 +155,7 @@ export function DestinationDetailClient({
               <>
                 <span className="text-gray-300">·</span>
                 <span className="font-semibold text-emerald-600">
-                  {t('from')} ${destination.fromPrice.toFixed(2)}
+                  {t('from')} ${destination.fromPrice.toFixed(2)} {t('perDay')}
                 </span>
               </>
             )}
