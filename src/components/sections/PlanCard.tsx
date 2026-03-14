@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import type { Plan } from '@/types';
 import { formatPrice } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,22 @@ import { routing } from '@/i18n/routing';
 
 const { Link: IntlLink } = createSharedPathnamesNavigation(routing);
 
+function localizeData(dataDisplay: string, locale: string): string {
+  if (locale === 'he') {
+    return dataDisplay
+      .replace(/\bGB\b/g, "ג'יגה")
+      .replace(/\bMB\b/g, 'מגה')
+      .replace(/\bUnlimited\b/gi, 'ללא הגבלה');
+  }
+  if (locale === 'ar') {
+    return dataDisplay
+      .replace(/\bGB\b/g, 'جيجا')
+      .replace(/\bMB\b/g, 'ميجا')
+      .replace(/\bUnlimited\b/gi, 'غير محدود');
+  }
+  return dataDisplay;
+}
+
 interface PlanCardProps {
   plan: Plan;
   destinationName: string;
@@ -24,8 +40,10 @@ interface PlanCardProps {
 export function PlanCard({ plan, destinationName, destinationSlug }: PlanCardProps) {
   const t = useTranslations('plan');
   const tDest = useTranslations('destinations');
+  const locale = useLocale();
   const addItem = useCartStore((s) => s.addItem);
   const { toast } = useToast();
+  const localizedData = localizeData(plan.dataDisplay, locale);
 
   const MIN_PURCHASE = 1.20;
 
@@ -57,6 +75,7 @@ export function PlanCard({ plan, destinationName, destinationSlug }: PlanCardPro
 
   const perDay = plan.days > 0 ? (plan.price / plan.days).toFixed(2) : plan.price;
 
+
   return (
     <Card className={`flex flex-col overflow-hidden transition-all hover:shadow-lg ${plan.popular ? 'ring-2 ring-primary bg-gradient-to-br from-white to-emerald-50/50 shadow-md' : 'bg-white shadow-sm hover:shadow-md border-emerald-100'}`}>
       {plan.popular && (
@@ -67,7 +86,7 @@ export function PlanCard({ plan, destinationName, destinationSlug }: PlanCardPro
       <CardContent className="flex-1 p-6">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <p className="font-semibold">{plan.name}</p>
+            <p className="font-semibold">{localizedData} · {plan.days} {t('days')}</p>
             <p className="text-sm text-muted-foreground">{plan.operatorName}</p>
           </div>
           <div className="text-end">
@@ -81,7 +100,7 @@ export function PlanCard({ plan, destinationName, destinationSlug }: PlanCardPro
         </div>
         <ul className="mt-4 space-y-1.5 text-sm text-muted-foreground">
           <li>
-            <span className="font-medium text-foreground">{t('data')}:</span> {plan.dataDisplay}
+            <span className="font-medium text-foreground">{t('data')}:</span> {localizedData}
           </li>
           <li className="flex items-center gap-1">
             <span className="font-medium text-foreground">{t('validity')}:</span> {plan.days} {t('days')}

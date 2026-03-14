@@ -69,8 +69,8 @@ export function FeaturedPlans() {
                   {getLocalizedCountryName(d.isoCode, d.name, locale)}
                 </span>
                 {d.fromPrice != null ? (
-                  <p className="mt-0.5 text-sm">
-                    <span className="text-muted-foreground">From </span>
+                  <p className="mt-0.5 text-sm flex items-center gap-1">
+                    <span className="text-muted-foreground">{tDest('from')}</span>
                     <span className="font-bold text-primary">
                       {formatPrice(d.fromPrice, d.fromCurrency ?? 'USD')}
                     </span>
