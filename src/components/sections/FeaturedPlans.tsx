@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { useQuery } from '@tanstack/react-query';
 import { getDestinations } from '@/lib/api/repositories/destinationsRepository';
 import { createSharedPathnamesNavigation } from 'next-intl/navigation';
@@ -10,15 +10,31 @@ import { ArrowRight, Sparkles } from 'lucide-react';
 
 const { Link: IntlLink } = createSharedPathnamesNavigation(routing);
 
+function getLocalizedCountryName(isoCode: string, fallback: string, locale: string): string {
+  if (isoCode.length !== 2) return fallback; // regional bundles keep English name
+  try {
+    return new Intl.DisplayNames([locale], { type: 'region' }).of(isoCode) || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 export function FeaturedPlans() {
   const t = useTranslations('home');
   const tDest = useTranslations('destinations');
+  const locale = useLocale();
   const { data: destinations = [] } = useQuery({
     queryKey: ['destinations'],
     queryFn: getDestinations,
   });
-  const popular = destinations.filter((d) => d.popular).slice(0, 8);
-
+  // Show admin-marked popular destinations; fall back to European countries when none are set
+  const popular = (() => {
+    const marked = destinations.filter((d) => d.popular);
+    if (marked.length > 0) return marked.slice(0, 8);
+    return destinations
+      .filter((d) => d.region === 'Europe' && d.isoCode.length === 2)
+      .slice(0, 8);
+  })();
 
   return (
     <section className="relative bg-gradient-to-b from-muted/30 to-white py-20 sm:py-24">
@@ -50,7 +66,7 @@ export function FeaturedPlans() {
               />
               <div className="min-w-0 flex-1">
                 <span className="block font-bold text-foreground transition-colors group-hover:text-primary">
-                  {d.name}
+                  {getLocalizedCountryName(d.isoCode, d.name, locale)}
                 </span>
                 {d.fromPrice != null ? (
                   <p className="mt-0.5 text-sm">

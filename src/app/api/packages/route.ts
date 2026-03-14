@@ -113,20 +113,15 @@ export async function GET(req: NextRequest) {
   const locationCode = req.nextUrl.searchParams.get('location') || '';
 
   try {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/c0f3d6c5-f7a1-48de-976d-653a33f6597b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f7158f'},body:JSON.stringify({sessionId:'f7158f',location:'route.ts:GET-start',message:'packages API called',data:{locationCode,ts:Date.now()},timestamp:Date.now(),hypothesisId:'A',runId:'run1'})}).catch(()=>{});
-    // #endregion
-    const [overrides, apiData] = await Promise.all([
+    const [overrides, featuredDestinations, apiData] = await Promise.all([
       prisma.packageOverride.findMany(),
+      prisma.featuredDestination.findMany({ orderBy: { displayOrder: 'asc' } }),
       locationCode
         ? getPackages(locationCode)
         : (async () => {
             // 1. Try persistent DB cache (stale-while-revalidate: always serve if available)
             const dbCached = await getDbCachedPackages();
             if (dbCached) {
-              // #region agent log
-              fetch('http://127.0.0.1:7242/ingest/c0f3d6c5-f7a1-48de-976d-653a33f6597b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f7158f'},body:JSON.stringify({sessionId:'f7158f',location:'route.ts:db-cache-hit',message:'served from DB cache',data:{count:dbCached.packageList.length,stale:dbCached.stale},timestamp:Date.now(),hypothesisId:'A',runId:'run1'})}).catch(()=>{});
-              // #endregion
               // If stale, refresh in background without blocking response
               if (dbCached.stale) {
                 getPackages('').then(r => {
@@ -139,9 +134,6 @@ export async function GET(req: NextRequest) {
             // 2. Cache missing — try empty locationCode to get ALL packages (25s timeout)
             const allPkgs = await getPackages('').catch(() => null);
             if (allPkgs && allPkgs.packageList.length >= 500) {
-              // #region agent log
-              fetch('http://127.0.0.1:7242/ingest/c0f3d6c5-f7a1-48de-976d-653a33f6597b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f7158f'},body:JSON.stringify({sessionId:'f7158f',location:'route.ts:empty-call-hit',message:'empty locationCode succeeded',data:{count:allPkgs.packageList.length},timestamp:Date.now(),hypothesisId:'A',runId:'run1'})}).catch(()=>{});
-              // #endregion
               setDbCachedPackages(allPkgs.packageList);
               return allPkgs;
             }
@@ -151,9 +143,6 @@ export async function GET(req: NextRequest) {
             const results = await Promise.all(
               FALLBACK_SEEDS.map((seed) => getPackages(seed).catch(() => ({ packageList: [] as EsimPackage[] })))
             );
-            // #region agent log
-            fetch('http://127.0.0.1:7242/ingest/c0f3d6c5-f7a1-48de-976d-653a33f6597b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f7158f'},body:JSON.stringify({sessionId:'f7158f',location:'route.ts:seeds-done',message:'seed fallback completed',data:{durationMs:Date.now()-seedStart,pkgCounts:results.map(r=>r.packageList?.length??0)},timestamp:Date.now(),hypothesisId:'A',runId:'run1'})}).catch(()=>{});
-            // #endregion
             const seen = new Set<string>();
             const merged: EsimPackage[] = [];
             for (const r of results) {
@@ -207,6 +196,9 @@ export async function GET(req: NextRequest) {
         return a.price - b.price;
       });
 
+    // Build set of admin-curated featured destination codes
+    const featuredSet = new Set(featuredDestinations.map((f) => f.locationCode));
+
     // Group by locationCode for destinations list
     const destinationsMap = new Map<string, {
       locationCode: string;
@@ -219,18 +211,21 @@ export async function GET(req: NextRequest) {
       maxDataMB: number;
       speeds: string[];
       featured: boolean;
+      displayOrder: number;
     }>();
 
     for (const pkg of packages) {
       const dataMB = pkg.volume > 0 ? Math.round(pkg.volume / (1024 * 1024)) : 0;
+      const isFeatured = featuredSet.has(pkg.locationCode) || pkg.featured;
       const existing = destinationsMap.get(pkg.locationCode);
       if (existing) {
         existing.planCount++;
         existing.minPrice = Math.min(existing.minPrice, pkg.price);
         if (dataMB > existing.maxDataMB) existing.maxDataMB = dataMB;
         if (pkg.speed && !existing.speeds.includes(pkg.speed)) existing.speeds.push(pkg.speed);
-        if (pkg.featured) existing.featured = true;
+        if (isFeatured) existing.featured = true;
       } else {
+        const featuredEntry = featuredDestinations.find((f) => f.locationCode === pkg.locationCode);
         destinationsMap.set(pkg.locationCode, {
           locationCode: pkg.locationCode,
           name: pkg.location,
@@ -241,25 +236,23 @@ export async function GET(req: NextRequest) {
           minPrice: pkg.price,
           maxDataMB: dataMB,
           speeds: pkg.speed ? [pkg.speed] : [],
-          featured: pkg.featured,
+          featured: isFeatured,
+          displayOrder: featuredEntry?.displayOrder ?? 999,
         });
       }
     }
 
-    // Sort: featured first, then regions first, then alphabetical
+    // Sort: featured first (by displayOrder), then regions, then alphabetical
     const destinations = Array.from(destinationsMap.values())
       .sort((a, b) => {
         if (a.featured !== b.featured) return a.featured ? -1 : 1;
+        if (a.featured && b.featured) return a.displayOrder - b.displayOrder;
         if (a.isRegional !== b.isRegional) return a.isRegional ? -1 : 1;
         return a.name.localeCompare(b.name);
       });
 
     const payload = { packages, destinations, total: packages.length };
     packagesCache.set(locationCode, { ...payload, ts: Date.now() });
-
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/c0f3d6c5-f7a1-48de-976d-653a33f6597b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f7158f'},body:JSON.stringify({sessionId:'f7158f',location:'route.ts:success',message:'packages API returning data',data:{pkgCount:packages.length,destCount:destinations.length},timestamp:Date.now(),hypothesisId:'A',runId:'run1'})}).catch(()=>{});
-    // #endregion
     return NextResponse.json(payload);
   } catch (error) {
     const errMsg = (error as Error).message;

@@ -148,6 +148,17 @@ model PackageOverride {
   @@map("package_overrides")
 }
 
+// ─── Featured Destinations (homepage popular section) ──────────────
+model FeaturedDestination {
+  id           String   @id @default(cuid())
+  locationCode String   @unique        // ISO country code (e.g. "FR", "DE")
+  displayOrder Int      @default(0)    // lower = shown first
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("featured_destinations")
+}
+
 // ─── Fee Settings (Paddle + additional fees for profit calculations) ───
 model FeeSettings {
   id                  String   @id @default(cuid())
