@@ -481,21 +481,25 @@ async function main() {
     select: { slug: true, contentHe: true },
   });
 
-  const alreadyUpdated = pages.every(
-    (p) => p.contentHe && p.contentHe.length > 500
-  );
+  const updates: Array<{ slug: string; contentHe: string; contentAr: string }> = [
+    { slug: 'terms', contentHe: termsHe, contentAr: termsAr },
+    { slug: 'privacy', contentHe: privacyHe, contentAr: privacyAr },
+    { slug: 'refund', contentHe: refundHe, contentAr: refundAr },
+  ];
 
-  if (alreadyUpdated) {
-    console.log('Legal pages already have full translations, skipping.');
-    return;
+  for (const { slug, contentHe, contentAr } of updates) {
+    const existing = pages.find((p) => p.slug === slug);
+    if (!existing) {
+      console.log(`⚠ ${slug} page not found in DB, skipping.`);
+      continue;
+    }
+    if (existing.contentHe && existing.contentHe.length > 500) {
+      console.log(`✓ ${slug} already has full translation, skipping.`);
+      continue;
+    }
+    await prisma.page.update({ where: { slug }, data: { contentHe, contentAr } });
+    console.log(`✓ ${slug} updated`);
   }
-
-  await prisma.page.update({ where: { slug: 'terms' }, data: { contentHe: termsHe, contentAr: termsAr } });
-  console.log('✓ terms updated');
-  await prisma.page.update({ where: { slug: 'privacy' }, data: { contentHe: privacyHe, contentAr: privacyAr } });
-  console.log('✓ privacy updated');
-  await prisma.page.update({ where: { slug: 'refund' }, data: { contentHe: refundHe, contentAr: refundAr } });
-  console.log('✓ refund updated');
 }
 
 main().catch(console.error).finally(() => prisma.$disconnect());
