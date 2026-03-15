@@ -10,6 +10,7 @@
     "app": "App",
     "account": "Account",
     "cart": "Cart",
+    "calculator": "Calculator",
     "searchPlaceholder": "Search destination..."
   },
   "home": {

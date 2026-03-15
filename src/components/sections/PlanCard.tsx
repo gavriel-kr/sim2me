@@ -12,6 +12,7 @@ import { useCartStore } from '@/stores/cartStore';
 import { useToast } from '@/hooks/useToast';
 import { createSharedPathnamesNavigation } from 'next-intl/navigation';
 import { routing } from '@/i18n/routing';
+import { DataUsageModal } from '@/components/sections/DataUsageModal';
 
 const { Link: IntlLink } = createSharedPathnamesNavigation(routing);
 
@@ -152,6 +153,7 @@ export function PlanCard({ plan, destinationName, destinationSlug }: PlanCardPro
             </li>
           )}
         </ul>
+        <DataUsageModal />
       </CardContent>
       <CardFooter className="flex gap-2 p-6 pt-0">
         <Button className="flex-1" onClick={handleAddToCart}>

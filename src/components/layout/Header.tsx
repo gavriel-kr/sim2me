@@ -23,6 +23,7 @@ const defaultNavLinks = [
   { href: '/app', key: 'app' },
   { href: '/how-it-works', key: 'howItWorks' },
   { href: '/compatible-devices', key: 'devices' },
+  { href: '/data-calculator', key: 'calculator' },
   { href: '/help', key: 'help' },
   { href: '/contact', key: 'contact' },
 ];
