@@ -1,10 +1,14 @@
+import { getTranslations } from 'next-intl/server';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { DataUsageCalculator } from '@/components/sections/DataUsageCalculator';
 
-export const metadata = {
-  title: 'מחשבון צריכת דאטה | Sim2Me',
-  description: 'חשבו כמה גיגה-בייט תצרכו בחופשה — TikTok, YouTube, Instagram, ניווט ועוד.',
-};
+export async function generateMetadata({ params: { locale } }: { params: { locale: string } }) {
+  const t = await getTranslations({ locale, namespace: 'calculator' });
+  return {
+    title: `${t('title')} | Sim2Me`,
+    description: t('subtitle'),
+  };
+}
 
 export default function DataCalculatorPage() {
   return (

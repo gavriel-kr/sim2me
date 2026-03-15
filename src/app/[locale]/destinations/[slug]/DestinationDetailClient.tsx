@@ -4,7 +4,9 @@ import { useTranslations } from 'next-intl';
 import { useState, useMemo, useCallback } from 'react';
 import type { Destination, Plan } from '@/types';
 import { PlanCard } from '@/components/sections/PlanCard';
-import { X, SlidersHorizontal, ArrowUpDown, Zap, Wifi, Database, Clock, DollarSign, LayoutGrid } from 'lucide-react';
+import { X, SlidersHorizontal, ArrowUpDown, Zap, Wifi, Database, Clock, DollarSign, LayoutGrid, Info, BarChart2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { DataUsageCalculator } from '@/components/sections/DataUsageCalculator';
 
 /* ─── Filter preset keys (labels come from t()) ──────────────── */
 const DATA_PRESET_KEYS = ['filterAny', 'filter1GB', 'filter3GB', 'filter5GB', 'filter10GB', 'filter20GB'] as const;
@@ -33,16 +35,8 @@ const SORT_OPTIONS = [
 type NetworkFilter = 'all' | '4G' | '5G';
 type SortKey = 'price_asc' | 'price_desc' | 'data_desc' | 'days_desc' | 'popular';
 
-/* ─── Pill button component ─────────────────────────────────── */
-function Pill({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
+/* ─── Pill button ────────────────────────────────────────────── */
+function Pill({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button
       onClick={onClick}
@@ -57,6 +51,59 @@ function Pill({
   );
 }
 
+/* ─── Compact filter slider with live value badge ────────────── */
+function FilterSlider({ value, max, onChange, valueLabel }: {
+  value: number; max: number; onChange: (v: number) => void; valueLabel: string;
+}) {
+  return (
+    <div className="mt-2 flex items-center gap-2.5 max-w-[260px]">
+      <input
+        type="range"
+        min={0}
+        max={max}
+        step={1}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="flex-1 h-1.5 accent-emerald-600 cursor-pointer"
+      />
+      <span className="shrink-0 min-w-[54px] text-center text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md px-2 py-0.5 whitespace-nowrap">
+        {valueLabel}
+      </span>
+    </div>
+  );
+}
+
+/* ─── Simple info popover (click-based, works on mobile) ──────── */
+function FilterInfo({ title, content }: { title: string; content: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="flex items-center justify-center text-gray-400 hover:text-emerald-600 transition-colors"
+      >
+        <Info className="h-3.5 w-3.5" />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute z-50 start-0 top-6 w-64 rounded-xl border border-emerald-100 bg-white shadow-xl p-3.5">
+            {title && <p className="text-xs font-bold text-gray-800 mb-1.5">{title}</p>}
+            <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-line">{content}</p>
+            <button
+              onClick={() => setOpen(false)}
+              className="absolute top-2 end-2 text-gray-400 hover:text-gray-600"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 interface DestinationDetailClientProps {
   destination: Destination;
   initialPlans: Plan[];
@@ -67,12 +114,29 @@ export function DestinationDetailClient({
   initialPlans,
 }: DestinationDetailClientProps) {
   const t = useTranslations('destinations');
+  const tc = useTranslations('calculator');
 
   const [dataIdx, setDataIdx] = useState(0);
   const [daysIdx, setDaysIdx] = useState(0);
   const [priceIdx, setPriceIdx] = useState(0);
   const [network, setNetwork] = useState<NetworkFilter>('all');
   const [sortBy, setSortBy] = useState<SortKey>('price_asc');
+  const [calcNudgeOpen, setCalcNudgeOpen] = useState(false);
+
+  /** Map weekly GB estimate from calculator → DATA_PRESET_MB index */
+  const weeklyGbToDataIdx = (gb: number): number => {
+    if (gb < 1)  return 0;
+    if (gb < 3)  return 1;
+    if (gb < 5)  return 2;
+    if (gb < 10) return 3;
+    if (gb < 20) return 4;
+    return 5;
+  };
+
+  const handleCalcFindPlan = useCallback((weeklyGB: number) => {
+    setDataIdx(weeklyGbToDataIdx(weeklyGB));
+    setCalcNudgeOpen(false);
+  }, []);
 
   const clearAll = useCallback(() => {
     setDataIdx(0);
@@ -163,8 +227,29 @@ export function DestinationDetailClient({
         </div>
       </div>
 
+      {/* ─── Calculator nudge (opens popup) ─────────────────── */}
+      <Dialog open={calcNudgeOpen} onOpenChange={setCalcNudgeOpen}>
+        <DialogTrigger asChild>
+          <button
+            type="button"
+            className="mt-4 inline-flex items-center gap-2 rounded-xl bg-emerald-50 border border-emerald-200 px-3 py-2 hover:bg-emerald-100 transition-colors cursor-pointer"
+          >
+            <BarChart2 className="h-4 w-4 text-emerald-500 shrink-0" />
+            <p className="text-xs font-medium text-gray-700">
+              {tc('notSureHowMuch')}{' '}
+              <span className="text-emerald-600 underline underline-offset-2 font-semibold">
+                {tc('tryCalculator')}
+              </span>
+            </p>
+          </button>
+        </DialogTrigger>
+        <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-y-auto p-0 rounded-2xl" showClose>
+          <DataUsageCalculator onFindPlan={handleCalcFindPlan} />
+        </DialogContent>
+      </Dialog>
+
       {/* ─── Filter bar ─────────────────────────────────────── */}
-      <div className="mt-6 rounded-2xl border border-gray-200 bg-white shadow-sm">
+      <div className="mt-3 rounded-2xl border border-gray-200 bg-white shadow-sm">
         {/* Sort row */}
         <div className="flex items-center justify-between gap-3 border-b border-gray-100 px-4 py-3">
           <div className="flex items-center gap-2">
@@ -195,6 +280,28 @@ export function DestinationDetailClient({
           <div className="mb-2 flex items-center gap-1.5">
             <Database className="h-3.5 w-3.5 text-gray-400" />
             <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t('filterDataLabel')}</span>
+            {/* Data info popup */}
+            <Dialog>
+              <DialogTrigger asChild>
+                <button
+                  type="button"
+                  className="flex items-center justify-center rounded-full text-gray-400 hover:text-emerald-600 transition-colors"
+                  aria-label={tc('dataInfoTitle')}
+                >
+                  <Info className="h-3.5 w-3.5" />
+                </button>
+              </DialogTrigger>
+              <DialogContent className="max-w-xl w-[95vw] max-h-[90vh] overflow-y-auto rounded-2xl p-6" showClose>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">{tc('dataInfoTitle')}</h3>
+                <p className="text-sm text-gray-600 leading-relaxed mb-4">{tc('dataInfoText')}</p>
+                <div className="border-t border-gray-100 pt-4">
+                  <p className="text-xs font-semibold text-gray-500 mb-3 flex items-center gap-1.5">
+                    <BarChart2 className="h-3.5 w-3.5" /> {tc('openCalculator')}
+                  </p>
+                  <DataUsageCalculator compact />
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
           <div className="flex flex-wrap gap-2">
             {DATA_PRESET_KEYS.map((key, i) => (
@@ -203,6 +310,12 @@ export function DestinationDetailClient({
               </Pill>
             ))}
           </div>
+          <FilterSlider
+            value={dataIdx}
+            max={DATA_PRESET_KEYS.length - 1}
+            onChange={setDataIdx}
+            valueLabel={t(DATA_PRESET_KEYS[dataIdx])}
+          />
         </div>
 
         {/* Days pills */}
@@ -210,6 +323,7 @@ export function DestinationDetailClient({
           <div className="mb-2 flex items-center gap-1.5">
             <Clock className="h-3.5 w-3.5 text-gray-400" />
             <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t('filterDuration')}</span>
+            <FilterInfo title={tc('durationInfoTitle')} content={tc('durationInfoText')} />
           </div>
           <div className="flex flex-wrap gap-2">
             {DAYS_PRESET_KEYS.map((key, i) => (
@@ -218,6 +332,12 @@ export function DestinationDetailClient({
               </Pill>
             ))}
           </div>
+          <FilterSlider
+            value={daysIdx}
+            max={DAYS_PRESET_KEYS.length - 1}
+            onChange={setDaysIdx}
+            valueLabel={t(DAYS_PRESET_KEYS[daysIdx])}
+          />
         </div>
 
         {/* Price pills */}
@@ -225,6 +345,7 @@ export function DestinationDetailClient({
           <div className="mb-2 flex items-center gap-1.5">
             <DollarSign className="h-3.5 w-3.5 text-gray-400" />
             <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t('filterPriceLabel')}</span>
+            <FilterInfo title={tc('priceInfoTitle')} content={tc('priceInfoText')} />
           </div>
           <div className="flex flex-wrap gap-2">
             {PRICE_PRESET_KEYS.map((key, i) => (
@@ -233,6 +354,12 @@ export function DestinationDetailClient({
               </Pill>
             ))}
           </div>
+          <FilterSlider
+            value={priceIdx}
+            max={PRICE_PRESET_KEYS.length - 1}
+            onChange={setPriceIdx}
+            valueLabel={t(PRICE_PRESET_KEYS[priceIdx])}
+          />
         </div>
 
         {/* Network pills – only show if 5G is available */}
@@ -241,6 +368,7 @@ export function DestinationDetailClient({
             <div className="mb-2 flex items-center gap-1.5">
               <Zap className="h-3.5 w-3.5 text-gray-400" />
               <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t('filterNetwork')}</span>
+              <FilterInfo title={tc('networkInfoTitle')} content={tc('networkInfoText')} />
             </div>
             <div className="flex flex-wrap gap-2">
               {(['all', '4G', '5G'] as NetworkFilter[]).map((v) => (

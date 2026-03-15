@@ -1,4 +1,4 @@
-import { notFound } from 'next/navigation';
+import { cache } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { DestinationDetailClient } from './DestinationDetailClient';
 import { translatePlanName } from '@/lib/translate-plan-name';
@@ -43,13 +43,15 @@ function translateCountryName(name: string, isoCode: string, isRegional: boolean
   return name;
 }
 
-async function getDestinationData(slug: string, locale: string = 'en') {
+// cache() deduplicates within a single request (generateMetadata + page share one fetch)
+const getDestinationData = cache(async function getDestinationData(slug: string, locale: string = 'en') {
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
   const locationCode = slug.toUpperCase();
 
   try {
     const res = await fetch(`${baseUrl}/api/packages?location=${locationCode}`, {
       next: { revalidate: 300 },
+      signal: AbortSignal.timeout(10000),
     });
     if (!res.ok) return null;
     const data = await res.json();
@@ -142,7 +144,7 @@ async function getDestinationData(slug: string, locale: string = 'en') {
   } catch {
     return null;
   }
-}
+});
 
 const SITE_URL = 'https://www.sim2me.net';
 
@@ -171,7 +173,24 @@ export async function generateMetadata({ params }: PageProps) {
 export default async function DestinationDetailPage({ params }: PageProps) {
   const { slug, locale } = await params;
   const data = await getDestinationData(slug, locale);
-  if (!data) notFound();
+  if (!data) {
+    return (
+      <MainLayout>
+        <div className="container px-4 py-24 text-center">
+          <p className="text-4xl mb-4">🌐</p>
+          <h1 className="text-xl font-bold text-gray-800 mb-2">
+            {locale === 'he' ? 'לא הצלחנו לטעון את הנתונים' : locale === 'ar' ? 'تعذر تحميل البيانات' : 'Could not load destination data'}
+          </h1>
+          <p className="text-sm text-muted-foreground mb-6">
+            {locale === 'he' ? 'ייתכן שהשרת עמוס. נסה שוב בעוד רגע.' : locale === 'ar' ? 'قد يكون الخادم مشغولاً. حاول مجدداً.' : 'The server may be busy. Please try again in a moment.'}
+          </p>
+          <a href={`/${locale}/destinations/${slug}`} className="inline-block rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors">
+            {locale === 'he' ? 'נסה שוב' : locale === 'ar' ? 'حاول مجدداً' : 'Try again'}
+          </a>
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>

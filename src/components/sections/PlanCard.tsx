@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import type { Plan } from '@/types';
 import { formatPrice } from '@/lib/utils';
@@ -13,6 +14,28 @@ import { useToast } from '@/hooks/useToast';
 import { createSharedPathnamesNavigation } from 'next-intl/navigation';
 import { routing } from '@/i18n/routing';
 import { DataUsageModal } from '@/components/sections/DataUsageModal';
+
+/** Works on both desktop (hover) and mobile (click-toggle) */
+function InfoTooltip({ content }: { content: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <Tooltip open={open} onOpenChange={setOpen} delayDuration={0}>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          onClick={(e) => { e.preventDefault(); setOpen((o) => !o); }}
+          className="inline-flex cursor-pointer text-muted-foreground hover:text-emerald-600 transition-colors"
+          aria-label="info"
+        >
+          <Info className="h-3.5 w-3.5" />
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="top" className="border-emerald-100 bg-emerald-50/95 text-gray-800">
+        <p>{content}</p>
+      </TooltipContent>
+    </Tooltip>
+  );
+}
 
 const { Link: IntlLink } = createSharedPathnamesNavigation(routing);
 
@@ -100,56 +123,31 @@ export function PlanCard({ plan, destinationName, destinationSlug }: PlanCardPro
           </div>
         </div>
         <ul className="mt-4 space-y-1.5 text-sm text-muted-foreground">
-          <li>
+          <li className="flex items-center gap-1">
             <span className="font-medium text-foreground">{t('data')}:</span> {localizedData}
+            <InfoTooltip content={t('dataTooltip')} />
           </li>
           <li className="flex items-center gap-1">
             <span className="font-medium text-foreground">{t('validity')}:</span> {plan.days} {t('days')}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="inline-flex cursor-help text-muted-foreground hover:text-emerald-600 transition-colors">
-                  <Info className="h-3.5 w-3.5" />
-                </span>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="border-emerald-100 bg-emerald-50/95 text-gray-800">
-                <p>{t('validityTooltip')}</p>
-              </TooltipContent>
-            </Tooltip>
+            <InfoTooltip content={t('validityTooltip')} />
           </li>
-          <li>
+          <li className="flex items-center gap-1">
             <span className="font-medium text-foreground">{t('network')}:</span> {plan.networkType}
             {plan.networkType === '5G' && (
               <Badge variant="secondary" className="ms-2 text-xs">5G</Badge>
             )}
+            <InfoTooltip content={t('networkTooltip')} />
           </li>
           {plan.tethering && (
             <li className="flex items-center gap-1">
               <span className="font-medium text-foreground">{t('tethering')}:</span> {t('yes')}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="inline-flex cursor-help text-muted-foreground hover:text-emerald-600 transition-colors">
-                    <Info className="h-3.5 w-3.5" />
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="border-emerald-100 bg-emerald-50/95 text-gray-800">
-                  <p>{t('tetheringTooltip')}</p>
-                </TooltipContent>
-              </Tooltip>
+              <InfoTooltip content={t('tetheringTooltip')} />
             </li>
           )}
           {plan.topUps && (
             <li className="flex items-center gap-1">
               <span className="font-medium text-foreground">{t('topUps')}:</span> {t('available')}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="inline-flex cursor-help text-muted-foreground hover:text-emerald-600 transition-colors">
-                    <Info className="h-3.5 w-3.5" />
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="border-emerald-100 bg-emerald-50/95 text-gray-800">
-                  <p>{t('topUpsTooltip')}</p>
-                </TooltipContent>
-              </Tooltip>
+              <InfoTooltip content={t('topUpsTooltip')} />
             </li>
           )}
         </ul>

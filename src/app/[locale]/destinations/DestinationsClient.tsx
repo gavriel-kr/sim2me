@@ -13,7 +13,7 @@ import {
   ChevronDown, ArrowUpDown, Filter, LayoutGrid,
 } from 'lucide-react';
 
-const { Link: IntlLink } = createSharedPathnamesNavigation(routing);
+const { Link: IntlLink, useRouter } = createSharedPathnamesNavigation(routing);
 
 /* ─── Types ────────────────────────────────────────────────── */
 interface DestItem {
@@ -163,7 +163,9 @@ function translateContinent(continent: string, locale: string): string {
    ═══════════════════════════════════════════════════════════════ */
 export function DestinationsClient({ locale = 'en' }: { locale?: string }) {
   const t = useTranslations('destinations');
+  const router = useRouter();
   const searchRef = useRef<HTMLInputElement>(null);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
   const searchParams = useSearchParams();
 
   /* ── Localized filter labels ────────────────────────────────── */
@@ -187,6 +189,8 @@ export function DestinationsClient({ locale = 'en' }: { locale?: string }) {
 
   /* ── State ─────────────────────────────────────────────────── */
   const [search, setSearch] = useState(() => searchParams.get('q') ?? '');
+  const [suggestionOpen, setSuggestionOpen] = useState(false);
+  const [suggestionIdx, setSuggestionIdx] = useState(-1);
   const [tab, setTab] = useState<'countries' | 'regions'>('countries');
   const [continent, setContinent] = useState('all');
   const [priceIdx, setPriceIdx] = useState(0);
@@ -330,6 +334,44 @@ export function DestinationsClient({ locale = 'en' }: { locale?: string }) {
     setSortBy('name');
   }, []);
 
+  /* ── Autocomplete suggestions ───────────────────────────────── */
+  const suggestions = useMemo(() => {
+    if (!search.trim() || search.length < 1) return [];
+    const q = search.toLowerCase();
+    return destinations
+      .filter((d) => !d.isRegional && d.name.toLowerCase().includes(q))
+      .slice(0, 7);
+  }, [search, destinations]);
+
+  const handleSelectSuggestion = useCallback(
+    (slug: string) => {
+      setSuggestionOpen(false);
+      setSearch('');
+      router.push(`/destinations/${slug}`);
+    },
+    [router]
+  );
+
+  const handleSearchKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (!suggestionOpen) return;
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSuggestionIdx((i) => Math.min(i + 1, suggestions.length - 1));
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSuggestionIdx((i) => Math.max(i - 1, -1));
+      } else if (e.key === 'Enter' && suggestionIdx >= 0 && suggestions[suggestionIdx]) {
+        e.preventDefault();
+        handleSelectSuggestion(suggestions[suggestionIdx].slug);
+      } else if (e.key === 'Escape') {
+        setSuggestionOpen(false);
+        setSuggestionIdx(-1);
+      }
+    },
+    [suggestionOpen, suggestionIdx, suggestions, handleSelectSuggestion]
+  );
+
   const getFlagUrl = useCallback(
     (flagCode: string) => `https://flagcdn.com/w80/${flagCode}.png`,
     []
@@ -345,6 +387,22 @@ export function DestinationsClient({ locale = 'en' }: { locale?: string }) {
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  useEffect(() => {
+    setSuggestionOpen(suggestions.length > 0);
+    setSuggestionIdx(-1);
+  }, [suggestions]);
+
+  /* ── Close suggestions on outside click ─────────────────────── */
+  useEffect(() => {
+    function handle(e: MouseEvent) {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
+        setSuggestionOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handle);
+    return () => document.removeEventListener('mousedown', handle);
   }, []);
 
   /* ── Loading ───────────────────────────────────────────────── */
@@ -400,7 +458,7 @@ export function DestinationsClient({ locale = 'en' }: { locale?: string }) {
         {/* Row 1: Search + Sort */}
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 sm:p-4">
           {/* Search input */}
-          <div className="relative flex-1">
+          <div className="relative flex-1 sm:max-w-xs" ref={searchContainerRef}>
             <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <input
               ref={searchRef}
@@ -408,6 +466,9 @@ export function DestinationsClient({ locale = 'en' }: { locale?: string }) {
               placeholder={t('searchPlaceholder')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={handleSearchKeyDown}
+              onFocus={() => suggestions.length > 0 && setSuggestionOpen(true)}
+              autoComplete="off"
               className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 ps-10 pe-10 text-sm
                 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20
                 transition-colors"
@@ -419,6 +480,36 @@ export function DestinationsClient({ locale = 'en' }: { locale?: string }) {
               >
                 <X className="h-4 w-4" />
               </button>
+            )}
+            {/* Autocomplete dropdown */}
+            {suggestionOpen && suggestions.length > 0 && (
+              <ul
+                role="listbox"
+                className="absolute z-50 mt-1 w-full rounded-xl border border-gray-200 bg-white shadow-lg overflow-hidden"
+              >
+                {suggestions.map((dest, idx) => (
+                  <li
+                    key={dest.id}
+                    role="option"
+                    aria-selected={idx === suggestionIdx}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      handleSelectSuggestion(dest.slug);
+                    }}
+                    onMouseEnter={() => setSuggestionIdx(idx)}
+                    className={`flex items-center gap-3 px-3 py-2 cursor-pointer text-sm transition-colors
+                      ${idx === suggestionIdx ? 'bg-emerald-50 text-emerald-800' : 'hover:bg-gray-50'}`}
+                  >
+                    <img
+                      src={`https://flagcdn.com/w40/${dest.flagCode}.png`}
+                      alt=""
+                      className="h-4 w-6 rounded-sm object-cover shrink-0"
+                      loading="lazy"
+                    />
+                    <span className="font-medium">{dest.name}</span>
+                  </li>
+                ))}
+              </ul>
             )}
           </div>
 

@@ -128,7 +128,9 @@
     "toastAdded": "Added to cart",
     "toastMinOrder": "Added to cart — minimum order notice",
     "toastMinDesc": "This plan costs {price}. Minimum purchase is {min}.",
-    "forDestination": "for"
+    "forDestination": "for",
+    "dataTooltip": "This is the total data for the entire package — not per day. E.g. 5 GB / 30 days means up to 5 GB over the full 30 days.",
+    "networkTooltip": "5G: ultra-fast (up to 1 Gbps) — streaming, gaming, video calls.\n4G/LTE: fast (up to 150 Mbps) — social media, maps, browsing.\n3G: basic (up to 21 Mbps) — messaging and email."
   },
   "howItWorks": {
     "title": "How It Works",
@@ -462,5 +464,32 @@
     "privacyContent": "This Privacy Policy applies globally to all countries and customers worldwide.\n\nWe collect your email and payment information to process orders. We do not sell your data. For support we may use your contact details to respond.",
     "refundTitle": "Refund Policy",
     "refundContent": "This Refund Policy applies globally to all countries and customers worldwide.\n\nUnused eSIMs can be refunded within 14 days of purchase. Once the eSIM is installed or activated, the plan is non-refundable. Contact support with your order ID to request a refund."
+  },
+  "calculator": {
+    "title": "Data Usage Calculator",
+    "subtitle": "Plan your trip smartly. Enter your browsing habits and get an accurate estimate of the data you'll need.",
+    "chooseApp": "Choose app...",
+    "howLong": "How long?",
+    "minutes": "Minutes",
+    "hours": "Hours",
+    "addPlatform": "Add another app",
+    "removeRow": "Remove row",
+    "summaryTitle": "Estimated Usage",
+    "dailyLabel": "Daily usage",
+    "weeklyLabel": "Weekly (7 days)",
+    "tenDaysLabel": "10 days",
+    "findPlan": "Find me the right plan",
+    "openCalculator": "Data usage calculator",
+    "dataInfoTitle": "About this data amount",
+    "dataInfoText": "The data shown is the total for the entire package — not per day. For example, a 5 GB / 30-day plan lets you use up to 5 GB across those 30 days.",
+    "notSureHowMuch": "Not sure how much data you need?",
+    "tryCalculator": "Try our calculator",
+    "disclaimer": "These estimates are based on global industry averages (Opensignal, network operators). Actual usage varies by device, network conditions, and content quality. Sim2Me does not guarantee accuracy.",
+    "durationInfoTitle": "Package Duration",
+    "durationInfoText": "The days countdown starts from your first data use at your destination — not from the purchase date.",
+    "priceInfoTitle": "Package Price",
+    "priceInfoText": "The price shown is the total for the entire package duration. No hidden fees.",
+    "networkInfoTitle": "Network Speed",
+    "networkInfoText": "5G: Very fast (up to 1 Gbps) — great for streaming and video calls.\n4G/LTE: Fast (up to 150 Mbps) — ideal for social media, maps, and browsing.\n3G: Basic (up to 21 Mbps) — suitable for messaging and email."
   }
 }
