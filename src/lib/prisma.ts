@@ -6,7 +6,10 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function createPrismaClient() {
-  return new PrismaClient().$extends(withAccelerate());
+  // PRISMA_DATABASE_URL takes priority (Accelerate URL for serverless runtime).
+  // Falls back to DATABASE_URL (direct connection, managed by Vercel integration).
+  const url = process.env.PRISMA_DATABASE_URL ?? process.env.DATABASE_URL;
+  return new PrismaClient({ datasources: { db: { url } } }).$extends(withAccelerate());
 }
 
 export const prisma = globalForPrisma.prisma ?? createPrismaClient();
