@@ -47,9 +47,9 @@ export const brandConfig = {
   /** Trust: number of destinations to show in marketing */
   destinationsCount: '200+',
   /** Optional rating (e.g. "4.8") */
-  rating: '4.8' as string | null,
+  rating: null as string | null,
   /** Optional review count */
-  reviewCount: '12,000+' as string | null,
+  reviewCount: null as string | null,
 } as const;
 
 export type BrandConfig = typeof brandConfig;
