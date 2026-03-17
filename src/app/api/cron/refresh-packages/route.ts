@@ -7,7 +7,7 @@ export const maxDuration = 60; // allow up to 60s for the eSIMaccess call
 
 /**
  * GET /api/cron/refresh-packages
- * Called automatically by Vercel Cron every 3 hours.
+ * Called automatically by Vercel Cron every 6 hours.
  * Auth: Vercel injects Authorization: Bearer <CRON_SECRET> automatically.
  */
 export async function GET(req: Request) {

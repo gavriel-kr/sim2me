@@ -18,7 +18,7 @@ function formatAgo(ts: number): string {
 
 function formatNextRefresh(ts: number): string {
   const minsElapsed = Math.floor((Date.now() - ts) / 60000);
-  const minsLeft = Math.max(0, 180 - minsElapsed);
+  const minsLeft = Math.max(0, 360 - minsElapsed);
   if (minsLeft === 0) return 'due now';
   if (minsLeft < 60) return `in ${minsLeft}m`;
   const hrs = Math.floor(minsLeft / 60);
