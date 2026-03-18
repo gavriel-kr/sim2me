@@ -43,6 +43,53 @@ const IconSpark = () => (
   </svg>
 );
 
+/*
+ * cx=100, cy=86 — arcs radiate upward from globe center
+ * Arc 1 (innermost) 45°  r=18  → start/end y ≈ 69.4
+ * Arc 2            60°  r=34  → start/end y ≈ 56.6
+ * Arc 3 (outermost) 75° r=50  → start/end y ≈ 46.3
+ */
+const WAVE_ARCS = [
+  { d: 'M93.1,69.4 A18,18 0 0,1 106.9,69.4', sw: 5.5, delay: '0s'    },
+  { d: 'M83,56.6 A34,34 0 0,1 117,56.6',     sw: 5.0, delay: '0.5s'  },
+  { d: 'M69.6,46.3 A50,50 0 0,1 130.4,46.3', sw: 4.5, delay: '1s'    },
+];
+
+function BrandWaveBackdrop() {
+  return (
+    <div className="flex h-full w-full items-center justify-center" aria-hidden>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 200 96"
+        className="h-full w-full"
+      >
+        {/* Globe image centered at (100, 86) — 16×16 */}
+        <image href="/globe-icon.png" x="89" y="75" width="22" height="22" />
+
+        {WAVE_ARCS.map(({ d, sw, delay }, i) => (
+          <path
+            key={i}
+            d={d}
+            fill="none"
+            stroke="#10b981"
+            strokeWidth={sw}
+            strokeLinecap="round"
+            opacity="0"
+          >
+            <animate
+              attributeName="opacity"
+              values="0;0.32;0"
+              dur="2.4s"
+              begin={delay}
+              repeatCount="indefinite"
+            />
+          </path>
+        ))}
+      </svg>
+    </div>
+  );
+}
+
 /** Works on both desktop (hover) and mobile (click-toggle) */
 function InfoTooltip({ content }: { content: string }) {
   const [open, setOpen] = useState(false);
@@ -153,7 +200,7 @@ export function PlanCard({ plan, destinationName, destinationSlug }: PlanCardPro
         </div>
       )}
       <CardContent className="relative flex-1 p-6">
-        <div className="flex items-start justify-between gap-3">
+        <div className="relative z-10 flex items-start justify-between gap-3">
           <div>
             <p className="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-sm font-semibold text-foreground ring-1 ring-emerald-100">
               {localizedData} · {plan.days} {t('days')}
@@ -172,38 +219,43 @@ export function PlanCard({ plan, destinationName, destinationSlug }: PlanCardPro
             )}
           </div>
         </div>
-        <ul className="mt-5 space-y-2.5 text-sm text-muted-foreground">
-          <li className="flex items-center gap-2">
-            <IconData />
-            <span className="font-medium text-foreground">{t('data')}:</span> {localizedData}
-            <InfoTooltip content={t('dataTooltip')} />
-          </li>
-          <li className="flex items-center gap-2">
-            <IconValidity />
-            <span className="font-medium text-foreground">{t('validity')}:</span> {plan.days} {t('days')}
-            <InfoTooltip content={t('validityTooltip')} />
-          </li>
-          <li className="flex items-center gap-2">
-            <IconNetwork />
-            <span className="font-medium text-foreground">{t('network')}:</span> {plan.networkType}
-            {plan.networkType === '5G' && (
-              <span className="ms-2 rounded-full bg-teal-100 px-2 py-0.5 text-xs font-medium text-teal-700">5G</span>
+        <div className="relative z-10 mt-5 flex items-center gap-2">
+          <ul className="flex-1 space-y-2.5 text-sm text-muted-foreground">
+            <li className="flex items-center gap-2">
+              <IconData />
+              <span className="font-medium text-foreground">{t('data')}:</span> {localizedData}
+              <InfoTooltip content={t('dataTooltip')} />
+            </li>
+            <li className="flex items-center gap-2">
+              <IconValidity />
+              <span className="font-medium text-foreground">{t('validity')}:</span> {plan.days} {t('days')}
+              <InfoTooltip content={t('validityTooltip')} />
+            </li>
+            <li className="flex items-center gap-2">
+              <IconNetwork />
+              <span className="font-medium text-foreground">{t('network')}:</span> {plan.networkType}
+              {plan.networkType === '5G' && (
+                <span className="ms-2 rounded-full bg-teal-100 px-2 py-0.5 text-xs font-medium text-teal-700">5G</span>
+              )}
+              <InfoTooltip content={t('networkTooltip')} />
+            </li>
+            {plan.tethering && (
+              <li className="flex items-center gap-2">
+                <span className="font-medium text-foreground">{t('tethering')}:</span> {t('yes')}
+                <InfoTooltip content={t('tetheringTooltip')} />
+              </li>
             )}
-            <InfoTooltip content={t('networkTooltip')} />
-          </li>
-          {plan.tethering && (
-            <li className="flex items-center gap-2">
-              <span className="font-medium text-foreground">{t('tethering')}:</span> {t('yes')}
-              <InfoTooltip content={t('tetheringTooltip')} />
-            </li>
-          )}
-          {plan.topUps && (
-            <li className="flex items-center gap-2">
-              <span className="font-medium text-foreground">{t('topUps')}:</span> {t('available')}
-              <InfoTooltip content={t('topUpsTooltip')} />
-            </li>
-          )}
-        </ul>
+            {plan.topUps && (
+              <li className="flex items-center gap-2">
+                <span className="font-medium text-foreground">{t('topUps')}:</span> {t('available')}
+                <InfoTooltip content={t('topUpsTooltip')} />
+              </li>
+            )}
+          </ul>
+          <div className="shrink-0 self-stretch flex items-center justify-center w-[30%] min-w-[80px] max-w-[110px]">
+            <BrandWaveBackdrop />
+          </div>
+        </div>
         <DataUsageModal />
       </CardContent>
       <CardFooter className="relative flex gap-2 p-6 pt-0">
