@@ -1,5 +1,6 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
 import type { Destination, Plan } from '@/types';
 import { formatPrice } from '@/lib/utils';
@@ -52,6 +53,70 @@ function IconTopUps() {
       <path d="M12 5v14M5 12h14" />
       <circle cx="12" cy="12" r="9" />
     </svg>
+  );
+}
+
+function IconData() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5" aria-hidden>
+      <ellipse cx="12" cy="5" rx="8" ry="3" />
+      <path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5" />
+      <path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3" />
+    </svg>
+  );
+}
+
+function IconValidity() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5" aria-hidden>
+      <rect x="3" y="4" width="18" height="18" rx="2.5" />
+      <path d="M8 2v4M16 2v4M3 10h18" />
+    </svg>
+  );
+}
+
+function DetailInfo({
+  icon,
+  label,
+  tooltip,
+  ariaLabel,
+  children,
+  trailing,
+}: {
+  icon: ReactNode;
+  label: string;
+  tooltip: string;
+  ariaLabel: string;
+  children: ReactNode;
+  trailing?: ReactNode;
+}) {
+  return (
+    <div className="rounded-2xl border border-emerald-100/80 bg-emerald-50/40 p-4">
+      <div className="flex items-start gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white text-emerald-600 shadow-sm ring-1 ring-emerald-100">
+          {icon}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <span>{label}</span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-flex cursor-help hover:text-emerald-600 transition-colors" aria-label={ariaLabel}>
+                  <Info className="h-3.5 w-3.5" />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-[260px] border-emerald-100 bg-emerald-50/95 text-gray-800">
+                <p>{tooltip}</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <div className="font-medium text-foreground">{children}</div>
+            {trailing}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -162,81 +227,57 @@ export function PlanDetailClient({ destination, plan }: PlanDetailClientProps) {
                   <Badge variant="secondary">5G</Badge>
                 )}
               </div>
-              <p className="mt-2 text-muted-foreground">{plan.operatorName}</p>
-              <dl className="mt-6 grid gap-3 sm:grid-cols-2">
-                <div>
-                  <dt className="text-sm text-muted-foreground">{t('data')}</dt>
-                  <dd className="font-medium">{plan.dataDisplay}</dd>
-                </div>
-                <div>
-                  <dt className="flex items-center gap-1 text-sm text-muted-foreground">
-                    {t('validity')}
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="inline-flex cursor-help hover:text-emerald-600 transition-colors">
-                          <Info className="h-3.5 w-3.5" />
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="border-emerald-100 bg-emerald-50/95 text-gray-800">
-                        <p>{t('validityTooltip')}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </dt>
-                  <dd className="font-medium">{plan.days} {t('days')}</dd>
-                </div>
-                <div>
-                  <dt className="text-sm text-muted-foreground">{t('network')}</dt>
-                  <dd className="font-medium">{plan.networkType}</dd>
-                </div>
-                <div>
-                  <dt className="flex items-center gap-1 text-sm text-muted-foreground">
-                    {t('tethering')}
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="inline-flex cursor-help hover:text-emerald-600 transition-colors">
-                          <Info className="h-3.5 w-3.5" />
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="border-emerald-100 bg-emerald-50/95 text-gray-800">
-                        <p>{t('tetheringTooltip')}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </dt>
-                  <dd className="font-medium">{plan.tethering ? t('yes') : t('no')}</dd>
-                </div>
-                <div>
-                  <dt className="flex items-center gap-1 text-sm text-muted-foreground">
-                    {t('topUps')}
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="inline-flex cursor-help hover:text-emerald-600 transition-colors">
-                          <Info className="h-3.5 w-3.5" />
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="border-emerald-100 bg-emerald-50/95 text-gray-800">
-                        <p>{t('topUpsTooltip')}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </dt>
-                  <dd className="font-medium">{plan.topUps ? t('available') : t('no')}</dd>
-                </div>
-              </dl>
+              <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-teal-50 px-3 py-1 text-sm font-medium text-teal-700 ring-1 ring-teal-100">
+                <IconNetworkType />
+                {plan.operatorName}
+              </div>
+              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                <DetailInfo
+                  icon={<IconData />}
+                  label={t('data')}
+                  tooltip={t('dataTooltip')}
+                  ariaLabel={t('data')}
+                >
+                  {plan.dataDisplay}
+                </DetailInfo>
+                <DetailInfo
+                  icon={<IconValidity />}
+                  label={t('validity')}
+                  tooltip={t('validityTooltip')}
+                  ariaLabel={t('validity')}
+                >
+                  {plan.days} {t('days')}
+                </DetailInfo>
+                <DetailInfo
+                  icon={<IconNetworkType />}
+                  label={t('network')}
+                  tooltip={t('networkTooltip')}
+                  ariaLabel={t('network')}
+                  trailing={plan.networkType === '5G' ? <Badge variant="secondary">5G</Badge> : undefined}
+                >
+                  {plan.networkType}
+                </DetailInfo>
+                <DetailInfo
+                  icon={<IconTethering />}
+                  label={t('tethering')}
+                  tooltip={t('tetheringTooltip')}
+                  ariaLabel={t('tethering')}
+                >
+                  {plan.tethering ? t('yes') : t('no')}
+                </DetailInfo>
+                <DetailInfo
+                  icon={<IconTopUps />}
+                  label={t('topUps')}
+                  tooltip={t('topUpsTooltip')}
+                  ariaLabel={t('topUps')}
+                >
+                  {plan.topUps ? t('available') : t('no')}
+                </DetailInfo>
+              </div>
 
               {/* Coverage: clear text guidance instead of an illustrative map */}
               <div className="mt-8 rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50/80 to-teal-50/60 p-6">
-                <p className="mb-3 flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
-                  {t('coverageTitle')}
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="inline-flex cursor-help text-muted-foreground hover:text-emerald-600 transition-colors" aria-label={t('coverageInfoAria')}>
-                        <Info className="h-3.5 w-3.5" />
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="max-w-[280px] border-emerald-100 bg-emerald-50/95 text-gray-800">
-                      <p>{t('coverageTooltip')}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </p>
+                <p className="mb-3 text-xs font-semibold text-muted-foreground">{t('coverageTitle')}</p>
                 <div className="rounded-2xl bg-white/70 p-5 backdrop-blur-sm">
                   <div className="space-y-3">
                     <p className="text-sm font-medium text-foreground">

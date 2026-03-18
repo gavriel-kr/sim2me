@@ -155,13 +155,18 @@ export function PlanCard({ plan, destinationName, destinationSlug }: PlanCardPro
       <CardContent className="relative flex-1 p-6">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="font-semibold">{localizedData} · {plan.days} {t('days')}</p>
-            <p className="mt-0.5 text-sm text-muted-foreground">{plan.operatorName}</p>
+            <p className="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-sm font-semibold text-foreground ring-1 ring-emerald-100">
+              {localizedData} · {plan.days} {t('days')}
+            </p>
+            <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-teal-50 px-3 py-1 text-xs font-medium text-teal-700 ring-1 ring-teal-100">
+              <IconNetwork />
+              {plan.operatorName}
+            </p>
           </div>
           <div className="text-end">
             <span className="text-2xl font-bold">{formatPrice(plan.price, plan.currency)}</span>
             {plan.days > 0 && (
-              <p className="text-xs text-muted-foreground">
+              <p className="mt-2 inline-flex rounded-full bg-sky-50 px-2.5 py-1 text-xs font-medium text-sky-700 ring-1 ring-sky-100">
                 {formatPrice(plan.price / plan.days, plan.currency)} {t('perDay')}
               </p>
             )}
