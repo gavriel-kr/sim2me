@@ -35,15 +35,15 @@ const SORT_OPTIONS = [
 type NetworkFilter = 'all' | '4G' | '5G';
 type SortKey = 'price_asc' | 'price_desc' | 'data_desc' | 'days_desc' | 'popular';
 
-/* ─── Pill button ────────────────────────────────────────────── */
+/* ─── Pill button (active = subtle green glow) ────────────────── */
 function Pill({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button
       onClick={onClick}
       className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-all border ${
         active
-          ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
-          : 'bg-white text-gray-600 border-gray-200 hover:border-emerald-400 hover:text-emerald-700'
+          ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm shadow-emerald-500/25 ring-1 ring-emerald-400/40'
+          : 'bg-white/80 text-gray-600 border-gray-200 hover:border-emerald-400 hover:text-emerald-700'
       }`}
     >
       {children}
@@ -88,7 +88,7 @@ function FilterInfo({ title, content }: { title: string; content: string }) {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute z-50 start-0 top-6 w-64 rounded-xl border border-emerald-100 bg-white shadow-xl p-3.5">
+          <div className="absolute z-50 start-0 top-6 w-64 rounded-2xl border border-emerald-100 bg-white shadow-xl p-3.5">
             {title && <p className="text-xs font-bold text-gray-800 mb-1.5">{title}</p>}
             <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-line">{content}</p>
             <button
@@ -206,7 +206,7 @@ export function DestinationDetailClient({
         <img
           src={destination.flagUrl}
           alt={destination.name}
-          className="h-16 w-24 rounded-xl object-cover shadow-md ring-1 ring-black/10"
+          className="h-16 w-24 rounded-2xl object-cover shadow-md ring-1 ring-black/10"
         />
         <div>
           <h1 className="text-2xl font-bold sm:text-3xl">{destination.name}</h1>
@@ -232,7 +232,7 @@ export function DestinationDetailClient({
         <DialogTrigger asChild>
           <button
             type="button"
-            className="mt-4 inline-flex items-center gap-2 rounded-xl bg-emerald-50 border border-emerald-200 px-3 py-2 hover:bg-emerald-100 transition-colors cursor-pointer"
+            className="mt-4 inline-flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2 transition-colors hover:bg-emerald-100 cursor-pointer"
           >
             <BarChart2 className="h-4 w-4 text-emerald-500 shrink-0" />
             <p className="text-xs font-medium text-gray-700">
@@ -243,15 +243,15 @@ export function DestinationDetailClient({
             </p>
           </button>
         </DialogTrigger>
-        <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-y-auto p-0 rounded-2xl" showClose>
+        <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-y-auto p-0 rounded-3xl" showClose>
           <DataUsageCalculator onFindPlan={handleCalcFindPlan} />
         </DialogContent>
       </Dialog>
 
-      {/* ─── Filter bar ─────────────────────────────────────── */}
-      <div className="mt-3 rounded-2xl border border-gray-200 bg-white shadow-sm">
+      {/* ─── Filter bar (glassmorphism, highlighted) ─── */}
+      <div className="relative mt-3 overflow-hidden rounded-3xl border border-emerald-100/90 bg-white/80 shadow-lg shadow-emerald-900/5 backdrop-blur-md">
         {/* Sort row */}
-        <div className="flex items-center justify-between gap-3 border-b border-gray-100 px-4 py-3">
+        <div className="relative flex items-center justify-between gap-3 border-b border-gray-100/80 px-4 py-3">
           <div className="flex items-center gap-2">
             <SlidersHorizontal className="h-4 w-4 text-gray-400" />
             <span className="text-sm font-semibold text-gray-700">{t('filters')}</span>
@@ -266,7 +266,7 @@ export function DestinationDetailClient({
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortKey)}
-              className="appearance-none rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-colors hover:border-emerald-400"
+              className="appearance-none rounded-xl border border-gray-200 bg-white/90 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:border-emerald-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
             >
               {SORT_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>{t(o.key)}</option>
@@ -276,7 +276,7 @@ export function DestinationDetailClient({
         </div>
 
         {/* Data pills */}
-        <div className="border-b border-gray-100 px-4 py-3">
+        <div className="relative border-b border-gray-100/80 px-4 py-3">
           <div className="mb-2 flex items-center gap-1.5">
             <Database className="h-3.5 w-3.5 text-gray-400" />
             <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t('filterDataLabel')}</span>
@@ -319,7 +319,7 @@ export function DestinationDetailClient({
         </div>
 
         {/* Days pills */}
-        <div className="border-b border-gray-100 px-4 py-3">
+        <div className="relative border-b border-gray-100/80 px-4 py-3">
           <div className="mb-2 flex items-center gap-1.5">
             <Clock className="h-3.5 w-3.5 text-gray-400" />
             <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t('filterDuration')}</span>
@@ -341,7 +341,7 @@ export function DestinationDetailClient({
         </div>
 
         {/* Price pills */}
-        <div className={`px-4 py-3 ${has5G ? 'border-b border-gray-100' : ''}`}>
+        <div className={`relative px-4 py-3 ${has5G ? 'border-b border-gray-100/80' : ''}`}>
           <div className="mb-2 flex items-center gap-1.5">
             <DollarSign className="h-3.5 w-3.5 text-gray-400" />
             <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t('filterPriceLabel')}</span>
@@ -364,7 +364,7 @@ export function DestinationDetailClient({
 
         {/* Network pills – only show if 5G is available */}
         {has5G && (
-          <div className="px-4 py-3">
+          <div className="relative px-4 py-3">
             <div className="mb-2 flex items-center gap-1.5">
               <Zap className="h-3.5 w-3.5 text-gray-400" />
               <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t('filterNetwork')}</span>
@@ -392,7 +392,7 @@ export function DestinationDetailClient({
 
         {/* Clear all */}
         {hasActiveFilters && (
-          <div className="flex justify-end border-t border-gray-100 px-4 py-2">
+          <div className="relative flex justify-end border-t border-gray-100/80 px-4 py-2">
             <button
               onClick={clearAll}
               className="flex items-center gap-1 text-xs font-medium text-red-500 hover:text-red-700 transition-colors"
@@ -433,7 +433,7 @@ export function DestinationDetailClient({
           <p className="mt-1 text-sm text-gray-400">{t('tryAdjusting')}</p>
           <button
             onClick={clearAll}
-            className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 transition-colors"
+            className="mt-5 inline-flex items-center gap-1.5 rounded-2xl bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-emerald-700"
           >
             <X className="h-3.5 w-3.5" /> {t('clearFilters')}
           </button>
