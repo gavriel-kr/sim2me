@@ -17,20 +17,20 @@ import { Sim2MeIcon } from '@/components/icons/Sim2MeIcon';
 
 /* Thin line icons for Data, Validity, Network */
 const IconData = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5 shrink-0" aria-hidden>
     <ellipse cx="12" cy="5" rx="9" ry="3" />
     <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
     <path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3" />
   </svg>
 );
 const IconValidity = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5 shrink-0" aria-hidden>
     <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
     <path d="M16 2v4M8 2v4M3 10h18" />
   </svg>
 );
 const IconNetwork = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5 shrink-0" aria-hidden>
     <path d="M5 12.55a11 11 0 0 1 14.08 0" />
     <path d="M1.42 9a16 16 0 0 1 21.16 0" />
     <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
@@ -200,39 +200,42 @@ export function PlanCard({ plan, destinationName, destinationSlug }: PlanCardPro
         </div>
       )}
       <CardContent className="relative flex-1 p-6">
-        <div className="relative z-10 flex items-start justify-between gap-3">
+        <div className="relative z-10 flex items-center justify-between gap-3 pb-3 border-b border-gray-200">
           <div>
-            <p className="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-sm font-semibold text-foreground ring-1 ring-emerald-100">
+            <p className="text-xl font-bold text-gray-700">
               {localizedData} · {plan.days} {t('days')}
             </p>
-            <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-teal-50 px-3 py-1 text-xs font-medium text-teal-700 ring-1 ring-teal-100">
-              <IconNetwork />
-              {plan.operatorName}
-            </p>
+            <DataUsageModal />
           </div>
-          <div className="text-end">
-            <span className="text-2xl font-bold">{formatPrice(plan.price, plan.currency)}</span>
+          <div className="flex flex-col items-center gap-1.5">
+            <span className="text-xl font-bold text-gray-700">{formatPrice(plan.price, plan.currency)}</span>
             {plan.days > 0 && (
-              <p className="mt-2 inline-flex rounded-full bg-sky-50 px-2.5 py-1 text-xs font-medium text-sky-700 ring-1 ring-sky-100">
+              <span className="inline-flex rounded-full bg-sky-50 px-2.5 py-1 text-xs font-medium text-sky-700 ring-1 ring-sky-100">
                 {formatPrice(plan.price / plan.days, plan.currency)} {t('perDay')}
-              </p>
+              </span>
             )}
           </div>
         </div>
         <div className="relative z-10 mt-5 flex items-center gap-2">
           <ul className="flex-1 space-y-2.5 text-sm text-muted-foreground">
             <li className="flex items-center gap-2">
-              <IconData />
+              <span className="inline-flex shrink-0 items-center justify-center rounded-lg bg-purple-100 p-1.5 text-purple-600" aria-hidden>
+                <IconData />
+              </span>
               <span className="font-medium text-foreground">{t('data')}:</span> {localizedData}
               <InfoTooltip content={t('dataTooltip')} />
             </li>
             <li className="flex items-center gap-2">
-              <IconValidity />
+              <span className="inline-flex shrink-0 items-center justify-center rounded-lg bg-amber-100 p-1.5 text-amber-600" aria-hidden>
+                <IconValidity />
+              </span>
               <span className="font-medium text-foreground">{t('validity')}:</span> {plan.days} {t('days')}
               <InfoTooltip content={t('validityTooltip')} />
             </li>
             <li className="flex items-center gap-2">
-              <IconNetwork />
+              <span className="inline-flex shrink-0 items-center justify-center rounded-lg bg-emerald-100 p-1.5 text-emerald-600" aria-hidden>
+                <IconNetwork />
+              </span>
               <span className="font-medium text-foreground">{t('network')}:</span> {plan.networkType}
               {plan.networkType === '5G' && (
                 <span className="ms-2 rounded-full bg-teal-100 px-2 py-0.5 text-xs font-medium text-teal-700">5G</span>
@@ -256,7 +259,6 @@ export function PlanCard({ plan, destinationName, destinationSlug }: PlanCardPro
             <BrandWaveBackdrop />
           </div>
         </div>
-        <DataUsageModal />
       </CardContent>
       <CardFooter className="relative flex gap-2 p-6 pt-0">
         <Button

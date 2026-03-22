@@ -10,6 +10,13 @@ import { useQuery } from '@tanstack/react-query';
 
 const { useRouter } = createSharedPathnamesNavigation(routing);
 
+/** Match DestinationsClient search dropdown — cycle tints */
+const SUGGESTION_ROW_CLASSES = [
+  { active: 'bg-blue-50 text-blue-950', idle: 'hover:bg-blue-50/80' },
+  { active: 'bg-amber-50 text-amber-950', idle: 'hover:bg-amber-50/80' },
+  { active: 'bg-emerald-50 text-emerald-950', idle: 'hover:bg-emerald-50/80' },
+] as const;
+
 interface SearchDestinationProps {
   ctaLabel?: string;
 }
@@ -142,7 +149,12 @@ export function SearchDestination({ ctaLabel }: SearchDestinationProps = {}) {
   return (
     <div className="w-full max-w-xl mx-auto" ref={containerRef}>
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+        <span
+          className="pointer-events-none absolute start-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg bg-blue-100 text-blue-600"
+          aria-hidden
+        >
+          <Search className="h-4 w-4 shrink-0" />
+        </span>
         <Input
           type="search"
           placeholder={t('searchPlaceholder')}
@@ -150,7 +162,8 @@ export function SearchDestination({ ctaLabel }: SearchDestinationProps = {}) {
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
           onFocus={() => suggestions.length > 0 && setOpen(true)}
-          className="h-12 pl-10 pr-4 text-base rounded-xl"
+          className="h-12 ps-14 pe-4 text-base rounded-xl border-blue-100 bg-blue-50/50 text-foreground
+            placeholder:text-muted-foreground focus-visible:border-blue-400 focus-visible:ring-blue-500/25"
           aria-label={t('searchPlaceholder')}
           aria-autocomplete="list"
           aria-expanded={open}
@@ -161,7 +174,7 @@ export function SearchDestination({ ctaLabel }: SearchDestinationProps = {}) {
         {open && suggestions.length > 0 && (
           <ul
             role="listbox"
-            className="absolute z-50 mt-1 w-full rounded-xl border border-gray-200 bg-white shadow-lg overflow-hidden"
+            className="absolute z-50 mt-1 w-full rounded-xl border border-blue-100/80 bg-white shadow-lg overflow-hidden"
           >
             {suggestions.map((dest, idx) => (
               <li
@@ -171,7 +184,9 @@ export function SearchDestination({ ctaLabel }: SearchDestinationProps = {}) {
                 onMouseDown={(e) => { e.preventDefault(); handleSelect(dest.slug); }}
                 onMouseEnter={() => setActiveIdx(idx)}
                 className={`flex items-center gap-3 px-4 py-2.5 cursor-pointer text-sm transition-colors
-                  ${idx === activeIdx ? 'bg-emerald-50 text-emerald-800' : 'hover:bg-gray-50'}`}
+                  ${idx === activeIdx
+                    ? SUGGESTION_ROW_CLASSES[idx % 3].active
+                    : `bg-white ${SUGGESTION_ROW_CLASSES[idx % 3].idle}`}`}
               >
                 <img
                   src={`https://flagcdn.com/w40/${dest.flagCode}.png`}

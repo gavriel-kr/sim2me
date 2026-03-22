@@ -2,7 +2,6 @@
 
 import { useTranslations } from 'next-intl';
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { createSharedPathnamesNavigation } from 'next-intl/navigation';
 import { routing } from '@/i18n/routing';
@@ -51,37 +50,84 @@ const DATA_DEFS = [
 
 const SORT_KEYS = ['name', 'price', 'plans', 'data'] as const;
 
+type MiniSelectAccent = 'blue' | 'amber' | 'emerald' | 'default';
+
+const MINI_SELECT_ACCENTS: Record<
+  MiniSelectAccent,
+  { icon: string; select: string; chevron: string }
+> = {
+  blue: {
+    icon: 'text-blue-600',
+    select:
+      'border-blue-200 bg-blue-50/50 hover:border-blue-400 focus:border-blue-500 focus:ring-blue-500/25',
+    chevron: 'text-blue-500/80',
+  },
+  amber: {
+    icon: 'text-amber-600',
+    select:
+      'border-amber-200 bg-amber-50/50 hover:border-amber-400 focus:border-amber-500 focus:ring-amber-500/25',
+    chevron: 'text-amber-500/80',
+  },
+  emerald: {
+    icon: 'text-emerald-600',
+    select:
+      'border-emerald-200 bg-emerald-50/50 hover:border-emerald-400 focus:border-emerald-500 focus:ring-emerald-500/25',
+    chevron: 'text-emerald-500/80',
+  },
+  default: {
+    icon: 'text-gray-500',
+    select:
+      'border-gray-200 bg-white hover:border-gray-300 focus:border-emerald-500 focus:ring-emerald-500/20',
+    chevron: 'text-gray-400',
+  },
+};
+
+/** Autocomplete row tint — cycles like plan-card icon accents */
+const SUGGESTION_ROW_CLASSES = [
+  { active: 'bg-blue-50 text-blue-950', idle: 'hover:bg-blue-50/80' },
+  { active: 'bg-amber-50 text-amber-950', idle: 'hover:bg-amber-50/80' },
+  { active: 'bg-emerald-50 text-emerald-950', idle: 'hover:bg-emerald-50/80' },
+] as const;
+
 /* ─── Select component (tiny) ──────────────────────────────── */
 function MiniSelect({
   value,
   onChange,
   options,
   icon,
+  accent = 'default',
 }: {
   value: string;
   onChange: (v: string) => void;
   options: { value: string; label: string }[];
   icon?: React.ReactNode;
+  accent?: MiniSelectAccent;
 }) {
+  const a = MINI_SELECT_ACCENTS[accent];
   return (
     <div className="relative">
       {icon && (
-        <span className="pointer-events-none absolute start-2.5 top-1/2 -translate-y-1/2 text-gray-400">
+        <span
+          className={`pointer-events-none absolute start-2.5 top-1/2 -translate-y-1/2 ${a.icon}`}
+        >
           {icon}
         </span>
       )}
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className={`appearance-none rounded-lg border border-gray-200 bg-white text-sm font-medium transition-colors
-          hover:border-emerald-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20
+        className={`appearance-none rounded-lg border text-sm font-medium transition-colors
+          focus:outline-none focus:ring-2
+          ${a.select}
           ${icon ? 'ps-8 pe-7 py-2' : 'ps-3 pe-7 py-2'}`}
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>{o.label}</option>
         ))}
       </select>
-      <ChevronDown className="pointer-events-none absolute end-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+      <ChevronDown
+        className={`pointer-events-none absolute end-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 ${a.chevron}`}
+      />
     </div>
   );
 }
@@ -161,12 +207,18 @@ function translateContinent(continent: string, locale: string): string {
 /* ═══════════════════════════════════════════════════════════════
    Main component
    ═══════════════════════════════════════════════════════════════ */
-export function DestinationsClient({ locale = 'en' }: { locale?: string }) {
+export function DestinationsClient({
+  locale = 'en',
+  initialSearchQuery = '',
+}: {
+  locale?: string;
+  /** From server `searchParams.q` — avoids useSearchParams() (CSR bailout / 500 issues). */
+  initialSearchQuery?: string;
+}) {
   const t = useTranslations('destinations');
   const router = useRouter();
   const searchRef = useRef<HTMLInputElement>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
-  const searchParams = useSearchParams();
 
   /* ── Localized filter labels ────────────────────────────────── */
   const PRICE_RANGES = useMemo(() => PRICE_DEFS.map((d) => ({
@@ -188,7 +240,7 @@ export function DestinationsClient({ locale = 'en' }: { locale?: string }) {
   ], [t]);
 
   /* ── State ─────────────────────────────────────────────────── */
-  const [search, setSearch] = useState(() => searchParams.get('q') ?? '');
+  const [search, setSearch] = useState(initialSearchQuery);
   const [suggestionOpen, setSuggestionOpen] = useState(false);
   const [suggestionIdx, setSuggestionIdx] = useState(-1);
   const [tab, setTab] = useState<'countries' | 'regions'>('countries');
@@ -197,6 +249,10 @@ export function DestinationsClient({ locale = 'en' }: { locale?: string }) {
   const [dataIdx, setDataIdx] = useState(0);
   const [speedFilter, setSpeedFilter] = useState('all');
   const [sortBy, setSortBy] = useState<string>('name');
+
+  useEffect(() => {
+    setSearch(initialSearchQuery);
+  }, [initialSearchQuery]);
 
   /* ── Data fetching ─────────────────────────────────────────── */
   const { data: destinations = [], isLoading, isError, refetch } = useQuery<DestItem[]>({
@@ -454,12 +510,17 @@ export function DestinationsClient({ locale = 'en' }: { locale?: string }) {
       <p className="mt-1 text-muted-foreground">{t('subtitle')}</p>
 
       {/* ═══ Unified search + filter bar ═════════════════════════ */}
-      <div className="mt-6 rounded-2xl border border-gray-200 bg-white shadow-sm">
+      <div className="mt-6 rounded-2xl border border-emerald-100/80 bg-gradient-to-br from-blue-50/35 via-white to-amber-50/35 shadow-sm">
         {/* Row 1: Search + Sort */}
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 sm:p-4">
           {/* Search input */}
           <div className="relative flex-1 sm:max-w-xs" ref={searchContainerRef}>
-            <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <span
+              className="pointer-events-none absolute start-2.5 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-lg bg-blue-100 text-blue-600"
+              aria-hidden
+            >
+              <Search className="h-3.5 w-3.5 shrink-0" />
+            </span>
             <input
               ref={searchRef}
               type="text"
@@ -469,14 +530,16 @@ export function DestinationsClient({ locale = 'en' }: { locale?: string }) {
               onKeyDown={handleSearchKeyDown}
               onFocus={() => suggestions.length > 0 && setSuggestionOpen(true)}
               autoComplete="off"
-              className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 ps-10 pe-10 text-sm
-                focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20
+              className="w-full rounded-xl border border-blue-100 bg-blue-50/50 py-2.5 ps-11 pe-10 text-sm text-foreground
+                placeholder:text-muted-foreground focus:border-blue-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/25
                 transition-colors"
             />
             {search && (
               <button
+                type="button"
                 onClick={() => setSearch('')}
-                className="absolute end-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute end-3 top-1/2 -translate-y-1/2 text-blue-400 hover:text-blue-700"
+                aria-label="Clear"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -485,7 +548,7 @@ export function DestinationsClient({ locale = 'en' }: { locale?: string }) {
             {suggestionOpen && suggestions.length > 0 && (
               <ul
                 role="listbox"
-                className="absolute z-50 mt-1 w-full rounded-xl border border-gray-200 bg-white shadow-lg overflow-hidden"
+                className="absolute z-50 mt-1 w-full rounded-xl border border-blue-100/80 bg-white shadow-lg overflow-hidden"
               >
                 {suggestions.map((dest, idx) => (
                   <li
@@ -498,7 +561,9 @@ export function DestinationsClient({ locale = 'en' }: { locale?: string }) {
                     }}
                     onMouseEnter={() => setSuggestionIdx(idx)}
                     className={`flex items-center gap-3 px-3 py-2 cursor-pointer text-sm transition-colors
-                      ${idx === suggestionIdx ? 'bg-emerald-50 text-emerald-800' : 'hover:bg-gray-50'}`}
+                      ${idx === suggestionIdx
+                        ? SUGGESTION_ROW_CLASSES[idx % 3].active
+                        : `bg-white ${SUGGESTION_ROW_CLASSES[idx % 3].idle}`}`}
                   >
                     <img
                       src={`https://flagcdn.com/w40/${dest.flagCode}.png`}
@@ -519,6 +584,7 @@ export function DestinationsClient({ locale = 'en' }: { locale?: string }) {
             onChange={setSortBy}
             icon={<ArrowUpDown className="h-3.5 w-3.5" />}
             options={SORT_OPTIONS}
+            accent="amber"
           />
         </div>
 
@@ -546,6 +612,7 @@ export function DestinationsClient({ locale = 'en' }: { locale?: string }) {
           <MiniSelect
             value={continent}
             onChange={setContinent}
+            accent="amber"
             options={[
               { value: 'all', label: t('allContinents') },
               ...continents.map((c) => ({ value: c, label: c })),
@@ -556,6 +623,7 @@ export function DestinationsClient({ locale = 'en' }: { locale?: string }) {
           <MiniSelect
             value={String(priceIdx)}
             onChange={(v) => setPriceIdx(Number(v))}
+            accent="emerald"
             options={PRICE_RANGES.map((r, i) => ({ value: String(i), label: r.label }))}
           />
 
@@ -563,6 +631,7 @@ export function DestinationsClient({ locale = 'en' }: { locale?: string }) {
           <MiniSelect
             value={String(dataIdx)}
             onChange={(v) => setDataIdx(Number(v))}
+            accent="blue"
             options={DATA_RANGES.map((r, i) => ({ value: String(i), label: r.label }))}
           />
 
@@ -571,6 +640,7 @@ export function DestinationsClient({ locale = 'en' }: { locale?: string }) {
             <MiniSelect
               value={speedFilter}
               onChange={setSpeedFilter}
+              accent="emerald"
               options={[
                 { value: 'all', label: t('anySpeed') },
                 ...allSpeeds.map((s) => ({ value: s, label: s })),

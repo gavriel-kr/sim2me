@@ -35,26 +35,42 @@ const SORT_OPTIONS = [
 type NetworkFilter = 'all' | '4G' | '5G';
 type SortKey = 'price_asc' | 'price_desc' | 'data_desc' | 'days_desc' | 'popular';
 
-/* ─── Pill button (active = subtle green glow) ────────────────── */
-function Pill({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+type PillAccent = 'blue' | 'amber' | 'emerald' | 'purple';
+
+const PILL_ACCENTS: Record<PillAccent, { active: string; idle: string }> = {
+  blue:    { active: 'bg-blue-50 text-blue-700 border-blue-300 ring-1 ring-blue-200',       idle: 'bg-white/80 text-gray-600 border-gray-200 hover:border-blue-300 hover:text-blue-700' },
+  amber:   { active: 'bg-amber-50 text-amber-700 border-amber-300 ring-1 ring-amber-200',   idle: 'bg-white/80 text-gray-600 border-gray-200 hover:border-amber-300 hover:text-amber-700' },
+  emerald: { active: 'bg-emerald-50 text-emerald-700 border-emerald-300 ring-1 ring-emerald-200', idle: 'bg-white/80 text-gray-600 border-gray-200 hover:border-emerald-300 hover:text-emerald-700' },
+  purple:  { active: 'bg-purple-50 text-purple-700 border-purple-300 ring-1 ring-purple-200', idle: 'bg-white/80 text-gray-600 border-gray-200 hover:border-purple-300 hover:text-purple-700' },
+};
+
+/* ─── Pill button ──────────────────────────────────────────────── */
+function Pill({ active, onClick, children, accent = 'emerald' }: {
+  active: boolean; onClick: () => void; children: React.ReactNode; accent?: PillAccent;
+}) {
+  const a = PILL_ACCENTS[accent];
   return (
     <button
       onClick={onClick}
-      className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-all border ${
-        active
-          ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm shadow-emerald-500/25 ring-1 ring-emerald-400/40'
-          : 'bg-white/80 text-gray-600 border-gray-200 hover:border-emerald-400 hover:text-emerald-700'
-      }`}
+      className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-all border ${active ? a.active : a.idle}`}
     >
       {children}
     </button>
   );
 }
 
+const SLIDER_ACCENTS: Record<PillAccent, { track: string; badge: string }> = {
+  purple:  { track: 'accent-purple-600',  badge: 'text-purple-700 bg-purple-50 border-purple-200' },
+  amber:   { track: 'accent-amber-500',   badge: 'text-amber-700 bg-amber-50 border-amber-200' },
+  blue:    { track: 'accent-blue-600',    badge: 'text-blue-700 bg-blue-50 border-blue-200' },
+  emerald: { track: 'accent-emerald-600', badge: 'text-emerald-700 bg-emerald-50 border-emerald-200' },
+};
+
 /* ─── Compact filter slider with live value badge ────────────── */
-function FilterSlider({ value, max, onChange, valueLabel }: {
-  value: number; max: number; onChange: (v: number) => void; valueLabel: string;
+function FilterSlider({ value, max, onChange, valueLabel, accent = 'emerald' }: {
+  value: number; max: number; onChange: (v: number) => void; valueLabel: string; accent?: PillAccent;
 }) {
+  const s = SLIDER_ACCENTS[accent];
   return (
     <div className="mt-2 flex items-center gap-2.5 max-w-[260px]">
       <input
@@ -64,9 +80,9 @@ function FilterSlider({ value, max, onChange, valueLabel }: {
         step={1}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="flex-1 h-1.5 accent-emerald-600 cursor-pointer"
+        className={`flex-1 h-1.5 ${s.track} cursor-pointer`}
       />
-      <span className="shrink-0 min-w-[54px] text-center text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md px-2 py-0.5 whitespace-nowrap">
+      <span className={`shrink-0 min-w-[54px] text-center text-xs font-semibold border rounded-md px-2 py-0.5 whitespace-nowrap ${s.badge}`}>
         {valueLabel}
       </span>
     </div>
@@ -278,7 +294,7 @@ export function DestinationDetailClient({
         {/* Data pills */}
         <div className="relative border-b border-gray-100/80 px-4 py-3">
           <div className="mb-2 flex items-center gap-1.5">
-            <Database className="h-3.5 w-3.5 text-gray-400" />
+            <Database className="h-3.5 w-3.5 text-purple-500" />
             <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t('filterDataLabel')}</span>
             {/* Data info popup */}
             <Dialog>
@@ -305,7 +321,7 @@ export function DestinationDetailClient({
           </div>
           <div className="flex flex-wrap gap-2">
             {DATA_PRESET_KEYS.map((key, i) => (
-              <Pill key={key} active={dataIdx === i} onClick={() => setDataIdx(i)}>
+              <Pill key={key} active={dataIdx === i} onClick={() => setDataIdx(i)} accent="purple">
                 {t(key)}
               </Pill>
             ))}
@@ -315,19 +331,20 @@ export function DestinationDetailClient({
             max={DATA_PRESET_KEYS.length - 1}
             onChange={setDataIdx}
             valueLabel={t(DATA_PRESET_KEYS[dataIdx])}
+            accent="purple"
           />
         </div>
 
         {/* Days pills */}
         <div className="relative border-b border-gray-100/80 px-4 py-3">
           <div className="mb-2 flex items-center gap-1.5">
-            <Clock className="h-3.5 w-3.5 text-gray-400" />
+            <Clock className="h-3.5 w-3.5 text-amber-500" />
             <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t('filterDuration')}</span>
             <FilterInfo title={tc('durationInfoTitle')} content={tc('durationInfoText')} />
           </div>
           <div className="flex flex-wrap gap-2">
             {DAYS_PRESET_KEYS.map((key, i) => (
-              <Pill key={key} active={daysIdx === i} onClick={() => setDaysIdx(i)}>
+              <Pill key={key} active={daysIdx === i} onClick={() => setDaysIdx(i)} accent="amber">
                 {t(key)}
               </Pill>
             ))}
@@ -337,19 +354,20 @@ export function DestinationDetailClient({
             max={DAYS_PRESET_KEYS.length - 1}
             onChange={setDaysIdx}
             valueLabel={t(DAYS_PRESET_KEYS[daysIdx])}
+            accent="amber"
           />
         </div>
 
         {/* Price pills */}
         <div className={`relative px-4 py-3 ${has5G ? 'border-b border-gray-100/80' : ''}`}>
           <div className="mb-2 flex items-center gap-1.5">
-            <DollarSign className="h-3.5 w-3.5 text-gray-400" />
+            <DollarSign className="h-3.5 w-3.5 text-blue-500" />
             <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t('filterPriceLabel')}</span>
             <FilterInfo title={tc('priceInfoTitle')} content={tc('priceInfoText')} />
           </div>
           <div className="flex flex-wrap gap-2">
             {PRICE_PRESET_KEYS.map((key, i) => (
-              <Pill key={key} active={priceIdx === i} onClick={() => setPriceIdx(i)}>
+              <Pill key={key} active={priceIdx === i} onClick={() => setPriceIdx(i)} accent="blue">
                 {t(key)}
               </Pill>
             ))}
@@ -359,6 +377,7 @@ export function DestinationDetailClient({
             max={PRICE_PRESET_KEYS.length - 1}
             onChange={setPriceIdx}
             valueLabel={t(PRICE_PRESET_KEYS[priceIdx])}
+            accent="blue"
           />
         </div>
 
@@ -366,13 +385,13 @@ export function DestinationDetailClient({
         {has5G && (
           <div className="relative px-4 py-3">
             <div className="mb-2 flex items-center gap-1.5">
-              <Zap className="h-3.5 w-3.5 text-gray-400" />
+              <Zap className="h-3.5 w-3.5 text-emerald-600" />
               <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t('filterNetwork')}</span>
               <FilterInfo title={tc('networkInfoTitle')} content={tc('networkInfoText')} />
             </div>
             <div className="flex flex-wrap gap-2">
               {(['all', '4G', '5G'] as NetworkFilter[]).map((v) => (
-                <Pill key={v} active={network === v} onClick={() => setNetwork(v)}>
+                <Pill key={v} active={network === v} onClick={() => setNetwork(v)} accent="emerald">
                   {v === 'all' ? (
                     t('filterAny')
                   ) : v === '5G' ? (

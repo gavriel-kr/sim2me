@@ -1,4 +1,5 @@
 import { cache } from 'react';
+import { headers } from 'next/headers';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { DestinationDetailClient } from './DestinationDetailClient';
 import { translatePlanName } from '@/lib/translate-plan-name';
@@ -43,9 +44,25 @@ function translateCountryName(name: string, isoCode: string, isRegional: boolean
   return name;
 }
 
+/** Same-origin API base: avoids broken fetches when dev runs on a non-3000 port. */
+async function getInternalFetchBaseUrl(): Promise<string> {
+  try {
+    const headersList = await headers();
+    const host = headersList.get('host');
+    if (host) {
+      const local = host.startsWith('localhost') || host.startsWith('127.0.0.1');
+      return `${local ? 'http' : 'https'}://${host}`;
+    }
+  } catch {
+    /* no request context */
+  }
+  const fromEnv = process.env.NEXTAUTH_URL?.replace(/\/$/, '');
+  return fromEnv || 'http://localhost:3000';
+}
+
 // cache() deduplicates within a single request (generateMetadata + page share one fetch)
 const getDestinationData = cache(async function getDestinationData(slug: string, locale: string = 'en') {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+  const baseUrl = await getInternalFetchBaseUrl();
   const locationCode = slug.toUpperCase();
 
   try {

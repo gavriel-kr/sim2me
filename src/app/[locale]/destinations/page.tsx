@@ -9,7 +9,10 @@ const seoByLocale: Record<string, { title: string; desc: string }> = {
   ar: { title: 'وجهات eSIM – خطط لأكثر من 200 دولة ومنطقة', desc: 'اعثر على خطط بيانات eSIM لأي دولة أو منطقة. قارن الأسعار وحجم البيانات والتغطية. أوروبا، آسيا، أمريكا، أفريقيا والمزيد.' },
 };
 
-type Props = { params: Promise<{ locale: string }> };
+type Props = {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ q?: string }>;
+};
 
 export async function generateMetadata({ params }: Props) {
   const { locale } = await params;
@@ -22,13 +25,14 @@ export async function generateMetadata({ params }: Props) {
   };
 }
 
-export default async function DestinationsPage({ params }: Props) {
+export default async function DestinationsPage({ params, searchParams }: Props) {
   const { locale } = await params;
+  const { q: searchQuery } = await searchParams;
   setRequestLocale(locale);
 
   return (
     <MainLayout>
-      <DestinationsClient locale={locale} />
+      <DestinationsClient locale={locale} initialSearchQuery={searchQuery ?? ''} />
     </MainLayout>
   );
 }
