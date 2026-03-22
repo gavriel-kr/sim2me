@@ -60,10 +60,10 @@ function Pill({ active, onClick, children, accent = 'emerald' }: {
 }
 
 const SLIDER_ACCENTS: Record<PillAccent, { track: string; badge: string }> = {
-  purple:  { track: 'accent-purple-600',  badge: 'text-purple-700 bg-purple-50 border-purple-200' },
-  amber:   { track: 'accent-amber-500',   badge: 'text-amber-700 bg-amber-50 border-amber-200' },
-  blue:    { track: 'accent-blue-600',    badge: 'text-blue-700 bg-blue-50 border-blue-200' },
-  emerald: { track: 'accent-emerald-600', badge: 'text-emerald-700 bg-emerald-50 border-emerald-200' },
+  purple:  { track: 'accent-purple-400',  badge: 'text-purple-700 bg-purple-50 border-purple-200' },
+  amber:   { track: 'accent-amber-300',   badge: 'text-amber-700 bg-amber-50 border-amber-200' },
+  blue:    { track: 'accent-blue-400',    badge: 'text-blue-700 bg-blue-50 border-blue-200' },
+  emerald: { track: 'accent-emerald-400', badge: 'text-emerald-700 bg-emerald-50 border-emerald-200' },
 };
 
 /* ─── Compact filter slider with live value badge ────────────── */
@@ -248,9 +248,9 @@ export function DestinationDetailClient({
         <DialogTrigger asChild>
           <button
             type="button"
-            className="mt-4 inline-flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2 transition-colors hover:bg-emerald-100 cursor-pointer"
+            className="mt-4 inline-flex items-center gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 transition-colors hover:bg-gray-100 cursor-pointer"
           >
-            <BarChart2 className="h-4 w-4 text-emerald-500 shrink-0" />
+            <BarChart2 className="h-4 w-4 text-gray-400 shrink-0" />
             <p className="text-xs font-medium text-gray-700">
               {tc('notSureHowMuch')}{' '}
               <span className="text-emerald-600 underline underline-offset-2 font-semibold">
