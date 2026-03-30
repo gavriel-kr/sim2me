@@ -267,7 +267,7 @@ export default async function DestinationDetailPage({ params }: PageProps) {
           <p className="text-base text-muted-foreground mb-8 max-w-md leading-relaxed">{copy.body}</p>
           <RedirectCountdownButton
             href={`/${locale}/destinations`}
-            seconds={15}
+            seconds={10}
             variant="empty"
             lang={lang}
           />
@@ -289,7 +289,7 @@ export default async function DestinationDetailPage({ params }: PageProps) {
         <p className="text-base text-muted-foreground mb-8 max-w-md leading-relaxed">{copy.body}</p>
         <RedirectCountdownButton
           href={`/${locale}/destinations`}
-          seconds={15}
+          seconds={10}
           variant="error"
           lang={lang}
         />
