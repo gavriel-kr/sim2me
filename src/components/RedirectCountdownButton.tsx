@@ -5,20 +5,26 @@ import { useEffect, useState } from 'react';
 import {
   EMPTY_STATE_COPY,
   ERROR_STATE_COPY,
+  NOT_FOUND_COPY,
   type UiLang,
-} from './destination-unavailable-copy';
+} from '@/lib/destination-unavailable-copy';
 
 interface RedirectCountdownButtonProps {
   href: string;
   seconds: number;
-  variant: 'empty' | 'error';
+  variant: 'empty' | 'error' | 'notFound';
   lang: UiLang;
 }
 
 export function RedirectCountdownButton({ href, seconds, variant, lang }: RedirectCountdownButtonProps) {
   const router = useRouter();
   const [remaining, setRemaining] = useState(seconds);
-  const copy = variant === 'empty' ? EMPTY_STATE_COPY[lang] : ERROR_STATE_COPY[lang];
+  const copy =
+    variant === 'empty'
+      ? EMPTY_STATE_COPY[lang]
+      : variant === 'error'
+        ? ERROR_STATE_COPY[lang]
+        : NOT_FOUND_COPY[lang];
 
   useEffect(() => {
     let cancelled = false;

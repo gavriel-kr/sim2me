@@ -2,14 +2,14 @@ import { cache } from 'react';
 import { headers } from 'next/headers';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { DestinationDetailClient } from './DestinationDetailClient';
-import { RedirectCountdownButton } from './RedirectCountdownButton';
+import { RedirectCountdownButton } from '@/components/RedirectCountdownButton';
 import {
   EMPTY_STATE_COPY,
   ERROR_STATE_COPY,
   METADATA_TITLE_EMPTY,
   METADATA_TITLE_ERROR,
   toUiLang,
-} from './destination-unavailable-copy';
+} from '@/lib/destination-unavailable-copy';
 import { BrandGlobeWaves } from '@/components/icons/BrandGlobeWaves';
 import { translatePlanName } from '@/lib/translate-plan-name';
 
@@ -267,7 +267,7 @@ export default async function DestinationDetailPage({ params }: PageProps) {
           <p className="text-base text-muted-foreground mb-8 max-w-md leading-relaxed">{copy.body}</p>
           <RedirectCountdownButton
             href={`/${locale}/destinations`}
-            seconds={5}
+            seconds={15}
             variant="empty"
             lang={lang}
           />
@@ -288,8 +288,8 @@ export default async function DestinationDetailPage({ params }: PageProps) {
         <h1 className="text-2xl font-bold text-gray-800 mb-3 max-w-lg">{copy.title}</h1>
         <p className="text-base text-muted-foreground mb-8 max-w-md leading-relaxed">{copy.body}</p>
         <RedirectCountdownButton
-          href={`/${locale}`}
-          seconds={5}
+          href={`/${locale}/destinations`}
+          seconds={15}
           variant="error"
           lang={lang}
         />
