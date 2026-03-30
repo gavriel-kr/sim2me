@@ -2,6 +2,15 @@ import { cache } from 'react';
 import { headers } from 'next/headers';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { DestinationDetailClient } from './DestinationDetailClient';
+import { RedirectCountdownButton } from './RedirectCountdownButton';
+import {
+  EMPTY_STATE_COPY,
+  ERROR_STATE_COPY,
+  METADATA_TITLE_EMPTY,
+  METADATA_TITLE_ERROR,
+  toUiLang,
+} from './destination-unavailable-copy';
+import { BrandGlobeWaves } from '@/components/icons/BrandGlobeWaves';
 import { translatePlanName } from '@/lib/translate-plan-name';
 
 export const dynamic = 'force-dynamic';
@@ -60,8 +69,46 @@ async function getInternalFetchBaseUrl(): Promise<string> {
   return fromEnv || 'http://localhost:3000';
 }
 
+type DestinationPayload = {
+  id: string;
+  name: string;
+  slug: string;
+  region: string;
+  isoCode: string;
+  flagUrl: string;
+  isRegional: boolean;
+  popular: boolean;
+  operatorCount: number;
+  planCount: number;
+  fromPrice: number;
+  fromCurrency: string;
+};
+
+type PlanPayload = {
+  id: string;
+  destinationId: string;
+  name: string;
+  dataAmount: number;
+  dataDisplay: string;
+  days: number;
+  price: number;
+  currency: string;
+  networkType: '4G' | '5G' | '3G';
+  speed: string;
+  tethering: boolean;
+  topUps: boolean;
+  operatorName: string;
+  popular: boolean;
+  saleBadge: string | null;
+};
+
+type PackagesFetchResult =
+  | { status: 'ok'; destination: DestinationPayload; plans: PlanPayload[] }
+  | { status: 'empty' }
+  | { status: 'error' };
+
 // cache() deduplicates within a single request (generateMetadata + page share one fetch)
-const getDestinationData = cache(async function getDestinationData(slug: string, locale: string = 'en') {
+const getDestinationData = cache(async function getDestinationData(slug: string, locale: string = 'en'): Promise<PackagesFetchResult> {
   const baseUrl = await getInternalFetchBaseUrl();
   const locationCode = slug.toUpperCase();
 
@@ -70,11 +117,11 @@ const getDestinationData = cache(async function getDestinationData(slug: string,
       next: { revalidate: 300 },
       signal: AbortSignal.timeout(10000),
     });
-    if (!res.ok) return null;
+    if (!res.ok) return { status: 'error' };
     const data = await res.json();
 
     const packages = data.packages || [];
-    if (packages.length === 0) return null;
+    if (packages.length === 0) return { status: 'empty' };
 
     // Build destination info from first package
     const firstPkg = packages[0];
@@ -157,9 +204,9 @@ const getDestinationData = cache(async function getDestinationData(slug: string,
       };
     });
 
-    return { destination, plans };
+    return { status: 'ok', destination, plans };
   } catch {
-    return null;
+    return { status: 'error' };
   }
 });
 
@@ -168,50 +215,85 @@ const SITE_URL = 'https://www.sim2me.net';
 export async function generateMetadata({ params }: PageProps) {
   const { slug, locale } = await params;
   const data = await getDestinationData(slug, locale);
-  if (!data) return { title: 'Destination' };
-  const { destination } = data;
-  const minPrice = destination.fromPrice > 0 ? ` from $${destination.fromPrice.toFixed(2)}` : '';
-  const prefix = `/${locale}`;
-  return {
-    title: `Buy eSIM for ${destination.name} – ${destination.planCount} Plans${minPrice}`,
-    description: `Buy prepaid eSIM for ${destination.name}. ${destination.planCount} data plans available${minPrice}. Instant delivery, no physical SIM needed. Compare plans and connect in minutes.`,
-    alternates: {
-      canonical: `${SITE_URL}${prefix}/destinations/${slug}`,
-      languages: {
-        'en':        `${SITE_URL}/en/destinations/${slug}`,
-        'he':        `${SITE_URL}/he/destinations/${slug}`,
-        'ar':        `${SITE_URL}/ar/destinations/${slug}`,
-        'x-default': `${SITE_URL}/en/destinations/${slug}`,
+  const lang = toUiLang(locale);
+  if (data.status === 'ok') {
+    const { destination } = data;
+    const minPrice = destination.fromPrice > 0 ? ` from $${destination.fromPrice.toFixed(2)}` : '';
+    const prefix = `/${locale}`;
+    return {
+      title: `Buy eSIM for ${destination.name} – ${destination.planCount} Plans${minPrice}`,
+      description: `Buy prepaid eSIM for ${destination.name}. ${destination.planCount} data plans available${minPrice}. Instant delivery, no physical SIM needed. Compare plans and connect in minutes.`,
+      alternates: {
+        canonical: `${SITE_URL}${prefix}/destinations/${slug}`,
+        languages: {
+          'en':        `${SITE_URL}/en/destinations/${slug}`,
+          'he':        `${SITE_URL}/he/destinations/${slug}`,
+          'ar':        `${SITE_URL}/ar/destinations/${slug}`,
+          'x-default': `${SITE_URL}/en/destinations/${slug}`,
+        },
       },
-    },
-  };
+    };
+  }
+  if (data.status === 'empty') {
+    return { title: METADATA_TITLE_EMPTY[lang] };
+  }
+  return { title: METADATA_TITLE_ERROR[lang] };
 }
 
 export default async function DestinationDetailPage({ params }: PageProps) {
   const { slug, locale } = await params;
   const data = await getDestinationData(slug, locale);
-  if (!data) {
+  const lang = toUiLang(locale);
+
+  if (data.status === 'ok') {
     return (
       <MainLayout>
-        <div className="container px-4 py-24 text-center">
-          <p className="text-4xl mb-4">🌐</p>
-          <h1 className="text-xl font-bold text-gray-800 mb-2">
-            {locale === 'he' ? 'לא הצלחנו לטעון את הנתונים' : locale === 'ar' ? 'تعذر تحميل البيانات' : 'Could not load destination data'}
-          </h1>
-          <p className="text-sm text-muted-foreground mb-6">
-            {locale === 'he' ? 'ייתכן שהשרת עמוס. נסה שוב בעוד רגע.' : locale === 'ar' ? 'قد يكون الخادم مشغولاً. حاول مجدداً.' : 'The server may be busy. Please try again in a moment.'}
-          </p>
-          <a href={`/${locale}/destinations/${slug}`} className="inline-block rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors">
-            {locale === 'he' ? 'נסה שוב' : locale === 'ar' ? 'حاول مجدداً' : 'Try again'}
-          </a>
+        <DestinationDetailClient destination={data.destination} initialPlans={data.plans} />
+      </MainLayout>
+    );
+  }
+
+  if (data.status === 'empty') {
+    const copy = EMPTY_STATE_COPY[lang];
+    return (
+      <MainLayout>
+        <div className="container px-4 py-24 flex flex-col items-center text-center">
+          <div className="mb-5 flex w-full justify-center" aria-hidden>
+            <div className="h-[53px] w-[110px] shrink-0 sm:h-[70px] sm:w-[145px]">
+              <BrandGlobeWaves />
+            </div>
+          </div>
+          <h1 className="text-2xl font-bold text-gray-800 mb-3 max-w-lg">{copy.title}</h1>
+          <p className="text-base text-muted-foreground mb-8 max-w-md leading-relaxed">{copy.body}</p>
+          <RedirectCountdownButton
+            href={`/${locale}/destinations`}
+            seconds={5}
+            variant="empty"
+            lang={lang}
+          />
         </div>
       </MainLayout>
     );
   }
 
+  const copy = ERROR_STATE_COPY[lang];
   return (
     <MainLayout>
-      <DestinationDetailClient destination={data.destination} initialPlans={data.plans} />
+      <div className="container px-4 py-24 flex flex-col items-center text-center">
+        <div className="mb-5 flex w-full justify-center" aria-hidden>
+          <div className="h-[53px] w-[110px] shrink-0 sm:h-[70px] sm:w-[145px]">
+            <BrandGlobeWaves />
+          </div>
+        </div>
+        <h1 className="text-2xl font-bold text-gray-800 mb-3 max-w-lg">{copy.title}</h1>
+        <p className="text-base text-muted-foreground mb-8 max-w-md leading-relaxed">{copy.body}</p>
+        <RedirectCountdownButton
+          href={`/${locale}`}
+          seconds={5}
+          variant="error"
+          lang={lang}
+        />
+      </div>
     </MainLayout>
   );
 }

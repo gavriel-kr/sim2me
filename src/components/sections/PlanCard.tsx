@@ -14,6 +14,7 @@ import { createSharedPathnamesNavigation } from 'next-intl/navigation';
 import { routing } from '@/i18n/routing';
 import { DataUsageModal } from '@/components/sections/DataUsageModal';
 import { Sim2MeIcon } from '@/components/icons/Sim2MeIcon';
+import { BrandGlobeWaves } from '@/components/icons/BrandGlobeWaves';
 
 /* Thin line icons for Data, Validity, Network */
 const IconData = () => (
@@ -42,53 +43,6 @@ const IconSpark = () => (
     <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 10l5.813 1.912a2 2 0 0 1 1.275 1.275L12 17l1.912-5.813a2 2 0 0 1 1.275-1.275L21 10l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
   </svg>
 );
-
-/*
- * cx=100, cy=86 — arcs radiate upward from globe center
- * Arc 1 (innermost) 45°  r=18  → start/end y ≈ 69.4
- * Arc 2            60°  r=34  → start/end y ≈ 56.6
- * Arc 3 (outermost) 75° r=50  → start/end y ≈ 46.3
- */
-const WAVE_ARCS = [
-  { d: 'M93.1,69.4 A18,18 0 0,1 106.9,69.4', sw: 5.5, delay: '0s'    },
-  { d: 'M83,56.6 A34,34 0 0,1 117,56.6',     sw: 5.0, delay: '0.5s'  },
-  { d: 'M69.6,46.3 A50,50 0 0,1 130.4,46.3', sw: 4.5, delay: '1s'    },
-];
-
-function BrandWaveBackdrop() {
-  return (
-    <div className="flex h-full w-full items-center justify-center" aria-hidden>
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 200 96"
-        className="h-full w-full"
-      >
-        {/* Globe image centered at (100, 86) — 16×16 */}
-        <image href="/globe-icon.png" x="89" y="75" width="22" height="22" />
-
-        {WAVE_ARCS.map(({ d, sw, delay }, i) => (
-          <path
-            key={i}
-            d={d}
-            fill="none"
-            stroke="#10b981"
-            strokeWidth={sw}
-            strokeLinecap="round"
-            opacity="0"
-          >
-            <animate
-              attributeName="opacity"
-              values="0;0.32;0"
-              dur="2.4s"
-              begin={delay}
-              repeatCount="indefinite"
-            />
-          </path>
-        ))}
-      </svg>
-    </div>
-  );
-}
 
 /** Works on both desktop (hover) and mobile (click-toggle) */
 function InfoTooltip({ content }: { content: string }) {
@@ -256,7 +210,7 @@ export function PlanCard({ plan, destinationName, destinationSlug }: PlanCardPro
             )}
           </ul>
           <div className="shrink-0 self-stretch flex items-center justify-center w-[30%] min-w-[80px] max-w-[110px]">
-            <BrandWaveBackdrop />
+            <BrandGlobeWaves />
           </div>
         </div>
       </CardContent>
