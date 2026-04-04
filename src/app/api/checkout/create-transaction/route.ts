@@ -92,9 +92,6 @@ export async function POST(request: Request) {
       const amountStr = String(Math.max(70, amountCents));
       const name = item.planName.slice(0, 250) || 'eSIM';
 
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/c0f3d6c5-f7a1-48de-976d-653a33f6597b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'3f6f39'},body:JSON.stringify({sessionId:'3f6f39',location:'create-transaction/route.ts:93',message:'PRICE VERIFICATION',data:{planId,clientSentUnitPrice:item.unitPrice,serverComputedPrice:serverPrice,amountChargedCents:Number(amountStr),overrideCustomPrice:override?.customPrice!=null?Number(override.customPrice):null,priceSource:override?.customPrice!=null?'PackageOverride.customPrice':'eSIMaccess_cache'},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
 
       const res = await fetch(`${PADDLE_API}/transactions`, {
         method: 'POST',
