@@ -1,11 +1,16 @@
 /**
  * Create Paddle checkout: either create a transaction with custom price (when PADDLE_API_KEY set)
  * or return catalog items (when paddlePriceId set in overrides). Single endpoint for both flows.
+ *
+ * SECURITY: The unitPrice field from the client is intentionally ignored in the dynamic-pricing
+ * path. The authoritative price is always resolved server-side from PackageOverride.customPrice
+ * or the eSIMaccess DB cache. Clients cannot manipulate what they are charged.
  */
 
 import { NextResponse } from 'next/server';
 import { getSessionForRequest, isCustomerSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
+import { getDbCachedPackages } from '@/lib/packagesCache';
 import { z } from 'zod';
 
 const bodySchema = z.object({
@@ -52,7 +57,37 @@ export async function POST(request: Request) {
 
     if (apiKey) {
       const item = items[0];
-      const amountCents = Math.round(item.unitPrice * 100);
+      const planId = item.planId;
+
+      // Resolve authoritative price server-side — never trust client-supplied unitPrice.
+      // 1. Check PackageOverride: reject if explicitly hidden, use customPrice if set.
+      const override = await prisma.packageOverride.findFirst({
+        where: { packageCode: planId },
+      });
+      if (override?.visible === false) {
+        return NextResponse.json(
+          { error: 'Plan not available for checkout', planId },
+          { status: 400 }
+        );
+      }
+
+      let serverPrice: number;
+      if (override?.customPrice != null) {
+        serverPrice = Number(override.customPrice);
+      } else {
+        // 2. Fall back to eSIMaccess DB cache (retailPrice preferred, else wholesale price).
+        const cached = await getDbCachedPackages();
+        const pkg = cached?.packageList?.find((p) => p.packageCode === planId);
+        if (!pkg) {
+          return NextResponse.json(
+            { error: 'Plan not available for checkout', planId },
+            { status: 400 }
+          );
+        }
+        serverPrice = pkg.retailPrice ? pkg.retailPrice / 10000 : pkg.price / 10000;
+      }
+
+      const amountCents = Math.round(serverPrice * 100);
       // Paddle minimum is 70 cents
       const amountStr = String(Math.max(70, amountCents));
       const name = item.planName.slice(0, 250) || 'eSIM';
