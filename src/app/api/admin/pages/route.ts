@@ -1,13 +1,15 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { requireAdmin } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
 export async function PATCH(request: Request) {
   const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const denied = requireAdmin(session);
+  if (denied) return denied;
 
   const body = await request.json();
   const { id, titleEn, titleHe, titleAr, contentEn, contentHe, contentAr, published, seo } = body;

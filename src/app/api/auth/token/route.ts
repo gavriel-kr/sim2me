@@ -9,6 +9,7 @@ import { encode } from 'next-auth/jwt';
 import { compare } from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 import { loginSchema } from '@/lib/validation/schemas';
+import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,6 +17,10 @@ const JWT_MAX_AGE = 7 * 24 * 60 * 60; // 7 days, same as authOptions.session.max
 
 export async function POST(request: Request) {
   try {
+    const ip = getClientIp(request);
+    const allowed = await checkRateLimit(ip, 'auth-token', 10, 60);
+    if (!allowed) return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 });
+
     const body = await request.json();
     const parsed = loginSchema.safeParse(body);
     if (!parsed.success) {

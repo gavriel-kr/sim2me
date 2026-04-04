@@ -111,6 +111,46 @@ export async function sendPostPurchaseEmail(to: string, data: PostPurchaseEmailD
   return sendEmail(to, subject, html);
 }
 
+export interface AdminOrderNotificationData {
+  customerName: string;
+  customerEmail: string;
+  packageName: string;
+  destination: string;
+  dataAmount: string;
+  validity: string;
+  amountCharged: number;
+  supplierCost: number;
+  orderId: string;
+  orderNo: string;
+  adminOrdersUrl: string;
+}
+
+/** Sends an order notification to the admin email. Fire-and-forget — never blocks order flow. */
+export async function sendAdminOrderNotificationEmail(data: AdminOrderNotificationData): Promise<void> {
+  const to = process.env.ADMIN_NOTIFICATION_EMAIL || 'info.sim2me@gmail.com';
+  const profit = (data.amountCharged - data.supplierCost).toFixed(2);
+  const profitColor = data.amountCharged >= data.supplierCost ? '#059669' : '#dc2626';
+  const html = `
+<div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; padding: 24px;">
+  <h2 style="margin: 0 0 16px 0; color: #0f172a;">🧾 New Order — Sim2Me</h2>
+  <table style="width:100%; border-collapse: collapse; font-size: 14px;">
+    <tr><td style="padding: 6px 12px 6px 0; color: #64748b; white-space:nowrap;">Customer</td><td style="padding: 6px 0;"><strong>${escapeHtml(data.customerName)}</strong> &lt;${escapeHtml(data.customerEmail)}&gt;</td></tr>
+    <tr><td style="padding: 6px 12px 6px 0; color: #64748b;">Package</td><td style="padding: 6px 0;">${escapeHtml(data.packageName)}</td></tr>
+    <tr><td style="padding: 6px 12px 6px 0; color: #64748b;">Destination</td><td style="padding: 6px 0;">${escapeHtml(data.destination)}</td></tr>
+    <tr><td style="padding: 6px 12px 6px 0; color: #64748b;">Data / Validity</td><td style="padding: 6px 0;">${escapeHtml(data.dataAmount)} / ${escapeHtml(data.validity)}</td></tr>
+    <tr><td style="padding: 6px 12px 6px 0; color: #64748b;">Charged</td><td style="padding: 6px 0;"><strong>$${data.amountCharged.toFixed(2)}</strong></td></tr>
+    <tr><td style="padding: 6px 12px 6px 0; color: #64748b;">Supplier Cost</td><td style="padding: 6px 0;">$${data.supplierCost.toFixed(2)}</td></tr>
+    <tr><td style="padding: 6px 12px 6px 0; color: #64748b;">Profit</td><td style="padding: 6px 0; color: ${profitColor};"><strong>$${profit}</strong></td></tr>
+    <tr><td style="padding: 6px 12px 6px 0; color: #64748b;">Order ID</td><td style="padding: 6px 0; font-family: monospace; font-size: 12px;">${escapeHtml(data.orderNo)}</td></tr>
+  </table>
+  <p style="margin: 20px 0 0 0;">
+    <a href="${escapeHtml(data.adminOrdersUrl)}" style="display: inline-block; background: #0f172a; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-size: 14px;">View in Admin</a>
+  </p>
+</div>`.trim();
+
+  sendEmail(to, `New Order: ${data.packageName} — $${data.amountCharged.toFixed(2)}`, html).catch(() => {});
+}
+
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, '&amp;')

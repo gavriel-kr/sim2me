@@ -103,9 +103,6 @@ export async function getPackages(locationCode?: string, timeoutMs?: number): Pr
     } catch (e) {
       lastError = e instanceof Error ? e : new Error(String(e));
       const msg = lastError.message.toLowerCase();
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/c0f3d6c5-f7a1-48de-976d-653a33f6597b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'f7158f'},body:JSON.stringify({sessionId:'f7158f',location:'esimaccess.ts:getPackages-catch',message:'getPackages error',data:{locationCode,attempt,error:msg.substring(0,100)},timestamp:Date.now(),hypothesisId:'B',runId:'run1'})}).catch(()=>{});
-      // #endregion
       const isRetryable = msg.includes('system is busy') || msg.includes('try again') || msg.includes('busy');
       if (!isRetryable || attempt === maxRetries) throw lastError;
       await new Promise((r) => setTimeout(r, 1000 * attempt)); // 1s, 2s — short delays for fast fallback

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { requireAdmin } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { getPackages } from '@/lib/esimaccess';
 
@@ -17,7 +18,8 @@ const FLOOR_PRICE = 0.70;
  */
 export async function POST() {
   const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const denied = requireAdmin(session);
+  if (denied) return denied;
 
   const { packageList } = await getPackages();
   if (!packageList?.length) {

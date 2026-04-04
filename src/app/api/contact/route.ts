@@ -1,11 +1,16 @@
 import { NextResponse } from 'next/server';
 import { contactFormSchema } from '@/lib/validation/schemas';
 import { prisma } from '@/lib/prisma';
+import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
   try {
+    const ip = getClientIp(request);
+    const allowed = await checkRateLimit(ip, 'contact', 3, 60);
+    if (!allowed) return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 });
+
     const body = await request.json();
     const parsed = contactFormSchema.safeParse(body);
 

@@ -319,3 +319,12 @@ model SeoSetting {
   @@index([path])
   @@map("seo_settings")
 }
+
+// ─── Rate Limiting ────────────────────────────────────────────
+model RateLimit {
+  key         String   @id          // "{ip}:{endpoint}"
+  count       Int      @default(1)
+  windowStart DateTime @default(now())
+
+  @@map("rate_limits")
+}

@@ -11,7 +11,7 @@ import { NextResponse } from 'next/server';
 import { verifyPaddleWebhook, safeJsonParse } from '@/lib/paddle';
 import { prisma } from '@/lib/prisma';
 import { purchasePackage, getEsimProfileWithRetry, getPackages, formatDataVolume } from '@/lib/esimaccess';
-import { sendPostPurchaseEmail } from '@/lib/email';
+import { sendPostPurchaseEmail, sendAdminOrderNotificationEmail } from '@/lib/email';
 import { hash } from 'bcryptjs';
 
 const EVENT_TRANSACTION_COMPLETED = 'transaction.completed';
@@ -147,6 +147,21 @@ export async function POST(request: Request) {
       paidAt: new Date(),
     },
   });
+
+  // Notify admin of every new order — fire-and-forget
+  sendAdminOrderNotificationEmail({
+    customerName: customerName || customerEmail,
+    customerEmail,
+    packageName,
+    destination,
+    dataAmount: dataAmountStr,
+    validity: validityStr,
+    amountCharged: totalAmount,
+    supplierCost: supplierCostUsd ?? 0,
+    orderId: order.id,
+    orderNo: order.orderNo,
+    adminOrdersUrl: `${baseUrl()}/admin/orders`,
+  }).catch(() => {});
 
   try {
     const purchase = await purchasePackage(planId, 1);

@@ -6,6 +6,7 @@
 
 import { getServerSession } from 'next-auth';
 import { decode } from 'next-auth/jwt';
+import { NextResponse } from 'next/server';
 import { authOptions } from '@/lib/auth';
 import type { Session } from 'next-auth';
 import type { SessionUserType } from '@/lib/auth';
@@ -73,4 +74,24 @@ export function isCustomerSession(session: RequestSession | null): session is Re
 export function getCustomerId(session: RequestSession | null): string | null {
   if (!isCustomerSession(session)) return null;
   return (session.user as SessionUser).id ?? null;
+}
+
+/**
+ * Admin authorization guard for API routes.
+ * Returns a NextResponse (401 or 403) if the request is not from an admin,
+ * or null if the session is valid and the user is an admin.
+ *
+ * Usage:
+ *   const session = await getServerSession(authOptions);
+ *   const denied = requireAdmin(session);
+ *   if (denied) return denied;
+ */
+export function requireAdmin(session: Session | null): NextResponse | null {
+  if (!session?.user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  if ((session.user as { type?: string }).type !== 'admin') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+  return null;
 }

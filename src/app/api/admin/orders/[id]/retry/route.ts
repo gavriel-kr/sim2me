@@ -3,6 +3,7 @@ export const maxDuration = 60;
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { requireAdmin } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { purchasePackage, getEsimProfileWithRetry, getPackages } from '@/lib/esimaccess';
 import { sendPostPurchaseEmail } from '@/lib/email';
@@ -18,7 +19,8 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const denied = requireAdmin(session);
+  if (denied) return denied;
 
   const order = await prisma.order.findUnique({ where: { id: params.id } });
   if (!order) return NextResponse.json({ error: 'Order not found' }, { status: 404 });

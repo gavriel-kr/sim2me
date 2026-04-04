@@ -11,6 +11,7 @@ import { NextResponse } from 'next/server';
 import { getSessionForRequest, isCustomerSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { getDbCachedPackages } from '@/lib/packagesCache';
+import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
 import { z } from 'zod';
 
 const bodySchema = z.object({
@@ -29,6 +30,10 @@ const PADDLE_API = 'https://api.paddle.com';
 
 export async function POST(request: Request) {
   try {
+    const ip = getClientIp(request);
+    const allowed = await checkRateLimit(ip, 'checkout', 10, 60);
+    if (!allowed) return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 });
+
     const body = await request.json();
     const parsed = bodySchema.safeParse(body);
     if (!parsed.success) {

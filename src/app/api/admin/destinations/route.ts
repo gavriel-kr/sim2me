@@ -1,6 +1,7 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { requireAdmin } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
@@ -8,7 +9,8 @@ export const dynamic = 'force-dynamic';
 /** GET — return all featured destination location codes */
 export async function GET() {
   const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const denied = requireAdmin(session);
+  if (denied) return denied;
 
   const featured = await prisma.featuredDestination.findMany({
     orderBy: { displayOrder: 'asc' },
@@ -19,7 +21,8 @@ export async function GET() {
 /** POST — replace the full featured destinations list */
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const denied2 = requireAdmin(session);
+  if (denied2) return denied2;
 
   const body = await req.json();
   const { locationCodes } = body as { locationCodes: string[] };
