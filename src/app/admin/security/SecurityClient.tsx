@@ -11,6 +11,7 @@ export function SecurityClient({ totpEnabled: initialEnabled, totpVerifiedAt }: 
   const [totpEnabled, setTotpEnabled] = useState(initialEnabled);
   const [step, setStep] = useState<'idle' | 'setup' | 'disable'>('idle');
   const [qrDataUrl, setQrDataUrl] = useState('');
+  const [otpauthUrl, setOtpauthUrl] = useState('');
   const [secret, setSecret] = useState('');
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
@@ -20,12 +21,31 @@ export function SecurityClient({ totpEnabled: initialEnabled, totpVerifiedAt }: 
   async function startSetup() {
     setLoading(true);
     setError('');
-    const res = await fetch('/api/admin/totp/generate', { method: 'POST' });
-    const data = await res.json();
-    setQrDataUrl(data.qrDataUrl);
-    setSecret(data.secret);
-    setStep('setup');
-    setLoading(false);
+    try {
+      const res = await fetch('/api/admin/totp/generate', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? 'Failed to start 2FA setup. Please try again.');
+        setLoading(false);
+        return;
+      }
+      setSecret(data.secret);
+      setOtpauthUrl(data.otpauthUrl);
+      setStep('setup');
+      // Generate QR code in the browser to avoid server-side canvas dependency
+      try {
+        const QRCode = await import('qrcode');
+        const url = await QRCode.toDataURL(data.otpauthUrl, { width: 200, margin: 2 });
+        setQrDataUrl(url);
+      } catch {
+        // QR code generation failed in browser — user can still use manual key
+        setQrDataUrl('');
+      }
+    } catch {
+      setError('Network error. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function confirmEnable() {
@@ -102,9 +122,17 @@ export function SecurityClient({ totpEnabled: initialEnabled, totpVerifiedAt }: 
             <p className="text-sm text-gray-700">
               1. Scan this QR code with <strong>Google Authenticator</strong> or <strong>Authy</strong>.
             </p>
-            {qrDataUrl && <img src={qrDataUrl} alt="QR Code" className="mx-auto block rounded-lg border border-gray-200 p-2" width={200} height={200} />}
+            {qrDataUrl
+              ? <img src={qrDataUrl} alt="QR Code" className="mx-auto block rounded-lg border border-gray-200 p-2" width={200} height={200} />
+              : otpauthUrl && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-center text-xs text-amber-700">
+                  QR image unavailable — use the manual key below or{' '}
+                  <a href={otpauthUrl} className="underline">tap here</a> to open your authenticator app directly.
+                </div>
+              )
+            }
             <p className="text-sm text-gray-500">
-              Or enter this key manually: <code className="rounded bg-gray-100 px-1 font-mono text-xs">{secret}</code>
+              Enter this key manually in your app: <code className="rounded bg-gray-100 px-1 font-mono text-xs break-all">{secret}</code>
             </p>
             <p className="text-sm text-gray-700">2. Enter the 6-digit code from your app to confirm setup:</p>
             <input
