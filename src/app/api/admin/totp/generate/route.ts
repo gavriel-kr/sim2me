@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { requireAdmin } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
-import { authenticator } from 'otplib';
+import { generateTotpSecret, buildOtpauthUrl } from '@/lib/totp';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,15 +15,14 @@ export async function POST() {
   const adminEmail = session!.user!.email!;
 
   try {
-    const secret = authenticator.generateSecret();
+    const secret = generateTotpSecret();
 
     await prisma.adminUser.update({
       where: { email: adminEmail },
       data: { totpSecret: secret, totpEnabled: false },
     });
 
-    // Return the otpauth URL; QR code is generated client-side (avoids canvas dependency on serverless)
-    const otpauthUrl = authenticator.keyuri(adminEmail, 'Sim2Me Admin', secret);
+    const otpauthUrl = buildOtpauthUrl(adminEmail, 'Sim2Me Admin', secret);
 
     return NextResponse.json({ secret, otpauthUrl });
   } catch (err) {

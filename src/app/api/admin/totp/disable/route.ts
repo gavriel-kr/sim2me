@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { requireAdmin } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
-import { authenticator } from 'otplib';
+import { verifyTotp } from '@/lib/totp';
 import { createAuditLog } from '@/lib/audit';
 import { z } from 'zod';
 
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: '2FA is not enabled' }, { status: 400 });
   }
 
-  const valid = authenticator.verify({ token: parsed.data.code, secret: admin.totpSecret });
+  const valid = verifyTotp(parsed.data.code, admin.totpSecret);
   if (!valid) {
     return NextResponse.json({ error: 'Invalid code' }, { status: 400 });
   }

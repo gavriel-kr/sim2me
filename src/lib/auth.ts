@@ -4,7 +4,7 @@ import { compare } from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 import { headers } from 'next/headers';
 import { checkRateLimit } from '@/lib/rateLimit';
-import { authenticator } from 'otplib';
+import { verifyTotp } from '@/lib/totp';
 
 export type SessionUserType = 'admin' | 'customer';
 
@@ -45,7 +45,7 @@ export const authOptions: NextAuthOptions = {
         if (user.totpEnabled && user.totpSecret) {
           const code = (credentials as { totpCode?: string }).totpCode?.trim();
           if (!code || code.length !== 6) throw new Error('TOTP_REQUIRED');
-          const totpValid = authenticator.verify({ token: code, secret: user.totpSecret });
+          const totpValid = verifyTotp(code, user.totpSecret);
           if (!totpValid) throw new Error('TOTP_INVALID');
         }
 
