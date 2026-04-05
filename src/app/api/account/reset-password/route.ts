@@ -2,11 +2,16 @@ import { NextResponse } from 'next/server';
 import { hash } from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 import { resetPasswordSchema } from '@/lib/validation/schemas';
+import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
   try {
+    const ip = getClientIp(request);
+    const allowed = await checkRateLimit(ip, 'reset-password', 5, 900);
+    if (!allowed) return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 });
+
     const body = await request.json();
     const parsed = resetPasswordSchema.safeParse(body);
     if (!parsed.success) {

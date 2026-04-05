@@ -33,10 +33,16 @@ export const newsletterSchema = z.object({
 // E.164: + and 7–15 digits
 const e164Regex = /^\+[1-9]\d{6,14}$/;
 
+// Shared password strength rule used across register / reset / change-password
+export const passwordSchema = z.string()
+  .min(8, 'Password must be at least 8 characters')
+  .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+  .regex(/[0-9]/, 'Password must contain at least one number');
+
 // ─── Account ─────────────────────────────────────────────────
 export const registerSchema = z.object({
   email: z.string().email('Valid email is required'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  password: passwordSchema,
   name: z.string().min(1, 'First name is required').max(100),
   lastName: z.string().max(100).optional(),
   phone: z.string().min(1, 'Phone is required').regex(e164Regex, 'Invalid phone number'),
@@ -54,7 +60,7 @@ export const forgotPasswordSchema = z.object({
 
 export const resetPasswordSchema = z.object({
   token: z.string().min(1),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  password: passwordSchema,
 });
 
 export const profileSchema = z.object({

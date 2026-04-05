@@ -2,6 +2,8 @@ import type { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { compare } from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
+import { headers } from 'next/headers';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 export type SessionUserType = 'admin' | 'customer';
 
@@ -21,6 +23,12 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
+
+        const headersList = await headers();
+        const forwarded = headersList.get('x-forwarded-for');
+        const ip = forwarded ? forwarded.split(',')[0].trim() : 'unknown';
+        const allowed = await checkRateLimit(ip, 'admin-login', 10, 60);
+        if (!allowed) return null;
 
         const user = await prisma.adminUser.findUnique({
           where: { email: credentials.email },

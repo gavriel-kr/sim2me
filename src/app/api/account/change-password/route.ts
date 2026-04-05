@@ -2,16 +2,22 @@ import { NextResponse } from 'next/server';
 import { getSessionForRequest, isCustomerSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { compare, hash } from 'bcryptjs';
+import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
+import { passwordSchema } from '@/lib/validation/schemas';
 import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
 
 const schema = z.object({
   currentPassword: z.string().min(1),
-  newPassword: z.string().min(8, 'Password must be at least 8 characters'),
+  newPassword: passwordSchema,
 });
 
 export async function POST(request: Request) {
+  const ip = getClientIp(request);
+  const allowed = await checkRateLimit(ip, 'change-password', 5, 60);
+  if (!allowed) return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 });
+
   const session = await getSessionForRequest(request);
   if (!isCustomerSession(session)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

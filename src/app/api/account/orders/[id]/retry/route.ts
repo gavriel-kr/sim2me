@@ -5,6 +5,7 @@ import { getSessionForRequest, isCustomerSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { purchasePackage, getEsimProfileWithRetry } from '@/lib/esimaccess';
 import { sendPostPurchaseEmail } from '@/lib/email';
+import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
 
 function baseUrl() {
   return (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.sim2me.net').replace(/\/$/, '');
@@ -14,6 +15,10 @@ export async function POST(
   request: Request,
   { params }: { params: { id: string } }
 ) {
+  const ip = getClientIp(request);
+  const allowed = await checkRateLimit(ip, 'order-retry', 3, 3600);
+  if (!allowed) return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 });
+
   const session = await getSessionForRequest(request);
   if (!isCustomerSession(session)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

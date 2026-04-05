@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { forgotPasswordSchema } from '@/lib/validation/schemas';
 import { sendPasswordResetEmail } from '@/lib/email';
+import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
 import crypto from 'crypto';
 
 export const dynamic = 'force-dynamic';
@@ -10,6 +11,10 @@ const RESET_EXPIRY_HOURS = 1;
 
 export async function POST(request: Request) {
   try {
+    const ip = getClientIp(request);
+    const allowed = await checkRateLimit(ip, 'forgot-password', 3, 900);
+    if (!allowed) return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 });
+
     const body = await request.json();
     const parsed = forgotPasswordSchema.safeParse(body);
     if (!parsed.success) {
