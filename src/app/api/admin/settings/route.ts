@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/session';
+import { createAuditLog } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,5 +24,6 @@ export async function POST(request: Request) {
   );
 
   await prisma.$transaction(ops);
+  createAuditLog({ adminEmail: session!.user!.email!, adminName: session!.user!.name ?? '', action: 'UPDATE_SETTINGS', details: { keys: Object.keys(settings) } }).catch(() => {});
   return NextResponse.json({ success: true });
 }

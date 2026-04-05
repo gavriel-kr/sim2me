@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { requireAdmin } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { getPackages } from '@/lib/esimaccess';
+import { createAuditLog } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
 
@@ -65,5 +66,6 @@ export async function POST() {
     })
   );
 
+  createAuditLog({ adminEmail: session!.user!.email!, adminName: session!.user!.name ?? '', action: 'APPLY_PRICE_FLOOR', details: { updated: qualifying.length, packageCodes: qualifying } }).catch(() => {});
   return NextResponse.json({ updated: qualifying.length, packageCodes: qualifying });
 }

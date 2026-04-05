@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { hash } from 'bcryptjs';
 import { requireAdmin } from '@/lib/session';
+import { createAuditLog } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,6 +36,7 @@ export async function POST(request: Request) {
     select: { id: true, name: true, email: true, role: true, active: true, createdAt: true },
   });
 
+  createAuditLog({ adminEmail: session!.user!.email!, adminName: session!.user!.name ?? '', action: 'CREATE_ADMIN_USER', targetType: 'AdminUser', targetId: user.id, details: { email: user.email, role: user.role } }).catch(() => {});
   return NextResponse.json({ user });
 }
 
@@ -60,6 +62,7 @@ export async function PATCH(request: Request) {
     select: { id: true, name: true, email: true, role: true, active: true },
   });
 
+  createAuditLog({ adminEmail: session!.user!.email!, adminName: session!.user!.name ?? '', action: 'UPDATE_ADMIN_USER', targetType: 'AdminUser', targetId: user.id, details: { role: user.role, active: user.active } }).catch(() => {});
   return NextResponse.json({ user });
 }
 
@@ -84,5 +87,6 @@ export async function DELETE(request: Request) {
   }
 
   await prisma.adminUser.delete({ where: { id } });
+  createAuditLog({ adminEmail: session!.user!.email!, adminName: session!.user!.name ?? '', action: 'DELETE_ADMIN_USER', targetType: 'AdminUser', targetId: id }).catch(() => {});
   return NextResponse.json({ success: true });
 }

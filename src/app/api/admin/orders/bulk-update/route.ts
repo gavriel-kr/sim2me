@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { requireAdmin } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
+import { createAuditLog } from '@/lib/audit';
 
 const ALLOWED_STATUSES = ['PENDING', 'PAID', 'PROCESSING', 'COMPLETED', 'FAILED', 'REFUNDED', 'CANCELLED'] as const;
 
@@ -59,5 +60,6 @@ export async function POST(request: Request) {
     }
   }
 
+  createAuditLog({ adminEmail: session!.user!.email!, adminName: session!.user!.name ?? '', action: 'BULK_UPDATE_ORDERS', details: { updated, total: updates.length, errors } }).catch(() => {});
   return NextResponse.json({ updated, total: updates.length, errors });
 }

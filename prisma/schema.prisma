@@ -10,15 +10,18 @@ datasource db {
 
 // ─── Admin Users ─────────────────────────────────────────────
 model AdminUser {
-  id            String         @id @default(cuid())
-  email         String         @unique
-  name          String
-  password      String
-  role          Role           @default(EDITOR)
-  active        Boolean        @default(true)
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  bulkEditLogs  BulkEditLog[]
+  id             String         @id @default(cuid())
+  email          String         @unique
+  name           String
+  password       String
+  role           Role           @default(EDITOR)
+  active         Boolean        @default(true)
+  totpSecret     String?
+  totpEnabled    Boolean        @default(false)
+  totpVerifiedAt DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  bulkEditLogs   BulkEditLog[]
 
   @@map("admin_users")
 }
@@ -206,7 +209,11 @@ model Customer {
   lastName  String?  // optional
   phone     String?  @unique // E.164; single number, required for credentials login
   googleId  String?  @unique // Google OAuth sub
-  newsletter Boolean @default(false)
+  newsletter         Boolean  @default(false)
+  emailVerified      Boolean  @default(false)
+  emailVerifyToken   String?
+  emailVerifyExpires DateTime?
+  passwordChangedAt  DateTime?
   resetToken         String?
   resetExpires       DateTime?
   createdAt DateTime @default(now())
@@ -327,4 +334,19 @@ model RateLimit {
   windowStart DateTime @default(now())
 
   @@map("rate_limits")
+}
+
+// ─── Admin Audit Log ─────────────────────────────────────────
+model AdminAuditLog {
+  id         String   @id @default(cuid())
+  adminEmail String
+  adminName  String
+  action     String
+  targetType String?
+  targetId   String?
+  details    String?  @db.Text
+  ip         String?
+  createdAt  DateTime @default(now())
+
+  @@map("admin_audit_logs")
 }

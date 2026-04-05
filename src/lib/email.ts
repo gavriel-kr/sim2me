@@ -21,6 +21,25 @@ async function logoImgTag(): Promise<string> {
   return `<p style="margin:0 0 20px 0;"><img src="${url}" alt="Sim2Me" width="160" height="48" style="display:block; max-height:48px; object-fit:contain;" /></p>`;
 }
 
+export async function sendVerificationEmail(to: string, token: string): Promise<boolean> {
+  const verifyUrl = `${baseUrl()}/api/account/verify-email?token=${encodeURIComponent(token)}`;
+  const logo = await logoImgTag();
+  const html = `
+    <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto;">
+      ${logo}
+      <h2 style="color: #059669;">אמת את כתובת האימייל שלך / Verify your email</h2>
+      <p style="direction:rtl; text-align:right;">שלום! כדי להשלים את הרישום שלך ל-Sim2Me, לחץ על הכפתור למטה לאימות האימייל שלך.</p>
+      <p>Hi! To complete your Sim2Me registration, click the button below to verify your email.</p>
+      <p style="margin: 24px 0;">
+        <a href="${verifyUrl}" style="display: inline-block; background: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600;">Verify Email / אמת אימייל</a>
+      </p>
+      <p style="font-size: 13px; color: #64748b;">Or copy this link: ${verifyUrl}</p>
+      <p style="font-size: 12px; color: #94a3b8; margin-top: 32px;">This link expires in 24 hours. If you did not register, you can safely ignore this email.</p>
+    </div>
+  `;
+  return sendEmail(to, 'Verify your Sim2Me account / אמת את חשבונך', html);
+}
+
 export async function sendPasswordResetEmail(to: string, token: string): Promise<boolean> {
   const resetUrl = `${baseUrl()}/account/reset-password?token=${encodeURIComponent(token)}`;
   const logo = await logoImgTag();

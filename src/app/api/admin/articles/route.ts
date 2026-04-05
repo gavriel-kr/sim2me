@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { requireAdmin } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
+import { createAuditLog } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
 
@@ -87,5 +88,6 @@ export async function POST(request: Request) {
     },
   });
 
+  createAuditLog({ adminEmail: session!.user!.email!, adminName: session!.user!.name ?? '', action: 'CREATE_ARTICLE', targetType: 'Article', targetId: article.id, details: { slug: article.slug } }).catch(() => {});
   return NextResponse.json({ article }, { status: 201 });
 }

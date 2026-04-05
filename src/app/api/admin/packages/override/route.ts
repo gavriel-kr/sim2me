@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { requireAdmin } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
+import { createAuditLog } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
 
@@ -61,6 +62,7 @@ export async function POST(req: NextRequest) {
     },
   });
 
+  createAuditLog({ adminEmail: session!.user!.email!, adminName: session!.user!.name ?? '', action: 'UPSERT_PACKAGE_OVERRIDE', targetType: 'PackageOverride', targetId: packageCode }).catch(() => {});
   return NextResponse.json({ override });
 }
 
@@ -87,5 +89,6 @@ export async function PATCH(req: NextRequest) {
     )
   );
 
+  createAuditLog({ adminEmail: session!.user!.email!, adminName: session!.user!.name ?? '', action: 'BULK_UPDATE_PACKAGE_VISIBILITY', details: { count: updates.length } }).catch(() => {});
   return NextResponse.json({ success: true });
 }

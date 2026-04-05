@@ -8,6 +8,7 @@ import { getServerSession } from 'next-auth';
 import { decode } from 'next-auth/jwt';
 import { NextResponse } from 'next/server';
 import { authOptions } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
 import type { Session } from 'next-auth';
 import type { SessionUserType } from '@/lib/auth';
 
@@ -40,8 +41,12 @@ export async function getSessionForRequest(request?: Request): Promise<RequestSe
           secret: process.env.NEXTAUTH_SECRET!,
         });
         if (token) {
-          const user = token as { id?: string; email?: string; name?: string; type?: SessionUserType; role?: string };
+          const user = token as { id?: string; email?: string; name?: string; type?: SessionUserType; role?: string; iat?: number };
           if (user.type === 'customer' || user.type === 'admin') {
+            if (user.type === 'customer' && user.id && user.iat) {
+              const stale = await isSessionStale(user.id, user.iat);
+              if (stale) return null;
+            }
             return {
               user: {
                 id: user.id ?? '',
@@ -62,7 +67,36 @@ export async function getSessionForRequest(request?: Request): Promise<RequestSe
 
   // 2. NextAuth cookie session (web)
   const session = await getServerSession(authOptions);
+  if (session && (session.user as SessionUser).type === 'customer' && request) {
+    const userId = (session.user as SessionUser).id;
+    if (userId) {
+      try {
+        const { getToken } = await import('next-auth/jwt');
+        const rawToken = await getToken({ req: request as Parameters<typeof getToken>[0]['req'], secret: process.env.NEXTAUTH_SECRET! });
+        if (rawToken?.iat) {
+          const stale = await isSessionStale(userId, rawToken.iat);
+          if (stale) return null;
+        }
+      } catch {
+        // getToken may fail in some edge cases — allow session to continue
+      }
+    }
+  }
   return session;
+}
+
+/** Returns true if passwordChangedAt in DB is newer than the token's iat (issued-at timestamp). */
+async function isSessionStale(customerId: string, tokenIat: number): Promise<boolean> {
+  try {
+    const customer = await prisma.customer.findUnique({
+      where: { id: customerId },
+      select: { passwordChangedAt: true },
+    });
+    if (!customer?.passwordChangedAt) return false;
+    return customer.passwordChangedAt.getTime() / 1000 > tokenIat;
+  } catch {
+    return false;
+  }
 }
 
 /** Type guard: session is customer (for account routes) */

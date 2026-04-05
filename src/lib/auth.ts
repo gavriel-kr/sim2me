@@ -4,6 +4,7 @@ import { compare } from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 import { headers } from 'next/headers';
 import { checkRateLimit } from '@/lib/rateLimit';
+import { authenticator } from 'otplib';
 
 export type SessionUserType = 'admin' | 'customer';
 
@@ -20,6 +21,7 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         email: { label: 'Email', type: 'email' },
         password: { label: 'Password', type: 'password' },
+        totpCode: { label: 'Authenticator Code', type: 'text' },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
@@ -38,6 +40,14 @@ export const authOptions: NextAuthOptions = {
 
         const valid = await compare(credentials.password, user.password);
         if (!valid) return null;
+
+        // If 2FA is enabled, verify TOTP code
+        if (user.totpEnabled && user.totpSecret) {
+          const code = (credentials as { totpCode?: string }).totpCode?.trim();
+          if (!code || code.length !== 6) throw new Error('TOTP_REQUIRED');
+          const totpValid = authenticator.verify({ token: code, secret: user.totpSecret });
+          if (!totpValid) throw new Error('TOTP_INVALID');
+        }
 
         return {
           id: user.id,
@@ -66,6 +76,10 @@ export const authOptions: NextAuthOptions = {
 
         const valid = await compare(credentials.password, customer.password);
         if (!valid) return null;
+
+        if (!customer.emailVerified) {
+          throw new Error('EMAIL_NOT_VERIFIED');
+        }
 
         return {
           id: customer.id,

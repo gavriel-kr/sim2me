@@ -2,12 +2,12 @@
 
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
 
 export default function AdminLoginPage() {
-  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [totpCode, setTotpCode] = useState('');
+  const [needsTotp, setNeedsTotp] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -19,14 +19,26 @@ export default function AdminLoginPage() {
     const result = await signIn('credentials', {
       email,
       password,
+      totpCode: needsTotp ? totpCode : '',
       redirect: false,
     });
+
+    if (result?.error === 'TOTP_REQUIRED') {
+      setNeedsTotp(true);
+      setLoading(false);
+      return;
+    }
+
+    if (result?.error === 'TOTP_INVALID') {
+      setError('Invalid authenticator code. Please try again.');
+      setLoading(false);
+      return;
+    }
 
     if (result?.error) {
       setError('Invalid email or password');
       setLoading(false);
     } else {
-      // Force full page reload so the server layout re-renders with the new session
       window.location.href = '/admin';
     }
   }
@@ -46,34 +58,61 @@ export default function AdminLoginPage() {
               {error}
             </div>
           )}
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 block w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-              required
-            />
-          </div>
-          <div className="mt-4">
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 block w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-              required
-            />
-          </div>
+          {!needsTotp ? (
+            <>
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="mt-1 block w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  required
+                />
+              </div>
+              <div className="mt-4">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
+                <input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="mt-1 block w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  required
+                />
+              </div>
+            </>
+          ) : (
+            <div>
+              <p className="mb-3 text-sm text-gray-600">Enter the 6-digit code from your authenticator app:</p>
+              <input
+                id="totp"
+                type="text"
+                inputMode="numeric"
+                maxLength={6}
+                placeholder="000000"
+                value={totpCode}
+                onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                autoFocus
+                className="block w-full rounded-xl border border-gray-300 px-4 py-3 text-center text-2xl font-mono tracking-widest focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => { setNeedsTotp(false); setTotpCode(''); setError(''); }}
+                className="mt-2 text-xs text-gray-400 hover:underline"
+              >
+                ← Back
+              </button>
+            </div>
+          )}
           <button
             type="submit"
             disabled={loading}
             className="mt-6 w-full rounded-xl bg-emerald-600 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-emerald-700 disabled:opacity-50"
           >
-            {loading ? 'Signing in...' : 'Sign in'}
+            {loading ? 'Signing in...' : needsTotp ? 'Verify' : 'Sign in'}
           </button>
         </form>
       </div>

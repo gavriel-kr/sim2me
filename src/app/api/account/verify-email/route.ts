@@ -3,37 +3,33 @@ import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
-export async function POST(request: Request) {
-  try {
-    const body = await request.json();
-    const token = typeof body?.token === 'string' ? body.token.trim() : null;
-    if (!token) {
-      return NextResponse.json({ error: 'Missing verification token' }, { status: 400 });
-    }
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const token = searchParams.get('token')?.trim();
 
-    const customer = await prisma.customer.findFirst({
-      where: {
-        emailVerifyToken: token,
-        emailVerifyExpires: { gt: new Date() },
-      },
-    });
-
-    if (!customer) {
-      return NextResponse.json({ error: 'Invalid or expired verification link. You can request a new one from your account.' }, { status: 400 });
-    }
-
-    await prisma.customer.update({
-      where: { id: customer.id },
-      data: {
-        emailVerified: true,
-        emailVerifyToken: null,
-        emailVerifyExpires: null,
-      },
-    });
-
-    return NextResponse.json({ success: true });
-  } catch (e) {
-    console.error('[Verify email]', e);
-    return NextResponse.json({ error: 'Verification failed' }, { status: 500 });
+  if (!token || token.length > 128) {
+    return NextResponse.redirect(new URL('/he/account/login?verifyError=invalid', request.url));
   }
+
+  const customer = await prisma.customer.findFirst({
+    where: {
+      emailVerifyToken: token,
+      emailVerifyExpires: { gt: new Date() },
+    },
+  });
+
+  if (!customer) {
+    return NextResponse.redirect(new URL('/he/account/login?verifyError=expired', request.url));
+  }
+
+  await prisma.customer.update({
+    where: { id: customer.id },
+    data: {
+      emailVerified: true,
+      emailVerifyToken: null,
+      emailVerifyExpires: null,
+    },
+  });
+
+  return NextResponse.redirect(new URL('/he/account/login?verified=true', request.url));
 }

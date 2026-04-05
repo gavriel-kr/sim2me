@@ -42,6 +42,7 @@ export async function POST(request: Request) {
         password: hashedPassword,
         resetToken: null,
         resetExpires: null,
+        passwordChangedAt: new Date(),
       },
     });
 

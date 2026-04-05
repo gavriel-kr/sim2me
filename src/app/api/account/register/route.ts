@@ -3,6 +3,8 @@ import { hash } from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 import { registerSchema } from '@/lib/validation/schemas';
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
+import { sendVerificationEmail } from '@/lib/email';
+import crypto from 'crypto';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,6 +47,8 @@ export async function POST(request: Request) {
     }
 
     const hashedPassword = await hash(password, 12);
+    const emailVerifyToken = crypto.randomBytes(32).toString('hex');
+    const emailVerifyExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
     await prisma.customer.create({
       data: {
@@ -54,10 +58,19 @@ export async function POST(request: Request) {
         lastName: lastName ?? null,
         phone,
         newsletter: newsletter ?? false,
+        emailVerified: false,
+        emailVerifyToken,
+        emailVerifyExpires,
       },
     });
 
-    return NextResponse.json({ success: true, message: 'Account created. You can sign in now.' });
+    sendVerificationEmail(emailLower, emailVerifyToken).catch(() => {});
+
+    return NextResponse.json({
+      success: true,
+      message: 'Account created. Please check your email to verify your account before signing in.',
+      requiresVerification: true,
+    });
   } catch (e) {
     console.error('[Register]', e);
     return NextResponse.json({ error: 'Registration failed' }, { status: 500 });

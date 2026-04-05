@@ -18,10 +18,13 @@ export function AccountLoginClient() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [unverified, setUnverified] = useState(false);
+  const [resendSent, setResendSent] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+    setUnverified(false);
     setLoading(true);
     try {
       const res = await signIn('credentials-customer', {
@@ -29,12 +32,15 @@ export function AccountLoginClient() {
         password,
         redirect: false,
       });
+      if (res?.error === 'EMAIL_NOT_VERIFIED') {
+        setUnverified(true);
+        return;
+      }
       if (res?.error) {
         setError('Invalid email or password. Please try again.');
         return;
       }
       if (res?.ok) {
-        // Full page reload ensures session cookie is read correctly
         window.location.href = '/account';
         return;
       }
@@ -46,6 +52,16 @@ export function AccountLoginClient() {
     }
   }
 
+  async function handleResend() {
+    setResendSent(false);
+    await fetch('/api/account/resend-verification', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email.trim().toLowerCase() }),
+    });
+    setResendSent(true);
+  }
+
   return (
     <Card className="border-0 shadow-lg">
       <CardHeader className="space-y-1 text-center">
@@ -53,6 +69,19 @@ export function AccountLoginClient() {
         <CardDescription>Sign in with your email and password</CardDescription>
       </CardHeader>
       <CardContent>
+        {unverified && (
+          <div className="mb-4 rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800">
+            <p className="font-medium">Please verify your email before signing in.</p>
+            <p className="mt-1">Check your inbox for the verification link.</p>
+            {resendSent ? (
+              <p className="mt-2 text-emerald-700 font-medium">✓ Verification email sent!</p>
+            ) : (
+              <button onClick={handleResend} className="mt-2 underline text-amber-700 hover:text-amber-900 cursor-pointer">
+                Resend verification email
+              </button>
+            )}
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
             <p id="login-error" className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive" role="alert">
