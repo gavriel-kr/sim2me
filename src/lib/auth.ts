@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { headers } from 'next/headers';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { verifyTotp } from '@/lib/totp';
+import { createAuditLog } from '@/lib/audit';
 
 export type SessionUserType = 'admin' | 'customer';
 
@@ -46,8 +47,16 @@ export const authOptions: NextAuthOptions = {
           const code = (credentials as { totpCode?: string }).totpCode?.trim();
           if (!code || code.length !== 6) throw new Error('TOTP_REQUIRED');
           const totpValid = verifyTotp(code, user.totpSecret);
-          if (!totpValid) throw new Error('TOTP_INVALID');
+          if (!totpValid) {
+            createAuditLog({ adminEmail: user.email, adminName: user.name, action: 'ADMIN_LOGIN_2FA_FAIL', ip }).catch(() => {});
+            throw new Error('TOTP_INVALID');
+          }
         }
+
+        // Warn (non-blocking) if ADMIN/SUPER_ADMIN has no 2FA set up
+        const needs2faWarning = !user.totpEnabled && (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN');
+
+        createAuditLog({ adminEmail: user.email, adminName: user.name, action: 'ADMIN_LOGIN', ip }).catch(() => {});
 
         return {
           id: user.id,
@@ -55,6 +64,7 @@ export const authOptions: NextAuthOptions = {
           name: user.name,
           role: user.role,
           type: 'admin' as SessionUserType,
+          needs2faWarning,
         };
       },
     }),
@@ -93,11 +103,14 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        const u = user as { id?: string; email?: string; name?: string; role?: string; type?: SessionUserType };
+        const u = user as { id?: string; email?: string; name?: string; role?: string; type?: SessionUserType; needs2faWarning?: boolean };
         if (u.type) {
           token.id = u.id;
           token.type = u.type;
-          if (u.type === 'admin') token.role = u.role;
+          if (u.type === 'admin') {
+            token.role = u.role;
+            token.needs2faWarning = u.needs2faWarning ?? false;
+          }
         }
       }
       return token;
@@ -107,6 +120,7 @@ export const authOptions: NextAuthOptions = {
         (session.user as { id: string }).id = token.id as string;
         (session.user as { type: SessionUserType }).type = (token.type as SessionUserType) || 'admin';
         (session.user as { role?: string }).role = token.role as string | undefined;
+        (session.user as { needs2faWarning?: boolean }).needs2faWarning = token.needs2faWarning as boolean | undefined;
       }
       return session;
     },

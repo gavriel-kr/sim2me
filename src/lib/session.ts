@@ -5,11 +5,12 @@
  */
 
 import { getServerSession } from 'next-auth';
-import { decode } from 'next-auth/jwt';
+import { decode, getToken } from 'next-auth/jwt';
 import { NextResponse } from 'next/server';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import type { Session } from 'next-auth';
+import type { NextRequest } from 'next/server';
 import type { SessionUserType } from '@/lib/auth';
 
 export type SessionUser = {
@@ -71,14 +72,17 @@ export async function getSessionForRequest(request?: Request): Promise<RequestSe
     const userId = (session.user as SessionUser).id;
     if (userId) {
       try {
-        const { getToken } = await import('next-auth/jwt');
-        const rawToken = await getToken({ req: request as Parameters<typeof getToken>[0]['req'], secret: process.env.NEXTAUTH_SECRET! });
+        // getToken reads the NextAuth JWT from cookies; requires NextRequest in App Router
+        const rawToken = await getToken({
+          req: request as NextRequest,
+          secret: process.env.NEXTAUTH_SECRET!,
+        });
         if (rawToken?.iat) {
-          const stale = await isSessionStale(userId, rawToken.iat);
+          const stale = await isSessionStale(userId, rawToken.iat as number);
           if (stale) return null;
         }
       } catch {
-        // getToken may fail in some edge cases — allow session to continue
+        // Fail-open: if token read fails, allow session to continue
       }
     }
   }

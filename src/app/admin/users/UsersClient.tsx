@@ -10,6 +10,7 @@ interface User {
   role: string;
   active: boolean;
   createdAt: Date;
+  totpEnabled: boolean;
 }
 
 interface Props {
@@ -161,6 +162,9 @@ export function UsersClient({ users: initialUsers }: Props) {
               </select>
               <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${roleColors[user.role] || 'bg-gray-100'}`}>
                 {user.role.replace('_', ' ')}
+              </span>
+              <span title={user.totpEnabled ? '2FA enabled' : '2FA not set up'} className={`rounded-full px-2 py-0.5 text-xs font-semibold ${user.totpEnabled ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                {user.totpEnabled ? '🔒 2FA' : '⚠️ No 2FA'}
               </span>
               <button
                 onClick={() => deleteUser(user.id)}
