@@ -94,56 +94,59 @@ export const authOptions: NextAuthOptions = {
           throw new Error('EMAIL_NOT_VERIFIED');
         }
 
-        // OTP 2FA check
-        if (customer.otpEnabled) {
-          const submittedCode = (credentials as { otpCode?: string }).otpCode?.trim();
+        // Email OTP — required for every login
+        const submittedCode = (credentials as { otpCode?: string }).otpCode?.trim();
 
-          if (!submittedCode) {
-            // First sign-in call: generate and send OTP, then block session creation
-            const code = generateOtpCode();
-            await prisma.customer.update({
-              where: { id: customer.id },
-              data: {
-                otpCodeHash: hashOtpCode(code),
-                otpCodeExpires: otpExpiresAt(),
-                otpAttempts: 0,
-              },
-            });
-            // Fire-and-forget — user receives email
-            sendOtpEmail(customer.email, code).catch(() => {});
-            throw new Error('OTP_REQUIRED');
-          }
-
-          // Second sign-in call: verify the submitted code
-          if (customer.otpAttempts >= 5) {
-            throw new Error('OTP_TOO_MANY_ATTEMPTS');
-          }
-
-          if (!customer.otpCodeHash || !customer.otpCodeExpires) {
-            throw new Error('OTP_REQUIRED');
-          }
-
-          const expired = new Date() > customer.otpCodeExpires;
-          if (expired) {
-            throw new Error('OTP_EXPIRED');
-          }
-
-          const codeValid = isOtpValid(submittedCode, customer.otpCodeHash, customer.otpCodeExpires);
-
-          if (!codeValid) {
-            await prisma.customer.update({
-              where: { id: customer.id },
-              data: { otpAttempts: { increment: 1 } },
-            });
-            throw new Error('OTP_INVALID');
-          }
-
-          // Success — clear code immediately (single-use)
+        if (!submittedCode) {
+          // First sign-in call: generate and send OTP, then block session creation
+          const code = generateOtpCode();
           await prisma.customer.update({
             where: { id: customer.id },
-            data: { otpCodeHash: null, otpCodeExpires: null, otpAttempts: 0 },
+            data: {
+              otpCodeHash: hashOtpCode(code),
+              otpCodeExpires: otpExpiresAt(),
+              otpAttempts: 0,
+            },
           });
+          sendOtpEmail(customer.email, code).catch(() => {});
+          throw new Error('OTP_REQUIRED');
         }
+
+        // Second sign-in call: verify the submitted code
+        if (customer.otpAttempts >= 5) {
+          throw new Error('OTP_TOO_MANY_ATTEMPTS');
+        }
+
+        if (!customer.otpCodeHash || !customer.otpCodeExpires) {
+          // No code in DB — resend and ask again
+          const code = generateOtpCode();
+          await prisma.customer.update({
+            where: { id: customer.id },
+            data: { otpCodeHash: hashOtpCode(code), otpCodeExpires: otpExpiresAt(), otpAttempts: 0 },
+          });
+          sendOtpEmail(customer.email, code).catch(() => {});
+          throw new Error('OTP_REQUIRED');
+        }
+
+        if (new Date() > customer.otpCodeExpires) {
+          throw new Error('OTP_EXPIRED');
+        }
+
+        const codeValid = isOtpValid(submittedCode, customer.otpCodeHash, customer.otpCodeExpires);
+
+        if (!codeValid) {
+          await prisma.customer.update({
+            where: { id: customer.id },
+            data: { otpAttempts: { increment: 1 } },
+          });
+          throw new Error('OTP_INVALID');
+        }
+
+        // Success — clear code immediately (single-use)
+        await prisma.customer.update({
+          where: { id: customer.id },
+          data: { otpCodeHash: null, otpCodeExpires: null, otpAttempts: 0 },
+        });
 
         return {
           id: customer.id,

@@ -955,139 +955,16 @@ export function AccountClient() {
                   <CardTitle className="text-base flex items-center gap-2">
                     <Shield className="w-4 h-4 text-primary" />
                     2-Step Verification
-                    {otpEnabled && (
-                      <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 border border-emerald-200">
-                        <CheckCircle className="w-3 h-3" /> Enabled
-                      </span>
-                    )}
+                    <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 border border-emerald-200">
+                      <CheckCircle className="w-3 h-3" /> Always On
+                    </span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {otpError && (
-                    <div className="mb-3 flex items-center gap-2 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                      <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                      {otpError}
-                    </div>
-                  )}
-                  {otpSuccess && (
-                    <div className="mb-3 flex items-center gap-2 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">
-                      <CheckCircle className="w-4 h-4 flex-shrink-0" />
-                      {otpSuccess}
-                    </div>
-                  )}
-
-                  {!otpEnabled && otpPanel === 'idle' && (
-                    <div className="space-y-3">
-                      <p className="text-sm text-muted-foreground">
-                        Add an extra layer of security. When enabled, a 6-digit code will be sent to your email each time you log in.
-                      </p>
-                      <Button size="sm" onClick={() => { setOtpPanel('enable-send'); setOtpError(''); }}>
-                        Enable 2-Step Verification
-                      </Button>
-                    </div>
-                  )}
-
-                  {otpEnabled && otpPanel === 'idle' && (
-                    <div className="space-y-3">
-                      <p className="text-sm text-muted-foreground">
-                        Each login requires a 6-digit code sent to <strong>{profile.email}</strong>.
-                      </p>
-                      <Button variant="outline" size="sm" className="text-destructive border-destructive/30 hover:bg-destructive/5"
-                        onClick={() => { setOtpPanel('disable-send'); setOtpDisablePassword(''); setOtpDisableCode(''); setOtpError(''); }}>
-                        Disable 2-Step Verification
-                      </Button>
-                    </div>
-                  )}
-
-                  {/* Enable: send test code */}
-                  {otpPanel === 'enable-send' && (
-                    <div className="space-y-3 max-w-sm">
-                      <p className="text-sm text-muted-foreground">
-                        We&apos;ll send a test code to <strong>{profile.email}</strong> to confirm setup.
-                      </p>
-                      <div className="flex gap-2">
-                        <Button size="sm" onClick={handleOtpSendSetup} disabled={otpLoading}>
-                          {otpLoading ? 'Sending…' : 'Send test code'}
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => { setOtpPanel('idle'); setOtpError(''); }}>Cancel</Button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Enable: verify test code */}
-                  {otpPanel === 'enable-verify' && (
-                    <div className="space-y-3 max-w-sm">
-                      <p className="text-sm text-muted-foreground">
-                        Enter the 6-digit code we sent to <strong>{profile.email}</strong>.
-                      </p>
-                      <Input
-                        type="text"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        maxLength={6}
-                        placeholder="000000"
-                        value={otpSetupCode}
-                        onChange={(e) => setOtpSetupCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                        className="h-11 text-center text-xl font-mono tracking-widest max-w-[160px]"
-                      />
-                      <div className="flex gap-2">
-                        <Button size="sm" onClick={handleOtpEnable} disabled={otpLoading || otpSetupCode.length !== 6}>
-                          {otpLoading ? 'Verifying…' : 'Confirm & Enable'}
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => { setOtpPanel('enable-send'); setOtpSetupCode(''); setOtpError(''); }}>
-                          Resend code
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => { setOtpPanel('idle'); setOtpError(''); }}>Cancel</Button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Disable: enter password */}
-                  {otpPanel === 'disable-send' && (
-                    <div className="space-y-3 max-w-sm">
-                      <p className="text-sm text-muted-foreground">
-                        Enter your current password to confirm, then we&apos;ll send a verification code.
-                      </p>
-                      <Input
-                        type="password"
-                        placeholder="Current password"
-                        value={otpDisablePassword}
-                        onChange={(e) => setOtpDisablePassword(e.target.value)}
-                        className="h-10"
-                      />
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="destructive" onClick={handleOtpDisableSend} disabled={otpLoading || !otpDisablePassword}>
-                          {otpLoading ? 'Sending…' : 'Send verification code'}
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => { setOtpPanel('idle'); setOtpError(''); }}>Cancel</Button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Disable: verify code */}
-                  {otpPanel === 'disable-verify' && (
-                    <div className="space-y-3 max-w-sm">
-                      <p className="text-sm text-muted-foreground">
-                        Enter the 6-digit code we sent to <strong>{profile.email}</strong> to confirm disabling 2FA.
-                      </p>
-                      <Input
-                        type="text"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        maxLength={6}
-                        placeholder="000000"
-                        value={otpDisableCode}
-                        onChange={(e) => setOtpDisableCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                        className="h-11 text-center text-xl font-mono tracking-widest max-w-[160px]"
-                      />
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="destructive" onClick={handleOtpDisable} disabled={otpLoading || otpDisableCode.length !== 6}>
-                          {otpLoading ? 'Verifying…' : 'Confirm Disable'}
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => { setOtpPanel('idle'); setOtpError(''); }}>Cancel</Button>
-                      </div>
-                    </div>
-                  )}
+                  <p className="text-sm text-muted-foreground">
+                    Every login to your account requires a 6-digit verification code sent to{' '}
+                    <strong>{profile.email}</strong>. This protects your account even if your password is compromised.
+                  </p>
                 </CardContent>
               </Card>
 
