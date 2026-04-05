@@ -3,6 +3,7 @@ import { contactFormSchema } from '@/lib/validation/schemas';
 import { prisma } from '@/lib/prisma';
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
 import { checkBotId } from 'botid/server';
+import { verifyTurnstile } from '@/lib/turnstile';
 
 const escapeHtml = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -21,6 +22,13 @@ export async function POST(request: Request) {
     if (!allowed) return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 });
 
     const body = await request.json();
+
+    // Turnstile verification
+    const turnstileOk = await verifyTurnstile(body?.turnstileToken ?? '', ip);
+    if (!turnstileOk) {
+      return NextResponse.json({ error: 'Security check failed. Please try again.' }, { status: 400 });
+    }
+
     const parsed = contactFormSchema.safeParse(body);
 
     if (!parsed.success) {

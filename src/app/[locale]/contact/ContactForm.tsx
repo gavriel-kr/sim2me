@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PhoneInput } from '@/components/PhoneInput';
+import { TurnstileWidget } from '@/components/ui/TurnstileWidget';
 import { useToast } from '@/hooks/useToast';
 import { Send, CheckCircle } from 'lucide-react';
 
@@ -26,6 +27,7 @@ export function ContactForm() {
   const { toast } = useToast();
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
@@ -43,7 +45,7 @@ export function ContactForm() {
       const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, turnstileToken }),
       });
       if (!res.ok) throw new Error('Failed to send');
       setSent(true);
@@ -173,9 +175,16 @@ export function ContactForm() {
         </Label>
       </div>
 
+      <TurnstileWidget
+        onVerify={setTurnstileToken}
+        onExpire={() => setTurnstileToken(null)}
+        onError={() => setTurnstileToken(null)}
+        className="my-1"
+      />
+
       <Button
         type="submit"
-        disabled={sending}
+        disabled={sending || !turnstileToken}
         className="h-12 w-full rounded-xl text-base font-semibold shadow-md"
       >
         {sending ? (
