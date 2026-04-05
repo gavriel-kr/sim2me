@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { getArticlesDefaultImage } from '@/lib/articles-default-image';
 import { prisma } from '@/lib/prisma';
+import { requireAdmin } from '@/lib/session';
 
 const KEY = 'articles_default_image';
 
@@ -10,7 +11,8 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const denied = requireAdmin(session);
+  if (denied) return denied;
 
   const defaultImage = await getArticlesDefaultImage();
   return NextResponse.json({ defaultImage });
@@ -18,7 +20,8 @@ export async function GET() {
 
 export async function PATCH(request: Request) {
   const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const denied = requireAdmin(session);
+  if (denied) return denied;
 
   const body = await request.json();
   const url = typeof body.url === 'string' ? body.url.trim() : '';

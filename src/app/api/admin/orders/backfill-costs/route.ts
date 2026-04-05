@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { getPackages } from '@/lib/esimaccess';
+import { requireAdmin } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,7 +14,8 @@ export const dynamic = 'force-dynamic';
  */
 export async function POST() {
   const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const denied = requireAdmin(session);
+  if (denied) return denied;
 
   // Find orders where eSIMaccess was charged but cost was never recorded
   const ordersToFill = await prisma.order.findMany({

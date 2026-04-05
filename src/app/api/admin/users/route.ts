@@ -3,14 +3,16 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { hash } from 'bcryptjs';
+import { requireAdmin } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const denied = requireAdmin(session);
+  if (denied) return denied;
 
-  const role = (session.user as { role: string }).role;
+  const role = (session!.user as { role: string }).role;
   if (role !== 'SUPER_ADMIN' && role !== 'ADMIN') {
     return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
   }
@@ -38,9 +40,10 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const denied2 = requireAdmin(session);
+  if (denied2) return denied2;
 
-  const role = (session.user as { role: string }).role;
+  const role = (session!.user as { role: string }).role;
   if (role !== 'SUPER_ADMIN' && role !== 'ADMIN') {
     return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
   }
@@ -62,9 +65,10 @@ export async function PATCH(request: Request) {
 
 export async function DELETE(request: Request) {
   const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const denied3 = requireAdmin(session);
+  if (denied3) return denied3;
 
-  const role = (session.user as { role: string }).role;
+  const role = (session!.user as { role: string }).role;
   if (role !== 'SUPER_ADMIN' && role !== 'ADMIN') {
     return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
   }

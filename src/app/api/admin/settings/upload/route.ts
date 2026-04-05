@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { requireAdmin } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,7 +11,8 @@ const ALLOWED_FAVICON = ['image/x-icon', 'image/png', 'image/svg+xml'] as const;
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const denied = requireAdmin(session);
+  if (denied) return denied;
 
   let formData: FormData;
   try {

@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { policies } from '@/content/policies';
+import { requireAdmin } from '@/lib/session';
 
 // Import translation files directly
 import en from '@/messages/en.json';
@@ -126,7 +127,8 @@ function getPageContent(slug: string, lang: typeof en) {
  */
 export async function POST() {
   const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const denied = requireAdmin(session);
+  if (denied) return denied;
 
   const allSlugs = [
     'home', 'about', 'contact', 'how-it-works',

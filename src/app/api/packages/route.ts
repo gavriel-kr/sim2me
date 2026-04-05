@@ -171,7 +171,6 @@ export async function GET(req: NextRequest) {
           name: override?.customTitle || pkg.name,
           originalName: pkg.name,
           price: override?.customPrice != null ? Number(override.customPrice) : retailPriceUsd,
-          wholesalePrice: pkg.price / 10000,
           currency: 'USD',
           volume: pkg.volume,
           duration: pkg.duration,

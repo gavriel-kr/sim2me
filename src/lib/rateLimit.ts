@@ -41,8 +41,9 @@ export async function checkRateLimit(
 
     await prisma.rateLimit.update({ where: { key }, data: { count: { increment: 1 } } });
     return true;
-  } catch {
+  } catch (e) {
     // On DB error, allow the request rather than blocking legitimate users
+    console.error('[RateLimit] DB error:', e);
     return true;
   }
 }

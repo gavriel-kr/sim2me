@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { revalidateTag } from 'next/cache';
 import { SEO_CACHE_TAG } from '@/lib/seo-override';
+import { requireAdmin } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,7 +13,8 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const denied = requireAdmin(session);
+  if (denied) return denied;
 
   const body = await request.json();
   const { title, description, ogTitle, ogDescription, ogImage, canonicalUrl } = body;
@@ -38,7 +40,8 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const denied = requireAdmin(session);
+  if (denied) return denied;
 
   await prisma.seoSetting.delete({ where: { id: params.id } });
   revalidateTag(SEO_CACHE_TAG);

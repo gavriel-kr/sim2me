@@ -1,10 +1,13 @@
 /**
  * GET order by Paddle transaction ID (for success page polling).
  * Returns public order summary: status, QR, install details. No auth required.
+ * Transaction IDs are Paddle-generated random strings — not guessable by brute-force.
+ * Rate-limited per IP to prevent enumeration attempts.
  */
 
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
 
 const TXN_PREFIX = 'txn_';
 const MAX_LEN = 64;
@@ -15,9 +18,13 @@ function sanitizeTxnId(id: string): string {
 }
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ transactionId: string }> }
 ) {
+  const ip = getClientIp(request);
+  const allowed = await checkRateLimit(ip, 'by-transaction', 30, 60);
+  if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+
   const { transactionId } = await params;
   const txnId = sanitizeTxnId(transactionId);
   if (!txnId) {

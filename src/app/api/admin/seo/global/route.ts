@@ -4,12 +4,14 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { revalidateTag } from 'next/cache';
 import { SEO_KEYS, GLOBAL_SEO_DEFAULTS, GLOBAL_SEO_CACHE_TAG, type SeoKeyName } from '@/lib/global-seo';
+import { requireAdmin } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const denied = requireAdmin(session);
+  if (denied) return denied;
 
   const rows = await prisma.siteSetting.findMany({
     where: { key: { in: Object.values(SEO_KEYS) } },
@@ -26,7 +28,8 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const denied = requireAdmin(session);
+  if (denied) return denied;
 
   const body = await request.json();
 

@@ -3,6 +3,9 @@ import { contactFormSchema } from '@/lib/validation/schemas';
 import { prisma } from '@/lib/prisma';
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
 
+const escapeHtml = (s: string) =>
+  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
@@ -48,19 +51,19 @@ export async function POST(request: Request) {
           <table style="width: 100%; border-collapse: collapse;">
             <tr>
               <td style="padding: 8px 0; font-weight: bold; color: #555; width: 100px;">Name:</td>
-              <td style="padding: 8px 0;">${name}</td>
+              <td style="padding: 8px 0;">${escapeHtml(name)}</td>
             </tr>
             <tr>
               <td style="padding: 8px 0; font-weight: bold; color: #555;">Email:</td>
-              <td style="padding: 8px 0;"><a href="mailto:${email}">${email}</a></td>
+              <td style="padding: 8px 0;"><a href="mailto:${escapeHtml(email)}">${escapeHtml(email)}</a></td>
             </tr>
             <tr>
               <td style="padding: 8px 0; font-weight: bold; color: #555;">Subject:</td>
-              <td style="padding: 8px 0;">${subject}</td>
+              <td style="padding: 8px 0;">${escapeHtml(subject)}</td>
             </tr>
           </table>
           <div style="margin-top: 16px; padding: 16px; background: #f5f5f5; border-radius: 8px;">
-            <p style="margin: 0; white-space: pre-wrap;">${message}</p>
+            <p style="margin: 0; white-space: pre-wrap;">${escapeHtml(message)}</p>
           </div>
           <p style="margin-top: 24px; font-size: 12px; color: #999;">
             This message was sent from the Sim2Me contact form.

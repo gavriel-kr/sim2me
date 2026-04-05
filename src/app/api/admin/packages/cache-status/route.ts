@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { ALL_PACKAGES_DB_CACHE_KEY } from '@/lib/packagesCache';
+import { requireAdmin } from '@/lib/session';
 
 /**
  * GET /api/admin/packages/cache-status
@@ -11,9 +12,8 @@ import { ALL_PACKAGES_DB_CACHE_KEY } from '@/lib/packagesCache';
  */
 export async function GET() {
   const session = await getServerSession(authOptions);
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const denied = requireAdmin(session);
+  if (denied) return denied;
 
   try {
     const setting = await prisma.siteSetting.findUnique({ where: { key: ALL_PACKAGES_DB_CACHE_KEY } });
