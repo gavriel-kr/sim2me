@@ -43,6 +43,7 @@
     "@tanstack/react-query": "^5.17.19",
     "@types/qrcode": "^1.5.6",
     "bcryptjs": "^3.0.3",
+    "botid": "^1.5.11",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "dotenv": "^17.2.4",

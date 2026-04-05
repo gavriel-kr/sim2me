@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { contactFormSchema } from '@/lib/validation/schemas';
 import { prisma } from '@/lib/prisma';
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
+import { checkBotId } from 'botid/server';
 
 const escapeHtml = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -10,6 +11,11 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
   try {
+    const botCheck = await checkBotId();
+    if (botCheck.isBot) {
+      return NextResponse.json({ error: 'Access denied.' }, { status: 403 });
+    }
+
     const ip = getClientIp(request);
     const allowed = await checkRateLimit(ip, 'contact', 3, 60);
     if (!allowed) return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 });
