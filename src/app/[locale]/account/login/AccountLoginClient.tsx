@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { TurnstileWidget } from '@/components/ui/TurnstileWidget';
 
 const { Link: IntlLink } = createSharedPathnamesNavigation(routing);
 
@@ -20,6 +21,7 @@ export function AccountLoginClient() {
   const [loading, setLoading] = useState(false);
   const [unverified, setUnverified] = useState(false);
   const [resendSent, setResendSent] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -27,6 +29,20 @@ export function AccountLoginClient() {
     setUnverified(false);
     setLoading(true);
     try {
+      // Verify Turnstile before attempting login
+      if (turnstileToken) {
+        const check = await fetch('/api/account/verify-turnstile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: turnstileToken }),
+        });
+        if (!check.ok) {
+          setError('Security check failed. Please try again.');
+          setTurnstileToken(null);
+          return;
+        }
+      }
+
       const res = await signIn('credentials-customer', {
         email: email.trim().toLowerCase(),
         password,
@@ -49,6 +65,7 @@ export function AccountLoginClient() {
       setError('Something went wrong. Please try again.');
     } finally {
       setLoading(false);
+      setTurnstileToken(null);
     }
   }
 
@@ -125,7 +142,13 @@ export function AccountLoginClient() {
               aria-describedby={error ? 'login-error' : undefined}
             />
           </div>
-          <Button type="submit" className="w-full h-11" size="lg" disabled={loading}>
+          <TurnstileWidget
+            onVerify={setTurnstileToken}
+            onExpire={() => setTurnstileToken(null)}
+            onError={() => setTurnstileToken(null)}
+            className="my-2"
+          />
+          <Button type="submit" className="w-full h-11" size="lg" disabled={loading || !turnstileToken}>
             {loading ? 'Signing in…' : t('signIn')}
           </Button>
         </form>

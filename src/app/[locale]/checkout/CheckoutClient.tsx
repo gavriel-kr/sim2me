@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { createSharedPathnamesNavigation } from 'next-intl/navigation';
 import { routing } from '@/i18n/routing';
 import { usePaddle } from '@/components/paddle/PaddleScript';
+import { TurnstileWidget } from '@/components/ui/TurnstileWidget';
 
 const { Link: IntlLink } = createSharedPathnamesNavigation(routing);
 
@@ -37,6 +38,7 @@ export function CheckoutClient() {
   const [step, setStep] = useState<Step>('cart');
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   const { register, handleSubmit, formState: { errors } } = useForm<TravelerInfoForm>({
     resolver: zodResolver(travelerInfoSchema),
@@ -77,6 +79,7 @@ export function CheckoutClient() {
           })),
           customerEmail: travelerData.email,
           customerName: [travelerData.firstName, travelerData.lastName].filter(Boolean).join(' ').trim() || undefined,
+          turnstileToken: turnstileToken ?? '',
         }),
       });
       const data = await res.json();
@@ -115,6 +118,7 @@ export function CheckoutClient() {
       setPaymentError(t('paymentError') || 'Something went wrong. Please try again.');
     } finally {
       setPaymentLoading(false);
+      setTurnstileToken(null);
     }
   };
 
@@ -253,13 +257,24 @@ export function CheckoutClient() {
                 {paymentError && (
                   <p className="mb-4 text-sm text-destructive" role="alert">{paymentError}</p>
                 )}
+                <TurnstileWidget
+                  onVerify={setTurnstileToken}
+                  onExpire={() => setTurnstileToken(null)}
+                  onError={() => setTurnstileToken(null)}
+                  className="my-3"
+                />
                 <Button
                   className="mt-4 w-full"
                   onClick={onPayWithPaddle}
-                  disabled={paymentLoading || !paddleReady || belowMinimum}
+                  disabled={paymentLoading || !paddleReady || belowMinimum || !turnstileToken}
                 >
                   {paymentLoading ? (t('processing') || 'Processing…') : (t('payNow') || 'Pay now')}
                 </Button>
+                {!turnstileToken && !paymentLoading && (
+                  <p className="mt-2 text-xs text-muted-foreground text-center">
+                    Completing security check…
+                  </p>
+                )}
               </CardContent>
             </Card>
           )}

@@ -12,6 +12,7 @@ import { getSessionForRequest, isCustomerSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { getDbCachedPackages } from '@/lib/packagesCache';
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
+import { verifyTurnstile } from '@/lib/turnstile';
 import { z } from 'zod';
 
 const bodySchema = z.object({
@@ -24,6 +25,7 @@ const bodySchema = z.object({
   customerEmail: z.string().email(),
   customerName: z.string().max(200).optional(),
   deviceType: z.string().max(64).optional(),
+  turnstileToken: z.string().optional(),
 });
 
 const PADDLE_API = 'https://api.paddle.com';
@@ -43,7 +45,14 @@ export async function POST(request: Request) {
       );
     }
 
-    const { items, customerEmail, customerName, deviceType } = parsed.data;
+    const { items, customerEmail, customerName, deviceType, turnstileToken } = parsed.data;
+
+    // Bot protection: verify Turnstile token before any business logic
+    const turnstileOk = await verifyTurnstile(turnstileToken ?? '', ip);
+    if (!turnstileOk) {
+      return NextResponse.json({ error: 'Security check failed. Please refresh and try again.' }, { status: 400 });
+    }
+
     const session = await getSessionForRequest(request);
     const userId = isCustomerSession(session) ? session.user.id : null;
 
