@@ -79,7 +79,7 @@ export default async function OrdersPage() {
           activationCode: o.activationCode ?? null,
           iccid: o.iccid ?? null,
           paddleTransactionId: o.paddleTransactionId ?? null,
-          createdAt: o.createdAt.toLocaleDateString(),
+          createdAt: o.createdAt.toLocaleDateString() + ' ' + o.createdAt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
         }))}
       />
     </div>
