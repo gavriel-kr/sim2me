@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -8,10 +9,15 @@ import { contactFormSchema, type ContactFormData, CONTACT_SUBJECTS } from '@/lib
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { PhoneInput } from '@/components/PhoneInput';
 import { TurnstileWidget } from '@/components/ui/TurnstileWidget';
 import { useToast } from '@/hooks/useToast';
 import { Send, CheckCircle } from 'lucide-react';
+
+// Dynamic import prevents SSR hydration mismatch from react-phone-number-input
+const PhoneInput = dynamic(
+  () => import('@/components/PhoneInput').then((m) => m.PhoneInput),
+  { ssr: false, loading: () => <div className="h-11 w-full rounded-xl border border-input bg-background animate-pulse" /> }
+);
 
 const SUBJECT_KEYS: Record<string, string> = {
   'Installation Help': 'subject_installation_help',

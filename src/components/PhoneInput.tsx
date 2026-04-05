@@ -35,7 +35,6 @@ export function PhoneInput({
       onChange={onChange}
       disabled={disabled}
       aria-label={ariaLabel}
-      flagUrl="https://flagcdn.com/w40/{XX}.png"
       className={cn(
         'flex h-11 w-full rounded-lg border border-input bg-background ring-offset-background',
         'focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2',
