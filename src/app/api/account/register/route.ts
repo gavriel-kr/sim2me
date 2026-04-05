@@ -5,17 +5,12 @@ import { registerSchema } from '@/lib/validation/schemas';
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
 import { sendVerificationEmail } from '@/lib/email';
 import crypto from 'crypto';
-import { checkBotId } from 'botid/server';
+// import { checkBotId } from 'botid/server'; // BotID disabled
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
   try {
-    const botCheck = await checkBotId();
-    if (botCheck.isBot) {
-      return NextResponse.json({ error: 'Access denied.' }, { status: 403 });
-    }
-
     const ip = getClientIp(request);
     const allowed = await checkRateLimit(ip, 'register', 5, 60);
     if (!allowed) return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 });

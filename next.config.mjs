@@ -1,5 +1,5 @@
 import createNextIntlPlugin from 'next-intl/plugin';
-import { withBotId } from 'botid/next/config';
+// import { withBotId } from 'botid/next/config'; // BotID disabled — Turnstile covers all protected routes
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
@@ -66,4 +66,4 @@ const nextConfig = {
   },
 };
 
-export default withNextIntl(withBotId(nextConfig));
+export default withNextIntl(nextConfig);
