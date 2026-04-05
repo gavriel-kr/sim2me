@@ -6,15 +6,17 @@ updates:
       interval: "weekly"
       day: "monday"
     groups:
-      production-dependencies:
-        dependency-type: "production"
-      development-dependencies:
-        dependency-type: "development"
+      patch-updates:
+        update-types:
+          - "patch"
+      minor-updates:
+        update-types:
+          - "minor"
     labels:
       - "dependencies"
       - "security"
     open-pull-requests-limit: 5
+    # Ignore ALL major version upgrades — these require manual planning and testing
     ignore:
-      # Next.js major version upgrade is handled manually (breaking changes)
-      - dependency-name: "next"
+      - dependency-name: "*"
         update-types: ["version-update:semver-major"]
