@@ -4,11 +4,12 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { AuditLogClient } from './AuditLogClient';
 
-export default async function AuditLogPage({ searchParams }: { searchParams?: { page?: string } }) {
+export default async function AuditLogPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
   const session = await getServerSession(authOptions);
   if (!session) redirect('/admin/login');
 
-  const page = Math.max(1, parseInt(searchParams?.page ?? '1', 10));
+  const { page: pageParam } = await searchParams;
+  const page = Math.max(1, parseInt(pageParam ?? '1', 10));
   const limit = 50;
   const skip = (page - 1) * limit;
 
