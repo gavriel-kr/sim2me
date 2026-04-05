@@ -151,6 +151,50 @@ export async function sendAdminOrderNotificationEmail(data: AdminOrderNotificati
   sendEmail(to, `New Order: ${data.packageName} — $${data.amountCharged.toFixed(2)}`, html).catch(() => {});
 }
 
+export interface FraudAlertEmailData {
+  customerName: string;
+  customerEmail: string;
+  packageName: string;
+  destination: string;
+  amountPaid: number;
+  supplierCost: number;
+  deficit: number;
+  paddleTransactionId: string;
+  orderId: string;
+  orderNo: string;
+  adminOrdersUrl: string;
+}
+
+/** Sends an urgent fraud alert when payment is below supplier cost. Fire-and-forget. */
+export async function sendFraudAlertEmail(data: FraudAlertEmailData): Promise<void> {
+  const to = process.env.ADMIN_NOTIFICATION_EMAIL || 'info.sim2me@gmail.com';
+  const html = `
+<div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; padding: 24px;">
+  <div style="background: #fef2f2; border: 2px solid #dc2626; border-radius: 10px; padding: 20px 24px; margin-bottom: 20px;">
+    <h2 style="margin: 0 0 8px 0; color: #dc2626; font-size: 20px;">🚨 FRAUD ALERT — Underpayment Blocked</h2>
+    <p style="margin: 0; color: #7f1d1d; font-size: 14px;">A transaction was blocked because the customer payment was below the supplier cost. No eSIM was purchased.</p>
+  </div>
+  <table style="width:100%; border-collapse: collapse; font-size: 14px;">
+    <tr><td style="padding: 7px 12px 7px 0; color: #64748b; white-space:nowrap;">Customer</td><td style="padding: 7px 0;"><strong>${escapeHtml(data.customerName)}</strong> &lt;${escapeHtml(data.customerEmail)}&gt;</td></tr>
+    <tr><td style="padding: 7px 12px 7px 0; color: #64748b;">Package</td><td style="padding: 7px 0;">${escapeHtml(data.packageName)}</td></tr>
+    <tr><td style="padding: 7px 12px 7px 0; color: #64748b;">Destination</td><td style="padding: 7px 0;">${escapeHtml(data.destination)}</td></tr>
+    <tr style="background:#fef2f2;"><td style="padding: 7px 12px 7px 0; color: #dc2626; font-weight:600;">Amount Paid</td><td style="padding: 7px 0; color: #dc2626; font-weight:700;">$${data.amountPaid.toFixed(2)}</td></tr>
+    <tr style="background:#fef2f2;"><td style="padding: 7px 12px 7px 0; color: #dc2626; font-weight:600;">Supplier Cost</td><td style="padding: 7px 0; color: #dc2626; font-weight:700;">$${data.supplierCost.toFixed(2)}</td></tr>
+    <tr style="background:#fef2f2;"><td style="padding: 7px 12px 7px 0; color: #dc2626; font-weight:600;">Deficit (Loss Prevented)</td><td style="padding: 7px 0; color: #dc2626; font-weight:700;">$${data.deficit.toFixed(2)}</td></tr>
+    <tr><td style="padding: 7px 12px 7px 0; color: #64748b;">Paddle Transaction</td><td style="padding: 7px 0; font-family: monospace; font-size: 12px;">${escapeHtml(data.paddleTransactionId)}</td></tr>
+    <tr><td style="padding: 7px 12px 7px 0; color: #64748b;">Order ID</td><td style="padding: 7px 0; font-family: monospace; font-size: 12px;">${escapeHtml(data.orderNo)}</td></tr>
+  </table>
+  <div style="margin: 20px 0 0 0; padding: 14px; background: #fff7ed; border: 1px solid #f97316; border-radius: 8px; font-size: 13px; color: #7c2d12;">
+    ⚠️ The order is marked <strong>FAILED</strong>. No eSIM was purchased from the supplier. Consider issuing a refund via Paddle Dashboard.
+  </div>
+  <p style="margin: 16px 0 0 0;">
+    <a href="${escapeHtml(data.adminOrdersUrl)}" style="display: inline-block; background: #dc2626; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-size: 14px;">View Order in Admin</a>
+  </p>
+</div>`.trim();
+
+  sendEmail(to, `🚨 FRAUD ALERT: Payment $${data.amountPaid.toFixed(2)} below supplier cost $${data.supplierCost.toFixed(2)} — ${data.packageName}`, html).catch(() => {});
+}
+
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, '&amp;')

@@ -11,7 +11,7 @@ import { NextResponse } from 'next/server';
 import { verifyPaddleWebhook, safeJsonParse } from '@/lib/paddle';
 import { prisma } from '@/lib/prisma';
 import { purchasePackage, getEsimProfileWithRetry, getPackages, formatDataVolume } from '@/lib/esimaccess';
-import { sendPostPurchaseEmail, sendAdminOrderNotificationEmail } from '@/lib/email';
+import { sendPostPurchaseEmail, sendAdminOrderNotificationEmail, sendFraudAlertEmail } from '@/lib/email';
 import { hash } from 'bcryptjs';
 
 const EVENT_TRANSACTION_COMPLETED = 'transaction.completed';
@@ -162,6 +162,37 @@ export async function POST(request: Request) {
     orderNo: order.orderNo,
     adminOrdersUrl: `${baseUrl()}/admin/orders`,
   }).catch(() => {});
+
+  // Safety guard: if payment is below supplier cost, block fulfillment immediately.
+  // supplierCostUsd is undefined only when the package could not be resolved from the API —
+  // in that case we allow the purchase to avoid blocking legitimate customers.
+  if (supplierCostUsd !== undefined && totalAmount < supplierCostUsd) {
+    const deficit = supplierCostUsd - totalAmount;
+    console.error('[Paddle webhook] UNDERPAYMENT BLOCKED', {
+      transactionId, totalAmount, supplierCostUsd, deficit, customerEmail, planId,
+    });
+    await prisma.order.update({
+      where: { id: order.id },
+      data: {
+        status: 'FAILED',
+        errorMessage: `Blocked: payment $${totalAmount.toFixed(2)} is below supplier cost $${supplierCostUsd.toFixed(2)}. Deficit: $${deficit.toFixed(2)}.`,
+      },
+    });
+    sendFraudAlertEmail({
+      customerName: customerName || customerEmail,
+      customerEmail,
+      packageName,
+      destination,
+      amountPaid: totalAmount,
+      supplierCost: supplierCostUsd,
+      deficit,
+      paddleTransactionId: transactionId,
+      orderId: order.id,
+      orderNo: order.orderNo,
+      adminOrdersUrl: `${baseUrl()}/admin/orders`,
+    }).catch(() => {});
+    return NextResponse.json({ received: true });
+  }
 
   try {
     const purchase = await purchasePackage(planId, 1);
