@@ -4,5 +4,15 @@
       "path": "/api/cron/refresh-packages",
       "schedule": "0 */6 * * *"
     }
+  ],
+  "routes": [
+    {
+      "src": "^/(wp-admin|wp-login\\.php|xmlrpc\\.php|phpmyadmin|phpinfo\\.php|server-status|\\.env|\\.git|\\.htaccess)(.*)?$",
+      "mitigate": { "action": "deny" }
+    },
+    {
+      "src": "^/.*\\.(php|asp|aspx|jsp|cgi|sh|bash|pl|py|rb|exe|dll|bat|cmd)$",
+      "mitigate": { "action": "deny" }
+    }
   ]
 }
