@@ -13,7 +13,8 @@ import ar from '@/messages/ar.json';
 export const dynamic = 'force-dynamic';
 
 /** Map page slug → translation section keys + how to format content */
-function getPageContent(slug: string, lang: typeof en) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getPageContent(slug: string, lang: any) {
   const l = lang as Record<string, Record<string, string>>;
 
   switch (slug) {

@@ -115,7 +115,7 @@ export default async function AdminDashboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {recentOrders.map((order) => (
+                {recentOrders.map((order: typeof recentOrders[number]) => (
                   <tr key={order.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 font-medium text-gray-900">{order.orderNo.slice(0, 12)}...</td>
                     <td className="px-4 py-3 text-gray-600">{order.customerEmail}</td>

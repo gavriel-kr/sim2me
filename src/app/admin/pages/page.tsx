@@ -19,7 +19,7 @@ export default async function CMSPagesPage() {
 
   // Auto-create any missing pages
   const existing = await prisma.page.findMany({ select: { slug: true } });
-  const existingSlugs = new Set(existing.map((p) => p.slug));
+  const existingSlugs = new Set(existing.map((p: typeof existing[number]) => p.slug));
 
   for (const slug of ALL_SLUGS) {
     if (!existingSlugs.has(slug)) {

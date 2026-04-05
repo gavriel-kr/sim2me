@@ -97,7 +97,7 @@ function matchRule(order: OrderForFilter, rule: FilterRule): boolean {
  * Apply filters to the given orders. Combines: free-text search, status, country_code,
  * date range, and all custom rules (AND together).
  */
-export function applyOrderFilters(orders: OrderForFilter[], filters: OrderFiltersState): OrderForFilter[] {
+export function applyOrderFilters<T extends OrderForFilter>(orders: T[], filters: OrderFiltersState): T[] {
   return orders.filter((order) => {
     if (filters.search.trim()) {
       const q = filters.search.trim().toLowerCase();

@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { revalidateTag } from 'next/cache';
 import { SEO_KEYS, GLOBAL_SEO_DEFAULTS, GLOBAL_SEO_CACHE_TAG, type SeoKeyName } from '@/lib/global-seo';
 import { requireAdmin } from '@/lib/session';
+import type { SiteSetting } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,7 +17,7 @@ export async function GET() {
   const rows = await prisma.siteSetting.findMany({
     where: { key: { in: Object.values(SEO_KEYS) } },
   });
-  const map = Object.fromEntries(rows.map((r) => [r.key, r.value]));
+  const map = Object.fromEntries(rows.map((r: SiteSetting) => [r.key, r.value]));
 
   const settings: Record<string, string> = {};
   for (const [name, key] of Object.entries(SEO_KEYS) as [SeoKeyName, string][]) {

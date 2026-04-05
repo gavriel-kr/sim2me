@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import type { Article } from '@prisma/client';
 
 export type ArticleLocale = 'en' | 'he' | 'ar';
 
@@ -94,7 +95,7 @@ export async function getPublishedArticles(locale: ArticleLocale): Promise<Artic
     },
   });
 
-  return rows.map((r) => {
+  return rows.map((r: Article) => {
     const base = pickLocaleFields(r, locale);
     return {
       id: r.id,
@@ -155,7 +156,7 @@ export async function getRelatedArticlesForCarousel(
     },
   });
 
-  return rows.map((r) => {
+  return rows.map((r: Article) => {
     const base = pickLocaleFields(r, locale);
     return {
       id: r.id,

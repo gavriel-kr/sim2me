@@ -37,7 +37,7 @@ export async function POST() {
 
   let updated = 0;
   await Promise.all(
-    ordersToFill.map(async (order) => {
+    ordersToFill.map(async (order: { id: string; packageCode: string }) => {
       const cost = priceMap.get(order.packageCode);
       if (cost == null) return; // package no longer in API — skip
       await prisma.order.update({

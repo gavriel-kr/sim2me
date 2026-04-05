@@ -48,7 +48,7 @@ export async function GET(request: Request) {
   });
 
   // Backfill: link any orders found by email back to this customerId
-  const unlinked = orders.filter((o) => !('customerId' in o));
+  const unlinked = orders.filter((o: typeof orders[number]) => !('customerId' in o));
   if (unlinked.length > 0) {
     await prisma.order.updateMany({
       where: { customerEmail: customer.email, customerId: null },

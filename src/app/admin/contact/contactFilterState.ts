@@ -13,6 +13,7 @@ export type ContactForFilter = {
   read: boolean;
   status: string;
   createdAt: string;
+  notes: Array<{ id: string; content: string; createdAt: string }>;
 };
 
 export type FilterOperator = '=' | '!=' | '>' | '>=' | '<' | '<=' | 'contains';

@@ -37,7 +37,8 @@ export async function POST() {
   }
 
   const enArHtml = fs.readFileSync(enArPath, 'utf-8');
-  const result = await runPhase7Update(prisma, { heHtml, enArHtml });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const result = await runPhase7Update(prisma as any, { heHtml, enArHtml });
 
   if (result.error) {
     return NextResponse.json({ error: result.error }, { status: 400 });

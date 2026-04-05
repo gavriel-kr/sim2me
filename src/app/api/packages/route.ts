@@ -157,10 +157,10 @@ export async function GET(req: NextRequest) {
           })(),
     ]);
 
-    const overrideMap = new Map(overrides.map((o) => [o.packageCode, o]));
+    const overrideMap = new Map<string, typeof overrides[number]>(overrides.map((o: typeof overrides[number]) => [o.packageCode, o]));
 
     // Merge and filter
-    const packages = (apiData.packageList || [])
+    const packages = (apiData.packageList as EsimPackage[] || [])
       .map((pkg) => {
         const override = overrideMap.get(pkg.packageCode);
         const retailPriceUsd = pkg.retailPrice ? pkg.retailPrice / 10000 : pkg.price / 10000;
@@ -196,7 +196,7 @@ export async function GET(req: NextRequest) {
       });
 
     // Build set of admin-curated featured destination codes
-    const featuredSet = new Set(featuredDestinations.map((f) => f.locationCode));
+    const featuredSet = new Set(featuredDestinations.map((f: typeof featuredDestinations[number]) => f.locationCode));
 
     // Group by locationCode for destinations list
     const destinationsMap = new Map<string, {
@@ -224,7 +224,7 @@ export async function GET(req: NextRequest) {
         if (pkg.speed && !existing.speeds.includes(pkg.speed)) existing.speeds.push(pkg.speed);
         if (isFeatured) existing.featured = true;
       } else {
-        const featuredEntry = featuredDestinations.find((f) => f.locationCode === pkg.locationCode);
+        const featuredEntry = featuredDestinations.find((f: typeof featuredDestinations[number]) => f.locationCode === pkg.locationCode);
         destinationsMap.set(pkg.locationCode, {
           locationCode: pkg.locationCode,
           name: pkg.location,

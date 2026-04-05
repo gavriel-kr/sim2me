@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import type { SiteSetting } from '@prisma/client';
 
 export const SITE_BRANDING_KEYS = {
   logoUrl: 'logo_url',
@@ -30,7 +31,7 @@ export async function getSiteBranding(): Promise<SiteBranding> {
         },
       },
     });
-    const map = Object.fromEntries(settings.map((s) => [s.key, s.value]));
+    const map = Object.fromEntries(settings.map((s: SiteSetting) => [s.key, s.value]));
     const rawLogo = map[SITE_BRANDING_KEYS.logoUrl]?.trim() || null;
     const rawFavicon = map[SITE_BRANDING_KEYS.faviconUrl]?.trim() || null;
     const rawVersion = map[SITE_BRANDING_KEYS.brandingUpdatedAt]?.trim();

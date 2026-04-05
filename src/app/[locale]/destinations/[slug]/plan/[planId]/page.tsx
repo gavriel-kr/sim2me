@@ -4,6 +4,7 @@ import { getPlanById } from '@/lib/api/repositories/plansRepository';
 import { translatePlanName } from '@/lib/translate-plan-name';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { PlanDetailClient } from './PlanDetailClient';
+import type { Plan } from '@/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -90,7 +91,7 @@ export default async function PlanDetailPage({ params }: PageProps) {
 
   return (
     <MainLayout>
-      <PlanDetailClient destination={localizedDestination} plan={planLocalized} />
+      <PlanDetailClient destination={localizedDestination} plan={planLocalized as Plan} />
     </MainLayout>
   );
 }

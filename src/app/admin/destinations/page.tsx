@@ -21,7 +21,7 @@ export default async function AdminDestinationsPage() {
         Choose which destinations appear in the &quot;Popular destinations&quot; section on the homepage.
         Drag to reorder. If the list is empty, European countries are shown by default.
       </p>
-      <DestinationsClient initialFeatured={featured.map((f) => f.locationCode)} />
+      <DestinationsClient initialFeatured={featured.map((f: typeof featured[number]) => f.locationCode)} />
     </div>
   );
 }

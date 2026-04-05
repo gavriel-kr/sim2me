@@ -37,7 +37,7 @@ export async function POST(request: Request) {
     const overrides = await prisma.packageOverride.findMany({
       where: { packageCode: { in: planIds }, visible: true },
     });
-    const overrideMap = new Map(overrides.map((o) => [o.packageCode, o]));
+    const overrideMap = new Map<string, typeof overrides[number]>(overrides.map((o: typeof overrides[number]) => [o.packageCode, o]));
 
     const paddleItems: { priceId: string; quantity: number }[] = [];
     for (const item of items) {

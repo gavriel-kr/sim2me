@@ -65,7 +65,7 @@ export default async function AdminAccountEditPage({
       <AccountEditClient
         account={safe}
         orders={orders}
-        contactSubmissions={contactSubmissions.map((s) => ({
+        contactSubmissions={contactSubmissions.map((s: typeof contactSubmissions[number]) => ({
           id: s.id,
           subject: s.subject,
           message: s.message,

@@ -127,7 +127,7 @@ export async function POST() {
       where: { esimOrderId: { in: apiOrderNos } },
       select: { esimOrderId: true },
     });
-    const existingSet = new Set(existing.map((o) => o.esimOrderId));
+    const existingSet = new Set(existing.map((o: { esimOrderId: string | null }) => o.esimOrderId));
 
     const toImport = allEsims.filter(
       (e) => e.orderNo && !existingSet.has(e.orderNo),

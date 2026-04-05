@@ -80,7 +80,7 @@ export function SuccessClient({ transactionId }: { transactionId: string | null 
     );
   }
 
-  if (status === 'loading' || (status === 'loading' && !order)) {
+  if (status === 'loading') {
     return (
       <div className="container mx-auto max-w-lg px-4 py-16">
         <div className="flex flex-col items-center justify-center space-y-8">

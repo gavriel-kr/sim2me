@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     if (toDelete.length > 0) {
       await tx.packageOverride.deleteMany({ where: { packageCode: { in: toDelete } } });
     }

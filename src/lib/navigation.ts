@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import type { SiteSetting } from '@prisma/client';
 
 export const NAV_KEYS = {
   navMenu: 'nav_menu',
@@ -82,7 +83,7 @@ export async function getNavigationConfig(): Promise<NavigationConfig> {
       },
     },
   });
-  const map = Object.fromEntries(settings.map((s) => [s.key, s.value]));
+  const map = Object.fromEntries(settings.map((s: SiteSetting) => [s.key, s.value]));
 
   const navMenu = parseJsonArray<NavLink>(map[NAV_KEYS.navMenu]);
   const footerProduct = parseJsonArray<NavLink>(map[NAV_KEYS.footerProduct]);

@@ -10,8 +10,9 @@ export const dynamic = 'force-dynamic';
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
   const denied = requireAdmin(session);
   if (denied) return denied;
@@ -20,7 +21,7 @@ export async function PATCH(
   const { title, description, ogTitle, ogDescription, ogImage, canonicalUrl } = body;
 
   const setting = await prisma.seoSetting.update({
-    where: { id: params.id },
+    where: { id },
     data: {
       title: title || null,
       description: description || null,
@@ -37,13 +38,14 @@ export async function PATCH(
 
 export async function DELETE(
   _: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
   const denied = requireAdmin(session);
   if (denied) return denied;
 
-  await prisma.seoSetting.delete({ where: { id: params.id } });
+  await prisma.seoSetting.delete({ where: { id } });
   revalidateTag(SEO_CACHE_TAG);
   return NextResponse.json({ ok: true });
 }

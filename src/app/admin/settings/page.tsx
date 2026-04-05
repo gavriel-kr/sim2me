@@ -10,7 +10,7 @@ export default async function SettingsPage() {
 
   const settings = await prisma.siteSetting.findMany();
   const settingsMap: Record<string, string> = {};
-  settings.forEach((s) => { settingsMap[s.key] = s.value; });
+  settings.forEach((s: typeof settings[number]) => { settingsMap[s.key] = s.value; });
 
   return (
     <div className="p-6 lg:p-8">

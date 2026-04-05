@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { unstable_cache } from 'next/cache';
+import type { SiteSetting } from '@prisma/client';
 
 export const GLOBAL_SEO_CACHE_TAG = 'global-seo-settings';
 
@@ -108,7 +109,7 @@ export const getGlobalSeoSettings = unstable_cache(
       const rows = await prisma.siteSetting.findMany({
         where: { key: { in: Object.values(SEO_KEYS) } },
       });
-      const map = Object.fromEntries(rows.map((r) => [r.key, r.value]));
+      const map = Object.fromEntries(rows.map((r: SiteSetting) => [r.key, r.value]));
 
       // Build typed result, merging DB values over defaults
       const result = {} as GlobalSeoSettings;

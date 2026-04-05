@@ -23,7 +23,7 @@ export default async function ContactSubmissionsPage() {
       <h1 className="text-2xl font-bold text-gray-900">Contact Submissions</h1>
       <p className="mt-1 text-sm text-gray-500">All contact form submissions from visitors</p>
       <ContactSubmissionsClient
-        submissions={submissions.map((s) => ({
+        submissions={submissions.map((s: typeof submissions[number]) => ({
           id: s.id,
           name: s.name,
           email: s.email,
@@ -34,7 +34,7 @@ export default async function ContactSubmissionsPage() {
           read: s.read,
           status: s.status as string,
           createdAt: s.createdAt.toLocaleDateString(),
-          notes: s.notes.map((n) => ({
+          notes: s.notes.map((n: typeof s.notes[number]) => ({
             id: n.id,
             content: n.content,
             createdAt: n.createdAt.toLocaleString(),

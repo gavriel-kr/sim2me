@@ -64,7 +64,7 @@ export default async function OrdersPage() {
       <p className="mt-1 text-sm text-gray-500">All customer orders and their status</p>
       <AdminOrdersClient
         stats={stats}
-        orders={orders.map((o) => ({
+        orders={orders.map((o: typeof orders[number]) => ({
           id: o.id,
           orderNo: o.orderNo,
           customerName: o.customerName,

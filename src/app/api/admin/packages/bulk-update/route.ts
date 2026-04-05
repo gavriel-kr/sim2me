@@ -2,7 +2,7 @@ import { NextResponse, NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { getPackages } from '@/lib/esimaccess';
+import { getPackages, type EsimPackage } from '@/lib/esimaccess';
 import { computeProfit, computeOtherFeesTotal, type AdditionalFeeItem } from '@/lib/profit';
 import type { BulkUpdatePayload, RollbackSnapshotItem } from '@/lib/bulk-edit-types';
 import { BULK_UPDATE_CHUNK_SIZE } from '@/lib/bulk-edit-types';
@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
 
   const paddlePercentageFee = Number(feeSettingsRow.paddlePercentageFee);
   const paddleFixedFee = Number(feeSettingsRow.paddleFixedFee);
-  const additionalFees: AdditionalFeeItem[] = additionalFeesRows.map((f) => ({
+  const additionalFees: AdditionalFeeItem[] = additionalFeesRows.map((f: typeof additionalFeesRows[number]) => ({
     type: f.type === 'FIXED' ? 'fixed' : 'percentage',
     value: Number(f.value),
     isActive: f.isActive,
@@ -92,16 +92,16 @@ export async function POST(req: NextRequest) {
   }));
 
   const packageList = packagesResult.packageList || [];
-  const packageMap = new Map(packageList.map((p) => [p.packageCode, p]));
-  const overrideMap = new Map(existingOverrides.map((o) => [o.packageCode, o]));
+  const packageMap = new Map<string, EsimPackage>(packageList.map((p: EsimPackage) => [p.packageCode, p]));
+  const overrideMap = new Map<string, typeof existingOverrides[number]>(existingOverrides.map((o: typeof existingOverrides[number]) => [o.packageCode, o]));
 
   const rollbackSnapshot: RollbackSnapshotItem[] = [];
   const updates: {
     packageCode: string;
     visible: boolean;
     customTitle: string | null;
-    customPrice: number | null;
-    simCost: number | null;
+    customPrice: number;
+    simCost: number;
     paddlePriceId: string | null;
     saleBadge: string | null;
     featured: boolean;

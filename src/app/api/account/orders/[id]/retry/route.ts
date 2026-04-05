@@ -13,8 +13,9 @@ function baseUrl() {
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const ip = getClientIp(request);
   const allowed = await checkRateLimit(ip, 'order-retry', 3, 3600);
   if (!allowed) return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 });
@@ -31,7 +32,7 @@ export async function POST(
   // Only allow retrying orders that belong to this customer
   const order = await prisma.order.findFirst({
     where: {
-      id: params.id,
+      id,
       status: 'FAILED',
       OR: [{ customerId: customer.id }, { customerEmail: customer.email }],
     },

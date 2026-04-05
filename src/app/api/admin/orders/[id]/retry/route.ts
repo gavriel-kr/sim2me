@@ -16,13 +16,14 @@ function baseUrl(): string {
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
   const denied = requireAdmin(session);
   if (denied) return denied;
 
-  const order = await prisma.order.findUnique({ where: { id: params.id } });
+  const order = await prisma.order.findUnique({ where: { id } });
   if (!order) return NextResponse.json({ error: 'Order not found' }, { status: 404 });
 
   if (order.status === 'COMPLETED') {

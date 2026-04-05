@@ -30,7 +30,7 @@ export async function GET(request: Request) {
     },
   });
 
-  return NextResponse.json({ submissions: submissions.map((s) => ({
+  return NextResponse.json({ submissions: submissions.map((s: typeof submissions[number]) => ({
     ...s,
     createdAt: s.createdAt.toISOString(),
   })) });

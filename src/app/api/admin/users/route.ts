@@ -81,7 +81,7 @@ export async function DELETE(request: Request) {
   if (!id) return NextResponse.json({ error: 'User ID required' }, { status: 400 });
 
   // Prevent deleting yourself
-  const userId = (session.user as { id: string }).id;
+  const userId = (session!.user as { id: string }).id;
   if (id === userId) {
     return NextResponse.json({ error: 'Cannot delete yourself' }, { status: 400 });
   }

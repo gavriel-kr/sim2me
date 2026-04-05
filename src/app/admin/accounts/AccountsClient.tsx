@@ -585,7 +585,7 @@ export function AccountsClient({ accounts: initial }: Props) {
                                     <label className="text-xs text-gray-500 mb-1 block">{label}</label>
                                     <input
                                       type={type}
-                                      value={(accountForm as Record<string, string>)[key] ?? ''}
+                                      value={(accountForm as unknown as Record<string, string>)[key] ?? ''}
                                       onChange={(e) => setAccountForm((f) => ({ ...f, [key]: e.target.value }))}
                                       className="h-9 w-full rounded-lg border border-gray-300 px-3 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-400 bg-white"
                                     />

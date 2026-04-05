@@ -29,7 +29,8 @@ export default function middleware(request: NextRequest) {
 
   // Preserve locale cookie and any other response headers set by next-intl
   intlResponse.cookies.getAll().forEach(({ name, value, ...opts }) => {
-    response.cookies.set({ name, value, ...(opts as Parameters<typeof response.cookies.set>[0]) });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    response.cookies.set({ name, value, ...(opts as any) });
   });
 
   return response;

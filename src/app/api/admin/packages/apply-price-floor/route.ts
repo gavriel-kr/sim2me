@@ -29,7 +29,7 @@ export async function POST() {
 
   // Fetch existing overrides so we can preserve other fields on upsert
   const existingOverrides = await prisma.packageOverride.findMany();
-  const overrideMap = new Map(existingOverrides.map((o) => [o.packageCode, o]));
+  const overrideMap = new Map<string, typeof existingOverrides[number]>(existingOverrides.map((o: typeof existingOverrides[number]) => [o.packageCode, o]));
 
   const qualifying: string[] = [];
 

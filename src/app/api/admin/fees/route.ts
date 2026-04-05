@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
+import type { AdditionalFee } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,7 +45,7 @@ export async function GET() {
       currency: settings.currency,
     },
     esimAdditionalCost: esimAdditionalCostSetting ? parseFloat(esimAdditionalCostSetting.value) || 0 : 0,
-    additionalFees: additionalFees.map((f) => ({
+    additionalFees: additionalFees.map((f: AdditionalFee) => ({
       id: f.id,
       name: f.name,
       type: f.type.toLowerCase() as 'fixed' | 'percentage',
@@ -189,7 +190,7 @@ export async function PUT(req: NextRequest) {
       currency: settings.currency,
     },
     esimAdditionalCost: esimAdditionalCostSetting ? parseFloat(esimAdditionalCostSetting.value) || 0 : 0,
-    additionalFees: (additionalFees ?? []).map((f) => ({
+    additionalFees: (additionalFees ?? []).map((f: AdditionalFee) => ({
       id: f.id,
       name: f.name,
       type: f.type.toLowerCase(),

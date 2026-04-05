@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { requireAdmin } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { getBalance } from '@/lib/esimaccess';
+import type { Order } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,11 +42,11 @@ export async function GET(req: Request) {
 
   const balance = balanceData ? (balanceData.balance ?? 0) / 10000 : null;
 
-  const totalSpent = orders.reduce((sum, o) => sum + (o.supplierCost ? Number(o.supplierCost) : 0), 0);
-  const completedCount = orders.filter((o) => o.status === 'COMPLETED').length;
+  const totalSpent = orders.reduce((sum: number, o: Order) => sum + (o.supplierCost ? Number(o.supplierCost) : 0), 0);
+  const completedCount = orders.filter((o: Order) => o.status === 'COMPLETED').length;
 
   return NextResponse.json({
-    orders: orders.map((o) => ({
+    orders: orders.map((o: Order) => ({
       id: o.id,
       orderNo: o.orderNo,
       esimOrderId: o.esimOrderId,
