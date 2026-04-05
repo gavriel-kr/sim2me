@@ -217,6 +217,10 @@ model Customer {
   passwordChangedAt  DateTime?
   resetToken         String?
   resetExpires       DateTime?
+  otpEnabled         Boolean   @default(false)
+  otpCodeHash        String?   // SHA-256(code) — never plain text
+  otpCodeExpires     DateTime?
+  otpAttempts        Int       @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   orders    Order[]

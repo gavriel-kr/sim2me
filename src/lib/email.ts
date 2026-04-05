@@ -223,6 +223,24 @@ function escapeHtml(s: string): string {
     .replace(/'/g, '&#39;');
 }
 
+/** Sends a 6-digit OTP login code to the customer. */
+export async function sendOtpEmail(to: string, code: string): Promise<boolean> {
+  const logo = await logoImgTag();
+  const html = `
+    <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+      ${logo}
+      <h2 style="color: #0f172a; margin: 0 0 8px 0;">קוד הכניסה שלך / Your Login Code</h2>
+      <p style="color: #475569; margin: 0 0 24px 0;">Use this code to complete your Sim2Me login. It expires in <strong>10 minutes</strong>.</p>
+      <div style="background: #f1f5f9; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 24px;">
+        <span style="font-size: 40px; font-weight: 700; letter-spacing: 12px; color: #0f172a; font-family: monospace;">${escapeHtml(code)}</span>
+      </div>
+      <p style="direction:rtl; text-align:right; color: #475569;">זהו קוד חד-פעמי לכניסה לאתר Sim2Me. הקוד פג תוקף תוך 10 דקות.</p>
+      <p style="font-size: 12px; color: #94a3b8; margin-top: 24px;">If you did not try to log in, you can safely ignore this email.</p>
+    </div>
+  `;
+  return sendEmail(to, `${code} — Your Sim2Me login code / קוד הכניסה שלך`, html);
+}
+
 async function sendEmail(to: string, subject: string, html: string): Promise<boolean> {
   if (!process.env.RESEND_API_KEY) {
     console.log('[Email] No RESEND_API_KEY — would send:', { to, subject });

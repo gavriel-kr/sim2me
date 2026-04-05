@@ -22,6 +22,7 @@ export async function GET(request: Request) {
       phone: true,
       newsletter: true,
       createdAt: true,
+      otpEnabled: true,
     },
   });
 
