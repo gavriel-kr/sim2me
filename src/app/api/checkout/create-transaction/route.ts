@@ -64,6 +64,7 @@ export async function POST(request: Request) {
       planId: items[0].planId,
       customerEmail: customerEmail.trim().slice(0, 320),
       customerName: (customerName ?? '').trim().slice(0, 200),
+      checkoutIp: ip,
     };
     if (deviceType) customData.deviceType = deviceType.trim().slice(0, 64);
     if (userId) customData.userId = userId;

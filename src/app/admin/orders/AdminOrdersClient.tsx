@@ -435,6 +435,7 @@ export function AdminOrdersClient({
           customerEmail: string | null;
           customerName: string | null;
           packageName: string | null;
+          checkoutIp: string | null;
           totalAmount: number;
           currency: string;
           createdAt: string;
@@ -459,7 +460,7 @@ export function AdminOrdersClient({
           archivedAt: null,
           createdAt: a.createdAt,
           source: 'paddle' as const,
-          checkoutIp: null,
+          checkoutIp: a.checkoutIp ?? null,
         }));
         setAbandonedOrders(items);
       })
