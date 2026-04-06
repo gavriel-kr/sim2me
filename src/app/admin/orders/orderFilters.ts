@@ -36,7 +36,7 @@ export interface OrderFiltersState {
   rules: FilterRule[];
 }
 
-export const ORDER_STATUSES = ['PENDING', 'PAID', 'PROCESSING', 'COMPLETED', 'FAILED', 'REFUNDED', 'CANCELLED'] as const;
+export const ORDER_STATUSES = ['PENDING', 'PAID', 'PROCESSING', 'COMPLETED', 'FAILED', 'REFUNDED', 'CANCELLED', 'ABANDONED'] as const;
 
 /** Parse a date string (e.g. "2/24/2026" or "2026-02-24") to timestamp for comparison */
 function parseDate(s: string): number | null {

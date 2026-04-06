@@ -72,6 +72,7 @@ export default async function OrdersPage() {
           packageName: o.packageName,
           destination: o.destination,
           totalAmount: Number(o.totalAmount),
+          currency: o.currency,
           status: o.status,
           errorMessage: o.errorMessage ?? null,
           qrCodeUrl: o.qrCodeUrl ?? null,
@@ -79,7 +80,10 @@ export default async function OrdersPage() {
           activationCode: o.activationCode ?? null,
           iccid: o.iccid ?? null,
           paddleTransactionId: o.paddleTransactionId ?? null,
-          createdAt: o.createdAt.toLocaleDateString() + ' ' + o.createdAt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+          esimOrderId: o.esimOrderId ?? null,
+          notes: o.notes ?? null,
+          archivedAt: o.archivedAt?.toISOString() ?? null,
+          createdAt: o.createdAt.toISOString(),
         }))}
       />
     </div>
