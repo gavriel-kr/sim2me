@@ -31,6 +31,7 @@ interface DbOrder {
   notes: string | null;
   archivedAt: string | null; // ISO string
   createdAt: string;         // ISO string
+  checkoutIp: string | null;
 }
 
 interface DisplayOrder {
@@ -54,6 +55,7 @@ interface DisplayOrder {
   archivedAt: string | null;
   createdAt: string;
   source: 'db' | 'paddle';
+  checkoutIp: string | null;
 }
 
 interface EsimStatusData {
@@ -387,6 +389,7 @@ export function AdminOrdersClient({ stats, orders: initialOrders }: { stats: Cub
           archivedAt: null,
           createdAt: a.createdAt,
           source: 'paddle' as const,
+          checkoutIp: null,
         }));
         setAbandonedOrders(items);
       })
@@ -968,6 +971,24 @@ export function AdminOrdersClient({ stats, orders: initialOrders }: { stats: Cub
                               className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-500 hover:bg-red-50"
                             >
                               🚫 Block Email
+                            </button>
+                          )}
+
+                          {/* Block IP */}
+                          {order.checkoutIp && (
+                            <button
+                              onClick={async () => {
+                                if (!confirm(`Block IP: ${order.checkoutIp}?`)) return;
+                                const res = await fetch('/api/admin/blocklist', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ type: 'IP', value: order.checkoutIp, reason: 'Admin manual block from orders page' }),
+                                });
+                                showMessage(order.id, res.ok ? '🚫 IP blocked' : '✗ Block failed', res.ok);
+                              }}
+                              className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-500 hover:bg-red-50"
+                            >
+                              🚫 Block IP
                             </button>
                           )}
                         </div>

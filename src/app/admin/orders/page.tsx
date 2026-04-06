@@ -84,6 +84,7 @@ export default async function OrdersPage() {
           notes: o.notes ?? null,
           archivedAt: o.archivedAt?.toISOString() ?? null,
           createdAt: o.createdAt.toISOString(),
+          checkoutIp: o.checkoutIp ?? null,
         }))}
       />
     </div>
