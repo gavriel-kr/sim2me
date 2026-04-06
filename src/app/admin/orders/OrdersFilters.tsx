@@ -1,7 +1,7 @@
 'use client';
 
+import { Filter, ChevronDown, ChevronRight, Plus, X, Search } from 'lucide-react';
 import { useState } from 'react';
-import { Search, Filter, ChevronDown, ChevronRight, Plus, X } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -15,8 +15,6 @@ import {
   type FilterField,
   type FilterOperator,
   ORDER_STATUSES,
-  getUniqueCountryCodes,
-  type OrderForFilter,
 } from './orderFilters';
 
 const FILTER_FIELDS: { value: FilterField; label: string }[] = [
@@ -40,26 +38,38 @@ const OPERATORS: { value: FilterOperator; label: string }[] = [
   { value: 'contains', label: 'contains' },
 ];
 
-const emptyRule = (): FilterRule => ({
-  field: 'order_id',
-  operator: '=',
-  value: '',
-});
+const emptyRule = (): FilterRule => ({ field: 'order_id', operator: '=', value: '' });
 
 interface OrdersFiltersProps {
   filters: OrderFiltersState;
   onFiltersChange: (f: OrderFiltersState) => void;
-  orders: OrderForFilter[];
+  localSearch: string;
+  onSearchChange: (v: string) => void;
+  availableCountries: string[];
+  archived: string;
+  onArchivedChange: (v: string) => void;
   resultCount: number;
+  totalCount: number;
+  currentPage: number;
+  pageSize: number;
 }
 
-export function OrdersFilters({ filters, onFiltersChange, orders, resultCount }: OrdersFiltersProps) {
+export function OrdersFilters({
+  filters,
+  onFiltersChange,
+  localSearch,
+  onSearchChange,
+  availableCountries,
+  archived,
+  onArchivedChange,
+  resultCount,
+  totalCount,
+  currentPage,
+  pageSize,
+}: OrdersFiltersProps) {
   const [rulesOpen, setRulesOpen] = useState(false);
-  const countryCodes = getUniqueCountryCodes(orders);
 
-  const update = (patch: Partial<OrderFiltersState>) => {
-    onFiltersChange({ ...filters, ...patch });
-  };
+  const update = (patch: Partial<OrderFiltersState>) => onFiltersChange({ ...filters, ...patch });
 
   const setRule = (index: number, patch: Partial<FilterRule>) => {
     const next = [...filters.rules];
@@ -67,48 +77,42 @@ export function OrdersFilters({ filters, onFiltersChange, orders, resultCount }:
     update({ rules: next });
   };
 
-  const addRule = () => {
-    update({ rules: [...filters.rules, emptyRule()] });
-    setRulesOpen(true);
-  };
-
-  const removeRule = (index: number) => {
-    update({ rules: filters.rules.filter((_, i) => i !== index) });
-  };
+  const addRule = () => { update({ rules: [...filters.rules, emptyRule()] }); setRulesOpen(true); };
+  const removeRule = (index: number) => update({ rules: filters.rules.filter((_, i) => i !== index) });
 
   const clearAll = () => {
-    onFiltersChange({
-      search: '',
-      status: '',
-      countryCode: '',
-      dateFrom: '',
-      dateTo: '',
-      rules: [],
-    });
+    onSearchChange('');
+    onFiltersChange({ search: '', status: '', countryCode: '', dateFrom: '', dateTo: '', rules: [] });
+    onArchivedChange('active');
   };
 
   const hasActiveFilters =
-    filters.search.trim() ||
+    localSearch.trim() ||
     filters.status ||
     filters.countryCode ||
     filters.dateFrom.trim() ||
     filters.dateTo.trim() ||
+    (archived && archived !== 'active') ||
     filters.rules.some((r) => r.value.trim());
+
+  const dbStart = Math.min((currentPage - 1) * pageSize + 1, totalCount);
+  const dbEnd = Math.min(currentPage * pageSize, totalCount);
 
   return (
     <div className="mb-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-      {/* Search + dropdowns + date range */}
+      {/* Row 1: search + dropdowns + dates */}
       <div className="flex flex-wrap items-end gap-3">
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
-            placeholder="Search order ID, name, email…"
-            value={filters.search}
-            onChange={(e) => update({ search: e.target.value })}
+            placeholder="Search ID, name, email, ICCID, IP…"
+            value={localSearch}
+            onChange={(e) => onSearchChange(e.target.value)}
             className="h-10 w-full rounded-lg border border-gray-300 bg-gray-50 pl-9 pr-3 text-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400"
           />
         </div>
+
         <Select value={filters.status || '_'} onValueChange={(v) => update({ status: v === '_' ? '' : v })}>
           <SelectTrigger className="w-[140px] border-gray-300 bg-gray-50">
             <SelectValue placeholder="Status" />
@@ -116,25 +120,34 @@ export function OrdersFilters({ filters, onFiltersChange, orders, resultCount }:
           <SelectContent>
             <SelectItem value="_">All statuses</SelectItem>
             {ORDER_STATUSES.map((s) => (
-              <SelectItem key={s} value={s}>
-                {s}
-              </SelectItem>
+              <SelectItem key={s} value={s}>{s}</SelectItem>
             ))}
           </SelectContent>
         </Select>
+
         <Select value={filters.countryCode || '_'} onValueChange={(v) => update({ countryCode: v === '_' ? '' : v })}>
           <SelectTrigger className="w-[120px] border-gray-300 bg-gray-50">
             <SelectValue placeholder="Country" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="_">All countries</SelectItem>
-            {countryCodes.map((c) => (
-              <SelectItem key={c} value={c}>
-                {c}
-              </SelectItem>
+            {availableCountries.map((c) => (
+              <SelectItem key={c} value={c}>{c}</SelectItem>
             ))}
           </SelectContent>
         </Select>
+
+        <Select value={archived || 'active'} onValueChange={onArchivedChange}>
+          <SelectTrigger className="w-[130px] border-gray-300 bg-gray-50">
+            <SelectValue placeholder="Archived" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="active">Active only</SelectItem>
+            <SelectItem value="archived">Archived only</SelectItem>
+            <SelectItem value="all">All</SelectItem>
+          </SelectContent>
+        </Select>
+
         <div className="flex items-center gap-2">
           <input
             type="date"
@@ -150,6 +163,7 @@ export function OrdersFilters({ filters, onFiltersChange, orders, resultCount }:
             className="h-10 rounded-lg border border-gray-300 bg-gray-50 px-3 text-sm focus:border-gray-400 focus:outline-none"
           />
         </div>
+
         {hasActiveFilters && (
           <button
             type="button"
@@ -182,9 +196,7 @@ export function OrdersFilters({ filters, onFiltersChange, orders, resultCount }:
                   className="h-9 rounded border border-gray-300 bg-white px-2 text-sm"
                 >
                   {FILTER_FIELDS.map((f) => (
-                    <option key={f.value} value={f.value}>
-                      {f.label}
-                    </option>
+                    <option key={f.value} value={f.value}>{f.label}</option>
                   ))}
                 </select>
                 <select
@@ -193,9 +205,7 @@ export function OrdersFilters({ filters, onFiltersChange, orders, resultCount }:
                   className="h-9 rounded border border-gray-300 bg-white px-2 text-sm"
                 >
                   {OPERATORS.map((op) => (
-                    <option key={op.value} value={op.value}>
-                      {op.label}
-                    </option>
+                    <option key={op.value} value={op.value}>{op.label}</option>
                   ))}
                 </select>
                 <input
@@ -209,7 +219,6 @@ export function OrdersFilters({ filters, onFiltersChange, orders, resultCount }:
                   type="button"
                   onClick={() => removeRule(i)}
                   className="rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-red-600"
-                  aria-label="Remove rule"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -227,7 +236,9 @@ export function OrdersFilters({ filters, onFiltersChange, orders, resultCount }:
       </div>
 
       <p className="mt-2 text-xs text-gray-500">
-        Showing {resultCount} order{resultCount !== 1 ? 's' : ''}
+        {totalCount > pageSize
+          ? `Showing ${dbStart}–${dbEnd} of ${totalCount} DB orders · ${resultCount} visible on this page`
+          : `${resultCount} order${resultCount !== 1 ? 's' : ''}`}
       </p>
     </div>
   );

@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Download, Upload, Copy, Check } from 'lucide-react';
+import { Download, Upload, Copy, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { DashboardCubicks, type CubickStat } from '../DashboardCubicks';
 import { applyOrderFilters, type OrderFiltersState, ORDER_STATUSES } from './orderFilters';
 import { OrdersFilters } from './OrdersFilters';
@@ -326,18 +327,85 @@ const defaultFilters: OrderFiltersState = {
   rules: [],
 };
 
+interface InitialFilters {
+  q: string;
+  status: string;
+  country: string;
+  from: string;
+  to: string;
+  archived: string;
+}
+
 // ─── Main component ───────────────────────────────────────────
 
-export function AdminOrdersClient({ stats, orders: initialOrders }: { stats: CubickStat[]; orders: DbOrder[] }) {
+export function AdminOrdersClient({
+  stats,
+  orders: initialOrders,
+  totalCount,
+  currentPage,
+  pageSize,
+  initialFilters,
+  availableCountries,
+}: {
+  stats: CubickStat[];
+  orders: DbOrder[];
+  totalCount: number;
+  currentPage: number;
+  pageSize: number;
+  initialFilters: InitialFilters;
+  availableCountries: string[];
+}) {
+  const router = useRouter();
+
+  // Sync dbOrders when server sends new props (URL navigation)
+  const prevOrdersRef = useRef(initialOrders);
   const [dbOrders, setDbOrders] = useState<DisplayOrder[]>(
-    initialOrders.map((o) => ({ ...o, source: 'db' as const })),
+    () => initialOrders.map((o) => ({ ...o, source: 'db' as const })),
   );
+  if (prevOrdersRef.current !== initialOrders) {
+    prevOrdersRef.current = initialOrders;
+    setDbOrders(initialOrders.map((o) => ({ ...o, source: 'db' as const })));
+  }
+
   const [abandonedOrders, setAbandonedOrders] = useState<DisplayOrder[]>([]);
   const [abandonedLoading, setAbandonedLoading] = useState(true);
-  const [showArchived, setShowArchived] = useState(false);
-  const [filters, setFilters] = useState<OrderFiltersState>(defaultFilters);
+  // localSearch: immediate UI feedback; debounced to URL after 500ms
+  const [localSearch, setLocalSearch] = useState(initialFilters.q);
+  // filters state mirrors URL params for non-search fields (dropdowns, dates)
+  const [filters, setFilters] = useState<OrderFiltersState>({
+    search: initialFilters.q,
+    status: initialFilters.status,
+    countryCode: initialFilters.country,
+    dateFrom: initialFilters.from,
+    dateTo: initialFilters.to,
+    rules: [],
+  });
   const [actionLoading, setActionLoading] = useState<Record<string, boolean>>({});
   const [expanded, setExpanded] = useState<string | null>(null);
+
+  // ─── URL-driven filter updates ────────────────────────────────
+  const updateFilter = useCallback((key: string, value: string) => {
+    const params = new URLSearchParams();
+    if (key !== 'q' && initialFilters.q) params.set('q', initialFilters.q);
+    if (key !== 'status' && initialFilters.status) params.set('status', initialFilters.status);
+    if (key !== 'country' && initialFilters.country) params.set('country', initialFilters.country);
+    if (key !== 'from' && initialFilters.from) params.set('from', initialFilters.from);
+    if (key !== 'to' && initialFilters.to) params.set('to', initialFilters.to);
+    if (key !== 'archived' && initialFilters.archived && initialFilters.archived !== 'active') params.set('archived', initialFilters.archived);
+    if (value) params.set(key, value);
+    if (key !== 'page') params.delete('page'); // reset to page 1 on filter change
+    router.replace(`/admin/orders${params.size > 0 ? `?${params.toString()}` : ''}`, { scroll: false });
+  }, [initialFilters, router]);
+
+  // Debounce search input → URL
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (localSearch !== initialFilters.q) {
+        updateFilter('q', localSearch.trim());
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [localSearch, initialFilters.q, updateFilter]);
   const [esimStatusMap, setEsimStatusMap] = useState<Record<string, EsimStatusData | 'loading' | 'error'>>({});
   const [message, setMessage] = useState<{ id: string; text: string; ok: boolean } | null>(null);
   const [confirmState, setConfirmState] = useState<ConfirmState>(null);
@@ -397,13 +465,29 @@ export function AdminOrdersClient({ stats, orders: initialOrders }: { stats: Cub
       .finally(() => setAbandonedLoading(false));
   }, []);
 
+  // DB orders are already server-filtered; merge with abandoned (client-side only)
   const allOrders = useMemo<DisplayOrder[]>(() => {
-    const merged = [...dbOrders, ...abandonedOrders];
-    const filtered = showArchived ? merged : merged.filter((o) => !o.archivedAt);
-    return filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }, [dbOrders, abandonedOrders, showArchived]);
+    const isAbandonedOnly = initialFilters.status === 'ABANDONED';
+    const showAbandoned = !initialFilters.status || initialFilters.status === 'ABANDONED';
 
-  const filteredOrders = applyOrderFilters(allOrders, filters);
+    // Filter abandoned client-side by local search
+    const q = localSearch.trim().toLowerCase();
+    const matchingAbandoned = showAbandoned
+      ? abandonedOrders.filter((o) => {
+          if (!q) return true;
+          return (
+            o.paddleTransactionId?.toLowerCase().includes(q) ||
+            o.customerEmail?.toLowerCase().includes(q)
+          );
+        })
+      : [];
+
+    const base = isAbandonedOnly ? matchingAbandoned : [...dbOrders, ...matchingAbandoned];
+    return base.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [dbOrders, abandonedOrders, initialFilters.status, localSearch]);
+
+  // filteredOrders = allOrders (DB pre-filtered by server; abandoned filtered above)
+  const filteredOrders = allOrders;
 
   const setOrderLoading = (id: string, val: boolean) =>
     setActionLoading((prev) => ({ ...prev, [id]: val }));
@@ -653,7 +737,26 @@ export function AdminOrdersClient({ stats, orders: initialOrders }: { stats: Cub
         </div>
       )}
 
-      <OrdersFilters filters={filters} onFiltersChange={setFilters} orders={allOrders} resultCount={filteredOrders.length} />
+      <OrdersFilters
+        filters={filters}
+        onFiltersChange={(newFilters) => {
+          setFilters(newFilters);
+          // Search is handled separately (debounced via localSearch)
+          if (newFilters.status !== filters.status) updateFilter('status', newFilters.status);
+          if (newFilters.countryCode !== filters.countryCode) updateFilter('country', newFilters.countryCode);
+          if (newFilters.dateFrom !== filters.dateFrom) updateFilter('from', newFilters.dateFrom);
+          if (newFilters.dateTo !== filters.dateTo) updateFilter('to', newFilters.dateTo);
+        }}
+        localSearch={localSearch}
+        onSearchChange={setLocalSearch}
+        availableCountries={availableCountries}
+        archived={initialFilters.archived}
+        onArchivedChange={(v) => updateFilter('archived', v === 'active' ? '' : v)}
+        resultCount={filteredOrders.length}
+        totalCount={totalCount}
+        currentPage={currentPage}
+        pageSize={pageSize}
+      />
 
       <div className="flex flex-wrap items-center gap-2">
         <button
@@ -677,10 +780,10 @@ export function AdminOrdersClient({ stats, orders: initialOrders }: { stats: Cub
         {/* Archived toggle */}
         <button
           type="button"
-          onClick={() => setShowArchived(!showArchived)}
-          className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${showArchived ? 'border-amber-400 bg-amber-50 text-amber-700' : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50'}`}
+          onClick={() => updateFilter('archived', initialFilters.archived === 'all' ? '' : 'all')}
+          className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${initialFilters.archived === 'all' ? 'border-amber-400 bg-amber-50 text-amber-700' : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50'}`}
         >
-          {showArchived ? '📁 Hiding archived' : '📁 Show archived'}
+          {initialFilters.archived === 'all' ? '📁 All (incl. archived)' : '📁 Show archived'}
         </button>
 
         {importResult && <p className="text-sm text-gray-600">{importResult}</p>}
@@ -1006,6 +1109,32 @@ export function AdminOrdersClient({ stats, orders: initialOrders }: { stats: Cub
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Pagination — DB orders only, hidden when ABANDONED-only filter */}
+      {initialFilters.status !== 'ABANDONED' && totalCount > pageSize && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white px-5 py-3 text-sm text-gray-600">
+          <span>
+            Showing {Math.min((currentPage - 1) * pageSize + 1, totalCount)}–{Math.min(currentPage * pageSize, totalCount)} of {totalCount} orders
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => updateFilter('page', String(currentPage - 1))}
+              disabled={currentPage <= 1}
+              className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium hover:bg-gray-50 disabled:opacity-40"
+            >
+              <ChevronLeft className="h-4 w-4" /> Prev
+            </button>
+            <span className="text-xs text-gray-500">Page {currentPage} of {Math.ceil(totalCount / pageSize)}</span>
+            <button
+              onClick={() => updateFilter('page', String(currentPage + 1))}
+              disabled={currentPage >= Math.ceil(totalCount / pageSize)}
+              className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium hover:bg-gray-50 disabled:opacity-40"
+            >
+              Next <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       )}
     </div>
