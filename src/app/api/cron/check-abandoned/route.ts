@@ -42,7 +42,7 @@ export async function GET(request: Request) {
   try {
     const baseApi = process.env.PADDLE_API_URL || 'https://api.paddle.com';
     const res = await fetch(
-      `${baseApi}/transactions?status=ready,draft&per_page=100`,
+      `${baseApi}/transactions?status[]=ready&status[]=draft&per_page=100`,
       { headers: { Authorization: `Bearer ${apiKey}` }, cache: 'no-store' },
     );
     if (res.ok) {
