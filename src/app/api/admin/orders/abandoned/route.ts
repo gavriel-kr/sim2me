@@ -50,11 +50,9 @@ export async function GET() {
     });
     const existingIds = new Set(existing.map((o: { paddleTransactionId: string | null }) => o.paddleTransactionId!));
 
-    // Only include transactions older than 30 minutes and not already in DB
-    const thirtyMinAgo = Date.now() - 30 * 60 * 1000;
+    // Show all draft/ready transactions not already in DB (Paddle handles expiry via status change)
     const abandoned = transactions
       .filter((t) => !existingIds.has(t.id))
-      .filter((t) => new Date(t.created_at).getTime() < thirtyMinAgo)
       .map((t) => ({
         paddleTransactionId: t.id,
         customerEmail: t.customer?.email ?? null,
