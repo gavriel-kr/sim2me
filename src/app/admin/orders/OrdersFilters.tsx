@@ -1,7 +1,7 @@
 'use client';
 
-import { Filter, ChevronDown, ChevronRight, Plus, X, Search } from 'lucide-react';
-import { useState } from 'react';
+import { Filter, ChevronDown, ChevronRight, Plus, X, Search, Check } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
 import {
   Select,
   SelectContent,
@@ -68,6 +68,34 @@ export function OrdersFilters({
   pageSize,
 }: OrdersFiltersProps) {
   const [rulesOpen, setRulesOpen] = useState(false);
+  const [statusOpen, setStatusOpen] = useState(false);
+  const statusRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (statusRef.current && !statusRef.current.contains(e.target as Node)) {
+        setStatusOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const selectedStatuses = filters.status ? filters.status.split(',').map((s) => s.trim()).filter(Boolean) : [];
+
+  const toggleStatus = (s: string) => {
+    const next = selectedStatuses.includes(s)
+      ? selectedStatuses.filter((x) => x !== s)
+      : [...selectedStatuses, s];
+    update({ status: next.join(',') });
+  };
+
+  const statusLabel = selectedStatuses.length === 0
+    ? 'All statuses'
+    : selectedStatuses.length === 1
+      ? selectedStatuses[0]
+      : `${selectedStatuses.length} statuses`;
 
   const update = (patch: Partial<OrderFiltersState>) => onFiltersChange({ ...filters, ...patch });
 
@@ -88,7 +116,7 @@ export function OrdersFilters({
 
   const hasActiveFilters =
     localSearch.trim() ||
-    filters.status ||
+    selectedStatuses.length > 0 ||
     filters.countryCode ||
     filters.dateFrom.trim() ||
     filters.dateTo.trim() ||
@@ -113,17 +141,50 @@ export function OrdersFilters({
           />
         </div>
 
-        <Select value={filters.status || '_'} onValueChange={(v) => update({ status: v === '_' ? '' : v })}>
-          <SelectTrigger className="w-[140px] border-gray-300 bg-gray-50">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="_">All statuses</SelectItem>
-            {ORDER_STATUSES.map((s) => (
-              <SelectItem key={s} value={s}>{s}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {/* Multi-select status dropdown */}
+        <div ref={statusRef} className="relative">
+          <button
+            type="button"
+            onClick={() => setStatusOpen((o) => !o)}
+            className={`flex h-10 w-[160px] items-center justify-between rounded-lg border px-3 text-sm transition-colors ${
+              selectedStatuses.length > 0
+                ? 'border-emerald-400 bg-emerald-50 text-emerald-700 font-medium'
+                : 'border-gray-300 bg-gray-50 text-gray-700'
+            }`}
+          >
+            <span className="truncate">{statusLabel}</span>
+            <ChevronDown className="ml-1 h-4 w-4 shrink-0 opacity-60" />
+          </button>
+          {statusOpen && (
+            <div className="absolute left-0 top-11 z-50 w-[180px] rounded-xl border border-gray-200 bg-white py-1 shadow-lg">
+              {/* Clear all */}
+              <button
+                type="button"
+                onClick={() => { update({ status: '' }); setStatusOpen(false); }}
+                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-500 hover:bg-gray-50"
+              >
+                <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${selectedStatuses.length === 0 ? 'border-emerald-500 bg-emerald-500' : 'border-gray-300'}`}>
+                  {selectedStatuses.length === 0 && <Check className="h-3 w-3 text-white" />}
+                </span>
+                All statuses
+              </button>
+              <div className="my-1 border-t border-gray-100" />
+              {ORDER_STATUSES.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => toggleStatus(s)}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                >
+                  <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${selectedStatuses.includes(s) ? 'border-emerald-500 bg-emerald-500' : 'border-gray-300'}`}>
+                    {selectedStatuses.includes(s) && <Check className="h-3 w-3 text-white" />}
+                  </span>
+                  {s}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         <Select value={filters.countryCode || '_'} onValueChange={(v) => update({ countryCode: v === '_' ? '' : v })}>
           <SelectTrigger className="w-[120px] border-gray-300 bg-gray-50">

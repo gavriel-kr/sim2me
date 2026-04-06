@@ -470,8 +470,9 @@ export function AdminOrdersClient({
 
   // DB orders are already server-filtered; merge with abandoned (client-side only)
   const allOrders = useMemo<DisplayOrder[]>(() => {
-    const isAbandonedOnly = initialFilters.status === 'ABANDONED';
-    const showAbandoned = !initialFilters.status || initialFilters.status === 'ABANDONED';
+    const selectedStatuses = initialFilters.status ? initialFilters.status.split(',').map((s) => s.trim()) : [];
+    const isAbandonedOnly = selectedStatuses.length > 0 && selectedStatuses.every((s) => s === 'ABANDONED');
+    const showAbandoned = selectedStatuses.length === 0 || selectedStatuses.includes('ABANDONED');
 
     // Filter abandoned client-side by local search
     const q = localSearch.trim().toLowerCase();

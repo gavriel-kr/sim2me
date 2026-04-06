@@ -54,9 +54,14 @@ export default async function OrdersPage({ searchParams }: PageProps) {
     ];
   }
 
-  // Status — skip if ABANDONED (Paddle-only, not a DB enum)
-  if (statusParam && statusParam !== 'ABANDONED' && DB_STATUSES.has(statusParam)) {
-    where.status = statusParam as Prisma.EnumOrderStatusFilter['equals'];
+  // Status — comma-separated multi-select; ABANDONED is Paddle-only (not a DB enum)
+  if (statusParam) {
+    const statuses = statusParam.split(',').map((s) => s.trim()).filter((s) => DB_STATUSES.has(s));
+    if (statuses.length === 1) {
+      where.status = statuses[0] as Prisma.EnumOrderStatusFilter['equals'];
+    } else if (statuses.length > 1) {
+      where.status = { in: statuses as never[] };
+    }
   }
 
   // Country (destination)
@@ -80,7 +85,8 @@ export default async function OrdersPage({ searchParams }: PageProps) {
   // 'all' → no filter
 
   // If ABANDONED-only is selected, return 0 DB orders
-  const isAbandonedOnly = statusParam === 'ABANDONED';
+  const selectedStatuses = statusParam ? statusParam.split(',').map((s) => s.trim()) : [];
+  const isAbandonedOnly = selectedStatuses.length > 0 && selectedStatuses.every((s) => s === 'ABANDONED');
 
   const pctFee = 0.05;
   const fixedFee = 0.5;
