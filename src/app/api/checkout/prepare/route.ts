@@ -7,6 +7,8 @@ import { NextResponse } from 'next/server';
 import { getSessionForRequest, isCustomerSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
+import { isBlocked } from '@/lib/fraud';
+import { getClientIp } from '@/lib/rateLimit';
 
 const prepareBodySchema = z.object({
   items: z.array(z.object({
@@ -30,6 +32,17 @@ export async function POST(request: Request) {
     }
 
     const { items, customerEmail, customerName, deviceType } = parsed.data;
+    const ip = getClientIp(request);
+
+    // Blocklist enforcement
+    const [ipBlocked, emailBlocked] = await Promise.all([
+      isBlocked('IP', ip),
+      isBlocked('EMAIL', customerEmail),
+    ]);
+    if (ipBlocked || emailBlocked) {
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+    }
+
     const session = await getSessionForRequest(request);
     const userId = isCustomerSession(session) ? session.user.id : null;
 
@@ -59,6 +72,7 @@ export async function POST(request: Request) {
       planId: items[0].planId,
       customerEmail: customerEmail.trim().slice(0, 320),
       customerName: (customerName ?? '').trim().slice(0, 200),
+      checkoutIp: ip.slice(0, 45),
     };
     if (deviceType) customData.deviceType = deviceType.trim().slice(0, 64);
     if (userId) customData.userId = userId;

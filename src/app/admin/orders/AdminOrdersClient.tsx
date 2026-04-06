@@ -952,6 +952,24 @@ export function AdminOrdersClient({ stats, orders: initialOrders }: { stats: Cub
                               {isArchived ? '📤 Restore' : '📁 Archive'}
                             </button>
                           )}
+
+                          {/* Block Email */}
+                          {order.customerEmail && (
+                            <button
+                              onClick={async () => {
+                                if (!confirm(`Block email: ${order.customerEmail}?`)) return;
+                                const res = await fetch('/api/admin/blocklist', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ type: 'EMAIL', value: order.customerEmail, reason: 'Admin manual block from orders page' }),
+                                });
+                                showMessage(order.id, res.ok ? '🚫 Email blocked' : '✗ Block failed', res.ok);
+                              }}
+                              className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-500 hover:bg-red-50"
+                            >
+                              🚫 Block Email
+                            </button>
+                          )}
                         </div>
 
                         {/* Action feedback */}

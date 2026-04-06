@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { requireAdmin } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { createAuditLog } from '@/lib/audit';
+import { sendRefundIssuedEmail } from '@/lib/email';
 
 interface PaddleTransactionItem {
   id: string;
@@ -33,7 +34,7 @@ export async function POST(
 
   const order = await prisma.order.findUnique({
     where: { id },
-    select: { id: true, orderNo: true, paddleTransactionId: true, status: true, totalAmount: true, currency: true, customerName: true },
+    select: { id: true, orderNo: true, paddleTransactionId: true, status: true, totalAmount: true, currency: true, customerName: true, customerEmail: true, packageName: true, destination: true },
   });
 
   if (!order) return NextResponse.json({ error: 'Order not found' }, { status: 404 });
@@ -101,6 +102,16 @@ export async function POST(
         customerName: order.customerName,
       },
     }).catch(() => {});
+
+    sendRefundIssuedEmail({
+      orderNo: order.orderNo,
+      customerName: order.customerName || order.customerEmail,
+      customerEmail: order.customerEmail,
+      packageName: order.packageName,
+      destination: order.destination,
+      totalAmount: Number(order.totalAmount),
+      currency: order.currency,
+    });
 
     return NextResponse.json({ ok: true });
   } catch (e) {

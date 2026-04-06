@@ -5,6 +5,7 @@ import { requireAdmin } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { cancelOrder } from '@/lib/esimaccess';
 import { createAuditLog } from '@/lib/audit';
+import { sendEsimCancelledEmail } from '@/lib/email';
 
 export async function POST(
   _request: Request,
@@ -17,7 +18,7 @@ export async function POST(
 
   const order = await prisma.order.findUnique({
     where: { id },
-    select: { id: true, orderNo: true, esimOrderId: true, status: true },
+    select: { id: true, orderNo: true, esimOrderId: true, status: true, customerName: true, customerEmail: true, packageName: true, destination: true, totalAmount: true, currency: true },
   });
 
   if (!order) return NextResponse.json({ error: 'Order not found' }, { status: 404 });
@@ -44,6 +45,16 @@ export async function POST(
     targetId: id,
     details: { orderNo: order.orderNo, esimOrderId: order.esimOrderId },
   }).catch(() => {});
+
+  sendEsimCancelledEmail({
+    orderNo: order.orderNo,
+    customerName: order.customerName || order.customerEmail,
+    customerEmail: order.customerEmail,
+    packageName: order.packageName,
+    destination: order.destination,
+    totalAmount: Number(order.totalAmount),
+    currency: order.currency,
+  });
 
   return NextResponse.json({ ok: true });
 }

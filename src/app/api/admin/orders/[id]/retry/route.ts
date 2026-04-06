@@ -6,7 +6,8 @@ import { authOptions } from '@/lib/auth';
 import { requireAdmin } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { purchasePackage, getEsimProfileWithRetry, getPackages } from '@/lib/esimaccess';
-import { sendPostPurchaseEmail } from '@/lib/email';
+import { sendPostPurchaseEmail, sendRetrySucceededEmail, sendRetryFailedEmail } from '@/lib/email';
+import { checkAndAutoBlockEmail } from '@/lib/fraud';
 import { hash } from 'bcryptjs';
 
 function baseUrl(): string {
@@ -108,6 +109,16 @@ export async function POST(
       }).catch((e) => console.error('[Retry] Email failed (non-fatal)', e));
     }
 
+    sendRetrySucceededEmail({
+      orderNo: order.orderNo,
+      customerName: order.customerName || order.customerEmail,
+      customerEmail: order.customerEmail,
+      packageName: order.packageName,
+      destination: order.destination,
+      totalAmount: Number(order.totalAmount),
+      currency: order.currency,
+      iccid: firstProfile?.iccid ?? null,
+    });
     return NextResponse.json({ success: true, message: 'Order fulfilled successfully' });
   } catch (e) {
     const errMsg = e instanceof Error ? e.message : String(e);
@@ -115,6 +126,17 @@ export async function POST(
       where: { id: order.id },
       data: { status: 'FAILED', errorMessage: errMsg.slice(0, 1000) },
     });
+    sendRetryFailedEmail({
+      orderNo: order.orderNo,
+      customerName: order.customerName || order.customerEmail,
+      customerEmail: order.customerEmail,
+      packageName: order.packageName,
+      destination: order.destination,
+      totalAmount: Number(order.totalAmount),
+      currency: order.currency,
+      errorMessage: errMsg.slice(0, 300),
+    });
+    checkAndAutoBlockEmail(order.customerEmail).catch(() => {});
     return NextResponse.json({ error: errMsg }, { status: 500 });
   }
 }

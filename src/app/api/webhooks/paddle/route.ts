@@ -11,7 +11,8 @@ import { NextResponse } from 'next/server';
 import { verifyPaddleWebhook, safeJsonParse } from '@/lib/paddle';
 import { prisma } from '@/lib/prisma';
 import { purchasePackage, getEsimProfileWithRetry, getPackages, formatDataVolume } from '@/lib/esimaccess';
-import { sendPostPurchaseEmail, sendAdminOrderNotificationEmail, sendFraudAlertEmail } from '@/lib/email';
+import { sendPostPurchaseEmail, sendAdminOrderNotificationEmail, sendFraudAlertEmail, sendOrderFailedEmail } from '@/lib/email';
+import { autoBlock, checkAndAutoBlockEmail } from '@/lib/fraud';
 import { hash } from 'bcryptjs';
 
 const EVENT_TRANSACTION_COMPLETED = 'transaction.completed';
@@ -36,6 +37,7 @@ interface CustomData {
   customerName?: string;
   userId?: string;
   deviceType?: string;
+  checkoutIp?: string;
 }
 
 function baseUrl(): string {
@@ -90,6 +92,7 @@ export async function POST(request: Request) {
   const customerName = sanitizeString(customData.customerName, 200);
   const deviceType = sanitizeString(customData.deviceType, 64);
   const userId = typeof customData.userId === 'string' ? customData.userId.trim().slice(0, 64) : null;
+  const checkoutIp = sanitizeString(customData.checkoutIp, 45);
 
   if (!planId || !customerEmail) {
     console.error('[Paddle webhook] Missing planId or customerEmail in custom_data', { transactionId, customData });
@@ -144,6 +147,7 @@ export async function POST(request: Request) {
       validity: validityStr,
       deviceType: deviceType || null,
       supplierCost: supplierCostUsd ?? null,
+      checkoutIp: checkoutIp || null,
       paidAt: new Date(),
     },
   });
@@ -191,6 +195,19 @@ export async function POST(request: Request) {
       orderNo: order.orderNo,
       adminOrdersUrl: `${baseUrl()}/admin/orders`,
     }).catch(() => {});
+    sendOrderFailedEmail({
+      orderNo: order.orderNo,
+      customerName: customerName || customerEmail,
+      customerEmail,
+      packageName,
+      destination,
+      totalAmount,
+      currency,
+      errorMessage: `Blocked: underpayment $${totalAmount.toFixed(2)} vs supplier cost $${supplierCostUsd.toFixed(2)}`,
+    });
+    // Auto-block the email + IP immediately for underpayment fraud
+    autoBlock('EMAIL', customerEmail, 'Underpayment fraud').catch(() => {});
+    if (checkoutIp) autoBlock('IP', checkoutIp, 'Underpayment fraud').catch(() => {});
     return NextResponse.json({ received: true });
   }
 
@@ -269,6 +286,17 @@ export async function POST(request: Request) {
       where: { id: order.id },
       data: { status: 'FAILED', errorMessage: errMsg.slice(0, 1000) },
     });
+    sendOrderFailedEmail({
+      orderNo: order.orderNo,
+      customerName: customerName || customerEmail,
+      customerEmail,
+      packageName,
+      destination,
+      totalAmount,
+      currency,
+      errorMessage: errMsg.slice(0, 300),
+    });
+    checkAndAutoBlockEmail(customerEmail).catch(() => {});
   }
 
   return NextResponse.json({ received: true });

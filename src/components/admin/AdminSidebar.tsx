@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import {
   LayoutDashboard, FileText, Settings, Users, UserCircle, ShoppingCart,
-  Globe, Search, LogOut, Package, BarChart3, Menu, X, DollarSign, MessageSquare, MenuSquare, MapPin, ClipboardList, Shield,
+  Globe, Search, LogOut, Package, BarChart3, Menu, X, DollarSign, MessageSquare, MenuSquare, MapPin, ClipboardList, Shield, Ban,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -28,6 +28,7 @@ const navItems = [
   { href: '/admin/navigation', label: 'Navigation', icon: MenuSquare },
   { href: '/admin/users', label: 'Admin Users', icon: Users },
   { href: '/admin/settings', label: 'Site Settings', icon: Settings },
+  { href: '/admin/blocklist', label: 'Blocklist', icon: Ban },
   { href: '/admin/audit-log', label: 'Audit Log', icon: ClipboardList },
   { href: '/admin/security', label: 'Security (2FA)', icon: Shield },
 ];

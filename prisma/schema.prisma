@@ -106,6 +106,7 @@ model Order {
   errorMessage         String?    @db.Text // last fulfillment error for debugging
   notes                String?    @db.Text // internal admin notes
   archivedAt           DateTime?            // soft delete — null = active
+  checkoutIp           String?              // client IP captured at checkout prepare time
   createdAt            DateTime    @default(now())
   updatedAt            DateTime    @updatedAt
   paidAt               DateTime?
@@ -356,4 +357,17 @@ model AdminAuditLog {
   createdAt  DateTime @default(now())
 
   @@map("admin_audit_logs")
+}
+
+// ─── Blocklist ────────────────────────────────────────────────
+model BlockedItem {
+  id          String   @id @default(cuid())
+  type        String   // 'IP' | 'EMAIL'
+  value       String
+  reason      String?  @db.Text
+  autoBlocked Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@unique([type, value])
+  @@map("blocked_items")
 }

@@ -214,6 +214,149 @@ export async function sendFraudAlertEmail(data: FraudAlertEmailData): Promise<vo
   sendEmail(to, `🚨 FRAUD ALERT: Payment $${data.amountPaid.toFixed(2)} below supplier cost $${data.supplierCost.toFixed(2)} — ${data.packageName}`, html).catch(() => {});
 }
 
+// ─── Admin event email helpers ────────────────────────────────────────────────
+
+interface AdminOrderEventData {
+  orderNo: string;
+  customerName: string;
+  customerEmail: string;
+  packageName: string;
+  destination: string;
+  totalAmount: number;
+  currency: string;
+}
+
+function adminUrl(): string {
+  return `${(process.env.NEXT_PUBLIC_SITE_URL || 'https://www.sim2me.net').replace(/\/$/, '')}/admin/orders`;
+}
+
+function orderTable(d: AdminOrderEventData): string {
+  return `
+<table style="width:100%; border-collapse: collapse; font-size: 14px; margin-bottom:16px;">
+  <tr><td style="padding: 6px 12px 6px 0; color: #64748b; white-space:nowrap;">Order</td><td style="padding: 6px 0; font-family:monospace; font-size:12px;">#${escapeHtml(d.orderNo)}</td></tr>
+  <tr><td style="padding: 6px 12px 6px 0; color: #64748b;">Customer</td><td style="padding: 6px 0;"><strong>${escapeHtml(d.customerName)}</strong> &lt;${escapeHtml(d.customerEmail)}&gt;</td></tr>
+  <tr><td style="padding: 6px 12px 6px 0; color: #64748b;">Package</td><td style="padding: 6px 0;">${escapeHtml(d.packageName)}</td></tr>
+  <tr><td style="padding: 6px 12px 6px 0; color: #64748b;">Destination</td><td style="padding: 6px 0;">${escapeHtml(d.destination)}</td></tr>
+  <tr><td style="padding: 6px 12px 6px 0; color: #64748b;">Amount</td><td style="padding: 6px 0;">${escapeHtml(d.currency)} ${d.totalAmount.toFixed(2)}</td></tr>
+</table>
+<p style="margin:0;"><a href="${escapeHtml(adminUrl())}" style="display:inline-block; background:#0f172a; color:white; padding:10px 20px; text-decoration:none; border-radius:6px; font-size:14px;">View Orders</a></p>`;
+}
+
+/** Admin alert: order reached FAILED status (eSIM or fraud). Fire-and-forget. */
+export function sendOrderFailedEmail(data: AdminOrderEventData & { errorMessage: string }): void {
+  const to = process.env.ADMIN_NOTIFICATION_EMAIL || 'info.sim2me@gmail.com';
+  const html = `
+<div style="font-family:sans-serif; max-width:560px; margin:0 auto; padding:24px;">
+  <div style="background:#fef2f2; border:2px solid #dc2626; border-radius:10px; padding:16px 20px; margin-bottom:16px;">
+    <h2 style="margin:0 0 6px 0; color:#dc2626; font-size:18px;">⚠️ Order FAILED — Sim2Me</h2>
+    <p style="margin:0; color:#7f1d1d; font-size:13px;">${escapeHtml(data.errorMessage)}</p>
+  </div>
+  ${orderTable(data)}
+</div>`.trim();
+  sendEmail(to, `⚠️ Order FAILED: #${data.orderNo} — ${data.customerName}`, html).catch(() => {});
+}
+
+/** Admin alert: admin retry succeeded. Fire-and-forget. */
+export function sendRetrySucceededEmail(data: AdminOrderEventData & { iccid?: string | null }): void {
+  const to = process.env.ADMIN_NOTIFICATION_EMAIL || 'info.sim2me@gmail.com';
+  const iccidRow = data.iccid
+    ? `<tr><td style="padding: 6px 12px 6px 0; color: #64748b;">ICCID</td><td style="padding: 6px 0; font-family:monospace; font-size:12px;">${escapeHtml(data.iccid)}</td></tr>`
+    : '';
+  const html = `
+<div style="font-family:sans-serif; max-width:560px; margin:0 auto; padding:24px;">
+  <div style="background:#f0fdf4; border:2px solid #16a34a; border-radius:10px; padding:16px 20px; margin-bottom:16px;">
+    <h2 style="margin:0; color:#16a34a; font-size:18px;">✅ Retry Succeeded — eSIM Provisioned</h2>
+  </div>
+  <table style="width:100%; border-collapse:collapse; font-size:14px; margin-bottom:16px;">
+    <tr><td style="padding: 6px 12px 6px 0; color: #64748b;">Order</td><td style="padding: 6px 0; font-family:monospace; font-size:12px;">#${escapeHtml(data.orderNo)}</td></tr>
+    <tr><td style="padding: 6px 12px 6px 0; color: #64748b;">Customer</td><td style="padding: 6px 0;"><strong>${escapeHtml(data.customerName)}</strong> &lt;${escapeHtml(data.customerEmail)}&gt;</td></tr>
+    <tr><td style="padding: 6px 12px 6px 0; color: #64748b;">Package</td><td style="padding: 6px 0;">${escapeHtml(data.packageName)}</td></tr>
+    ${iccidRow}
+  </table>
+  <p style="margin:0;"><a href="${escapeHtml(adminUrl())}" style="display:inline-block; background:#16a34a; color:white; padding:10px 20px; text-decoration:none; border-radius:6px; font-size:14px;">View Orders</a></p>
+</div>`.trim();
+  sendEmail(to, `✅ Retry Succeeded: #${data.orderNo} — ${data.customerName}`, html).catch(() => {});
+}
+
+/** Admin alert: admin retry failed again. Fire-and-forget. */
+export function sendRetryFailedEmail(data: AdminOrderEventData & { errorMessage: string }): void {
+  const to = process.env.ADMIN_NOTIFICATION_EMAIL || 'info.sim2me@gmail.com';
+  const html = `
+<div style="font-family:sans-serif; max-width:560px; margin:0 auto; padding:24px;">
+  <div style="background:#fef2f2; border:2px solid #dc2626; border-radius:10px; padding:16px 20px; margin-bottom:16px;">
+    <h2 style="margin:0 0 6px 0; color:#dc2626; font-size:18px;">❌ Retry Failed — Sim2Me</h2>
+    <p style="margin:0; color:#7f1d1d; font-size:13px;">${escapeHtml(data.errorMessage)}</p>
+  </div>
+  ${orderTable(data)}
+</div>`.trim();
+  sendEmail(to, `❌ Retry Failed: #${data.orderNo} — ${data.customerName}`, html).catch(() => {});
+}
+
+/** Admin alert: eSIM was cancelled via admin. Fire-and-forget. */
+export function sendEsimCancelledEmail(data: AdminOrderEventData): void {
+  const to = process.env.ADMIN_NOTIFICATION_EMAIL || 'info.sim2me@gmail.com';
+  const html = `
+<div style="font-family:sans-serif; max-width:560px; margin:0 auto; padding:24px;">
+  <div style="background:#fff7ed; border:2px solid #f97316; border-radius:10px; padding:16px 20px; margin-bottom:16px;">
+    <h2 style="margin:0; color:#ea580c; font-size:18px;">🚫 eSIM Cancelled by Admin</h2>
+  </div>
+  ${orderTable(data)}
+</div>`.trim();
+  sendEmail(to, `🚫 eSIM Cancelled: #${data.orderNo} — ${data.customerName}`, html).catch(() => {});
+}
+
+/** Admin alert: refund issued via Paddle. Fire-and-forget. */
+export function sendRefundIssuedEmail(data: AdminOrderEventData): void {
+  const to = process.env.ADMIN_NOTIFICATION_EMAIL || 'info.sim2me@gmail.com';
+  const html = `
+<div style="font-family:sans-serif; max-width:560px; margin:0 auto; padding:24px;">
+  <div style="background:#eff6ff; border:2px solid #3b82f6; border-radius:10px; padding:16px 20px; margin-bottom:16px;">
+    <h2 style="margin:0; color:#1d4ed8; font-size:18px;">💸 Refund Issued via Paddle</h2>
+  </div>
+  ${orderTable(data)}
+</div>`.trim();
+  sendEmail(to, `💸 Refund Issued: #${data.orderNo} — ${data.currency} ${data.totalAmount.toFixed(2)}`, html).catch(() => {});
+}
+
+export interface AbandonedCheckoutItem {
+  paddleTransactionId: string;
+  customerEmail?: string;
+  amount?: number;
+  currency?: string;
+  minutesAgo: number;
+}
+
+/** Admin digest: new abandoned checkouts detected by cron. Fire-and-forget. */
+export function sendAbandonedCheckoutEmail(items: AbandonedCheckoutItem[]): void {
+  const to = process.env.ADMIN_NOTIFICATION_EMAIL || 'info.sim2me@gmail.com';
+  const rows = items.map((it) => `
+  <tr>
+    <td style="padding:6px 8px; font-family:monospace; font-size:12px;">${escapeHtml(it.paddleTransactionId)}</td>
+    <td style="padding:6px 8px;">${escapeHtml(it.customerEmail ?? '—')}</td>
+    <td style="padding:6px 8px;">${it.currency ?? ''} ${it.amount != null ? it.amount.toFixed(2) : '—'}</td>
+    <td style="padding:6px 8px;">${it.minutesAgo}m ago</td>
+  </tr>`).join('');
+  const html = `
+<div style="font-family:sans-serif; max-width:640px; margin:0 auto; padding:24px;">
+  <h2 style="margin:0 0 16px 0; color:#0f172a;">👻 ${items.length} Abandoned Checkout${items.length === 1 ? '' : 's'} — Sim2Me</h2>
+  <table style="width:100%; border-collapse:collapse; font-size:14px; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden;">
+    <thead style="background:#f8fafc;">
+      <tr>
+        <th style="padding:8px; text-align:left; color:#64748b; font-weight:600;">Transaction ID</th>
+        <th style="padding:8px; text-align:left; color:#64748b; font-weight:600;">Email</th>
+        <th style="padding:8px; text-align:left; color:#64748b; font-weight:600;">Amount</th>
+        <th style="padding:8px; text-align:left; color:#64748b; font-weight:600;">When</th>
+      </tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table>
+  <p style="margin: 20px 0 0 0;"><a href="${escapeHtml(adminUrl())}" style="display:inline-block; background:#0f172a; color:white; padding:10px 20px; text-decoration:none; border-radius:6px; font-size:14px;">View Orders</a></p>
+</div>`.trim();
+  sendEmail(to, `👻 ${items.length} Abandoned Checkout${items.length === 1 ? '' : 's'} Detected`, html).catch(() => {});
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, '&amp;')
