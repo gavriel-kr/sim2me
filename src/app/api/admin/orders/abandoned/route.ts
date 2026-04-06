@@ -8,6 +8,7 @@ interface PaddleTransaction {
   id: string;
   status: string;
   customer?: { email?: string };
+  custom_data?: { customerEmail?: string; customerName?: string; planId?: string } | null;
   details?: { totals?: { total?: string; currency_code?: string } };
   created_at: string;
 }
@@ -55,8 +56,12 @@ export async function GET() {
       .filter((t) => !existingIds.has(t.id))
       .map((t) => ({
         paddleTransactionId: t.id,
-        customerEmail: t.customer?.email ?? null,
-        totalAmount: parseFloat(t.details?.totals?.total ?? '0') || 0,
+        // custom_data holds what the customer typed in our checkout form
+        customerEmail: t.custom_data?.customerEmail ?? t.customer?.email ?? null,
+        customerName: t.custom_data?.customerName ?? null,
+        packageName: t.custom_data?.planId ?? null,
+        // Paddle returns totals in lowest denomination (cents) — divide by 100 for dollars
+        totalAmount: (parseFloat(t.details?.totals?.total ?? '0') || 0) / 100,
         currency: t.details?.totals?.currency_code ?? 'USD',
         createdAt: t.created_at,
         paddleStatus: t.status,

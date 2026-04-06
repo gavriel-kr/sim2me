@@ -433,15 +433,17 @@ export function AdminOrdersClient({
         const items: DisplayOrder[] = (d.abandoned ?? []).map((a: {
           paddleTransactionId: string;
           customerEmail: string | null;
+          customerName: string | null;
+          packageName: string | null;
           totalAmount: number;
           currency: string;
           createdAt: string;
         }) => ({
           id: a.paddleTransactionId,
           orderNo: a.paddleTransactionId,
-          customerName: '',
+          customerName: a.customerName ?? '',
           customerEmail: a.customerEmail ?? '',
-          packageName: '',
+          packageName: a.packageName ?? '',
           destination: '',
           totalAmount: a.totalAmount,
           currency: a.currency,
