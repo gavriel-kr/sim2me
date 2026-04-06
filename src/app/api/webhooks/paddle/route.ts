@@ -92,7 +92,10 @@ export async function POST(request: Request) {
   const customerName = sanitizeString(customData.customerName, 200);
   const deviceType = sanitizeString(customData.deviceType, 64);
   const userId = typeof customData.userId === 'string' ? customData.userId.trim().slice(0, 64) : null;
-  const checkoutIp = sanitizeString(customData.checkoutIp, 45);
+  // Validate IP format — customData passes through browser (untrusted), only store valid IPs
+  const rawIp = sanitizeString(customData.checkoutIp, 45);
+  const IP_PATTERN = /^(\d{1,3}\.){3}\d{1,3}$|^[\da-f:]{2,39}$/i;
+  const checkoutIp = IP_PATTERN.test(rawIp) ? rawIp : null;
 
   if (!planId || !customerEmail) {
     console.error('[Paddle webhook] Missing planId or customerEmail in custom_data', { transactionId, customData });
@@ -205,9 +208,10 @@ export async function POST(request: Request) {
       currency,
       errorMessage: `Blocked: underpayment $${totalAmount.toFixed(2)} vs supplier cost $${supplierCostUsd.toFixed(2)}`,
     });
-    // Auto-block the email + IP immediately for underpayment fraud
+    // Auto-block email immediately — email is validated and not spoofable
+    // Note: checkoutIp travels via customData (browser-controlled) so we don't auto-block
+    // by IP here; IP blocking is enforced at checkout time using the real server IP
     autoBlock('EMAIL', customerEmail, 'Underpayment fraud').catch(() => {});
-    if (checkoutIp) autoBlock('IP', checkoutIp, 'Underpayment fraud').catch(() => {});
     return NextResponse.json({ received: true });
   }
 

@@ -37,7 +37,8 @@ export default async function OrdersPage({ searchParams }: PageProps) {
   const from = (params.from ?? '').trim();
   const to = (params.to ?? '').trim();
   const archived = params.archived ?? 'active'; // 'active' | 'archived' | 'all'
-  const page = Math.max(1, parseInt(params.page ?? '1') || 1);
+  const MAX_PAGE = 500;
+  const page = Math.min(MAX_PAGE, Math.max(1, parseInt(params.page ?? '1') || 1));
 
   // Build Prisma where clause
   const where: Prisma.OrderWhereInput = {};

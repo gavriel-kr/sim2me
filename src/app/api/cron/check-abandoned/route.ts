@@ -24,12 +24,15 @@ interface PaddleTransactionsResponse {
 }
 
 export async function GET(request: Request) {
+  // Fail-closed: always require CRON_SECRET
   const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret) {
-    const auth = request.headers.get('authorization');
-    if (auth !== `Bearer ${cronSecret}`) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+  if (!cronSecret) {
+    console.error('[check-abandoned] CRON_SECRET env var not configured — endpoint disabled');
+    return NextResponse.json({ error: 'Cron not configured' }, { status: 503 });
+  }
+  const auth = request.headers.get('authorization');
+  if (auth !== `Bearer ${cronSecret}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const apiKey = process.env.PADDLE_API_KEY;
