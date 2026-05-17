@@ -36,7 +36,7 @@ export async function GET() {
           'Content-Type': 'application/json',
           'RT-AccessCode': process.env.ESIMACCESS_ACCESS_CODE!,
         },
-        body: JSON.stringify({ orderNo: first.esimOrderId }),
+        body: JSON.stringify({ orderNo: first.esimOrderId, pager: { pageNum: 1, pageSize: 10 } }),
       });
       rawApiSample = await res.json();
     } catch (e) {
