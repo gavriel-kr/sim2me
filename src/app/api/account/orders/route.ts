@@ -60,7 +60,7 @@ export async function GET(request: Request) {
   // Backfill missing eSIM credentials (smdpAddress / activationCode / qrCodeUrl)
   // for COMPLETED orders that have an ICCID but are missing install details.
   const needsBackfill = orders.filter(
-    (o) => o.status === 'COMPLETED' && o.iccid && (!o.smdpAddress || !o.activationCode)
+    (o: typeof orders[number]) => o.status === 'COMPLETED' && o.iccid && (!o.smdpAddress || !o.activationCode)
   ).slice(0, 5); // cap at 5 to avoid long API round-trips
 
   if (needsBackfill.length > 0) {
