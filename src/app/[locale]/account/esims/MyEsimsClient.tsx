@@ -85,12 +85,26 @@ export function MyEsimsClient({ orders }: Props) {
                   </div>
                   <div className="space-y-3">
                     {order.smdpAddress && order.activationCode && (
-                      <a
-                        href={'https://esimsetup.apple.com/esim_qrcode_provisioning?carddata=' + encodeURIComponent('LPA:1$' + order.smdpAddress + '$' + order.activationCode)}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
-                      >
-                        📲 Install eSIM on iPhone
-                      </a>
+                      <div className="flex flex-wrap gap-2">
+                        <a
+                          href={'https://esimsetup.apple.com/esim_qrcode_provisioning?carddata=' + encodeURIComponent('LPA:1$' + order.smdpAddress + '$' + order.activationCode)}
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+                        >
+                          📲 Install on iPhone
+                        </a>
+                        <a
+                          href={'https://esimsetup.android.com/esim_qrcode_provisioning?carddata=' + encodeURIComponent('LPA:1$' + order.smdpAddress + '$' + order.activationCode)}
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+                        >
+                          🤖 Install on Android
+                        </a>
+                      </div>
+                    )}
+                    {order.smdpAddress && order.activationCode && (
+                      <div>
+                        <p className="text-sm font-medium">Activation Link (LPA)</p>
+                        <p className="mt-1 break-all font-mono text-xs select-all bg-muted/50 rounded px-2 py-1">{'LPA:1$' + order.smdpAddress + '$' + order.activationCode}</p>
+                      </div>
                     )}
                     {order.smdpAddress && (
                       <div>

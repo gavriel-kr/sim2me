@@ -19,9 +19,14 @@ import {
 
 const { Link: IntlLink } = createSharedPathnamesNavigation(routing);
 
-function buildEsimInstallUrl(smdpAddress: string, activationCode: string): string {
-  const lpa = 'LPA:1$' + smdpAddress + '$' + activationCode;
-  return 'https://esimsetup.apple.com/esim_qrcode_provisioning?carddata=' + encodeURIComponent(lpa);
+function buildLpa(smdpAddress: string, activationCode: string): string {
+  return 'LPA:1$' + smdpAddress + '$' + activationCode;
+}
+function buildIosInstallUrl(smdpAddress: string, activationCode: string): string {
+  return 'https://esimsetup.apple.com/esim_qrcode_provisioning?carddata=' + encodeURIComponent(buildLpa(smdpAddress, activationCode));
+}
+function buildAndroidInstallUrl(smdpAddress: string, activationCode: string): string {
+  return 'https://esimsetup.android.com/esim_qrcode_provisioning?carddata=' + encodeURIComponent(buildLpa(smdpAddress, activationCode));
 }
 
 type Profile = {
@@ -607,12 +612,26 @@ export function AccountClient() {
                                   )}
                                   <div className="space-y-3 text-sm min-w-0">
                                     {order.smdpAddress && order.activationCode && (
-                                      <a
-                                        href={buildEsimInstallUrl(order.smdpAddress, order.activationCode)}
-                                        className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
-                                      >
-                                        📲 Install eSIM on iPhone
-                                      </a>
+                                      <div className="flex flex-wrap gap-2">
+                                        <a
+                                          href={buildIosInstallUrl(order.smdpAddress, order.activationCode)}
+                                          className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+                                        >
+                                          📲 Install on iPhone
+                                        </a>
+                                        <a
+                                          href={buildAndroidInstallUrl(order.smdpAddress, order.activationCode)}
+                                          className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+                                        >
+                                          🤖 Install on Android
+                                        </a>
+                                      </div>
+                                    )}
+                                    {order.smdpAddress && order.activationCode && (
+                                      <div>
+                                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Activation Link (LPA)</p>
+                                        <p className="font-mono text-xs break-all mt-1 select-all bg-muted/50 rounded px-2 py-1">{buildLpa(order.smdpAddress, order.activationCode)}</p>
+                                      </div>
                                     )}
                                     {order.smdpAddress && (
                                       <div>
@@ -725,12 +744,26 @@ export function AccountClient() {
                             )}
                             <div className="space-y-3 text-sm min-w-0">
                               {order.smdpAddress && order.activationCode && (
-                                <a
-                                  href={buildEsimInstallUrl(order.smdpAddress, order.activationCode)}
-                                  className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
-                                >
-                                  📲 Install eSIM on iPhone
-                                </a>
+                                <div className="flex flex-wrap gap-2">
+                                  <a
+                                    href={buildIosInstallUrl(order.smdpAddress, order.activationCode)}
+                                    className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+                                  >
+                                    📲 Install on iPhone
+                                  </a>
+                                  <a
+                                    href={buildAndroidInstallUrl(order.smdpAddress, order.activationCode)}
+                                    className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+                                  >
+                                    🤖 Install on Android
+                                  </a>
+                                </div>
+                              )}
+                              {order.smdpAddress && order.activationCode && (
+                                <div>
+                                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Activation Link (LPA)</p>
+                                  <p className="font-mono text-xs break-all mt-1 select-all bg-muted/50 rounded px-2 py-1">{buildLpa(order.smdpAddress, order.activationCode)}</p>
+                                </div>
                               )}
                               {order.smdpAddress && (
                                 <div>

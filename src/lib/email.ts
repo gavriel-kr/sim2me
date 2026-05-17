@@ -83,12 +83,20 @@ export async function sendPostPurchaseEmail(to: string, data: PostPurchaseEmailD
   const loginLink = data.loginLink || baseUrl() + '/account';
   const email = data.email || to;
 
-  const installUrl = (smdp !== '—' && code !== '—')
-    ? 'https://esimsetup.apple.com/esim_qrcode_provisioning?carddata=' + encodeURIComponent('LPA:1$' + smdp + '$' + code)
-    : null;
+  const hasLinks = smdp !== '—' && code !== '—';
+  const lpa = hasLinks ? ('LPA:1$' + smdp + '$' + code) : null;
+  const iosUrl = lpa ? ('https://esimsetup.apple.com/esim_qrcode_provisioning?carddata=' + encodeURIComponent(lpa)) : null;
+  const androidUrl = lpa ? ('https://esimsetup.android.com/esim_qrcode_provisioning?carddata=' + encodeURIComponent(lpa)) : null;
 
-  const installBlock = installUrl
-    ? '<p style="margin:16px 0 4px 0;"><a href="' + installUrl + '" style="display:inline-block; background:#0d9f6e; color:white; padding:12px 20px; text-decoration:none; border-radius:8px; font-weight:600; font-size:15px;">📲 התקן eSIM על iPhone</a></p><p style="margin:4px 0 16px 0; font-size:12px; color:#64748b;">לחץ על הכפתור מהאייפון שלך כדי להתקין ישירות. לאנדרואיד — השתמש בפרטים הידניים למטה.</p>'
+  const installBlock = lpa
+    ? '<p style="margin:16px 0 8px 0; font-weight:600;">התקנה מהירה בלחיצה:</p>' +
+      '<p style="margin:0 0 8px 0;">' +
+        '<a href="' + iosUrl + '" style="display:inline-block; background:#0d9f6e; color:white; padding:10px 18px; text-decoration:none; border-radius:8px; font-weight:600; font-size:14px; margin-left:8px;">📲 iPhone</a>' +
+        '<a href="' + androidUrl + '" style="display:inline-block; background:#1a73e8; color:white; padding:10px 18px; text-decoration:none; border-radius:8px; font-weight:600; font-size:14px;">🤖 Android</a>' +
+      '</p>' +
+      '<p style="margin:4px 0 16px 0; font-size:12px; color:#64748b;">לחץ על הכפתור המתאים למכשיר שלך להתקנה ישירה. אם לא עובד, השתמש בפרטים הידניים למטה.</p>' +
+      '<p style="margin:0 0 4px 0; font-size:12px; color:#64748b;"><strong>Activation Link (LPA):</strong></p>' +
+      '<p style="margin:0 0 16px 0; background:#f1f5f9; padding:6px 10px; border-radius:6px; font-family:monospace; font-size:11px; word-break:break-all;">' + escapeHtml(lpa) + '</p>'
     : '';
 
   const qrBlock = data.qrCodeUrl
