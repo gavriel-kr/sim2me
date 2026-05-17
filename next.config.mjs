@@ -30,7 +30,7 @@ const nextConfig = {
           "default-src 'self'",
           "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://sandbox-buy.paddle.com https://buy.paddle.com https://cdn.paddle.com https://www.googletagmanager.com https://www.google-analytics.com https://static.cloudflareinsights.com https://public.profitwell.com https://challenges.cloudflare.com",
           "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.paddle.com",
-          "img-src 'self' data: blob: https://flagcdn.com https://purecatamphetamine.github.io https://sandbox-buy.paddle.com https://buy.paddle.com https://cdn.paddle.com https://www.googletagmanager.com https://www.google-analytics.com https://*.esimaccess.com",
+          "img-src 'self' data: blob: https://flagcdn.com https://purecatamphetamine.github.io https://sandbox-buy.paddle.com https://buy.paddle.com https://cdn.paddle.com https://www.googletagmanager.com https://www.google-analytics.com https://p.qrsim.net",
           "connect-src 'self' https://sandbox-buy.paddle.com https://buy.paddle.com https://cdn.paddle.com https://www.google-analytics.com https://analytics.google.com https://region1.google-analytics.com https://cloudflareinsights.com https://public.profitwell.com https://challenges.cloudflare.com",
           "frame-src https://sandbox-buy.paddle.com https://buy.paddle.com https://cdn.paddle.com https://www.googletagmanager.com https://challenges.cloudflare.com",
           "font-src 'self' data: https://fonts.gstatic.com https://cdn.paddle.com",
