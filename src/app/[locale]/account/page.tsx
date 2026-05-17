@@ -2,10 +2,7 @@ import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 import { MainLayout } from '@/components/layout/MainLayout';
-import dynamicImport from 'next/dynamic';
-
-// No SSR — prevents hydration mismatch from locale-dependent date formatting
-const AccountClient = dynamicImport(() => import('./AccountClient').then(m => ({ default: m.AccountClient })), { ssr: false });
+import { AccountClient } from './AccountClient';
 
 export const metadata = {
   title: 'My account',
