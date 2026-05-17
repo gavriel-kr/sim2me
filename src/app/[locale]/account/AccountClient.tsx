@@ -87,13 +87,17 @@ type UsageData = {
 };
 
 const ESIM_STATUS: Record<string, { label: string; cls: string }> = {
-  GOT_RESOURCE: { label: 'Available', cls: 'bg-blue-100 text-blue-700' },
-  ONBOARD:      { label: 'Installed', cls: 'bg-green-100 text-green-700' },
-  CANCEL:       { label: 'Cancelled', cls: 'bg-red-100 text-red-700' },
-  ENABLE:       { label: 'Active',    cls: 'bg-emerald-100 text-emerald-700' },
-  IN_USE:       { label: 'In Use',    cls: 'bg-emerald-100 text-emerald-700' },
-  DELETED:      { label: 'Deleted',   cls: 'bg-gray-100 text-gray-600' },
-  DISABLED:     { label: 'Disabled',  cls: 'bg-gray-100 text-gray-600' },
+  // smdpStatus values (take priority)
+  ENABLED:      { label: 'Active',     cls: 'bg-emerald-100 text-emerald-700' },
+  RELEASED:     { label: 'Available',  cls: 'bg-blue-100 text-blue-700' },
+  DISABLED:     { label: 'Disabled',   cls: 'bg-gray-100 text-gray-600' },
+  DELETED:      { label: 'Removed',    cls: 'bg-gray-100 text-gray-600' },
+  // esimStatus values (fallback)
+  GOT_RESOURCE: { label: 'Available',  cls: 'bg-blue-100 text-blue-700' },
+  ONBOARD:      { label: 'Installing', cls: 'bg-yellow-100 text-yellow-700' },
+  CANCEL:       { label: 'Cancelled',  cls: 'bg-red-100 text-red-700' },
+  ENABLE:       { label: 'Active',     cls: 'bg-emerald-100 text-emerald-700' },
+  IN_USE:       { label: 'Active',     cls: 'bg-emerald-100 text-emerald-700' },
 };
 
 function fmtBytes(bytes: number | null | undefined): string {
@@ -102,17 +106,36 @@ function fmtBytes(bytes: number | null | undefined): string {
   return mb >= 1024 ? `${(mb / 1024).toFixed(1)} GB` : `${Math.round(mb)} MB`;
 }
 
-function timeLeft(expiredTime: string | null, totalDuration: number | null, durationUnit: string | null, now: number): string {
-  // If we have an actual expiry date, show real days remaining
-  if (expiredTime && now > 0) {
+function timeLeft(
+  expiredTime: string | null,
+  activateTime: string | null,
+  totalDuration: number | null,
+  durationUnit: string | null,
+  now: number,
+): string {
+  // Only show real countdown if the eSIM was actually activated (clock has started)
+  if (activateTime && expiredTime && now > 0) {
     const msLeft = new Date(expiredTime).getTime() - now;
     if (msLeft <= 0) return 'Expired';
     const daysLeft = Math.ceil(msLeft / (1000 * 60 * 60 * 24));
     return daysLeft === 1 ? '1 day left' : `${daysLeft} days left`;
   }
-  // Fallback: show plan duration
+  // Not yet activated → show plan duration
   if (totalDuration && durationUnit) return `${totalDuration} ${durationUnit.toLowerCase()}s validity`;
   return '—';
+}
+
+/**
+ * Determine best status to show.
+ * smdpStatus "ENABLED" = eSIM installed on device → show Active.
+ * Otherwise fall back to esimStatus.
+ */
+function resolveStatus(esimStatus: string | null | undefined, smdpStatus: string | null | undefined): string | null {
+  const smdp = (smdpStatus || '').toUpperCase();
+  if (smdp === 'ENABLED') return 'ENABLED';
+  if (smdp === 'DISABLED') return 'DISABLED';
+  if (smdp === 'DELETED') return 'DELETED';
+  return (esimStatus || '').toUpperCase() || null;
 }
 
 function UsageBar({ orderId, iccid, onStatusChange }: { orderId: string; iccid: string; onStatusChange?: (key: string | null) => void }) {
@@ -126,7 +149,7 @@ function UsageBar({ orderId, iccid, onStatusChange }: { orderId: string; iccid: 
       .then((data) => {
         if (data?.usage) {
           setUsage(data.usage);
-          onStatusChange?.(data.usage.esimStatus ?? null);
+          onStatusChange?.(resolveStatus(data.usage.esimStatus, data.usage.smdpStatus));
         } else {
           setUsage('unavailable');
           onStatusChange?.(null);
@@ -143,8 +166,8 @@ function UsageBar({ orderId, iccid, onStatusChange }: { orderId: string; iccid: 
   const total = usage.orderVolume;
   const used = usage.usedVolume;
   const usedPct = total && total > 0 ? Math.min(100, Math.round(((used ?? 0) / total) * 100)) : null;
-  const statusKey = (usage.esimStatus || '').toUpperCase();
-  const statusInfo = ESIM_STATUS[statusKey];
+  const statusKey = resolveStatus(usage.esimStatus, usage.smdpStatus);
+  const statusInfo = statusKey ? ESIM_STATUS[statusKey] : null;
 
   return (
     <div className="space-y-2">
@@ -156,7 +179,7 @@ function UsageBar({ orderId, iccid, onStatusChange }: { orderId: string; iccid: 
           </span>
         )}
         <span className="text-xs text-muted-foreground">
-          {timeLeft(usage.expiredTime, usage.totalDuration, usage.durationUnit, now)}
+          {timeLeft(usage.expiredTime, usage.activateTime, usage.totalDuration, usage.durationUnit, now)}
         </span>
         {usage.activateTime && (
           <span className="text-xs text-muted-foreground">
