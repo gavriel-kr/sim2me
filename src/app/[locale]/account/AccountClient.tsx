@@ -19,6 +19,11 @@ import {
 
 const { Link: IntlLink } = createSharedPathnamesNavigation(routing);
 
+function buildEsimInstallUrl(smdpAddress: string, activationCode: string): string {
+  const lpa = 'LPA:1$' + smdpAddress + '$' + activationCode;
+  return 'https://esimsetup.apple.com/esim_qrcode_provisioning?carddata=' + encodeURIComponent(lpa);
+}
+
 type Profile = {
   id: string;
   email: string;
@@ -601,6 +606,14 @@ export function AccountClient() {
                                     </div>
                                   )}
                                   <div className="space-y-3 text-sm min-w-0">
+                                    {order.smdpAddress && order.activationCode && (
+                                      <a
+                                        href={buildEsimInstallUrl(order.smdpAddress, order.activationCode)}
+                                        className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+                                      >
+                                        📲 Install eSIM on iPhone
+                                      </a>
+                                    )}
                                     {order.smdpAddress && (
                                       <div>
                                         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">SM-DP+ Address</p>
@@ -711,6 +724,14 @@ export function AccountClient() {
                               </div>
                             )}
                             <div className="space-y-3 text-sm min-w-0">
+                              {order.smdpAddress && order.activationCode && (
+                                <a
+                                  href={buildEsimInstallUrl(order.smdpAddress, order.activationCode)}
+                                  className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+                                >
+                                  📲 Install eSIM on iPhone
+                                </a>
+                              )}
                               {order.smdpAddress && (
                                 <div>
                                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">SM-DP+ Address</p>
