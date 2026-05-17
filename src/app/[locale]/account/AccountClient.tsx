@@ -102,19 +102,20 @@ function fmtBytes(bytes: number | null | undefined): string {
   return mb >= 1024 ? `${(mb / 1024).toFixed(1)} GB` : `${Math.round(mb)} MB`;
 }
 
-function timeLeft(expiredTime: string | null, activateTime: string | null, totalDuration: number | null, durationUnit: string | null, now: number): string {
-  if (!activateTime) {
-    if (totalDuration && durationUnit) return `${totalDuration} ${durationUnit.toLowerCase()}s validity`;
-    return '—';
+function timeLeft(expiredTime: string | null, totalDuration: number | null, durationUnit: string | null, now: number): string {
+  // If we have an actual expiry date, show real days remaining
+  if (expiredTime && now > 0) {
+    const msLeft = new Date(expiredTime).getTime() - now;
+    if (msLeft <= 0) return 'Expired';
+    const daysLeft = Math.ceil(msLeft / (1000 * 60 * 60 * 24));
+    return daysLeft === 1 ? '1 day left' : `${daysLeft} days left`;
   }
-  if (!expiredTime) return '—';
-  const msLeft = new Date(expiredTime).getTime() - now;
-  if (msLeft <= 0) return 'Expired';
-  const daysLeft = Math.ceil(msLeft / (1000 * 60 * 60 * 24));
-  return daysLeft === 1 ? '1 day left' : `${daysLeft} days left`;
+  // Fallback: show plan duration
+  if (totalDuration && durationUnit) return `${totalDuration} ${durationUnit.toLowerCase()}s validity`;
+  return '—';
 }
 
-function UsageBar({ orderId, iccid }: { orderId: string; iccid: string }) {
+function UsageBar({ orderId, iccid, onStatusChange }: { orderId: string; iccid: string; onStatusChange?: (key: string | null) => void }) {
   const [usage, setUsage] = useState<UsageData | null | 'loading' | 'unavailable'>('loading');
   const [now, setNow] = useState(0);
 
@@ -123,14 +124,16 @@ function UsageBar({ orderId, iccid }: { orderId: string; iccid: string }) {
     fetch(`/api/account/esims/usage?iccid=${encodeURIComponent(iccid)}&orderId=${encodeURIComponent(orderId)}`)
       .then((r) => r.ok ? r.json() : null)
       .then((data) => {
-        if (data?.usage) setUsage(data.usage);
-        else {
-          console.warn('[UsageBar] no usage data:', data);
+        if (data?.usage) {
+          setUsage(data.usage);
+          onStatusChange?.(data.usage.esimStatus ?? null);
+        } else {
           setUsage('unavailable');
+          onStatusChange?.(null);
         }
       })
-      .catch((e) => { console.error('[UsageBar] fetch error:', e); setUsage('unavailable'); });
-  }, [iccid, orderId]);
+      .catch(() => { setUsage('unavailable'); onStatusChange?.(null); });
+  }, [iccid, orderId, onStatusChange]);
 
   if (usage === 'loading') return <p className="text-xs text-muted-foreground animate-pulse">Loading status…</p>;
   if (usage === 'unavailable' || !usage) return (
@@ -153,7 +156,7 @@ function UsageBar({ orderId, iccid }: { orderId: string; iccid: string }) {
           </span>
         )}
         <span className="text-xs text-muted-foreground">
-          {timeLeft(usage.expiredTime, usage.activateTime, usage.totalDuration, usage.durationUnit, now)}
+          {timeLeft(usage.expiredTime, usage.totalDuration, usage.durationUnit, now)}
         </span>
         {usage.activateTime && (
           <span className="text-xs text-muted-foreground">
@@ -199,6 +202,9 @@ export function AccountClient() {
   const [loading, setLoading] = useState(true);
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [shownDetails, setShownDetails] = useState<Set<string>>(new Set());
+  const [esimStatuses, setEsimStatuses] = useState<Record<string, string | null>>({});
+  const handleStatusChange = (orderId: string, key: string | null) =>
+    setEsimStatuses((prev) => ({ ...prev, [orderId]: key }));
   const toggleDetails = (id: string) => setShownDetails((prev) => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
   const [retrying, setRetrying] = useState<string | null>(null);
   const [retryMsg, setRetryMsg] = useState<{ id: string; ok: boolean; text: string } | null>(null);
@@ -782,14 +788,24 @@ export function AccountClient() {
                                 {' · '}{new Date(order.createdAt).toLocaleDateString('en-GB')}
                               </p>
                             </div>
-                            <span className="rounded-full px-2 py-0.5 text-xs font-semibold flex-shrink-0 bg-green-100 text-green-700">
-                              Active
-                            </span>
+                            {(() => {
+                              const sk = (esimStatuses[order.id] || '').toUpperCase();
+                              const si = ESIM_STATUS[sk];
+                              return (
+                                <span className={`rounded-full px-2 py-0.5 text-xs font-semibold flex-shrink-0 ${si ? si.cls : 'bg-green-100 text-green-700'}`}>
+                                  {si ? si.label : 'Active'}
+                                </span>
+                              );
+                            })()}
                           </div>
 
                           {/* Usage bar — live from eSIMaccess */}
                           {order.iccid && (
-                            <UsageBar orderId={order.id} iccid={order.iccid} />
+                            <UsageBar
+                              orderId={order.id}
+                              iccid={order.iccid}
+                              onStatusChange={(key) => handleStatusChange(order.id, key)}
+                            />
                           )}
 
                           {/* QR + credentials */}
