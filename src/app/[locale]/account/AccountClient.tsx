@@ -130,7 +130,9 @@ function UsageBar({ orderId, iccid }: { orderId: string; iccid: string }) {
   }, [iccid, orderId]);
 
   if (usage === 'loading') return <p className="text-xs text-muted-foreground animate-pulse">Loading status…</p>;
-  if (usage === 'unavailable' || !usage) return null;
+  if (usage === 'unavailable' || !usage) return (
+    <p className="text-xs text-muted-foreground">Status unavailable</p>
+  );
 
   const total = usage.orderVolume;
   const used = usage.usedVolume;
@@ -502,7 +504,7 @@ export function AccountClient() {
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Member since</p>
-              <p className="font-semibold text-sm">{new Date(profile.createdAt).getFullYear()}</p>
+              <p className="font-semibold text-sm" suppressHydrationWarning>{new Date(profile.createdAt).getFullYear()}</p>
             </div>
           </div>
         </div>
@@ -1195,8 +1197,8 @@ export function AccountClient() {
                             <div className="flex items-start justify-between gap-2">
                               <div className="flex-1 min-w-0">
                                 <p className="font-semibold text-sm">{sub.subject}</p>
-                                <p className="text-xs text-muted-foreground mt-0.5">
-                                  {new Date(sub.createdAt).toLocaleDateString()}
+                                <p className="text-xs text-muted-foreground mt-0.5" suppressHydrationWarning>
+                                  {new Date(sub.createdAt).toLocaleDateString('en-GB')}
                                 </p>
                               </div>
                               <span className={`shrink-0 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold border ${statusColors[sub.status] ?? 'bg-gray-50 text-gray-600 border-gray-200'}`}>
