@@ -141,6 +141,8 @@ export function AccountClient() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
+  const [shownDetails, setShownDetails] = useState<Set<string>>(new Set());
+  const toggleDetails = (id: string) => setShownDetails((prev) => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
   const [retrying, setRetrying] = useState<string | null>(null);
   const [retryMsg, setRetryMsg] = useState<{ id: string; ok: boolean; text: string } | null>(null);
   const [showTroubleshooting, setShowTroubleshooting] = useState<string | null>(null);
@@ -627,28 +629,42 @@ export function AccountClient() {
                                         </a>
                                       </div>
                                     )}
-                                    {order.smdpAddress && order.activationCode && (
+                                    {(order.smdpAddress || order.iccid) && (
                                       <div>
-                                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Activation Link (LPA)</p>
-                                        <p className="font-mono text-xs break-all mt-1 select-all bg-muted/50 rounded px-2 py-1">{buildLpa(order.smdpAddress, order.activationCode)}</p>
-                                      </div>
-                                    )}
-                                    {order.smdpAddress && (
-                                      <div>
-                                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">SM-DP+ Address</p>
-                                        <p className="font-mono text-xs break-all mt-1 select-all">{order.smdpAddress}</p>
-                                      </div>
-                                    )}
-                                    {order.activationCode && (
-                                      <div>
-                                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Activation Code</p>
-                                        <p className="font-mono text-sm mt-1 select-all">{order.activationCode}</p>
-                                      </div>
-                                    )}
-                                    {order.iccid && (
-                                      <div>
-                                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">ICCID</p>
-                                        <p className="font-mono text-xs mt-1 select-all">{order.iccid}</p>
+                                        <button
+                                          onClick={() => toggleDetails(order.id)}
+                                          className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
+                                        >
+                                          {shownDetails.has(order.id) ? 'Hide details' : 'Show manual install details'}
+                                        </button>
+                                        {shownDetails.has(order.id) && (
+                                          <div className="mt-2 space-y-2">
+                                            {order.smdpAddress && order.activationCode && (
+                                              <div>
+                                                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Activation Link (LPA)</p>
+                                                <p className="font-mono text-xs break-all mt-1 select-all bg-muted/50 rounded px-2 py-1">{buildLpa(order.smdpAddress, order.activationCode)}</p>
+                                              </div>
+                                            )}
+                                            {order.smdpAddress && (
+                                              <div>
+                                                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">SM-DP+ Address</p>
+                                                <p className="font-mono text-xs break-all mt-1 select-all bg-muted/50 rounded px-2 py-1">{order.smdpAddress}</p>
+                                              </div>
+                                            )}
+                                            {order.activationCode && (
+                                              <div>
+                                                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Activation Code</p>
+                                                <p className="font-mono text-sm mt-1 select-all bg-muted/50 rounded px-2 py-1">{order.activationCode}</p>
+                                              </div>
+                                            )}
+                                            {order.iccid && (
+                                              <div>
+                                                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">ICCID</p>
+                                                <p className="font-mono text-xs mt-1 select-all bg-muted/50 rounded px-2 py-1">{order.iccid}</p>
+                                              </div>
+                                            )}
+                                          </div>
+                                        )}
                                       </div>
                                     )}
                                   </div>
@@ -759,28 +775,42 @@ export function AccountClient() {
                                   </a>
                                 </div>
                               )}
-                              {order.smdpAddress && order.activationCode && (
+                              {(order.smdpAddress || order.iccid) && (
                                 <div>
-                                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Activation Link (LPA)</p>
-                                  <p className="font-mono text-xs break-all mt-1 select-all bg-muted/50 rounded px-2 py-1">{buildLpa(order.smdpAddress, order.activationCode)}</p>
-                                </div>
-                              )}
-                              {order.smdpAddress && (
-                                <div>
-                                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">SM-DP+ Address</p>
-                                  <p className="font-mono text-xs break-all mt-1 select-all bg-muted/50 rounded px-2 py-1">{order.smdpAddress}</p>
-                                </div>
-                              )}
-                              {order.activationCode && (
-                                <div>
-                                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Activation Code</p>
-                                  <p className="font-mono text-sm mt-1 select-all bg-muted/50 rounded px-2 py-1">{order.activationCode}</p>
-                                </div>
-                              )}
-                              {order.iccid && (
-                                <div>
-                                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">ICCID</p>
-                                  <p className="font-mono text-xs mt-1 select-all bg-muted/50 rounded px-2 py-1">{order.iccid}</p>
+                                  <button
+                                    onClick={() => toggleDetails(order.id)}
+                                    className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
+                                  >
+                                    {shownDetails.has(order.id) ? 'Hide details' : 'Show manual install details'}
+                                  </button>
+                                  {shownDetails.has(order.id) && (
+                                    <div className="mt-2 space-y-2">
+                                      {order.smdpAddress && order.activationCode && (
+                                        <div>
+                                          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Activation Link (LPA)</p>
+                                          <p className="font-mono text-xs break-all mt-1 select-all bg-muted/50 rounded px-2 py-1">{buildLpa(order.smdpAddress, order.activationCode)}</p>
+                                        </div>
+                                      )}
+                                      {order.smdpAddress && (
+                                        <div>
+                                          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">SM-DP+ Address</p>
+                                          <p className="font-mono text-xs break-all mt-1 select-all bg-muted/50 rounded px-2 py-1">{order.smdpAddress}</p>
+                                        </div>
+                                      )}
+                                      {order.activationCode && (
+                                        <div>
+                                          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Activation Code</p>
+                                          <p className="font-mono text-sm mt-1 select-all bg-muted/50 rounded px-2 py-1">{order.activationCode}</p>
+                                        </div>
+                                      )}
+                                      {order.iccid && (
+                                        <div>
+                                          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">ICCID</p>
+                                          <p className="font-mono text-xs mt-1 select-all bg-muted/50 rounded px-2 py-1">{order.iccid}</p>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
                                 </div>
                               )}
                             </div>
