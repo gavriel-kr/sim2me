@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
 /**
- * GET — Diagnostic: show what data the missing orders have (no writes)
+ * GET — Diagnostic: show DB state + raw eSIMaccess response for first missing order
  */
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -22,17 +22,29 @@ export async function GET() {
       OR: [{ smdpAddress: null }, { activationCode: null }],
       AND: [{ OR: [{ esimOrderId: { not: null } }, { iccid: { not: null } }] }],
     },
-    select: {
-      id: true,
-      esimOrderId: true,
-      iccid: true,
-      smdpAddress: true,
-      activationCode: true,
-      qrCodeUrl: true,
-    },
+    select: { id: true, esimOrderId: true, iccid: true, smdpAddress: true, activationCode: true, qrCodeUrl: true },
   });
 
-  return NextResponse.json({ count: orders.length, orders });
+  // Fetch raw API response for first order to see what eSIMaccess actually returns
+  let rawApiSample: unknown = null;
+  const first = orders[0];
+  if (first?.esimOrderId) {
+    try {
+      const res = await fetch('https://api.esimaccess.com/api/v1/open/esim/query', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'RT-AccessCode': process.env.ESIMACCESS_ACCESS_CODE!,
+        },
+        body: JSON.stringify({ orderNo: first.esimOrderId }),
+      });
+      rawApiSample = await res.json();
+    } catch (e) {
+      rawApiSample = { fetchError: String(e) };
+    }
+  }
+
+  return NextResponse.json({ count: orders.length, firstOrder: first, rawApiSample });
 }
 
 /**
