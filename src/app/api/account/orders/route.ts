@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSessionForRequest, isCustomerSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
-import { getEsimUsage } from '@/lib/esimaccess';
+import { getEsimProfile, getEsimUsage } from '@/lib/esimaccess';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,6 +43,7 @@ export async function GET(request: Request) {
       qrCodeUrl: true,
       smdpAddress: true,
       activationCode: true,
+      esimOrderId: true,
       createdAt: true,
       paddleTransactionId: true,
     },
@@ -57,34 +58,37 @@ export async function GET(request: Request) {
     }).catch(() => {});
   }
 
-  // Backfill missing eSIM credentials (smdpAddress / activationCode / qrCodeUrl)
-  // for COMPLETED orders that have an ICCID but are missing install details.
-  const needsBackfill = orders.filter(
-    (o: typeof orders[number]) => o.status === 'COMPLETED' && o.iccid && (!o.smdpAddress || !o.activationCode)
-  ).slice(0, 5); // cap at 5 to avoid long API round-trips
-
+  // Backfill missing eSIM credentials for COMPLETED orders
   type OrderRow = typeof orders[number];
+  const needsBackfill = (orders as OrderRow[]).filter(
+    (o) => o.status === 'COMPLETED' && (!o.smdpAddress || !o.activationCode) && (o.esimOrderId || o.iccid)
+  ).slice(0, 5);
+
   if (needsBackfill.length > 0) {
-    const results = await Promise.allSettled(
+    await Promise.allSettled(
       needsBackfill.map(async (o: OrderRow) => {
-        const profile = await getEsimUsage(o.iccid!);
-        if (!profile) return;
-        await prisma.order.update({
-          where: { id: o.id },
-          data: {
+        try {
+          // Prefer esimOrderId (returns full credentials); fall back to iccid query
+          const result = o.esimOrderId
+            ? await getEsimProfile(o.esimOrderId)
+            : null;
+          const profile = result?.esimList?.[0] ?? (o.iccid ? await getEsimUsage(o.iccid) : null);
+          if (!profile) return;
+          const patch = {
             ...(profile.smdpAddress && { smdpAddress: profile.smdpAddress }),
             ...(profile.activationCode && { activationCode: profile.activationCode }),
             ...(profile.qrCodeUrl && { qrCodeUrl: profile.qrCodeUrl }),
-          },
-        });
-        o.smdpAddress = profile.smdpAddress ?? o.smdpAddress;
-        o.activationCode = profile.activationCode ?? o.activationCode;
-        o.qrCodeUrl = profile.qrCodeUrl ?? o.qrCodeUrl;
+          };
+          if (Object.keys(patch).length === 0) return;
+          await prisma.order.update({ where: { id: o.id }, data: patch });
+          if (profile.smdpAddress) o.smdpAddress = profile.smdpAddress;
+          if (profile.activationCode) o.activationCode = profile.activationCode;
+          if (profile.qrCodeUrl) o.qrCodeUrl = profile.qrCodeUrl;
+        } catch (e) {
+          console.warn('[orders] backfill failed', o.id, e);
+        }
       })
     );
-    results.forEach((r: PromiseSettledResult<void>) => {
-      if (r.status === 'rejected') console.warn('[orders] backfill failed for one order', r.reason);
-    });
   }
 
   return NextResponse.json({ orders });
