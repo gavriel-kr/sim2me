@@ -63,9 +63,10 @@ export async function GET(request: Request) {
     (o: typeof orders[number]) => o.status === 'COMPLETED' && o.iccid && (!o.smdpAddress || !o.activationCode)
   ).slice(0, 5); // cap at 5 to avoid long API round-trips
 
+  type OrderRow = typeof orders[number];
   if (needsBackfill.length > 0) {
     const results = await Promise.allSettled(
-      needsBackfill.map(async (o) => {
+      needsBackfill.map(async (o: OrderRow) => {
         const profile = await getEsimUsage(o.iccid!);
         if (!profile) return;
         await prisma.order.update({
@@ -76,13 +77,12 @@ export async function GET(request: Request) {
             ...(profile.qrCodeUrl && { qrCodeUrl: profile.qrCodeUrl }),
           },
         });
-        // Patch the in-memory order so this response already has fresh data
         o.smdpAddress = profile.smdpAddress ?? o.smdpAddress;
         o.activationCode = profile.activationCode ?? o.activationCode;
         o.qrCodeUrl = profile.qrCodeUrl ?? o.qrCodeUrl;
       })
     );
-    results.forEach((r) => {
+    results.forEach((r: PromiseSettledResult<void>) => {
       if (r.status === 'rejected') console.warn('[orders] backfill failed for one order', r.reason);
     });
   }
