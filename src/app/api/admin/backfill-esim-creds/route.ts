@@ -9,6 +9,33 @@ export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
 /**
+ * GET — Diagnostic: show what data the missing orders have (no writes)
+ */
+export async function GET() {
+  const session = await getServerSession(authOptions);
+  const denied = requireAdmin(session);
+  if (denied) return denied;
+
+  const orders = await prisma.order.findMany({
+    where: {
+      status: 'COMPLETED',
+      OR: [{ smdpAddress: null }, { activationCode: null }],
+      AND: [{ OR: [{ esimOrderId: { not: null } }, { iccid: { not: null } }] }],
+    },
+    select: {
+      id: true,
+      esimOrderId: true,
+      iccid: true,
+      smdpAddress: true,
+      activationCode: true,
+      qrCodeUrl: true,
+    },
+  });
+
+  return NextResponse.json({ count: orders.length, orders });
+}
+
+/**
  * POST — Backfill smdpAddress / activationCode / qrCodeUrl for COMPLETED orders
  * missing install credentials.
  *
