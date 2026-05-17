@@ -178,7 +178,13 @@ export function AccountClient() {
         });
         setOtpEnabled(profileData.otpEnabled ?? false);
       }
-      if (ordersData?.orders) setOrders(ordersData.orders);
+      if (ordersData?.orders) {
+        setOrders(ordersData.orders);
+        // #region agent log
+        const sample = ordersData.orders.find((o: {qrCodeUrl?: string}) => o.qrCodeUrl);
+        if (sample) fetch('http://127.0.0.1:7930/ingest/c0f3d6c5-f7a1-48de-976d-653a33f6597b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ec9c49'},body:JSON.stringify({sessionId:'ec9c49',location:'AccountClient.tsx:orders-loaded',message:'sample qrCodeUrl',data:{qrCodeUrl:sample.qrCodeUrl,smdp:sample.smdpAddress,activationCode:sample.activationCode},timestamp:Date.now(),hypothesisId:'H1'})}).catch(()=>{});
+        // #endregion
+      }
     }).finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, []);
