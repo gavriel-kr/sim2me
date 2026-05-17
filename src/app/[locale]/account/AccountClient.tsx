@@ -14,8 +14,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   User, ShoppingBag, Wifi, Settings, LogOut, Phone, Mail,
   Calendar, Shield, CheckCircle, AlertCircle, ChevronRight, QrCode,
-  RotateCcw, ChevronDown, ChevronUp, HelpCircle, Download, MessageSquare,
+  RotateCcw, ChevronDown, ChevronUp, HelpCircle, Download, MessageSquare, Smartphone,
 } from 'lucide-react';
+
+function buildEsimInstallUrl(smdpAddress: string, activationCode: string): string {
+  return `https://esimsetup.apple.com/esim_qrcode_provisioning?carddata=${encodeURIComponent(`LPA:1$${smdpAddress}$${activationCode}`)}`;
+}
 
 const { Link: IntlLink } = createSharedPathnamesNavigation(routing);
 
@@ -593,6 +597,10 @@ export function AccountClient() {
                                         src={order.qrCodeUrl}
                                         alt="eSIM QR"
                                         className="h-40 w-40 rounded-xl border object-contain bg-white"
+                                        // #region agent log
+                                        onError={() => fetch('http://127.0.0.1:7930/ingest/c0f3d6c5-f7a1-48de-976d-653a33f6597b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ec9c49'},body:JSON.stringify({sessionId:'ec9c49',location:'AccountClient.tsx:orders-qr-img',message:'QR image failed to load',data:{qrCodeUrl:order.qrCodeUrl},timestamp:Date.now(),hypothesisId:'H1'})}).catch(()=>{})}
+                                        onLoad={() => fetch('http://127.0.0.1:7930/ingest/c0f3d6c5-f7a1-48de-976d-653a33f6597b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ec9c49'},body:JSON.stringify({sessionId:'ec9c49',location:'AccountClient.tsx:orders-qr-img',message:'QR image loaded OK',data:{qrCodeUrl:order.qrCodeUrl},timestamp:Date.now(),hypothesisId:'H1'})}).catch(()=>{})}
+                                        // #endregion
                                       />
                                     </div>
                                   ) : (
@@ -601,6 +609,15 @@ export function AccountClient() {
                                     </div>
                                   )}
                                   <div className="space-y-3 text-sm min-w-0">
+                                    {order.smdpAddress && order.activationCode && (
+                                      <a
+                                        href={buildEsimInstallUrl(order.smdpAddress, order.activationCode)}
+                                        className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+                                      >
+                                        <Smartphone className="w-3.5 h-3.5" />
+                                        Install eSIM on iPhone
+                                      </a>
+                                    )}
                                     {order.smdpAddress && (
                                       <div>
                                         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">SM-DP+ Address</p>
@@ -693,6 +710,10 @@ export function AccountClient() {
                                   src={order.qrCodeUrl}
                                   alt="eSIM QR Code"
                                   className="h-40 w-40 rounded-xl border object-contain bg-white"
+                                  // #region agent log
+                                  onError={() => fetch('http://127.0.0.1:7930/ingest/c0f3d6c5-f7a1-48de-976d-653a33f6597b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ec9c49'},body:JSON.stringify({sessionId:'ec9c49',location:'AccountClient.tsx:esims-qr-img',message:'QR image failed to load',data:{qrCodeUrl:order.qrCodeUrl},timestamp:Date.now(),hypothesisId:'H1'})}).catch(()=>{})}
+                                  onLoad={() => fetch('http://127.0.0.1:7930/ingest/c0f3d6c5-f7a1-48de-976d-653a33f6597b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'ec9c49'},body:JSON.stringify({sessionId:'ec9c49',location:'AccountClient.tsx:esims-qr-img',message:'QR image loaded OK',data:{qrCodeUrl:order.qrCodeUrl},timestamp:Date.now(),hypothesisId:'H1'})}).catch(()=>{})}
+                                  // #endregion
                                 />
                                 <a
                                   href={order.qrCodeUrl}
@@ -711,6 +732,15 @@ export function AccountClient() {
                               </div>
                             )}
                             <div className="space-y-3 text-sm min-w-0">
+                              {order.smdpAddress && order.activationCode && (
+                                <a
+                                  href={buildEsimInstallUrl(order.smdpAddress, order.activationCode)}
+                                  className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+                                >
+                                  <Smartphone className="w-3.5 h-3.5" />
+                                  Install eSIM on iPhone
+                                </a>
+                              )}
                               {order.smdpAddress && (
                                 <div>
                                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">SM-DP+ Address</p>

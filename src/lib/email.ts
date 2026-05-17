@@ -83,6 +83,19 @@ export async function sendPostPurchaseEmail(to: string, data: PostPurchaseEmailD
   const loginLink = data.loginLink || baseUrl() + '/account';
   const email = data.email || to;
 
+  const installUrl = smdp !== '—' && code !== '—'
+    ? `https://esimsetup.apple.com/esim_qrcode_provisioning?carddata=${encodeURIComponent(`LPA:1$${smdp}$${code}`)}`
+    : null;
+
+  const installBlock = installUrl
+    ? `<p style="margin:16px 0;">
+         <a href="${installUrl}" style="display:inline-block; background:#0d9f6e; color:white; padding:12px 20px; text-decoration:none; border-radius:8px; font-weight:600; font-size:15px;">
+           📲 התקן eSIM על iPhone
+         </a>
+       </p>
+       <p style="margin:4px 0 16px 0; font-size:12px; color:#64748b;">לחץ על הכפתור מהאייפון שלך כדי להתקין את ה-eSIM ישירות. לאנדרואיד — השתמש בפרטים הידניים למטה.</p>`
+    : '';
+
   const qrBlock = data.qrCodeUrl
     ? `<p style="margin:16px 0;"><strong>סריקת QR:</strong> מצורף להודעה זו קוד ה-QR שלך. סרוק אותו דרך הגדרות הסלולר במכשיר.</p>
        <p style="margin:12px 0;"><img src="${data.qrCodeUrl}" alt="QR Code" width="200" height="200" style="display:block; border-radius:8px;" /></p>`
@@ -110,6 +123,7 @@ export async function sendPostPurchaseEmail(to: string, data: PostPurchaseEmailD
       <li><strong>תוקף:</strong> ${escapeHtml(validityDays)}</li>
     </ul>
     <p style="margin: 0 0 8px 0; font-weight: 600;">איך מתקינים את ה-eSIM?</p>
+    ${installBlock}
     ${qrBlock}
     <p style="margin: 16px 0 8px 0;"><strong>התקנה ידנית:</strong> אם אינך יכול לסרוק, השתמש בפרטים הבאים:</p>
     <ul style="margin: 0 0 20px 0; padding-right: 20px;">

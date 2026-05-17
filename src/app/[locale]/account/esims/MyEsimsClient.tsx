@@ -84,6 +84,14 @@ export function MyEsimsClient({ orders }: Props) {
                     )}
                   </div>
                   <div className="space-y-3">
+                    {order.smdpAddress && order.activationCode && (
+                      <a
+                        href={`https://esimsetup.apple.com/esim_qrcode_provisioning?carddata=${encodeURIComponent(`LPA:1$${order.smdpAddress}$${order.activationCode}`)}`}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+                      >
+                        Install eSIM on iPhone
+                      </a>
+                    )}
                     {order.smdpAddress && (
                       <div>
                         <p className="text-sm font-medium">SM-DP+ Address</p>
