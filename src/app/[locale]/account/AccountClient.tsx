@@ -124,9 +124,12 @@ function UsageBar({ orderId, iccid }: { orderId: string; iccid: string }) {
       .then((r) => r.ok ? r.json() : null)
       .then((data) => {
         if (data?.usage) setUsage(data.usage);
-        else setUsage('unavailable');
+        else {
+          console.warn('[UsageBar] no usage data:', data);
+          setUsage('unavailable');
+        }
       })
-      .catch(() => setUsage('unavailable'));
+      .catch((e) => { console.error('[UsageBar] fetch error:', e); setUsage('unavailable'); });
   }, [iccid, orderId]);
 
   if (usage === 'loading') return <p className="text-xs text-muted-foreground animate-pulse">Loading status…</p>;

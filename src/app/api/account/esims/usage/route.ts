@@ -36,10 +36,18 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  const profile = await getEsimUsage(iccid);
+  let profile = null;
+  let fetchError: string | null = null;
+  try {
+    profile = await getEsimUsage(iccid);
+  } catch (e) {
+    fetchError = e instanceof Error ? e.message : String(e);
+    console.error('[usage] getEsimUsage threw:', fetchError);
+  }
 
   if (!profile) {
-    return NextResponse.json({ usage: null });
+    console.warn('[usage] no profile for iccid:', iccid, 'error:', fetchError);
+    return NextResponse.json({ usage: null, debug: { iccid, fetchError } });
   }
 
   return NextResponse.json({
