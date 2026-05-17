@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { listEsimsPage } from '@/lib/esimaccess';
+import { getEsimProfile, getEsimUsage } from '@/lib/esimaccess';
 import { requireAdmin } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
@@ -10,25 +10,26 @@ export const maxDuration = 60;
 
 /**
  * POST — Backfill smdpAddress / activationCode / qrCodeUrl for COMPLETED orders
- * that have an ICCID but are missing install credentials.
- * Paginates through eSIMaccess full eSIM list and matches by ICCID.
+ * missing install credentials.
+ *
+ * Strategy (in priority order):
+ *   1. esimOrderId present  → getEsimProfile(esimOrderId)  ← always returns full credentials
+ *   2. iccid present only   → getEsimUsage(iccid)           ← best-effort fallback
  */
 export async function POST() {
   const session = await getServerSession(authOptions);
   const denied = requireAdmin(session);
   if (denied) return denied;
 
-  // Find orders that need backfill
   const ordersToFill = await prisma.order.findMany({
     where: {
       status: 'COMPLETED',
-      iccid: { not: null },
-      OR: [
-        { smdpAddress: null },
-        { activationCode: null },
+      OR: [{ smdpAddress: null }, { activationCode: null }],
+      AND: [
+        { OR: [{ esimOrderId: { not: null } }, { iccid: { not: null } }] },
       ],
     },
-    select: { id: true, iccid: true },
+    select: { id: true, esimOrderId: true, iccid: true },
   });
 
   if (ordersToFill.length === 0) {
@@ -37,62 +38,67 @@ export async function POST() {
 
   console.log(`[backfill-esim-creds] ${ordersToFill.length} orders need backfill`);
 
-  // Build ICCID → order lookup
-  const iccidMap = new Map<string, string>(); // iccid → order.id
-  for (const o of ordersToFill) {
-    if (o.iccid) iccidMap.set(o.iccid, o.id);
-  }
-
-  // Page through eSIMaccess full list to find matching eSIMs
-  const credMap = new Map<string, { smdpAddress?: string; activationCode?: string; qrCodeUrl?: string }>();
-  let pageNum = 1;
-  while (true) {
-    const page = await listEsimsPage(pageNum, 100);
-    const list = page?.esimList ?? [];
-    console.log(`[backfill-esim-creds] page ${pageNum}: ${list.length} eSIMs from API`);
-
-    // Log first item to see what fields eSIMaccess actually returns
-    if (pageNum === 1 && list.length > 0) {
-      console.log('[backfill-esim-creds] sample eSIM fields:', JSON.stringify(list[0]));
-    }
-
-    for (const esim of list) {
-      if (!esim.iccid) continue;
-      if (iccidMap.has(esim.iccid)) {
-        credMap.set(esim.iccid, {
-          smdpAddress: esim.smdpAddress || undefined,
-          activationCode: esim.activationCode || undefined,
-          qrCodeUrl: esim.qrCodeUrl || undefined,
-        });
-      }
-    }
-
-    if (list.length < 100) break; // last page
-    pageNum++;
-    if (pageNum > 20) break; // safety cap (2000 eSIMs max)
-  }
-
-  console.log(`[backfill-esim-creds] found credentials for ${credMap.size} matching eSIMs`);
-
-  // Update orders
   let updated = 0;
-  await Promise.all(
-    ordersToFill.map(async (o: typeof ordersToFill[number]) => {
-      if (!o.iccid) return;
-      const creds = credMap.get(o.iccid);
-      if (!creds) return;
+  let skipped = 0;
 
-      const patch: Record<string, string> = {};
-      if (creds.smdpAddress) patch.smdpAddress = creds.smdpAddress;
-      if (creds.activationCode) patch.activationCode = creds.activationCode;
-      if (creds.qrCodeUrl) patch.qrCodeUrl = creds.qrCodeUrl;
-      if (Object.keys(patch).length === 0) return;
+  // Process in small batches to avoid rate-limiting
+  const BATCH = 5;
+  for (let i = 0; i < ordersToFill.length; i += BATCH) {
+    const batch = ordersToFill.slice(i, i + BATCH);
 
-      await prisma.order.update({ where: { id: o.id }, data: patch });
-      updated++;
-    })
-  );
+    await Promise.allSettled(
+      batch.map(async (o: typeof ordersToFill[number]) => {
+        try {
+          let smdpAddress: string | undefined;
+          let activationCode: string | undefined;
+          let qrCodeUrl: string | undefined;
 
-  console.log(`[backfill-esim-creds] updated ${updated} orders`);
-  return NextResponse.json({ updated, total: ordersToFill.length });
+          if (o.esimOrderId) {
+            // Primary: query by order number — reliably returns all credentials
+            const result = await getEsimProfile(o.esimOrderId);
+            const profile = result?.esimList?.[0];
+            if (profile) {
+              smdpAddress = profile.smdpAddress || undefined;
+              activationCode = profile.activationCode || undefined;
+              qrCodeUrl = profile.qrCodeUrl || undefined;
+            }
+          } else if (o.iccid) {
+            // Fallback: query by ICCID
+            const profile = await getEsimUsage(o.iccid);
+            if (profile) {
+              smdpAddress = profile.smdpAddress || undefined;
+              activationCode = profile.activationCode || undefined;
+              qrCodeUrl = profile.qrCodeUrl || undefined;
+            }
+          }
+
+          const patch: Record<string, string> = {};
+          if (smdpAddress) patch.smdpAddress = smdpAddress;
+          if (activationCode) patch.activationCode = activationCode;
+          if (qrCodeUrl) patch.qrCodeUrl = qrCodeUrl;
+
+          if (Object.keys(patch).length === 0) {
+            skipped++;
+            console.warn(`[backfill-esim-creds] no credentials returned for order ${o.id} (esimOrderId=${o.esimOrderId}, iccid=${o.iccid})`);
+            return;
+          }
+
+          await prisma.order.update({ where: { id: o.id }, data: patch });
+          updated++;
+          console.log(`[backfill-esim-creds] updated order ${o.id}: smdp=${smdpAddress?.slice(0, 20)}`);
+        } catch (e) {
+          skipped++;
+          console.error(`[backfill-esim-creds] failed for order ${o.id}:`, e);
+        }
+      })
+    );
+
+    // Small delay between batches to respect API rate limits
+    if (i + BATCH < ordersToFill.length) {
+      await new Promise((r) => setTimeout(r, 300));
+    }
+  }
+
+  console.log(`[backfill-esim-creds] done: updated=${updated} skipped=${skipped} total=${ordersToFill.length}`);
+  return NextResponse.json({ updated, skipped, total: ordersToFill.length });
 }
