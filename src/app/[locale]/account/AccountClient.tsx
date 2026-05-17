@@ -539,9 +539,9 @@ export function AccountClient() {
                               <p className="font-semibold text-sm truncate">
                                 {order.destination ? `${order.destination} — ` : ''}{order.packageName}
                               </p>
-                              <p className="text-xs text-muted-foreground mt-0.5">
+                              <p className="text-xs text-muted-foreground mt-0.5" suppressHydrationWarning>
                                 {[order.dataAmount, order.validity].filter(Boolean).join(' / ')}
-                                {' · '}{new Date(order.createdAt).toLocaleDateString()}
+                                {' · '}{new Date(order.createdAt).toLocaleDateString('en-GB')}
                               </p>
                             </div>
                             <div className="flex items-center gap-2 flex-shrink-0">
@@ -701,9 +701,9 @@ export function AccountClient() {
                               <p className="font-semibold">
                                 {order.destination ? `${order.destination} — ` : ''}{order.packageName}
                               </p>
-                              <p className="text-xs text-muted-foreground mt-0.5">
+                              <p className="text-xs text-muted-foreground mt-0.5" suppressHydrationWarning>
                                 {[order.dataAmount, order.validity].filter(Boolean).join(' / ')}
-                                {' · '}{new Date(order.createdAt).toLocaleDateString()}
+                                {' · '}{new Date(order.createdAt).toLocaleDateString('en-GB')}
                               </p>
                             </div>
                             <span className="rounded-full px-2 py-0.5 text-xs font-semibold flex-shrink-0 bg-green-100 text-green-700">

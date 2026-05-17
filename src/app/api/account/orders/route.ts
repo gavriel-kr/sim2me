@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSessionForRequest, isCustomerSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
+import { getEsimUsage } from '@/lib/esimaccess';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,6 +55,36 @@ export async function GET(request: Request) {
       where: { customerEmail: customer.email, customerId: null },
       data: { customerId: customer.id },
     }).catch(() => {});
+  }
+
+  // Backfill missing eSIM credentials (smdpAddress / activationCode / qrCodeUrl)
+  // for COMPLETED orders that have an ICCID but are missing install details.
+  const needsBackfill = orders.filter(
+    (o) => o.status === 'COMPLETED' && o.iccid && (!o.smdpAddress || !o.activationCode)
+  ).slice(0, 5); // cap at 5 to avoid long API round-trips
+
+  if (needsBackfill.length > 0) {
+    const results = await Promise.allSettled(
+      needsBackfill.map(async (o) => {
+        const profile = await getEsimUsage(o.iccid!);
+        if (!profile) return;
+        await prisma.order.update({
+          where: { id: o.id },
+          data: {
+            ...(profile.smdpAddress && { smdpAddress: profile.smdpAddress }),
+            ...(profile.activationCode && { activationCode: profile.activationCode }),
+            ...(profile.qrCodeUrl && { qrCodeUrl: profile.qrCodeUrl }),
+          },
+        });
+        // Patch the in-memory order so this response already has fresh data
+        o.smdpAddress = profile.smdpAddress ?? o.smdpAddress;
+        o.activationCode = profile.activationCode ?? o.activationCode;
+        o.qrCodeUrl = profile.qrCodeUrl ?? o.qrCodeUrl;
+      })
+    );
+    results.forEach((r) => {
+      if (r.status === 'rejected') console.warn('[orders] backfill failed for one order', r.reason);
+    });
   }
 
   return NextResponse.json({ orders });
