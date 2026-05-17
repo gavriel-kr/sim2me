@@ -61,10 +61,15 @@ interface DisplayOrder {
 
 interface EsimStatusData {
   status?: string | null;
+  esimStatus?: string | null;
+  smdpStatus?: string | null;
   usedVolume?: number | null;
   remainingVolume?: number | null;
   orderVolume?: number | null;
-  expiredTime?: number | null;
+  expiredTime?: string | null;
+  activateTime?: string | null;
+  totalDuration?: number | null;
+  durationUnit?: string | null;
   iccid?: string | null;
   qrCodeUrl?: string | null;
   smdpAddress?: string | null;
@@ -111,23 +116,37 @@ function formatBytes(bytes: number | null | undefined): string {
   return `${bytes} B`;
 }
 
-function formatExpiry(ms: number | null | undefined): string {
-  if (!ms) return '—';
-  return new Date(ms).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+function formatExpiry(val: string | number | null | undefined): string {
+  if (!val) return '—';
+  return new Date(val).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
 }
+
+const ESIM_STATUS_MAP: Record<string, { label: string; dot: string; text: string }> = {
+  GOT_RESOURCE: { label: 'Available',  dot: 'bg-blue-400',    text: 'text-blue-600' },
+  ONBOARD:      { label: 'Installed',  dot: 'bg-emerald-500', text: 'text-emerald-600' },
+  IN_USE:       { label: 'In Use',     dot: 'bg-emerald-500', text: 'text-emerald-600' },
+  ENABLE:       { label: 'Active',     dot: 'bg-emerald-500', text: 'text-emerald-600' },
+  CANCEL:       { label: 'Cancelled',  dot: 'bg-red-400',     text: 'text-red-500' },
+  DELETED:      { label: 'Deleted',    dot: 'bg-gray-300',    text: 'text-gray-500' },
+  DISABLED:     { label: 'Disabled',   dot: 'bg-gray-300',    text: 'text-gray-500' },
+};
 
 function esimStatusDot(status: string | null | undefined): string {
   if (!status) return 'bg-gray-300';
+  const info = ESIM_STATUS_MAP[status.toUpperCase()];
+  if (info) return info.dot;
   const s = status.toLowerCase();
-  if (s.includes('active') || s.includes('enable')) return 'bg-emerald-500';
-  if (s.includes('expire') || s.includes('cancel')) return 'bg-red-500';
+  if (s.includes('active') || s.includes('enable') || s.includes('onboard')) return 'bg-emerald-500';
+  if (s.includes('expire') || s.includes('cancel')) return 'bg-red-400';
   return 'bg-yellow-400';
 }
 
 function esimStatusColor(status: string | null | undefined): string {
   if (!status) return 'text-gray-400';
+  const info = ESIM_STATUS_MAP[status.toUpperCase()];
+  if (info) return info.text;
   const s = status.toLowerCase();
-  if (s.includes('active') || s.includes('enable')) return 'text-emerald-600';
+  if (s.includes('active') || s.includes('enable') || s.includes('onboard')) return 'text-emerald-600';
   if (s.includes('expire') || s.includes('cancel')) return 'text-red-500';
   return 'text-yellow-600';
 }
@@ -177,14 +196,39 @@ function EsimStatusPanel({ data, order }: { data: EsimStatusData; order: Display
   const activationCode = data.activationCode || order.activationCode;
   const qrCodeUrl = data.qrCodeUrl || order.qrCodeUrl;
 
+  const esimStatusKey = (data.esimStatus || data.status || '').toUpperCase();
+  const esimStatusInfo = ESIM_STATUS_MAP[esimStatusKey];
+
   return (
     <div className="space-y-2">
-      {data.status && (
-        <div className="flex items-center gap-1.5">
-          <span className={`h-2 w-2 flex-shrink-0 rounded-full ${esimStatusDot(data.status)}`} />
-          <span className={`text-xs font-medium ${esimStatusColor(data.status)}`}>{data.status}</span>
+      {/* Status row */}
+      {(data.esimStatus || data.status) && (
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1.5">
+            <span className={`h-2 w-2 flex-shrink-0 rounded-full ${esimStatusDot(data.esimStatus || data.status)}`} />
+            <span className={`text-xs font-medium ${esimStatusColor(data.esimStatus || data.status)}`}>
+              {esimStatusInfo?.label || data.esimStatus || data.status}
+            </span>
+          </div>
+          {data.smdpStatus && (
+            <span className="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500">
+              SM-DP+: {data.smdpStatus}
+            </span>
+          )}
         </div>
       )}
+      {/* Time info */}
+      <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-gray-500">
+        {data.activateTime && (
+          <span>Activated: <span className="text-gray-700">{formatExpiry(data.activateTime)}</span></span>
+        )}
+        {!data.activateTime && data.totalDuration && (
+          <span>Validity: <span className="text-gray-700">{data.totalDuration} {data.durationUnit?.toLowerCase() ?? 'days'}</span></span>
+        )}
+        {data.expiredTime && (
+          <span>Expires: <span className="text-gray-700">{formatExpiry(data.expiredTime)}</span></span>
+        )}
+      </div>
       {usedPct !== null && (
         <div>
           <div className="mb-1 flex justify-between text-xs text-gray-500">
@@ -198,12 +242,6 @@ function EsimStatusPanel({ data, order }: { data: EsimStatusData; order: Display
             />
           </div>
           <p className="mt-0.5 text-xs text-gray-400">Remaining: {formatBytes(data.remainingVolume)}</p>
-        </div>
-      )}
-      {data.expiredTime && (
-        <div>
-          <p className="text-xs text-gray-400">Expires</p>
-          <p className="text-xs text-gray-700">{formatExpiry(data.expiredTime)}</p>
         </div>
       )}
       {iccid && (

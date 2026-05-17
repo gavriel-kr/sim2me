@@ -72,35 +72,63 @@ export interface EsimOrderResult {
 
 export interface EsimProfile {
   iccid: string;
-  // eSIMaccess returns the full LPA string in the "ac" field: "LPA:1$smdpAddress$activationCode"
-  // smdpAddress and activationCode are parsed from it by parseAc() below.
+  // Credentials — eSIMaccess returns these in the "ac" field as "LPA:1$smdpAddress$activationCode"
   ac?: string;
   smdpAddress: string;
   activationCode: string;
   qrCodeUrl: string;
+  // Status fields (actual API field names)
+  esimStatus?: string;     // e.g. "GOT_RESOURCE", "ONBOARD", "CANCEL"
+  smdpStatus?: string;     // e.g. "RELEASED", "ENABLED", "DISABLED", "DELETED"
+  // Kept for backward compatibility — normalised from API fields below
   status: string;
-  // Usage data (returned by esim/query when available)
-  orderVolume?: number;    // bytes ordered
-  usedVolume?: number;     // bytes used
-  remainingVolume?: number; // bytes remaining
-  expiredTime?: number;    // unix timestamp ms
+  // Volume (actual API field names)
+  totalVolume?: number;    // bytes ordered (API: totalVolume)
+  orderUsage?: number;     // bytes used    (API: orderUsage)
+  // Kept for backward compatibility — normalised from API fields below
+  orderVolume?: number;
+  usedVolume?: number;
+  remainingVolume?: number;
+  // Time
+  totalDuration?: number;  // e.g. 7
+  durationUnit?: string;   // e.g. "DAY"
+  activateTime?: string | null;   // ISO string, null if not yet installed
+  expiredTime?: string | null;    // ISO string
 }
 
 /**
- * eSIMaccess returns credentials as a single "ac" field: "LPA:1$smdpAddress$activationCode"
- * This helper parses it and fills smdpAddress / activationCode if they are empty.
+ * Normalise a raw eSIMaccess API response item:
+ * - Parse "ac" field into smdpAddress + activationCode
+ * - Map actual API field names to our interface aliases
  */
-function parseAc(profile: EsimProfile): EsimProfile {
-  if (profile.smdpAddress && profile.activationCode) return profile;
-  const parts = (profile.ac || '').split('$');
-  // Format: LPA:1$<smdpAddress>$<activationCode>
-  if (parts.length >= 3) {
-    return {
-      ...profile,
-      smdpAddress: profile.smdpAddress || parts[1],
-      activationCode: profile.activationCode || parts[2],
-    };
+function parseAc(raw: EsimProfile): EsimProfile {
+  const profile = { ...raw };
+
+  // Parse LPA credentials from "ac" field
+  if (!profile.smdpAddress || !profile.activationCode) {
+    const parts = (profile.ac || '').split('$');
+    if (parts.length >= 3) {
+      profile.smdpAddress = profile.smdpAddress || parts[1];
+      profile.activationCode = profile.activationCode || parts[2];
+    }
   }
+
+  // Normalise status: esimStatus → status
+  if (!profile.status && profile.esimStatus) {
+    profile.status = profile.esimStatus;
+  }
+
+  // Normalise volume: totalVolume → orderVolume, orderUsage → usedVolume
+  if (profile.orderVolume == null && profile.totalVolume != null) {
+    profile.orderVolume = profile.totalVolume;
+  }
+  if (profile.usedVolume == null && profile.orderUsage != null) {
+    profile.usedVolume = profile.orderUsage;
+  }
+  if (profile.remainingVolume == null && profile.orderVolume != null && profile.usedVolume != null) {
+    profile.remainingVolume = Math.max(0, profile.orderVolume - profile.usedVolume);
+  }
+
   return profile;
 }
 

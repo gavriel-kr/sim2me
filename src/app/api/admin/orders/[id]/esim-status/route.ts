@@ -44,11 +44,16 @@ export async function GET(
     }
 
     return NextResponse.json({
-      status: profile.status ?? null,
+      status: profile.esimStatus ?? profile.status ?? null,
+      smdpStatus: profile.smdpStatus ?? null,
+      esimStatus: profile.esimStatus ?? null,
       usedVolume: profile.usedVolume ?? null,
       remainingVolume: profile.remainingVolume ?? null,
       orderVolume: profile.orderVolume ?? null,
       expiredTime: profile.expiredTime ?? null,
+      activateTime: profile.activateTime ?? null,
+      totalDuration: profile.totalDuration ?? null,
+      durationUnit: profile.durationUnit ?? null,
       iccid: profile.iccid ?? null,
       qrCodeUrl: profile.qrCodeUrl ?? null,
       smdpAddress: profile.smdpAddress ?? null,

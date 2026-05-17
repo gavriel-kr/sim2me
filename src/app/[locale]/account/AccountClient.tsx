@@ -74,14 +74,48 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
+type UsageData = {
+  esimStatus: string | null;
+  smdpStatus: string | null;
+  orderVolume: number | null;
+  usedVolume: number | null;
+  remainingVolume: number | null;
+  expiredTime: string | null;
+  activateTime: string | null;
+  totalDuration: number | null;
+  durationUnit: string | null;
+};
+
+const ESIM_STATUS: Record<string, { label: string; cls: string }> = {
+  GOT_RESOURCE: { label: 'Available', cls: 'bg-blue-100 text-blue-700' },
+  ONBOARD:      { label: 'Installed', cls: 'bg-green-100 text-green-700' },
+  CANCEL:       { label: 'Cancelled', cls: 'bg-red-100 text-red-700' },
+  ENABLE:       { label: 'Active',    cls: 'bg-emerald-100 text-emerald-700' },
+  IN_USE:       { label: 'In Use',    cls: 'bg-emerald-100 text-emerald-700' },
+  DELETED:      { label: 'Deleted',   cls: 'bg-gray-100 text-gray-600' },
+  DISABLED:     { label: 'Disabled',  cls: 'bg-gray-100 text-gray-600' },
+};
+
+function fmtBytes(bytes: number | null | undefined): string {
+  if (bytes == null) return '—';
+  const mb = bytes / (1024 * 1024);
+  return mb >= 1024 ? `${(mb / 1024).toFixed(1)} GB` : `${Math.round(mb)} MB`;
+}
+
+function timeLeft(expiredTime: string | null, activateTime: string | null, totalDuration: number | null, durationUnit: string | null): string {
+  if (!activateTime) {
+    if (totalDuration && durationUnit) return `${totalDuration} ${durationUnit.toLowerCase()}s validity`;
+    return '—';
+  }
+  if (!expiredTime) return '—';
+  const msLeft = new Date(expiredTime).getTime() - Date.now();
+  if (msLeft <= 0) return 'Expired';
+  const daysLeft = Math.ceil(msLeft / (1000 * 60 * 60 * 24));
+  return daysLeft === 1 ? '1 day left' : `${daysLeft} days left`;
+}
+
 function UsageBar({ orderId, iccid }: { orderId: string; iccid: string }) {
-  const [usage, setUsage] = useState<{
-    orderVolume: number | null;
-    usedVolume: number | null;
-    remainingVolume: number | null;
-    expiredTime: number | null;
-    status: string;
-  } | null | 'loading' | 'unavailable'>('loading');
+  const [usage, setUsage] = useState<UsageData | null | 'loading' | 'unavailable'>('loading');
 
   useEffect(() => {
     fetch(`/api/account/esims/usage?iccid=${encodeURIComponent(iccid)}&orderId=${encodeURIComponent(orderId)}`)
@@ -93,43 +127,59 @@ function UsageBar({ orderId, iccid }: { orderId: string; iccid: string }) {
       .catch(() => setUsage('unavailable'));
   }, [iccid, orderId]);
 
-  if (usage === 'loading') return <p className="text-xs text-muted-foreground animate-pulse">Loading usage data…</p>;
+  if (usage === 'loading') return <p className="text-xs text-muted-foreground animate-pulse">Loading status…</p>;
   if (usage === 'unavailable' || !usage) return null;
 
   const total = usage.orderVolume;
   const used = usage.usedVolume;
-  const remaining = usage.remainingVolume;
-
-  if (!total || total <= 0) return null;
-
-  const usedPct = Math.min(100, Math.round(((used ?? 0) / total) * 100));
-  const fmt = (bytes: number) => {
-    const mb = bytes / (1024 * 1024);
-    return mb >= 1024 ? `${(mb / 1024).toFixed(1)} GB` : `${Math.round(mb)} MB`;
-  };
+  const usedPct = total && total > 0 ? Math.min(100, Math.round(((used ?? 0) / total) * 100)) : null;
+  const statusKey = (usage.esimStatus || '').toUpperCase();
+  const statusInfo = ESIM_STATUS[statusKey];
 
   return (
-    <div className="space-y-1.5">
-      <div className="flex items-center justify-between text-xs">
-        <span className="font-medium text-muted-foreground">Data usage</span>
-        <span className="font-mono">
-          {used != null ? fmt(used) : '—'} / {fmt(total)}
+    <div className="space-y-2">
+      {/* Status + time row */}
+      <div className="flex flex-wrap items-center gap-2">
+        {statusInfo && (
+          <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${statusInfo.cls}`}>
+            {statusInfo.label}
+          </span>
+        )}
+        <span className="text-xs text-muted-foreground">
+          {timeLeft(usage.expiredTime, usage.activateTime, usage.totalDuration, usage.durationUnit)}
         </span>
+        {usage.activateTime && (
+          <span className="text-xs text-muted-foreground">
+            · Activated {new Date(usage.activateTime).toLocaleDateString('en-GB')}
+          </span>
+        )}
+        {usage.expiredTime && usage.activateTime && (
+          <span className="text-xs text-muted-foreground">
+            · Expires {new Date(usage.expiredTime).toLocaleDateString('en-GB')}
+          </span>
+        )}
       </div>
-      <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
-        <div
-          className={`h-2 rounded-full transition-all ${usedPct > 80 ? 'bg-red-500' : usedPct > 50 ? 'bg-amber-500' : 'bg-emerald-500'}`}
-          style={{ width: `${usedPct}%` }}
-        />
-      </div>
-      <div className="flex items-center justify-between text-xs text-muted-foreground">
-        <span>{usedPct}% used</span>
-        {remaining != null && <span>{fmt(remaining)} remaining</span>}
-      </div>
-      {usage.expiredTime && (
-        <p className="text-xs text-muted-foreground">
-          Expires: {new Date(usage.expiredTime).toLocaleDateString()}
-        </p>
+
+      {/* Data bar */}
+      {total && total > 0 && usedPct !== null && (
+        <div className="space-y-1">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-muted-foreground">Data</span>
+            <span className="font-mono text-muted-foreground">
+              {fmtBytes(used)} used / {fmtBytes(total)}
+            </span>
+          </div>
+          <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
+            <div
+              className={`h-2 rounded-full transition-all ${usedPct > 80 ? 'bg-red-500' : usedPct > 50 ? 'bg-amber-500' : 'bg-emerald-500'}`}
+              style={{ width: `${usedPct}%` }}
+            />
+          </div>
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>{usedPct}% used</span>
+            <span>{fmtBytes(usage.remainingVolume)} remaining</span>
+          </div>
+        </div>
       )}
     </div>
   );

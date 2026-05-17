@@ -44,11 +44,15 @@ export async function GET(request: Request) {
 
   return NextResponse.json({
     usage: {
-      status: profile.status,
+      esimStatus: profile.esimStatus ?? profile.status ?? null,
+      smdpStatus: profile.smdpStatus ?? null,
       orderVolume: profile.orderVolume ?? null,
       usedVolume: profile.usedVolume ?? null,
       remainingVolume: profile.remainingVolume ?? null,
       expiredTime: profile.expiredTime ?? null,
+      activateTime: profile.activateTime ?? null,
+      totalDuration: profile.totalDuration ?? null,
+      durationUnit: profile.durationUnit ?? null,
     },
   });
 }
