@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSessionForRequest, isCustomerSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
-import { getEsimUsage } from '@/lib/esimaccess';
+import { getEsimProfile, getEsimUsage } from '@/lib/esimaccess';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,25 +29,29 @@ export async function GET(request: Request) {
       id: orderId,
       OR: [{ customerId: customer.id }, { customerEmail: customer.email }],
     },
-    select: { id: true, iccid: true },
+    select: { id: true, iccid: true, esimOrderId: true },
   });
 
   if (!order || order.iccid !== iccid) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
+  // Prefer esimOrderId query (proven reliable); fall back to iccid query
   let profile = null;
-  let fetchError: string | null = null;
-  try {
+  if (order.esimOrderId) {
+    try {
+      const result = await getEsimProfile(order.esimOrderId);
+      profile = result?.esimList?.[0] ?? null;
+    } catch {
+      profile = null;
+    }
+  }
+  if (!profile && iccid) {
     profile = await getEsimUsage(iccid);
-  } catch (e) {
-    fetchError = e instanceof Error ? e.message : String(e);
-    console.error('[usage] getEsimUsage threw:', fetchError);
   }
 
   if (!profile) {
-    console.warn('[usage] no profile for iccid:', iccid, 'error:', fetchError);
-    return NextResponse.json({ usage: null, debug: { iccid, fetchError } });
+    return NextResponse.json({ usage: null });
   }
 
   return NextResponse.json({
