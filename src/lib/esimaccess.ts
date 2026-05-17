@@ -72,6 +72,9 @@ export interface EsimOrderResult {
 
 export interface EsimProfile {
   iccid: string;
+  // eSIMaccess returns the full LPA string in the "ac" field: "LPA:1$smdpAddress$activationCode"
+  // smdpAddress and activationCode are parsed from it by parseAc() below.
+  ac?: string;
   smdpAddress: string;
   activationCode: string;
   qrCodeUrl: string;
@@ -81,6 +84,24 @@ export interface EsimProfile {
   usedVolume?: number;     // bytes used
   remainingVolume?: number; // bytes remaining
   expiredTime?: number;    // unix timestamp ms
+}
+
+/**
+ * eSIMaccess returns credentials as a single "ac" field: "LPA:1$smdpAddress$activationCode"
+ * This helper parses it and fills smdpAddress / activationCode if they are empty.
+ */
+function parseAc(profile: EsimProfile): EsimProfile {
+  if (profile.smdpAddress && profile.activationCode) return profile;
+  const parts = (profile.ac || '').split('$');
+  // Format: LPA:1$<smdpAddress>$<activationCode>
+  if (parts.length >= 3) {
+    return {
+      ...profile,
+      smdpAddress: profile.smdpAddress || parts[1],
+      activationCode: profile.activationCode || parts[2],
+    };
+  }
+  return profile;
 }
 
 // ─── API Methods ─────────────────────────────────────────────
@@ -128,10 +149,11 @@ export async function purchasePackage(packageCode: string, quantity: number = 1)
 
 /** Get eSIM profile (QR code, ICCID, etc.) after purchase */
 export async function getEsimProfile(orderNo: string): Promise<{ esimList: EsimProfile[] }> {
-  return apiCall<{ esimList: EsimProfile[] }>('/open/esim/query', {
+  const result = await apiCall<{ esimList: EsimProfile[] }>('/open/esim/query', {
     orderNo,
     pager: { pageNum: 1, pageSize: 10 },
   });
+  return { ...result, esimList: (result.esimList ?? []).map(parseAc) };
 }
 
 /**
@@ -173,7 +195,8 @@ export async function getEsimUsage(iccid: string): Promise<EsimProfile | null> {
       iccid,
       pager: { pageNum: 1, pageSize: 1 },
     });
-    return result?.esimList?.[0] ?? null;
+    const profile = result?.esimList?.[0] ?? null;
+    return profile ? parseAc(profile) : null;
   } catch {
     return null;
   }
