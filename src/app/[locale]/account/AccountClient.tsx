@@ -102,13 +102,13 @@ function fmtBytes(bytes: number | null | undefined): string {
   return mb >= 1024 ? `${(mb / 1024).toFixed(1)} GB` : `${Math.round(mb)} MB`;
 }
 
-function timeLeft(expiredTime: string | null, activateTime: string | null, totalDuration: number | null, durationUnit: string | null): string {
+function timeLeft(expiredTime: string | null, activateTime: string | null, totalDuration: number | null, durationUnit: string | null, now: number): string {
   if (!activateTime) {
     if (totalDuration && durationUnit) return `${totalDuration} ${durationUnit.toLowerCase()}s validity`;
     return '—';
   }
   if (!expiredTime) return '—';
-  const msLeft = new Date(expiredTime).getTime() - Date.now();
+  const msLeft = new Date(expiredTime).getTime() - now;
   if (msLeft <= 0) return 'Expired';
   const daysLeft = Math.ceil(msLeft / (1000 * 60 * 60 * 24));
   return daysLeft === 1 ? '1 day left' : `${daysLeft} days left`;
@@ -116,8 +116,10 @@ function timeLeft(expiredTime: string | null, activateTime: string | null, total
 
 function UsageBar({ orderId, iccid }: { orderId: string; iccid: string }) {
   const [usage, setUsage] = useState<UsageData | null | 'loading' | 'unavailable'>('loading');
+  const [now, setNow] = useState(0);
 
   useEffect(() => {
+    setNow(Date.now());
     fetch(`/api/account/esims/usage?iccid=${encodeURIComponent(iccid)}&orderId=${encodeURIComponent(orderId)}`)
       .then((r) => r.ok ? r.json() : null)
       .then((data) => {
@@ -146,7 +148,7 @@ function UsageBar({ orderId, iccid }: { orderId: string; iccid: string }) {
           </span>
         )}
         <span className="text-xs text-muted-foreground">
-          {timeLeft(usage.expiredTime, usage.activateTime, usage.totalDuration, usage.durationUnit)}
+          {timeLeft(usage.expiredTime, usage.activateTime, usage.totalDuration, usage.durationUnit, now)}
         </span>
         {usage.activateTime && (
           <span className="text-xs text-muted-foreground">
@@ -646,6 +648,9 @@ export function AccountClient() {
                               )}
 
                               {/* COMPLETED: QR + install details */}
+                              {isCompleted && order.iccid && (
+                                <UsageBar orderId={order.id} iccid={order.iccid} />
+                              )}
                               {isCompleted && (
                                 <div className="flex flex-col sm:flex-row gap-4">
                                   {order.qrCodeUrl ? (
