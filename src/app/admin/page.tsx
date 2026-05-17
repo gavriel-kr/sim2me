@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { BackfillBanner } from './BackfillBanner';
+import { EsimCredsBanner } from './EsimCredsBanner';
 import { DashboardCubicks } from './DashboardCubicks';
 import { paddleFeeAmount } from '@/lib/profit';
 import { getBalance } from '@/lib/esimaccess';
@@ -53,10 +54,10 @@ export default async function AdminDashboard() {
   const esimAdditionalCost = esimAdditionalCostSetting ? parseFloat(esimAdditionalCostSetting.value) || 0 : 0;
   const esimCost = Number(allEsimCostAgg._sum.supplierCost || 0) + esimAdditionalCost;
   const profit = revenue - esimCost - feeCost;
-  const [completedCount, missingCostCount, balanceData] = await Promise.all([
+  const [completedCount, missingCostCount, missingCredsCount, balanceData] = await Promise.all([
     prisma.order.count({ where: { status: 'COMPLETED', paddleTransactionId: { not: null } } }),
-    // Orders where eSIMaccess was charged but supplierCost was never recorded
     prisma.order.count({ where: { esimOrderId: { not: null }, supplierCost: null } }),
+    prisma.order.count({ where: { status: 'COMPLETED', iccid: { not: null }, OR: [{ smdpAddress: null }, { activationCode: null }] } }),
     getBalance().catch(() => null),
   ]);
 
@@ -79,6 +80,7 @@ export default async function AdminDashboard() {
       <p className="mt-1 text-sm text-gray-500">Welcome back, {session.user?.name}</p>
 
       <BackfillBanner missingCount={missingCostCount} />
+      <EsimCredsBanner missingCount={missingCredsCount} />
 
       <DashboardCubicks stats={stats} />
 
