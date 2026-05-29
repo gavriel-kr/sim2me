@@ -22,6 +22,9 @@ export async function verifyTurnstile(token: string, ip?: string): Promise<boole
   // Empty token is always invalid
   if (!token || token.trim() === '') return false;
 
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5000);
+
   try {
     const body: Record<string, string> = {
       secret,
@@ -33,14 +36,23 @@ export async function verifyTurnstile(token: string, ip?: string): Promise<boole
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
+      signal: controller.signal,
     });
+    clearTimeout(timeout);
 
     if (!res.ok) return false;
 
     const data = (await res.json()) as { success: boolean; 'error-codes'?: string[] };
     return data.success === true;
-  } catch {
-    // Network error — fail closed
+  } catch (err) {
+    clearTimeout(timeout);
+    const isTimeout = err instanceof Error && err.name === 'AbortError';
+    if (isTimeout) {
+      // Cloudflare siteverify unreachable — fail open to avoid blocking purchases
+      console.warn('[Turnstile] verification timeout — allowing request through');
+      return true;
+    }
+    // Other network error — fail closed
     return false;
   }
 }
