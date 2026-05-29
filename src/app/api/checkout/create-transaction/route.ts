@@ -169,24 +169,27 @@ export async function POST(request: Request) {
         console.error('[Paddle create transaction] fetch error', fetchErr);
         return NextResponse.json(
           { error: isTimeout ? 'Payment provider timeout. Please try again.' : 'Could not reach payment provider.' },
-          { status: 502 }
+          { status: 400 }
         );
       }
       clearTimeout(paddleTimeout);
 
       if (!res.ok) {
         const err = await res.text();
+        // #region agent log
+        _dbgLog('paddle-error-response', { hypothesisId: 'H-D', paddleStatus: res.status, body: err.slice(0, 500) });
+        // #endregion
         console.error('[Paddle create transaction]', res.status, err);
         return NextResponse.json(
-          { error: 'Payment provider error', details: err.slice(0, 400) },
-          { status: 502 }
+          { error: `Payment provider error (${res.status}): ${err.slice(0, 200)}` },
+          { status: 400 }
         );
       }
 
       const data = await res.json();
       const transactionId = data?.data?.id;
       if (!transactionId) {
-        return NextResponse.json({ error: 'Invalid response from payment provider' }, { status: 502 });
+        return NextResponse.json({ error: 'Invalid response from payment provider' }, { status: 400 });
       }
 
       // #region agent log
