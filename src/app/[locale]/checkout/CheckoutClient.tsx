@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { useForm } from 'react-hook-form';
@@ -15,8 +15,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { createSharedPathnamesNavigation } from 'next-intl/navigation';
 import { routing } from '@/i18n/routing';
 import { usePaddle } from '@/components/paddle/PaddleScript';
-// Turnstile temporarily disabled for diagnostics — TURNSTILE_RESTORE to re-enable
-// import { TurnstileWidget, type TurnstileWidgetRef } from '@/components/ui/TurnstileWidget';
+import { TurnstileWidget, type TurnstileWidgetRef } from '@/components/ui/TurnstileWidget';
 
 const { Link: IntlLink } = createSharedPathnamesNavigation(routing);
 
@@ -39,7 +38,8 @@ export function CheckoutClient() {
   const [step, setStep] = useState<Step>('cart');
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
-  // Turnstile disabled for diagnostics — TURNSTILE_RESTORE
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const turnstileRef = useRef<TurnstileWidgetRef>(null);
 
   const { register, handleSubmit, formState: { errors } } = useForm<TravelerInfoForm>({
     resolver: zodResolver(travelerInfoSchema),
@@ -80,7 +80,7 @@ export function CheckoutClient() {
           })),
           customerEmail: travelerData.email,
           customerName: [travelerData.firstName, travelerData.lastName].filter(Boolean).join(' ').trim() || undefined,
-          turnstileToken: 'DIAG_BYPASS',
+          turnstileToken: turnstileToken ?? '',
         }),
       });
 
@@ -135,6 +135,7 @@ export function CheckoutClient() {
       setPaymentError(t('paymentError') || 'Something went wrong. Please try again.');
     } finally {
       setPaymentLoading(false);
+      turnstileRef.current?.reset();
     }
   };
 
@@ -270,13 +271,19 @@ export function CheckoutClient() {
                     <strong>Minimum purchase is $1.20.</strong> This plan (${total.toFixed(2)}) cannot be purchased individually.
                   </div>
                 )}
+                <TurnstileWidget
+                  ref={turnstileRef}
+                  onSuccess={setTurnstileToken}
+                  onError={() => setTurnstileToken(null)}
+                  onExpire={() => setTurnstileToken(null)}
+                />
                 {paymentError && (
                   <p className="mb-4 text-sm text-destructive" role="alert">{paymentError}</p>
                 )}
                 <Button
                   className="mt-4 w-full"
                   onClick={onPayWithPaddle}
-                  disabled={paymentLoading || !paddleReady || belowMinimum}
+                  disabled={paymentLoading || !paddleReady || belowMinimum || !turnstileToken}
                 >
                   {paymentLoading ? (t('processing') || 'Processing…') : (t('payNow') || 'Pay now')}
                 </Button>

@@ -12,7 +12,7 @@ import { getSessionForRequest, isCustomerSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { getDbCachedPackages } from '@/lib/packagesCache';
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
-// import { checkBotId } from 'botid/server'; // BotID disabled
+import { verifyTurnstile } from '@/lib/turnstile';
 import { z } from 'zod';
 
 const bodySchema = z.object({
@@ -33,22 +33,10 @@ const PADDLE_API = 'https://api.paddle.com';
 export const maxDuration = 30;
 
 export async function POST(request: Request) {
-  // #region agent log
-  const _t0 = Date.now();
-  const _dbgLog = (msg: string, data?: Record<string, unknown>) => {
-    const ms = Date.now() - _t0;
-    console.log(`[DBG-667172] +${ms}ms ${msg}`, data ? JSON.stringify(data) : '');
-    fetch('http://127.0.0.1:7930/ingest/c0f3d6c5-f7a1-48de-976d-653a33f6597b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'667172'},body:JSON.stringify({sessionId:'667172',location:'create-transaction/route.ts',message:msg,data:{ms,...(data||{})},timestamp:Date.now()})}).catch(()=>{});
-  };
-  _dbgLog('START', { hasApiKey: !!process.env.PADDLE_API_KEY });
-  // #endregion
   try {
     const ip = getClientIp(request);
 
     const body = await request.json();
-    // #region agent log
-    _dbgLog('body-parsed', { hypothesisId: 'H-E' });
-    // #endregion
     const parsed = bodySchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
@@ -57,17 +45,15 @@ export async function POST(request: Request) {
       );
     }
 
-    const { items, customerEmail, customerName, deviceType } = parsed.data;
+    const { items, customerEmail, customerName, deviceType, turnstileToken } = parsed.data;
     const apiKey = process.env.PADDLE_API_KEY?.trim();
     const item = items[0];
     const planId = item.planId;
 
-    // #region agent log
-    _dbgLog('before-parallel', { hypothesisId: 'H-A H-B H-C', planId });
-    // #endregion
     // Run all independent async operations in parallel to minimise latency.
-    const [allowed, session, override, cached] = await Promise.all([
+    const [allowed, turnstileOk, session, override, cached] = await Promise.all([
       checkRateLimit(ip, 'checkout', 10, 60),
+      verifyTurnstile(turnstileToken ?? '', ip),
       getSessionForRequest(request),
       apiKey
         ? prisma.packageOverride.findFirst({ where: { packageCode: planId } })
@@ -76,11 +62,9 @@ export async function POST(request: Request) {
         ? getDbCachedPackages()
         : Promise.resolve(null),
     ]);
-    // #region agent log
-    _dbgLog('after-parallel', { hypothesisId: 'H-A H-B H-C', allowed, hasCached: !!cached, cacheLen: (cached as {packageList?: unknown[]})?.packageList?.length ?? 0 });
-    // #endregion
 
     if (!allowed) return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 });
+    if (!turnstileOk) return NextResponse.json({ error: 'Security check failed. Please refresh and try again.' }, { status: 400 });
 
     const userId = isCustomerSession(session) ? session.user.id : null;
 
@@ -124,13 +108,9 @@ export async function POST(request: Request) {
       const amountStr = String(Math.max(70, amountCents));
       const name = item.planName.slice(0, 250) || 'eSIM';
 
-
       const paddleController = new AbortController();
       const paddleTimeout = setTimeout(() => paddleController.abort(), 20000);
 
-      // #region agent log
-      _dbgLog('before-paddle', { hypothesisId: 'H-D', amountStr });
-      // #endregion
       let res: Response;
       try {
         res = await fetch(`${PADDLE_API}/transactions`, {
@@ -163,9 +143,6 @@ export async function POST(request: Request) {
       } catch (fetchErr) {
         clearTimeout(paddleTimeout);
         const isTimeout = fetchErr instanceof Error && fetchErr.name === 'AbortError';
-        // #region agent log
-        _dbgLog('paddle-fetch-error', { hypothesisId: 'H-D', isTimeout, err: (fetchErr as Error).message });
-        // #endregion
         console.error('[Paddle create transaction] fetch error', fetchErr);
         return NextResponse.json(
           { error: isTimeout ? 'Payment provider timeout. Please try again.' : 'Could not reach payment provider.' },
@@ -176,18 +153,12 @@ export async function POST(request: Request) {
 
       if (!res.ok) {
         const err = await res.text();
-        // #region agent log
-        _dbgLog('paddle-error-response', { hypothesisId: 'H-D', paddleStatus: res.status, body: err.slice(0, 500) });
-        // #endregion
         console.error('[Paddle create transaction]', res.status, err);
-        let paddleMsg = 'Payment provider error';
+        let paddleMsg = 'Payment provider error. Please try again.';
         try {
           const paddleJson = JSON.parse(err);
           paddleMsg = paddleJson?.error?.detail || paddleJson?.error?.code || paddleMsg;
         } catch { /* not json */ }
-        // #region agent log
-        _dbgLog('paddle-error-parsed', { hypothesisId: 'H-D', paddleStatus: res.status, paddleMsg });
-        // #endregion
         return NextResponse.json(
           { error: paddleMsg, paddleStatus: res.status },
           { status: 400 }
@@ -200,9 +171,6 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Invalid response from payment provider' }, { status: 400 });
       }
 
-      // #region agent log
-      _dbgLog('SUCCESS', { hypothesisId: 'none', transactionId });
-      // #endregion
       return NextResponse.json({ transactionId, successUrl, mode: 'transaction' });
     }
 
@@ -235,9 +203,6 @@ export async function POST(request: Request) {
       mode: 'items',
     });
   } catch (e) {
-    // #region agent log
-    fetch('http://127.0.0.1:7930/ingest/c0f3d6c5-f7a1-48de-976d-653a33f6597b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'667172'},body:JSON.stringify({sessionId:'667172',location:'create-transaction/route.ts:catch',message:'UNHANDLED-ERROR',data:{err:(e as Error).message},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
     console.error('[Checkout create-transaction]', e);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
