@@ -83,11 +83,18 @@ export function CheckoutClient() {
           turnstileToken: turnstileToken ?? '',
         }),
       });
-      const data = await res.json();
+
+      let data: Record<string, unknown> = {};
+      try {
+        data = await res.json();
+      } catch {
+        // non-JSON body (e.g. Vercel infrastructure error)
+      }
 
       if (!res.ok) {
         const detail = data.details ? ` (${data.details})` : '';
-        setPaymentError((data.error || 'Checkout unavailable') + detail);
+        const msg = typeof data.error === 'string' ? data.error : `Error ${res.status}`;
+        setPaymentError(msg + detail);
         return;
       }
       if (!paddleReady || !openCheckout) {
