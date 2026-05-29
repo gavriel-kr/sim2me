@@ -273,7 +273,7 @@ export function CheckoutClient() {
                 )}
                 <TurnstileWidget
                   ref={turnstileRef}
-                  onSuccess={setTurnstileToken}
+                  onVerify={setTurnstileToken}
                   onError={() => setTurnstileToken(null)}
                   onExpire={() => setTurnstileToken(null)}
                 />
