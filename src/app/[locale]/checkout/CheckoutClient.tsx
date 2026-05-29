@@ -84,7 +84,16 @@ export function CheckoutClient() {
         }),
       });
 
-      let data: Record<string, unknown> = {};
+      type CheckoutResponse = {
+        error?: string;
+        details?: string;
+        mode?: string;
+        transactionId?: string;
+        items?: Array<{ priceId: string; quantity: number }>;
+        customData?: Record<string, string>;
+        successUrl?: string;
+      };
+      let data: CheckoutResponse = {};
       try {
         data = await res.json();
       } catch {
@@ -93,7 +102,7 @@ export function CheckoutClient() {
 
       if (!res.ok) {
         const detail = data.details ? ` (${data.details})` : '';
-        const msg = typeof data.error === 'string' ? data.error : `Error ${res.status}`;
+        const msg = data.error || `Error ${res.status}`;
         setPaymentError(msg + detail);
         return;
       }
