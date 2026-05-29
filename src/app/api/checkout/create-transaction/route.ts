@@ -12,7 +12,6 @@ import { getSessionForRequest, isCustomerSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { getDbCachedPackages } from '@/lib/packagesCache';
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
-import { verifyTurnstile } from '@/lib/turnstile';
 // import { checkBotId } from 'botid/server'; // BotID disabled
 import { z } from 'zod';
 
@@ -36,8 +35,6 @@ export const maxDuration = 30;
 export async function POST(request: Request) {
   try {
     const ip = getClientIp(request);
-    const allowed = await checkRateLimit(ip, 'checkout', 10, 60);
-    if (!allowed) return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 });
 
     const body = await request.json();
     const parsed = bodySchema.safeParse(body);
@@ -48,14 +45,14 @@ export async function POST(request: Request) {
       );
     }
 
-    const { items, customerEmail, customerName, deviceType, turnstileToken } = parsed.data;
+    const { items, customerEmail, customerName, deviceType } = parsed.data;
     const apiKey = process.env.PADDLE_API_KEY?.trim();
     const item = items[0];
     const planId = item.planId;
 
     // Run all independent async operations in parallel to minimise latency.
-    // Turnstile verification temporarily disabled for diagnostics — TURNSTILE_RESTORE to re-enable
-    const [session, override, cached] = await Promise.all([
+    const [allowed, session, override, cached] = await Promise.all([
+      checkRateLimit(ip, 'checkout', 10, 60),
       getSessionForRequest(request),
       apiKey
         ? prisma.packageOverride.findFirst({ where: { packageCode: planId } })
@@ -64,6 +61,8 @@ export async function POST(request: Request) {
         ? getDbCachedPackages()
         : Promise.resolve(null),
     ]);
+
+    if (!allowed) return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 });
 
     const userId = isCustomerSession(session) ? session.user.id : null;
 
