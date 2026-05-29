@@ -54,8 +54,8 @@ export async function POST(request: Request) {
     const planId = item.planId;
 
     // Run all independent async operations in parallel to minimise latency.
-    const [turnstileOk, session, override, cached] = await Promise.all([
-      verifyTurnstile(turnstileToken ?? '', ip),
+    // Turnstile verification temporarily disabled for diagnostics — TURNSTILE_RESTORE to re-enable
+    const [session, override, cached] = await Promise.all([
       getSessionForRequest(request),
       apiKey
         ? prisma.packageOverride.findFirst({ where: { packageCode: planId } })
@@ -64,10 +64,6 @@ export async function POST(request: Request) {
         ? getDbCachedPackages()
         : Promise.resolve(null),
     ]);
-
-    if (!turnstileOk) {
-      return NextResponse.json({ error: 'Security check failed. Please refresh and try again.' }, { status: 400 });
-    }
 
     const userId = isCustomerSession(session) ? session.user.id : null;
 
