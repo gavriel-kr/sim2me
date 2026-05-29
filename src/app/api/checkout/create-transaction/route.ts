@@ -31,6 +31,8 @@ const bodySchema = z.object({
 
 const PADDLE_API = 'https://api.paddle.com';
 
+export const maxDuration = 30;
+
 export async function POST(request: Request) {
   try {
     const ip = getClientIp(request);
@@ -109,38 +111,54 @@ export async function POST(request: Request) {
       const name = item.planName.slice(0, 250) || 'eSIM';
 
 
-      const res = await fetch(`${PADDLE_API}/transactions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          items: [
-            {
-              quantity: item.quantity,
-              price: {
-                description: name,
-                name,
-                unit_price: { amount: amountStr, currency_code: 'USD' },
-                product: {
-                  name,
-                  tax_category: 'standard',
+      const paddleController = new AbortController();
+      const paddleTimeout = setTimeout(() => paddleController.abort(), 20000);
+
+      let res: Response;
+      try {
+        res = await fetch(`${PADDLE_API}/transactions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            items: [
+              {
+                quantity: item.quantity,
+                price: {
                   description: name,
+                  name,
+                  unit_price: { amount: amountStr, currency_code: 'USD' },
+                  product: {
+                    name,
+                    tax_category: 'standard',
+                    description: name,
+                  },
                 },
               },
-            },
-          ],
-          currency_code: 'USD',
-          custom_data: customData,
-        }),
-      });
+            ],
+            currency_code: 'USD',
+            custom_data: customData,
+          }),
+          signal: paddleController.signal,
+        });
+      } catch (fetchErr) {
+        clearTimeout(paddleTimeout);
+        const isTimeout = fetchErr instanceof Error && fetchErr.name === 'AbortError';
+        console.error('[Paddle create transaction] fetch error', fetchErr);
+        return NextResponse.json(
+          { error: isTimeout ? 'Payment provider timeout. Please try again.' : 'Could not reach payment provider.' },
+          { status: 502 }
+        );
+      }
+      clearTimeout(paddleTimeout);
 
       if (!res.ok) {
         const err = await res.text();
         console.error('[Paddle create transaction]', res.status, err);
         return NextResponse.json(
-          { error: 'Payment provider error', details: err.slice(0, 200) },
+          { error: 'Payment provider error', details: err.slice(0, 400) },
           { status: 502 }
         );
       }
