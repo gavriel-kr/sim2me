@@ -180,8 +180,16 @@ export async function POST(request: Request) {
         _dbgLog('paddle-error-response', { hypothesisId: 'H-D', paddleStatus: res.status, body: err.slice(0, 500) });
         // #endregion
         console.error('[Paddle create transaction]', res.status, err);
+        let paddleMsg = 'Payment provider error';
+        try {
+          const paddleJson = JSON.parse(err);
+          paddleMsg = paddleJson?.error?.detail || paddleJson?.error?.code || paddleMsg;
+        } catch { /* not json */ }
+        // #region agent log
+        _dbgLog('paddle-error-parsed', { hypothesisId: 'H-D', paddleStatus: res.status, paddleMsg });
+        // #endregion
         return NextResponse.json(
-          { error: `Payment provider error (${res.status}): ${err.slice(0, 200)}` },
+          { error: paddleMsg, paddleStatus: res.status },
           { status: 400 }
         );
       }
