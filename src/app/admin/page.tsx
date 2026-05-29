@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { BackfillBanner } from './BackfillBanner';
 import { EsimCredsBanner } from './EsimCredsBanner';
+import { PaddleKeyBanner } from './PaddleKeyBanner';
 import { DashboardCubicks } from './DashboardCubicks';
 import { paddleFeeAmount } from '@/lib/profit';
 import { getBalance } from '@/lib/esimaccess';
@@ -79,6 +80,7 @@ export default async function AdminDashboard() {
       <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
       <p className="mt-1 text-sm text-gray-500">Welcome back, {session.user?.name}</p>
 
+      <PaddleKeyBanner expiresAt={process.env.PADDLE_KEY_EXPIRES ?? null} />
       <BackfillBanner missingCount={missingCostCount} />
       <EsimCredsBanner missingCount={missingCredsCount} />
 
