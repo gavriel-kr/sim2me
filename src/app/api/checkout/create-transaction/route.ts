@@ -49,21 +49,33 @@ export async function POST(request: Request) {
     }
 
     const { items, customerEmail, customerName, deviceType, turnstileToken } = parsed.data;
+    const apiKey = process.env.PADDLE_API_KEY?.trim();
+    const item = items[0];
+    const planId = item.planId;
 
-    // Bot protection: verify Turnstile token before any business logic
-    const turnstileOk = await verifyTurnstile(turnstileToken ?? '', ip);
+    // Run all independent async operations in parallel to minimise latency.
+    const [turnstileOk, session, override, cached] = await Promise.all([
+      verifyTurnstile(turnstileToken ?? '', ip),
+      getSessionForRequest(request),
+      apiKey
+        ? prisma.packageOverride.findFirst({ where: { packageCode: planId } })
+        : Promise.resolve(null),
+      apiKey
+        ? getDbCachedPackages()
+        : Promise.resolve(null),
+    ]);
+
     if (!turnstileOk) {
       return NextResponse.json({ error: 'Security check failed. Please refresh and try again.' }, { status: 400 });
     }
 
-    const session = await getSessionForRequest(request);
     const userId = isCustomerSession(session) ? session.user.id : null;
 
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') || 'https://www.sim2me.net';
     const successUrl = `${baseUrl}/success`;
 
     const customData: Record<string, string> = {
-      planId: items[0].planId,
+      planId,
       customerEmail: customerEmail.trim().slice(0, 320),
       customerName: (customerName ?? '').trim().slice(0, 200),
       checkoutIp: ip,
@@ -71,17 +83,8 @@ export async function POST(request: Request) {
     if (deviceType) customData.deviceType = deviceType.trim().slice(0, 64);
     if (userId) customData.userId = userId;
 
-    const apiKey = process.env.PADDLE_API_KEY?.trim();
-
     if (apiKey) {
-      const item = items[0];
-      const planId = item.planId;
-
       // Resolve authoritative price server-side — never trust client-supplied unitPrice.
-      // 1. Check PackageOverride: reject if explicitly hidden, use customPrice if set.
-      const override = await prisma.packageOverride.findFirst({
-        where: { packageCode: planId },
-      });
       if (override?.visible === false) {
         return NextResponse.json(
           { error: 'Plan not available for checkout', planId },
@@ -93,9 +96,7 @@ export async function POST(request: Request) {
       if (override?.customPrice != null) {
         serverPrice = Number(override.customPrice);
       } else {
-        // 2. Fall back to eSIMaccess DB cache (retailPrice preferred, else wholesale price).
-        const cached = await getDbCachedPackages();
-        const pkg = cached?.packageList?.find((p) => p.packageCode === planId);
+        const pkg = cached?.packageList?.find((p: { packageCode: string; retailPrice?: number; price: number }) => p.packageCode === planId);
         if (!pkg) {
           return NextResponse.json(
             { error: 'Plan not available for checkout', planId },
@@ -179,19 +180,19 @@ export async function POST(request: Request) {
     const overrideMap = new Map<string, typeof overrides[number]>(overrides.map((o: typeof overrides[number]) => [o.packageCode, o]));
 
     const paddleItems: { priceId: string; quantity: number }[] = [];
-    for (const item of items) {
-      const override = overrideMap.get(item.planId);
-      const priceId = override?.paddlePriceId?.trim();
+    for (const cartItem of items) {
+      const itemOverride = overrideMap.get(cartItem.planId);
+      const priceId = itemOverride?.paddlePriceId?.trim();
       if (!priceId || !priceId.startsWith('pri_')) {
         return NextResponse.json(
           {
             error: 'Plan not available for checkout. Add PADDLE_API_KEY in .env to use dynamic pricing, or set Paddle Price ID in Admin → Packages for this plan.',
-            planId: item.planId,
+            planId: cartItem.planId,
           },
           { status: 400 }
         );
       }
-      paddleItems.push({ priceId, quantity: item.quantity });
+      paddleItems.push({ priceId, quantity: cartItem.quantity });
     }
 
     return NextResponse.json({
