@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { useForm } from 'react-hook-form';
@@ -15,7 +15,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { createSharedPathnamesNavigation } from 'next-intl/navigation';
 import { routing } from '@/i18n/routing';
 import { usePaddle } from '@/components/paddle/PaddleScript';
-import { TurnstileWidget } from '@/components/ui/TurnstileWidget';
+import { TurnstileWidget, type TurnstileWidgetRef } from '@/components/ui/TurnstileWidget';
 
 const { Link: IntlLink } = createSharedPathnamesNavigation(routing);
 
@@ -39,6 +39,7 @@ export function CheckoutClient() {
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const turnstileRef = useRef<TurnstileWidgetRef>(null);
 
   const { register, handleSubmit, formState: { errors } } = useForm<TravelerInfoForm>({
     resolver: zodResolver(travelerInfoSchema),
@@ -119,6 +120,7 @@ export function CheckoutClient() {
     } finally {
       setPaymentLoading(false);
       setTurnstileToken(null);
+      turnstileRef.current?.reset();
     }
   };
 
@@ -258,6 +260,7 @@ export function CheckoutClient() {
                   <p className="mb-4 text-sm text-destructive" role="alert">{paymentError}</p>
                 )}
                 <TurnstileWidget
+                  ref={turnstileRef}
                   onVerify={setTurnstileToken}
                   onExpire={() => setTurnstileToken(null)}
                   onError={() => setTurnstileToken(null)}
