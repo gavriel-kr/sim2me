@@ -8,20 +8,34 @@ import { X, SlidersHorizontal, ArrowUpDown, Zap, Wifi, Database, Clock, DollarSi
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { DataUsageCalculator } from '@/components/sections/DataUsageCalculator';
 
-/* ─── Filter preset keys (labels come from t()) ──────────────── */
-const DATA_PRESET_KEYS = ['filterAny', 'filter1GB', 'filter3GB', 'filter5GB', 'filter10GB', 'filter20GB'] as const;
-const DATA_PRESET_MB = [0, 1024, 3072, 5120, 10240, 20480];
+/* ─── Filter presets (pills) + continuous slider ranges ──────── */
+const DATA_MAX_GB = 20;
+const DATA_PILLS = [
+  { key: 'filterAny' as const, gb: 0 },
+  { key: 'filter1GB' as const, gb: 1 },
+  { key: 'filter3GB' as const, gb: 3 },
+  { key: 'filter5GB' as const, gb: 5 },
+  { key: 'filter10GB' as const, gb: 10 },
+  { key: 'filter20GB' as const, gb: 20 },
+];
 
-const DAYS_PRESET_KEYS = ['filterAny', 'filter7Days', 'filter14Days', 'filter30Days'] as const;
-const DAYS_PRESET_DAYS = [0, 7, 14, 30];
+const DAYS_MAX = 30;
+const DAYS_PILLS = [
+  { key: 'filterAny' as const, days: 0 },
+  { key: 'filter7Days' as const, days: 7 },
+  { key: 'filter14Days' as const, days: 14 },
+  { key: 'filter30Days' as const, days: 30 },
+];
 
-const PRICE_PRESET_KEYS = ['anyPrice', 'filterUnder10', 'filter10to25', 'filter25to50', 'filter50Plus'] as const;
-const PRICE_PRESET_CONFIG = [
-  { max: Infinity },
-  { max: 10 },
-  { min: 10, max: 25 },
-  { min: 25, max: 50 },
-  { min: 50, max: Infinity },
+/** Price slider: 0 = any, 1–50 = up to $N, 51 = $50+ (min $50) */
+const PRICE_SLIDER_MAX = 51;
+const PRICE_PLUS = 51;
+const PRICE_PILLS = [
+  { key: 'anyPrice' as const, value: 0 },
+  { key: 'filterUnder10' as const, value: 10 },
+  { key: 'filter10to25' as const, value: 25 },
+  { key: 'filter25to50' as const, value: 50 },
+  { key: 'filter50Plus' as const, value: PRICE_PLUS },
 ];
 
 const SORT_OPTIONS = [
@@ -82,7 +96,7 @@ function FilterSlider({ value, max, onChange, valueLabel, accent = 'emerald' }: 
         onChange={(e) => onChange(Number(e.target.value))}
         className={`flex-1 h-1.5 ${s.track} cursor-pointer`}
       />
-      <span className={`shrink-0 min-w-[54px] text-center text-xs font-semibold border rounded-md px-2 py-0.5 whitespace-nowrap ${s.badge}`}>
+      <span className={`shrink-0 min-w-[72px] text-center text-xs font-semibold border rounded-md px-2 py-0.5 whitespace-nowrap ${s.badge}`}>
         {valueLabel}
       </span>
     </div>
@@ -132,58 +146,60 @@ export function DestinationDetailClient({
   const t = useTranslations('destinations');
   const tc = useTranslations('calculator');
 
-  const [dataIdx, setDataIdx] = useState(0);
-  const [daysIdx, setDaysIdx] = useState(0);
-  const [priceIdx, setPriceIdx] = useState(0);
+  const [minDataGB, setMinDataGB] = useState(0);
+  const [minDays, setMinDays] = useState(0);
+  const [priceMax, setPriceMax] = useState(0);
   const [network, setNetwork] = useState<NetworkFilter>('all');
   const [sortBy, setSortBy] = useState<SortKey>('price_asc');
   const [calcNudgeOpen, setCalcNudgeOpen] = useState(false);
 
-  /** Map weekly GB estimate from calculator → DATA_PRESET_MB index */
-  const weeklyGbToDataIdx = (gb: number): number => {
-    if (gb < 1)  return 0;
-    if (gb < 3)  return 1;
-    if (gb < 5)  return 2;
-    if (gb < 10) return 3;
-    if (gb < 20) return 4;
-    return 5;
+  /** Map weekly GB estimate from calculator → continuous GB filter */
+  const weeklyGbToMinData = (gb: number): number => {
+    if (gb < 1) return 0;
+    return Math.min(DATA_MAX_GB, Math.ceil(gb));
   };
 
   const handleCalcFindPlan = useCallback((weeklyGB: number) => {
-    setDataIdx(weeklyGbToDataIdx(weeklyGB));
+    setMinDataGB(weeklyGbToMinData(weeklyGB));
     setCalcNudgeOpen(false);
   }, []);
 
   const clearAll = useCallback(() => {
-    setDataIdx(0);
-    setDaysIdx(0);
-    setPriceIdx(0);
+    setMinDataGB(0);
+    setMinDays(0);
+    setPriceMax(0);
     setNetwork('all');
     setSortBy('price_asc');
   }, []);
 
-  const hasActiveFilters = dataIdx !== 0 || daysIdx !== 0 || priceIdx !== 0 || network !== 'all';
+  const hasActiveFilters = minDataGB !== 0 || minDays !== 0 || priceMax !== 0 || network !== 'all';
+
+  const dataValueLabel = minDataGB === 0 ? t('filterAny') : t('filterGbPlus', { gb: minDataGB });
+  const daysValueLabel = minDays === 0 ? t('filterAny') : t('filterDaysPlus', { days: minDays });
+  const priceValueLabel =
+    priceMax === 0 ? t('anyPrice')
+    : priceMax === PRICE_PLUS ? t('filter50Plus')
+    : t('filterUpToPrice', { price: priceMax });
 
   const plans = useMemo(() => {
     let list = [...initialPlans];
 
-    // Data filter
-    const dataMinMB = DATA_PRESET_MB[dataIdx];
-    if (dataIdx !== 0 && dataMinMB > 0) {
+    // Data filter (min GB)
+    if (minDataGB > 0) {
+      const dataMinMB = minDataGB * 1024;
       list = list.filter((p) => p.dataAmount < 0 || p.dataAmount >= dataMinMB);
     }
 
-    // Days filter
-    const daysMin = DAYS_PRESET_DAYS[daysIdx];
-    if (daysIdx !== 0 && daysMin > 0) {
-      list = list.filter((p) => p.days >= daysMin);
+    // Days filter (min days)
+    if (minDays > 0) {
+      list = list.filter((p) => p.days >= minDays);
     }
 
-    // Price filter
-    const priceConfig = PRICE_PRESET_CONFIG[priceIdx];
-    if (priceIdx !== 0 && priceConfig) {
-      const min = priceConfig.min ?? 0;
-      list = list.filter((p) => p.price >= min && p.price <= priceConfig.max);
+    // Price filter: 1–50 = up to $N; 51 = $50+
+    if (priceMax === PRICE_PLUS) {
+      list = list.filter((p) => p.price >= 50);
+    } else if (priceMax > 0) {
+      list = list.filter((p) => p.price <= priceMax);
     }
 
     // Network filter
@@ -211,7 +227,7 @@ export function DestinationDetailClient({
     }
 
     return list;
-  }, [initialPlans, dataIdx, daysIdx, priceIdx, network, sortBy]);
+  }, [initialPlans, minDataGB, minDays, priceMax, network, sortBy]);
 
   const has5G = useMemo(() => initialPlans.some((p) => p.networkType === '5G'), [initialPlans]);
 
@@ -273,7 +289,7 @@ export function DestinationDetailClient({
             <span className="text-sm font-semibold text-gray-700">{t('filters')}</span>
             {hasActiveFilters && (
               <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-[10px] font-bold text-white">
-                {[dataIdx !== 0, daysIdx !== 0, priceIdx !== 0, network !== 'all'].filter(Boolean).length}
+                {[minDataGB !== 0, minDays !== 0, priceMax !== 0, network !== 'all'].filter(Boolean).length}
               </span>
             )}
           </div>
@@ -320,17 +336,17 @@ export function DestinationDetailClient({
             </Dialog>
           </div>
           <div className="flex flex-wrap gap-2">
-            {DATA_PRESET_KEYS.map((key, i) => (
-              <Pill key={key} active={dataIdx === i} onClick={() => setDataIdx(i)} accent="purple">
-                {t(key)}
+            {DATA_PILLS.map((pill) => (
+              <Pill key={pill.key} active={minDataGB === pill.gb} onClick={() => setMinDataGB(pill.gb)} accent="purple">
+                {t(pill.key)}
               </Pill>
             ))}
           </div>
           <FilterSlider
-            value={dataIdx}
-            max={DATA_PRESET_KEYS.length - 1}
-            onChange={setDataIdx}
-            valueLabel={t(DATA_PRESET_KEYS[dataIdx])}
+            value={minDataGB}
+            max={DATA_MAX_GB}
+            onChange={setMinDataGB}
+            valueLabel={dataValueLabel}
             accent="purple"
           />
         </div>
@@ -343,17 +359,17 @@ export function DestinationDetailClient({
             <FilterInfo title={tc('durationInfoTitle')} content={tc('durationInfoText')} />
           </div>
           <div className="flex flex-wrap gap-2">
-            {DAYS_PRESET_KEYS.map((key, i) => (
-              <Pill key={key} active={daysIdx === i} onClick={() => setDaysIdx(i)} accent="amber">
-                {t(key)}
+            {DAYS_PILLS.map((pill) => (
+              <Pill key={pill.key} active={minDays === pill.days} onClick={() => setMinDays(pill.days)} accent="amber">
+                {t(pill.key)}
               </Pill>
             ))}
           </div>
           <FilterSlider
-            value={daysIdx}
-            max={DAYS_PRESET_KEYS.length - 1}
-            onChange={setDaysIdx}
-            valueLabel={t(DAYS_PRESET_KEYS[daysIdx])}
+            value={minDays}
+            max={DAYS_MAX}
+            onChange={setMinDays}
+            valueLabel={daysValueLabel}
             accent="amber"
           />
         </div>
@@ -366,17 +382,17 @@ export function DestinationDetailClient({
             <FilterInfo title={tc('priceInfoTitle')} content={tc('priceInfoText')} />
           </div>
           <div className="flex flex-wrap gap-2">
-            {PRICE_PRESET_KEYS.map((key, i) => (
-              <Pill key={key} active={priceIdx === i} onClick={() => setPriceIdx(i)} accent="blue">
-                {t(key)}
+            {PRICE_PILLS.map((pill) => (
+              <Pill key={pill.key} active={priceMax === pill.value} onClick={() => setPriceMax(pill.value)} accent="blue">
+                {t(pill.key)}
               </Pill>
             ))}
           </div>
           <FilterSlider
-            value={priceIdx}
-            max={PRICE_PRESET_KEYS.length - 1}
-            onChange={setPriceIdx}
-            valueLabel={t(PRICE_PRESET_KEYS[priceIdx])}
+            value={priceMax}
+            max={PRICE_SLIDER_MAX}
+            onChange={setPriceMax}
+            valueLabel={priceValueLabel}
             accent="blue"
           />
         </div>
