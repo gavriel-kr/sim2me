@@ -44,6 +44,9 @@ export interface FAQ {
   questionKey: string;
   answerKey: string;
   category?: string;
+  /** Optional CTA under the answer (e.g. link to personal account). */
+  ctaHref?: string;
+  ctaLabelKey?: string;
 }
 
 export interface CartItem {

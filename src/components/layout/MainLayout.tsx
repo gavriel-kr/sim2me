@@ -3,7 +3,6 @@
 import { Header } from './Header';
 import { Footer } from './Footer';
 import { StickyHelpButton } from './StickyHelpButton';
-import { InstallAppBanner } from './InstallAppBanner';
 import { AccessibilityToolbar } from './AccessibilityToolbar';
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
@@ -20,7 +19,6 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
       <Footer />
       <StickyHelpButton />
       <AccessibilityToolbar />
-      <InstallAppBanner />
     </>
   );
 }

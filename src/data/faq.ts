@@ -1,11 +1,27 @@
 import type { FAQ } from '@/types';
 
 export const mockFaqs: FAQ[] = [
+  // Product
+  {
+    id: '0',
+    questionKey: 'doYouHaveApp',
+    answerKey: 'answerDoYouHaveApp',
+    category: 'general',
+    ctaHref: '/account',
+    ctaLabelKey: 'goToAccount',
+  },
   // Getting started
   { id: '1', questionKey: 'whatIsEsim', answerKey: 'answerWhatIsEsim', category: 'general' },
   { id: '2', questionKey: 'howToInstall', answerKey: 'answerHowToInstall', category: 'general' },
   { id: '3', questionKey: 'whenToActivate', answerKey: 'answerWhenToActivate', category: 'general' },
-  { id: '4', questionKey: 'compatibleDevices', answerKey: 'answerCompatibleDevices', category: 'devices' },
+  {
+    id: '4',
+    questionKey: 'compatibleDevices',
+    answerKey: 'answerCompatibleDevices',
+    category: 'devices',
+    ctaHref: '/compatible-devices',
+    ctaLabelKey: 'goToDevices',
+  },
   // Usage
   { id: '5', questionKey: 'canUseDualSim', answerKey: 'answerCanUseDualSim', category: 'general' },
   { id: '6', questionKey: 'dataRoaming', answerKey: 'answerDataRoaming', category: 'general' },

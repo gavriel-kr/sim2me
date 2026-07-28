@@ -39,7 +39,12 @@ export function HelpClient() {
                 {tFaq(faq.questionKey)}
               </AccordionTrigger>
               <AccordionContent className="text-muted-foreground">
-                {tFaq(faq.answerKey)}
+                <p>{tFaq(faq.answerKey)}</p>
+                {faq.ctaHref && faq.ctaLabelKey ? (
+                  <IntlLink href={faq.ctaHref} className="mt-3 inline-block">
+                    <Button size="sm">{tFaq(faq.ctaLabelKey)}</Button>
+                  </IntlLink>
+                ) : null}
               </AccordionContent>
             </AccordionItem>
           ))}

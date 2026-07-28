@@ -33,9 +33,11 @@ export default async function HelpPage({ params }: { params: Promise<{ locale: s
 
   /* FAQ JSON-LD structured data for Google rich snippets */
   const faqKeys = [
+    ['doYouHaveApp', 'answerDoYouHaveApp'],
     ['whatIsEsim', 'answerWhatIsEsim'],
     ['howToInstall', 'answerHowToInstall'],
     ['whenToActivate', 'answerWhenToActivate'],
+    ['compatibleDevices', 'answerCompatibleDevices'],
     ['canUseDualSim', 'answerCanUseDualSim'],
     ['dataRoaming', 'answerDataRoaming'],
     ['hotspot', 'answerHotspot'],
@@ -43,7 +45,6 @@ export default async function HelpPage({ params }: { params: Promise<{ locale: s
     ['topUp', 'answerTopUp'],
     ['coverage', 'answerCoverage'],
     ['reinstall', 'answerReinstall'],
-    ['compatibleDevices', 'answerCompatibleDevices'],
     ['noSignal', 'answerNoSignal'],
     ['refundPolicy', 'answerRefundPolicy'],
     ['vpn', 'answerVpn'],

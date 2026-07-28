@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Removed
+- **App promotion** – Removed bottom Install App banner, “App” nav/footer links, sitemap entry, and app marketing i18n. `/[locale]/app` now redirects to home (web + personal account cover the product). `mobile/` / `public/app` left intact, unlinked from UI.
+
 ### Changed
 - **Unified favicon** – Replaced all site icons (favicon, apple-touch, PWA icons) with the official Sim2Me logo (Wi‑Fi + globe + SIM). Removed legacy favicon.svg; API fallback now serves favicon.png. Cache versions bumped (v3/v5) so browsers and Google fetch the new icon.
 - **Header/Footer default logo** – Replaced with full logo (logo.png: Wi‑Fi + globe + SIM + "Sim2Me" text) when no custom logo from admin.

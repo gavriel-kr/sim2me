@@ -7,7 +7,6 @@
     "help": "Help",
     "about": "About",
     "contact": "Contact",
-    "app": "App",
     "account": "Account",
     "cart": "Cart",
     "calculator": "Calculator",
@@ -35,8 +34,6 @@
     "newsletterTitle": "Get travel tips and offers",
     "newsletterPlaceholder": "Your email",
     "newsletterButton": "Subscribe",
-    "appComingSoon": "Our app is coming soon",
-    "appNotify": "Get notified when we launch",
     "instantActivation": "Instant activation worldwide",
     "howItWorksButton": "How it works",
     "valueSectionTitle": "Why travelers choose Sim2Me",
@@ -228,6 +225,10 @@
     "accountTitle": "Account & Orders"
   },
   "faq": {
+    "doYouHaveApp": "Do you have an app?",
+    "answerDoYouHaveApp": "There's no need for a separate app — Sim2Me is a full website. In your personal account you can view orders, manage eSIMs, see QR codes, and everything else you need.",
+    "goToAccount": "Go to my account",
+    "goToDevices": "View compatible devices",
     "whatIsEsim": "What is an eSIM?",
     "answerWhatIsEsim": "An eSIM (embedded SIM) is a digital SIM built into your phone. It lets you activate a cellular data plan without needing a physical SIM card. Simply scan a QR code or tap a link to install — it's that easy.",
     "howToInstall": "How do I install my eSIM?",
@@ -251,7 +252,7 @@
     "coverage": "How is network coverage?",
     "answerCoverage": "We partner with tier-1 local operators in each country for the best coverage. Coverage is excellent in urban areas. Rural coverage may vary by country. Check each plan's details for specific network information, including 4G/5G availability.",
     "compatibleDevices": "Is my phone compatible with eSIM?",
-    "answerCompatibleDevices": "Most modern smartphones support eSIM — including iPhone XS and later, Samsung Galaxy S20+, Google Pixel 3+, and many more. Your device must be carrier-unlocked. Visit our Compatible Devices page for the full list.",
+    "answerCompatibleDevices": "Most modern smartphones support eSIM — including iPhone XS and later, Samsung Galaxy S20+, Google Pixel 3+, and many more. Your device must be carrier-unlocked. See the full list on our Compatible Devices page.",
     "vpn": "Should I use a VPN with my eSIM?",
     "answerVpn": "While not required, a VPN can enhance your privacy when using public networks abroad. Make sure to turn off any VPN during eSIM installation, as it can interfere with the download process.",
     "noSignal": "What if I have no signal after arriving?",
@@ -274,17 +275,6 @@
     "why5Desc": "Powered by GSMA-certified eSIM technology with data centers in the EU. Your data and privacy are protected.",
     "why6Title": "Dedicated Support",
     "why6Desc": "Our support team is here to help before, during, and after your trip. Reach out anytime."
-  },
-  "app": {
-    "title": "Sim2Me App",
-    "subtitle": "Manage your eSIMs and browse plans — right from your phone.",
-    "webAppTitle": "Use the Web App (iOS + Android)",
-    "webAppDesc": "Works on all devices. Add to Home Screen for the full app experience.",
-    "openWebApp": "Open Web App",
-    "browsePlansTitle": "Browse & Buy Plans",
-    "browsePlansDesc": "Search 200+ destinations and buy eSIM data plans from your phone.",
-    "manageTitle": "Manage Your eSIMs",
-    "manageDesc": "View data usage, QR codes, and activation codes for all your eSIMs."
   },
   "contact": {
     "title": "Contact Us",

@@ -9,7 +9,12 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import { Button } from '@/components/ui/button';
 import { HelpCircle } from 'lucide-react';
+import { createSharedPathnamesNavigation } from 'next-intl/navigation';
+import { routing } from '@/i18n/routing';
+
+const { Link: IntlLink } = createSharedPathnamesNavigation(routing);
 
 export function FAQSection() {
   const t = useTranslations('home');
@@ -41,7 +46,12 @@ export function FAQSection() {
                 {tFaq(faq.questionKey)}
               </AccordionTrigger>
               <AccordionContent className="pb-5 text-muted-foreground leading-relaxed">
-                {tFaq(faq.answerKey)}
+                <p>{tFaq(faq.answerKey)}</p>
+                {faq.ctaHref && faq.ctaLabelKey ? (
+                  <IntlLink href={faq.ctaHref} className="mt-3 inline-block">
+                    <Button size="sm">{tFaq(faq.ctaLabelKey)}</Button>
+                  </IntlLink>
+                ) : null}
               </AccordionContent>
             </AccordionItem>
           ))}

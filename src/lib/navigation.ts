@@ -24,16 +24,13 @@ export type NavigationConfig = {
 const DEFAULT_NAV_MENU: NavLink[] = [
   { href: '/', key: 'home' },
   { href: '/destinations', key: 'destinations' },
-  { href: '/app', key: 'app' },
   { href: '/how-it-works', key: 'howItWorks' },
-  { href: '/compatible-devices', key: 'devices' },
   { href: '/help', key: 'help' },
   { href: '/contact', key: 'contact' },
 ];
 
 const DEFAULT_FOOTER_PRODUCT: NavLink[] = [
   { href: '/destinations', key: 'destinations' },
-  { href: '/app', key: 'app' },
   { href: '/how-it-works', key: 'howItWorks' },
   { href: '/compatible-devices', key: 'devices' },
 ];
@@ -68,6 +65,29 @@ function parseJsonArray<T>(raw: string | undefined): T[] | null {
   }
 }
 
+/** Strip retired app-marketing links from DB-stored nav overrides. */
+function withoutAppPromoLinks(links: NavLink[] | null): NavLink[] | null {
+  if (!links) return null;
+  const filtered = links.filter((l) => {
+    const href = (l.href || '').trim().replace(/\/$/, '');
+    if (l.key === 'app') return false;
+    if (href === '/app') return false;
+    return true;
+  });
+  return filtered;
+}
+
+/** Compatible-devices stays in footer; strip from header/nav menu only. */
+function withoutDevicesFromHeader(links: NavLink[] | null): NavLink[] | null {
+  if (!links) return null;
+  return links.filter((l) => {
+    const href = (l.href || '').trim().replace(/\/$/, '');
+    if (l.key === 'devices') return false;
+    if (href === '/compatible-devices') return false;
+    return true;
+  });
+}
+
 /** Get navigation config from DB. Returns null for sections that have no override. */
 export async function getNavigationConfig(): Promise<NavigationConfig> {
   const settings = await prisma.siteSetting.findMany({
@@ -92,12 +112,12 @@ export async function getNavigationConfig(): Promise<NavigationConfig> {
   const footerGuides = parseJsonArray<NavLink>(map[NAV_KEYS.footerGuides]);
 
   return {
-    navMenu,
+    navMenu: withoutDevicesFromHeader(withoutAppPromoLinks(navMenu)),
     footer: {
-      product: footerProduct,
-      company: footerCompany,
-      legal: footerLegal,
-      guides: footerGuides,
+      product: withoutAppPromoLinks(footerProduct),
+      company: withoutAppPromoLinks(footerCompany),
+      legal: withoutAppPromoLinks(footerLegal),
+      guides: withoutAppPromoLinks(footerGuides),
     },
   };
 }
