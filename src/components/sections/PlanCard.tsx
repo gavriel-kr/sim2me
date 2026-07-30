@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/useToast';
 import { createSharedPathnamesNavigation } from 'next-intl/navigation';
 import { routing } from '@/i18n/routing';
 import { DataUsageModal } from '@/components/sections/DataUsageModal';
+import { planToGaItem, trackAddToCart } from '@/lib/analytics';
 import { Sim2MeIcon } from '@/components/icons/Sim2MeIcon';
 import { BrandGlobeWaves } from '@/components/icons/BrandGlobeWaves';
 
@@ -108,6 +109,7 @@ export function PlanCard({ plan, destinationName, destinationSlug }: PlanCardPro
       destinationSlug,
       plan,
     });
+    trackAddToCart(planToGaItem(plan, destinationName));
     if (plan.price < MIN_PURCHASE) {
       toast({
         title: t('toastMinOrder'),
@@ -152,6 +154,11 @@ export function PlanCard({ plan, destinationName, destinationSlug }: PlanCardPro
           <IconSpark />
           <span>{t('badgeBestSeller')}</span>
         </div>
+      )}
+      {plan.saleBadge && (
+        <span className={`absolute end-2 z-10 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-2.5 py-1 text-[11px] font-bold text-white shadow-md ${plan.popular ? 'top-11' : 'top-2'}`}>
+          {plan.saleBadge}
+        </span>
       )}
       <CardContent className="relative flex-1 p-6">
         <div className="relative z-10 flex items-center justify-between gap-3 pb-3 border-b border-gray-200">

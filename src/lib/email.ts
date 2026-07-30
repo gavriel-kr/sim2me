@@ -40,22 +40,61 @@ export async function sendVerificationEmail(to: string, token: string): Promise<
   return sendEmail(to, 'Verify your Sim2Me account / אמת את חשבונך', html);
 }
 
-export async function sendPasswordResetEmail(to: string, token: string): Promise<boolean> {
-  const resetUrl = `${baseUrl()}/account/reset-password?token=${encodeURIComponent(token)}`;
+/** Supported email locales. Falls back to 'he' for legacy flows without a locale. */
+export type EmailLocale = 'he' | 'en' | 'ar';
+
+export function toEmailLocale(value: unknown): EmailLocale {
+  return value === 'en' || value === 'ar' || value === 'he' ? value : 'he';
+}
+
+const RESET_COPY: Record<EmailLocale, {
+  subject: string; title: string; body: string; button: string; copyLink: string; expiry: string;
+}> = {
+  en: {
+    subject: 'Reset your password – Sim2Me',
+    title: 'Reset your password',
+    body: `We received a request to reset your password for your ${SITE_NAME} account. Click the link below to set a new password:`,
+    button: 'Reset password',
+    copyLink: 'Or copy this link:',
+    expiry: "This link expires in 1 hour. If you didn't request a reset, you can ignore this email.",
+  },
+  he: {
+    subject: 'איפוס סיסמה – Sim2Me',
+    title: 'איפוס הסיסמה שלך',
+    body: `קיבלנו בקשה לאיפוס הסיסמה לחשבון ${SITE_NAME} שלך. לחץ על הכפתור למטה כדי להגדיר סיסמה חדשה:`,
+    button: 'איפוס סיסמה',
+    copyLink: 'או העתק את הקישור:',
+    expiry: 'הקישור תקף לשעה אחת. אם לא ביקשת איפוס, ניתן להתעלם מהודעה זו.',
+  },
+  ar: {
+    subject: 'إعادة تعيين كلمة المرور – Sim2Me',
+    title: 'إعادة تعيين كلمة المرور',
+    body: `تلقّينا طلبًا لإعادة تعيين كلمة المرور لحسابك في ${SITE_NAME}. اضغط على الزر أدناه لتعيين كلمة مرور جديدة:`,
+    button: 'إعادة تعيين كلمة المرور',
+    copyLink: 'أو انسخ هذا الرابط:',
+    expiry: 'تنتهي صلاحية هذا الرابط خلال ساعة واحدة. إذا لم تطلب إعادة التعيين، يمكنك تجاهل هذه الرسالة.',
+  },
+};
+
+export async function sendPasswordResetEmail(to: string, token: string, locale: EmailLocale = 'en'): Promise<boolean> {
+  const c = RESET_COPY[locale];
+  const dir = locale === 'en' ? 'ltr' : 'rtl';
+  const align = dir === 'rtl' ? 'right' : 'left';
+  const resetUrl = `${baseUrl()}/${locale}/account/reset-password?token=${encodeURIComponent(token)}`;
   const logo = await logoImgTag();
   const html = `
-    <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto;">
+    <div dir="${dir}" style="font-family: sans-serif; max-width: 560px; margin: 0 auto; text-align: ${align};">
       ${logo}
-      <h2 style="color: #059669;">Reset your password</h2>
-      <p>We received a request to reset your password for your ${SITE_NAME} account. Click the link below to set a new password:</p>
+      <h2 style="color: #059669;">${c.title}</h2>
+      <p>${c.body}</p>
       <p style="margin: 24px 0;">
-        <a href="${resetUrl}" style="display: inline-block; background: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600;">Reset password</a>
+        <a href="${resetUrl}" style="display: inline-block; background: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600;">${c.button}</a>
       </p>
-      <p style="font-size: 13px; color: #64748b;">Or copy this link: ${resetUrl}</p>
-      <p style="font-size: 12px; color: #94a3b8; margin-top: 32px;">This link expires in 1 hour. If you didn't request a reset, you can ignore this email.</p>
+      <p style="font-size: 13px; color: #64748b;">${c.copyLink} ${resetUrl}</p>
+      <p style="font-size: 12px; color: #94a3b8; margin-top: 32px;">${c.expiry}</p>
     </div>
   `;
-  return sendEmail(to, 'Reset your password – Sim2Me', html);
+  return sendEmail(to, c.subject, html);
 }
 
 export interface PostPurchaseEmailData {
@@ -71,11 +110,106 @@ export interface PostPurchaseEmailData {
   tempPassword?: string | null;
 }
 
-/** Hebrew RTL post-purchase email. Subject and body as per SIM2ME spec. */
-export async function sendPostPurchaseEmail(to: string, data: PostPurchaseEmailData): Promise<boolean> {
-  const subject = 'ה-eSIM שלך מ-SIM2ME מוכן להפעלה! ✈️';
-  const name = data.customerName || 'לקוח/ה';
-  const planName = data.planName || 'חבילת נתונים';
+const POST_PURCHASE_COPY: Record<EmailLocale, {
+  subject: string; nameFallback: string; planFallback: string;
+  greeting: string; intro: string; detailsTitle: string;
+  labelPlan: string; labelData: string; labelValidity: string;
+  howToInstall: string; quickInstall: string; quickInstallHint: string;
+  qrTitle: string; qrAttached: string; qrInAccount: string;
+  manualTitle: string; manualIntro: string;
+  accountTitle: string; accountText: string; usernameLabel: string;
+  tempPasswordLabel: string; tempPasswordHint: string;
+  tip: string; signOff: string;
+}> = {
+  he: {
+    subject: 'ה-eSIM שלך מ-SIM2ME מוכן להפעלה! ✈️',
+    nameFallback: 'לקוח/ה',
+    planFallback: 'חבילת נתונים',
+    greeting: 'שלום',
+    intro: 'איזה כיף שאתה טס עם SIM2ME! החבילה שלך הופעלה בהצלחה ומוכנה לשימוש.',
+    detailsTitle: 'פרטי החבילה שלך:',
+    labelPlan: 'חבילה:',
+    labelData: 'נפח גלישה:',
+    labelValidity: 'תוקף:',
+    howToInstall: 'איך מתקינים את ה-eSIM?',
+    quickInstall: 'התקנה מהירה בלחיצה:',
+    quickInstallHint: 'לחץ על הכפתור המתאים למכשיר שלך להתקנה ישירה. אם לא עובד, השתמש בפרטים הידניים למטה.',
+    qrTitle: 'סריקת QR:',
+    qrAttached: 'מצורף להודעה זו קוד ה-QR שלך. סרוק אותו דרך הגדרות הסלולר במכשיר.',
+    qrInAccount: 'קוד ה-QR זמין בעמוד ההזמנה ובחשבון שלך.',
+    manualTitle: 'התקנה ידנית:',
+    manualIntro: 'אם אינך יכול לסרוק, השתמש בפרטים הבאים:',
+    accountTitle: 'כניסה לחשבון וניהול חבילה:',
+    accountText: 'תוכל לעקוב אחר צריכת הנתונים שלך ולהוסיף חבילות בקישור הבא:',
+    usernameLabel: 'שם משתמש:',
+    tempPasswordLabel: 'סיסמה זמנית:',
+    tempPasswordHint: '(מומלץ לשנות לאחר הכניסה)',
+    tip: 'חשוב לדעת: מומלץ להפעיל את ה-eSIM עוד בארץ תחת רשת Wi-Fi יציבה, ולהפעיל \'נדידת נתונים\' (Data Roaming) רק ברגע הנחיתה בחו"ל.',
+    signOff: 'נסיעה טובה!<br/>צוות SIM2ME',
+  },
+  en: {
+    subject: 'Your SIM2ME eSIM is ready to activate! ✈️',
+    nameFallback: 'Traveler',
+    planFallback: 'Data plan',
+    greeting: 'Hi',
+    intro: 'Great to have you flying with SIM2ME! Your plan was activated successfully and is ready to use.',
+    detailsTitle: 'Your plan details:',
+    labelPlan: 'Plan:',
+    labelData: 'Data:',
+    labelValidity: 'Validity:',
+    howToInstall: 'How to install your eSIM',
+    quickInstall: 'One-tap quick install:',
+    quickInstallHint: 'Tap the button matching your device for direct installation. If it does not work, use the manual details below.',
+    qrTitle: 'QR scan:',
+    qrAttached: 'Your QR code is included in this email. Scan it from your device cellular settings.',
+    qrInAccount: 'Your QR code is available on the order page and in your account.',
+    manualTitle: 'Manual installation:',
+    manualIntro: 'If you cannot scan, use the following details:',
+    accountTitle: 'Account access & plan management:',
+    accountText: 'Track your data usage and add plans at the following link:',
+    usernameLabel: 'Username:',
+    tempPasswordLabel: 'Temporary password:',
+    tempPasswordHint: '(we recommend changing it after signing in)',
+    tip: 'Good to know: install the eSIM at home over stable Wi-Fi, and turn on Data Roaming only when you land abroad.',
+    signOff: 'Have a great trip!<br/>The SIM2ME Team',
+  },
+  ar: {
+    subject: 'شريحة eSIM الخاصة بك من SIM2ME جاهزة للتفعيل! ✈️',
+    nameFallback: 'عميلنا العزيز',
+    planFallback: 'باقة بيانات',
+    greeting: 'مرحبًا',
+    intro: 'يسعدنا أنك تسافر مع SIM2ME! تم تفعيل باقتك بنجاح وهي جاهزة للاستخدام.',
+    detailsTitle: 'تفاصيل باقتك:',
+    labelPlan: 'الباقة:',
+    labelData: 'حجم البيانات:',
+    labelValidity: 'الصلاحية:',
+    howToInstall: 'كيف تُثبّت شريحة eSIM؟',
+    quickInstall: 'تثبيت سريع بنقرة واحدة:',
+    quickInstallHint: 'اضغط على الزر المناسب لجهازك للتثبيت المباشر. إذا لم ينجح، استخدم البيانات اليدوية أدناه.',
+    qrTitle: 'مسح رمز QR:',
+    qrAttached: 'رمز QR الخاص بك مرفق في هذه الرسالة. امسحه من إعدادات شبكة الجوال في جهازك.',
+    qrInAccount: 'رمز QR متاح في صفحة الطلب وفي حسابك.',
+    manualTitle: 'التثبيت اليدوي:',
+    manualIntro: 'إذا تعذّر عليك المسح، استخدم البيانات التالية:',
+    accountTitle: 'الدخول إلى الحساب وإدارة الباقة:',
+    accountText: 'يمكنك متابعة استهلاك البيانات وإضافة باقات عبر الرابط التالي:',
+    usernameLabel: 'اسم المستخدم:',
+    tempPasswordLabel: 'كلمة مرور مؤقتة:',
+    tempPasswordHint: '(ننصح بتغييرها بعد تسجيل الدخول)',
+    tip: 'من المهم أن تعرف: يُفضّل تفعيل شريحة eSIM قبل السفر عبر شبكة Wi-Fi مستقرة، وتشغيل "تجوال البيانات" (Data Roaming) فقط عند الهبوط في الخارج.',
+    signOff: 'رحلة سعيدة!<br/>فريق SIM2ME',
+  },
+};
+
+/** Localized post-purchase email (he/en/ar). Defaults to Hebrew for legacy flows. */
+export async function sendPostPurchaseEmail(to: string, data: PostPurchaseEmailData, locale: EmailLocale = 'he'): Promise<boolean> {
+  const c = POST_PURCHASE_COPY[locale];
+  const dir = locale === 'en' ? 'ltr' : 'rtl';
+  const listPad = dir === 'rtl' ? 'padding-right: 20px;' : 'padding-left: 20px;';
+  const btnGap = dir === 'rtl' ? 'margin-left:8px;' : 'margin-right:8px;';
+  const subject = c.subject;
+  const name = data.customerName || c.nameFallback;
+  const planName = data.planName || c.planFallback;
   const dataGb = data.dataGb || '—';
   const validityDays = data.validityDays || '—';
   const smdp = data.smdpAddress || '—';
@@ -89,24 +223,24 @@ export async function sendPostPurchaseEmail(to: string, data: PostPurchaseEmailD
   const androidUrl = lpa ? ('https://esimsetup.android.com/esim_qrcode_provisioning?carddata=' + encodeURIComponent(lpa)) : null;
 
   const installBlock = lpa
-    ? '<p style="margin:16px 0 8px 0; font-weight:600;">התקנה מהירה בלחיצה:</p>' +
+    ? '<p style="margin:16px 0 8px 0; font-weight:600;">' + c.quickInstall + '</p>' +
       '<p style="margin:0 0 8px 0;">' +
-        '<a href="' + iosUrl + '" style="display:inline-block; background:#0d9f6e; color:white; padding:10px 18px; text-decoration:none; border-radius:8px; font-weight:600; font-size:14px; margin-left:8px;">📲 iPhone</a>' +
+        '<a href="' + iosUrl + '" style="display:inline-block; background:#0d9f6e; color:white; padding:10px 18px; text-decoration:none; border-radius:8px; font-weight:600; font-size:14px; ' + btnGap + '">📲 iPhone</a>' +
         '<a href="' + androidUrl + '" style="display:inline-block; background:#1a73e8; color:white; padding:10px 18px; text-decoration:none; border-radius:8px; font-weight:600; font-size:14px;">🤖 Android</a>' +
       '</p>' +
-      '<p style="margin:4px 0 16px 0; font-size:12px; color:#64748b;">לחץ על הכפתור המתאים למכשיר שלך להתקנה ישירה. אם לא עובד, השתמש בפרטים הידניים למטה.</p>' +
+      '<p style="margin:4px 0 16px 0; font-size:12px; color:#64748b;">' + c.quickInstallHint + '</p>' +
       '<p style="margin:0 0 4px 0; font-size:12px; color:#64748b;"><strong>Activation Link (LPA):</strong></p>' +
       '<p style="margin:0 0 16px 0; background:#f1f5f9; padding:6px 10px; border-radius:6px; font-family:monospace; font-size:11px; word-break:break-all;">' + escapeHtml(lpa) + '</p>'
     : '';
 
   const qrBlock = data.qrCodeUrl
-    ? '<p style="margin:16px 0;"><strong>סריקת QR:</strong> מצורף להודעה זו קוד ה-QR שלך. סרוק אותו דרך הגדרות הסלולר במכשיר.</p><p style="margin:12px 0;"><img src="' + data.qrCodeUrl + '" alt="QR Code" width="200" height="200" style="display:block; border-radius:8px;" /></p>'
-    : '<p style="margin:16px 0;"><strong>סריקת QR:</strong> קוד ה-QR זמין בעמוד ההזמנה ובחשבון שלך.</p>';
+    ? '<p style="margin:16px 0;"><strong>' + c.qrTitle + '</strong> ' + c.qrAttached + '</p><p style="margin:12px 0;"><img src="' + data.qrCodeUrl + '" alt="QR Code" width="200" height="200" style="display:block; border-radius:8px;" /></p>'
+    : '<p style="margin:16px 0;"><strong>' + c.qrTitle + '</strong> ' + c.qrInAccount + '</p>';
 
   const logo = await logoImgTag();
   const html = `
 <!DOCTYPE html>
-<html dir="rtl" lang="he">
+<html dir="${dir}" lang="${locale}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -115,29 +249,29 @@ export async function sendPostPurchaseEmail(to: string, data: PostPurchaseEmailD
 <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background: #f8fafc; color: #1e293b;">
   <div style="background: white; border-radius: 12px; padding: 28px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
     ${logo}
-    <h1 style="color: #0d9f6e; font-size: 1.5rem; margin: 0 0 16px 0;">ה-eSIM שלך מ-SIM2ME מוכן להפעלה! ✈️</h1>
-    <p style="margin: 0 0 20px 0; line-height: 1.6;">שלום ${escapeHtml(name)},</p>
-    <p style="margin: 0 0 20px 0; line-height: 1.6;">איזה כיף שאתה טס עם SIM2ME! החבילה שלך הופעלה בהצלחה ומוכנה לשימוש.</p>
-    <p style="margin: 0 0 8px 0; font-weight: 600;">פרטי החבילה שלך:</p>
-    <ul style="margin: 0 0 20px 0; padding-right: 20px;">
-      <li><strong>חבילה:</strong> ${escapeHtml(planName)}</li>
-      <li><strong>נפח גלישה:</strong> ${escapeHtml(dataGb)}</li>
-      <li><strong>תוקף:</strong> ${escapeHtml(validityDays)}</li>
+    <h1 style="color: #0d9f6e; font-size: 1.5rem; margin: 0 0 16px 0;">${subject}</h1>
+    <p style="margin: 0 0 20px 0; line-height: 1.6;">${c.greeting} ${escapeHtml(name)},</p>
+    <p style="margin: 0 0 20px 0; line-height: 1.6;">${c.intro}</p>
+    <p style="margin: 0 0 8px 0; font-weight: 600;">${c.detailsTitle}</p>
+    <ul style="margin: 0 0 20px 0; ${listPad}">
+      <li><strong>${c.labelPlan}</strong> ${escapeHtml(planName)}</li>
+      <li><strong>${c.labelData}</strong> ${escapeHtml(dataGb)}</li>
+      <li><strong>${c.labelValidity}</strong> ${escapeHtml(validityDays)}</li>
     </ul>
-    <p style="margin: 0 0 8px 0; font-weight: 600;">איך מתקינים את ה-eSIM?</p>
+    <p style="margin: 0 0 8px 0; font-weight: 600;">${c.howToInstall}</p>
     ${installBlock}
     ${qrBlock}
-    <p style="margin: 16px 0 8px 0;"><strong>התקנה ידנית:</strong> אם אינך יכול לסרוק, השתמש בפרטים הבאים:</p>
-    <ul style="margin: 0 0 20px 0; padding-right: 20px;">
+    <p style="margin: 16px 0 8px 0;"><strong>${c.manualTitle}</strong> ${c.manualIntro}</p>
+    <ul style="margin: 0 0 20px 0; ${listPad}">
       <li><strong>SM-DP+ Address:</strong> <code style="background:#f1f5f9; padding:2px 6px; border-radius:4px;">${escapeHtml(smdp)}</code></li>
       <li><strong>Activation Code:</strong> <code style="background:#f1f5f9; padding:2px 6px; border-radius:4px;">${escapeHtml(code)}</code></li>
     </ul>
-    <p style="margin: 0 0 8px 0; font-weight: 600;">כניסה לחשבון וניהול חבילה:</p>
-    <p style="margin: 0 0 20px 0; line-height: 1.6;">תוכל לעקוב אחר צריכת הנתונים שלך ולהוסיף חבילות בקישור הבא: <a href="${escapeHtml(loginLink)}" style="color: #0d9f6e;">${escapeHtml(loginLink)}</a></p>
-    <p style="margin: 0 0 4px 0;">שם משתמש: <strong>${escapeHtml(email)}</strong></p>
-    ${data.tempPassword ? `<p style="margin: 4px 0 0 0;">סיסמה זמנית: <strong style="font-family:monospace; background:#f1f5f9; padding:2px 8px; border-radius:4px;">${escapeHtml(data.tempPassword)}</strong> (מומלץ לשנות לאחר הכניסה)</p>` : ''}
-    <p style="margin: 24px 0 0 0; font-size: 0.9rem; color: #64748b;">חשוב לדעת: מומלץ להפעיל את ה-eSIM עוד בארץ תחת רשת Wi-Fi יציבה, ולהפעיל 'נדידת נתונים' (Data Roaming) רק ברגע הנחיתה בחו"ל.</p>
-    <p style="margin: 20px 0 0 0;">נסיעה טובה!<br/>צוות SIM2ME</p>
+    <p style="margin: 0 0 8px 0; font-weight: 600;">${c.accountTitle}</p>
+    <p style="margin: 0 0 20px 0; line-height: 1.6;">${c.accountText} <a href="${escapeHtml(loginLink)}" style="color: #0d9f6e;">${escapeHtml(loginLink)}</a></p>
+    <p style="margin: 0 0 4px 0;">${c.usernameLabel} <strong>${escapeHtml(email)}</strong></p>
+    ${data.tempPassword ? `<p style="margin: 4px 0 0 0;">${c.tempPasswordLabel} <strong style="font-family:monospace; background:#f1f5f9; padding:2px 8px; border-radius:4px;">${escapeHtml(data.tempPassword)}</strong> ${c.tempPasswordHint}</p>` : ''}
+    <p style="margin: 24px 0 0 0; font-size: 0.9rem; color: #64748b;">${c.tip}</p>
+    <p style="margin: 20px 0 0 0;">${c.signOff}</p>
   </div>
 </body>
 </html>

@@ -1,0 +1,94 @@
+import { NextResponse, NextRequest } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { requireAdmin } from '@/lib/session';
+import { prisma } from '@/lib/prisma';
+import { createAuditLog } from '@/lib/audit';
+
+export const dynamic = 'force-dynamic';
+
+/** GET all overrides */
+export async function GET() {
+  try {
+    const session = await getServerSession(authOptions);
+    const denied = requireAdmin(session);
+    if (denied) return denied;
+
+    const overrides = await prisma.packageOverride.findMany();
+    return NextResponse.json({ overrides });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
+}
+
+/** POST - create or update an override */
+export async function POST(req: NextRequest) {
+  const session = await getServerSession(authOptions);
+  const denied = requireAdmin(session);
+  if (denied) return denied;
+
+  const body = await req.json();
+  const { packageCode, visible, customTitle, customPrice, simCost, paddlePriceId, saleBadge, featured, sortOrder, notes } = body;
+
+  if (!packageCode) {
+    return NextResponse.json({ error: 'packageCode is required' }, { status: 400 });
+  }
+
+  const override = await prisma.packageOverride.upsert({
+    where: { packageCode },
+    create: {
+      packageCode,
+      visible: visible ?? true,
+      customTitle: customTitle || null,
+      customPrice: customPrice != null ? customPrice : null,
+      simCost: simCost != null ? simCost : null,
+      paddlePriceId: typeof paddlePriceId === 'string' && paddlePriceId.trim() ? paddlePriceId.trim() : null,
+      saleBadge: saleBadge || null,
+      featured: featured ?? false,
+      sortOrder: sortOrder ?? 0,
+      notes: notes || null,
+    },
+    update: {
+      visible: visible ?? true,
+      customTitle: customTitle || null,
+      customPrice: customPrice != null ? customPrice : null,
+      ...(simCost !== undefined && { simCost: simCost != null ? simCost : null }),
+      ...(paddlePriceId !== undefined && { paddlePriceId: typeof paddlePriceId === 'string' && paddlePriceId.trim() ? paddlePriceId.trim() : null }),
+      saleBadge: saleBadge || null,
+      featured: featured ?? false,
+      sortOrder: sortOrder ?? 0,
+      notes: notes || null,
+    },
+  });
+
+  createAuditLog({ adminEmail: session!.user!.email!, adminName: session!.user!.name ?? '', action: 'UPSERT_PACKAGE_OVERRIDE', targetType: 'PackageOverride', targetId: packageCode }).catch(() => {});
+  return NextResponse.json({ override });
+}
+
+/** PATCH - bulk update visibility */
+export async function PATCH(req: NextRequest) {
+  const session = await getServerSession(authOptions);
+  const denied = requireAdmin(session);
+  if (denied) return denied;
+
+  const body = await req.json();
+  const { updates } = body as { updates: { packageCode: string; visible: boolean }[] };
+
+  if (!updates?.length) {
+    return NextResponse.json({ error: 'updates array required' }, { status: 400 });
+  }
+
+  await prisma.$transaction(
+    updates.map((u) =>
+      prisma.packageOverride.upsert({
+        where: { packageCode: u.packageCode },
+        create: { packageCode: u.packageCode, visible: u.visible },
+        update: { visible: u.visible },
+      })
+    )
+  );
+
+  createAuditLog({ adminEmail: session!.user!.email!, adminName: session!.user!.name ?? '', action: 'BULK_UPDATE_PACKAGE_VISIBILITY', details: { count: updates.length } }).catch(() => {});
+  return NextResponse.json({ success: true });
+}

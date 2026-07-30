@@ -1,0 +1,373 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── Admin Users ─────────────────────────────────────────────
+model AdminUser {
+  id             String         @id @default(cuid())
+  email          String         @unique
+  name           String
+  password       String
+  role           Role           @default(EDITOR)
+  active         Boolean        @default(true)
+  totpSecret        String?
+  totpEnabled       Boolean        @default(false)
+  totpVerifiedAt    DateTime?
+  passwordChangedAt DateTime?
+  createdAt         DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  bulkEditLogs   BulkEditLog[]
+
+  @@map("admin_users")
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  EDITOR
+  VIEWER
+}
+
+// ─── CMS Pages ───────────────────────────────────────────────
+model Page {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  titleEn     String   @default("")
+  titleHe     String   @default("")
+  titleAr     String   @default("")
+  contentEn   String   @default("") @db.Text
+  contentHe   String   @default("") @db.Text
+  contentAr   String   @default("") @db.Text
+  published   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  seo         SeoMeta?
+
+  @@map("pages")
+}
+
+// ─── SEO Meta ────────────────────────────────────────────────
+model SeoMeta {
+  id              String  @id @default(cuid())
+  pageId          String  @unique
+  page            Page    @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  metaTitleEn     String  @default("")
+  metaTitleHe     String  @default("")
+  metaTitleAr     String  @default("")
+  metaDescEn      String  @default("") @db.Text
+  metaDescHe      String  @default("") @db.Text
+  metaDescAr      String  @default("") @db.Text
+  ogImage         String  @default("")
+  keywords        String  @default("")
+
+  @@map("seo_meta")
+}
+
+// ─── Site Settings ───────────────────────────────────────────
+model SiteSetting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String @db.Text
+
+  @@map("site_settings")
+}
+
+// ─── Orders ──────────────────────────────────────────────────
+model Order {
+  id                   String      @id @default(cuid())
+  orderNo              String      @unique @default(cuid())
+  customerId           String?     // optional FK when user is logged in
+  customer             Customer?   @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  customerEmail        String
+  customerName         String      @default("")
+  status               OrderStatus @default(PENDING)
+  totalAmount          Decimal     @db.Decimal(10, 2)
+  currency             String      @default("USD")
+  paddleTransactionId  String?     @unique // Paddle txn_ id for webhook idempotency
+  esimOrderId          String?
+  esimTransactionId    String?
+  packageCode          String
+  packageName          String
+  destination          String
+  dataAmount           String
+  validity             String
+  iccid                String?
+  qrCodeUrl            String?
+  smdpAddress          String?
+  activationCode       String?
+  deviceType           String?    // from checkout passthrough
+  supplierCost         Decimal?   @db.Decimal(10, 4) // wholesale cost paid to eSIMaccess (USD)
+  errorMessage         String?    @db.Text // last fulfillment error for debugging
+  notes                String?    @db.Text // internal admin notes
+  archivedAt           DateTime?            // soft delete — null = active
+  checkoutIp           String?              // client IP captured at checkout prepare time
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+  paidAt               DateTime?
+
+  @@map("orders")
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  PROCESSING
+  COMPLETED
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+// ─── Bulk Edit Log (audit + rollback for bulk package updates) ────
+model BulkEditLog {
+  id                   String   @id @default(cuid())
+  adminId              String
+  admin                AdminUser @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  timestamp            DateTime @default(now())
+  affectedCount        Int
+  payloadJson          String   @db.Text  // request payload (edits, conditions)
+  rollbackSnapshotJson String   @db.Text  // before-state for rollback
+
+  @@map("bulk_edit_logs")
+}
+
+// ─── Package Overrides (admin control over eSIMaccess packages) ────
+model PackageOverride {
+  id             String   @id @default(cuid())
+  packageCode    String   @unique        // eSIMaccess packageCode
+  visible        Boolean  @default(true) // show on public website
+  customTitle    String?                 // override package name
+  customPrice    Decimal? @db.Decimal(10, 2)  // override retail price (USD)
+  simCost        Decimal? @db.Decimal(10, 4) // override SIM cost (USD); when null use API wholesale
+  paddlePriceId  String?                 // Paddle price_id (pri_xxx) for checkout
+  saleBadge      String?                 // e.g. "20% OFF", "HOT", "SALE"
+  featured       Boolean  @default(false)
+  sortOrder      Int      @default(0)
+  notes          String?  @db.Text       // internal admin notes
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("package_overrides")
+}
+
+// ─── Featured Destinations (homepage popular section) ──────────────
+model FeaturedDestination {
+  id           String   @id @default(cuid())
+  locationCode String   @unique        // ISO country code (e.g. "FR", "DE")
+  displayOrder Int      @default(0)    // lower = shown first
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("featured_destinations")
+}
+
+// ─── Fee Settings (Paddle + additional fees for profit calculations) ───
+model FeeSettings {
+  id                  String   @id @default(cuid())
+  paddlePercentageFee Decimal  @db.Decimal(5, 4) @default(0.05)  // e.g. 0.05 = 5%
+  paddleFixedFee      Decimal  @db.Decimal(10, 2) @default(0.50) // USD per transaction
+  currency            String   @default("USD")
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@map("fee_settings")
+}
+
+model AdditionalFee {
+  id                  String   @id @default(cuid())
+  name                String
+  type                AdditionalFeeType  // FIXED or PERCENTAGE
+  value               Decimal  @db.Decimal(10, 4)  // fixed amount or rate (e.g. 0.02 = 2%)
+  isActive            Boolean  @default(true)
+  appliesTo           AdditionalFeeAppliesTo @default(ALL_PRODUCTS)
+  selectedProductIds  String?  @db.Text  // JSON array of packageCode when appliesTo = SELECTED_PRODUCTS
+  sortOrder           Int      @default(0)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@map("additional_fees")
+}
+
+enum AdditionalFeeType {
+  FIXED
+  PERCENTAGE
+}
+
+enum AdditionalFeeAppliesTo {
+  ALL_PRODUCTS
+  SELECTED_PRODUCTS
+}
+
+// ─── Customers (site users / account holders) ───────────────
+model Customer {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String?  // hashed; null for Google-only users
+  name      String   @default("")
+  lastName  String?  // optional
+  phone     String?  @unique // E.164; single number, required for credentials login
+  googleId  String?  @unique // Google OAuth sub
+  newsletter         Boolean  @default(false)
+  emailVerified      Boolean  @default(false)
+  emailVerifyToken   String?
+  emailVerifyExpires DateTime?
+  passwordChangedAt  DateTime?
+  resetToken         String?
+  resetExpires       DateTime?
+  otpEnabled         Boolean   @default(false)
+  otpCodeHash        String?   // SHA-256(code) — never plain text
+  otpCodeExpires     DateTime?
+  otpAttempts        Int       @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  orders    Order[]
+
+  @@map("customers")
+}
+
+// ─── Contact Submissions ─────────────────────────────────────
+model ContactSubmission {
+  id               String              @id @default(cuid())
+  name             String
+  email            String
+  phone            String?
+  subject          String
+  message          String              @db.Text
+  marketingConsent Boolean             @default(false)
+  read             Boolean             @default(false)
+  status           ContactStatus       @default(NEW)
+  notes            ContactNote[]
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @default(now()) @updatedAt
+
+  @@map("contact_submissions")
+}
+
+model ContactNote {
+  id           String            @id @default(cuid())
+  submissionId String
+  submission   ContactSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  content      String            @db.Text
+  createdAt    DateTime          @default(now())
+
+  @@map("contact_notes")
+}
+
+enum ContactStatus {
+  NEW
+  IN_PROGRESS
+  RESOLVED
+}
+
+// ─── Articles (SEO blog / guides) ────────────────────────────
+// One row per topic; all languages in same row (like Page model)
+model Article {
+  id                  String   @id @default(cuid())
+  slug                String   @unique // canonical slug
+  // Content per locale
+  titleEn             String   @default("")
+  titleHe             String   @default("")
+  titleAr             String   @default("")
+  contentEn            String   @default("") @db.Text
+  contentHe            String   @default("") @db.Text
+  contentAr            String   @default("") @db.Text
+  excerptEn           String?   @db.Text
+  excerptHe           String?   @db.Text
+  excerptAr           String?   @db.Text
+  // SEO per locale
+  focusKeywordEn      String?
+  focusKeywordHe      String?
+  focusKeywordAr      String?
+  metaTitleEn         String?
+  metaTitleHe         String?
+  metaTitleAr         String?
+  metaDescEn          String?   @db.Text
+  metaDescHe          String?   @db.Text
+  metaDescAr          String?   @db.Text
+  ogTitleEn           String?
+  ogTitleHe           String?
+  ogTitleAr           String?
+  ogDescEn            String?   @db.Text
+  ogDescHe            String?   @db.Text
+  ogDescAr            String?   @db.Text
+  canonicalUrlEn      String?
+  canonicalUrlHe      String?
+  canonicalUrlAr      String?
+  // Status per locale
+  statusEn            ArticleStatus @default(DRAFT)
+  statusHe            ArticleStatus @default(DRAFT)
+  statusAr            ArticleStatus @default(DRAFT)
+  // Shared
+  featuredImage       String?
+  articleOrder        Int      @default(0)
+  showRelatedArticles Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@map("articles")
+}
+
+enum ArticleStatus {
+  DRAFT
+  PUBLISHED
+}
+
+// ─── Path-based SEO Overrides ────────────────────────────────
+model SeoSetting {
+  id            String   @id @default(cuid())
+  path          String   @unique
+  title         String?
+  description   String?  @db.Text
+  ogTitle       String?
+  ogDescription String?  @db.Text
+  ogImage       String?
+  canonicalUrl  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([path])
+  @@map("seo_settings")
+}
+
+// ─── Rate Limiting ────────────────────────────────────────────
+model RateLimit {
+  key         String   @id          // "{ip}:{endpoint}"
+  count       Int      @default(1)
+  windowStart DateTime @default(now())
+
+  @@map("rate_limits")
+}
+
+// ─── Admin Audit Log ─────────────────────────────────────────
+model AdminAuditLog {
+  id         String   @id @default(cuid())
+  adminEmail String
+  adminName  String
+  action     String
+  targetType String?
+  targetId   String?
+  details    String?  @db.Text
+  ip         String?
+  createdAt  DateTime @default(now())
+
+  @@map("admin_audit_logs")
+}
+
+// ─── Blocklist ────────────────────────────────────────────────
+model BlockedItem {
+  id          String   @id @default(cuid())
+  type        String   // 'IP' | 'EMAIL'
+  value       String
+  reason      String?  @db.Text
+  autoBlocked Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@unique([type, value])
+  @@map("blocked_items")
+}

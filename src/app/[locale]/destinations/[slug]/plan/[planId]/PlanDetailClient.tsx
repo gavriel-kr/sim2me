@@ -1,8 +1,10 @@
 'use client';
 
 import type { ReactNode } from 'react';
+import { useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import type { Destination, Plan } from '@/types';
+import { planToGaItem, trackAddToCart, trackViewItem } from '@/lib/analytics';
 import { formatPrice } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -132,6 +134,12 @@ export function PlanDetailClient({ destination, plan }: PlanDetailClientProps) {
 
   const MIN_PURCHASE = 1.20;
 
+  useEffect(() => {
+    trackViewItem(planToGaItem(plan, destination.name));
+    // fire once per plan page view
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [plan.id]);
+
   const handleAddToCart = () => {
     addItem({
       planId: plan.id,
@@ -140,6 +148,7 @@ export function PlanDetailClient({ destination, plan }: PlanDetailClientProps) {
       destinationSlug: destination.slug,
       plan,
     });
+    trackAddToCart(planToGaItem(plan, destination.name));
     if (plan.price < MIN_PURCHASE) {
       toast({
         title: t('toastMinOrder'),

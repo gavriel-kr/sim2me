@@ -2,6 +2,39 @@
 
 ## [Unreleased]
 
+### Changed (Ticket 025 — Commerce-First Hero)
+- **Hero headline/subtitle (he/en/ar)** – "Stay connected worldwide. No roaming fees." + pain-relief subtitle ("Land connected — no SIM swapping, no surprise bill"), replacing the generic brand copy. No QR/scan language; live prices shown in chips/deals rather than a static anchor in the H1.
+- **"From $X per day" mislabel fixed** – `fromPrice` is the cheapest package price (auto-computed from the live catalog), not a daily rate; removed the wrong "per day" suffix in FeaturedPlans, destination page header, and destinations index. Removed the hardcoded `fromPrice: 4.99` from the static fallback list so a wrong price is never shown when the catalog API is down.
+- **Destination page: full catalog expands in place** – "Show all N plans" now opens the full catalog below the curated tiers (with smooth scroll) instead of replacing them; "Back to recommended" collapses it. The usage-calculator's "find plan" opens the catalog too, since the data filter lives there.
+- **Hero is now a funnel entry** – Up to 6 popular-destination quick-chips (flag + localized name + live "from $X") under the search box; returning visitors get a "Continue to {destination}?" chip from recently-viewed (ticket 024 storage). Top hot-deal teaser chip near the badge, anchor-scrolls to the deals section (`#hot-deals`). Micro-trust row (installed in minutes / secure checkout / 24-7 support) under the CTA.
+- **Phone mockup sells** – Shows today's 3 real hot deals (localized country, data/days, deal price + strikethrough) instead of hardcoded English fakes; localized chrome; localized static fallback when no deals. All data via existing shared react-query caches — zero new requests/endpoints. 7 new i18n keys × 3 locales.
+
+### Added (Ticket 024 — Homepage Hot Deals + Personal Shelf)
+- **Hot Deals engine** – 3 daily homepage deals with an extra 5–10% random discount, profit-gated: created only when net profit after discount ≥ $3 (`computeProfit`: simCost + Paddle fees + additional fees). Pool = admin-featured destinations; max 1 deal per destination; date-seeded rotation (stable per UTC day). New table `hot_deals` (additive), `src/lib/hot-deals.ts`, `GET /api/hot-deals`.
+- **Checkout honors deal price** – `create-transaction` resolves an active deal server-side (today + yesterday grace); a deal can only lower the charged amount. Displayed price and charged price always match.
+- **Homepage "Hot Deals" section** – 3 cards with strikethrough original price, -X% ribbon, add-to-cart at deal price; GA4 `hot_deals` item list. Hidden when no eligible deals.
+- **Homepage "For You" section** – signal hierarchy: recently viewed destination (localStorage, written by destination pages) → latest order destination (logged-in) → daily-rotating featured destination. Reuses smart-shelf `buildTiers` + `CuratedTierCard` (up to 3 tiers centered on the star).
+- **Admin → Hot Deals** – new page: today's deals with per-deal net profit, pin (survives rotation), disable, regenerate, and settings (count, min profit, discount range, min price, enabled). New `api/admin/hot-deals`.
+- 14 new i18n keys × 3 locales; homepage order now Hero → Hot Deals → For You → ValueProps → Popular destinations.
+
+### Fixed (Ticket 024, incidental)
+- **Dev server crash under Node 24** – `tailwind.config.ts` used `require()` in an ESM context; switched to a standard import.
+
+### Fixed (Ticket 021 — Critical Revenue Fixes)
+- **Post-purchase email now localized (he/en/ar)** – Checkout passes the buyer's locale through Paddle `custom_data`; the webhook picks the matching email template. Hebrew content unchanged and remains the fallback for legacy transactions. Files: `src/lib/email.ts`, `CheckoutClient.tsx`, `api/checkout/create-transaction`, `api/webhooks/paddle`.
+- **Guest auto-account can now log in** – Accounts auto-created after purchase get `emailVerified: true` (login blocked unverified customers, making the emailed temp password unusable).
+- **Newsletter form actually subscribes** – New `POST /api/newsletter` (rate-limited) sets `Customer.newsletter = true`; homepage form wired with localized success/error toasts (previously toast-only, saved nothing).
+- **`saleBadge` now visible to customers** – Admin-set badge renders as a pill on `PlanCard`; `Plan` type extended.
+- **Admin single-save no longer wipes `sortOrder`** – `POST /api/admin/packages/override` only updates `sortOrder` when explicitly provided.
+- **Password reset email localized (he/en/ar)** – Forgot-password page passes the locale; reset link now locale-prefixed.
+
+### Added (Ticket 023 — Smart Shelf)
+- **Curated destination offers** – Destination pages now default to 3–5 "trip intent" tiers (Weekend Trip / Easy Week / The Full Trip ★ / Heavy Traveler / Long Stay, localized he/ar/en) computed client-side: fixed-data plans only, deduped by spec, Pareto-dominated plans dropped, nearest-fit to tier targets. One ★ per destination (admin-featured wins). Full catalog + filters unchanged behind "Show all N plans"; small catalogs (<3 tiers) keep the classic grid. New: `src/lib/plan-curation.ts`, `CuratedTierCard.tsx`; edited `DestinationDetailClient.tsx`; 13 i18n keys × 3 locales. Example: Japan 42 cards → 5 curated tiers.
+- **Value-upgrade rule** – After nearest-fit picks a tier plan, the engine upgrades to a plan with more data (same-or-longer validity) if it costs ≤ +15%, capped at 4× the tier's data target. Protects customers from "1GB when 2GB costs almost the same" traps.
+
+### Added (Ticket 022 — Funnel Analytics)
+- **GA4 ecommerce events** – New `src/lib/analytics.ts` (consent-safe gtag wrappers). Wired: `view_item_list` (destination page), `view_item` (plan page), `add_to_cart` (PlanCard + plan page), `begin_checkout`, `add_payment_info` (checkout), `purchase` (success page, deduped per transaction). `api/orders/by-transaction` response now includes `packageCode`, `totalAmount`, `currency` for the purchase event.
+
 ### Removed
 - **App promotion** – Removed bottom Install App banner, “App” nav/footer links, sitemap entry, and app marketing i18n. `/[locale]/app` now redirects to home (web + personal account cover the product). `mobile/` / `public/app` left intact, unlinked from UI.
 

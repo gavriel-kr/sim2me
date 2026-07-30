@@ -1,0 +1,12 @@
+import { PrismaClient } from '@prisma/client';
+import fs from 'fs';
+const slug = process.argv[2];
+const locale = process.argv[3] || 'en';
+const prisma = new PrismaClient();
+const a = await prisma.article.findUnique({ where: { slug } });
+if (!a) process.exit(1);
+const key = locale === 'ar' ? 'contentAr' : locale === 'he' ? 'contentHe' : 'contentEn';
+const tkey = locale === 'ar' ? 'titleAr' : locale === 'he' ? 'titleHe' : 'titleEn';
+fs.writeFileSync(`scripts/article-locale-fills/tmp-${slug}-${locale}.txt`, `${a[tkey]}\n\n----\n\n${a[key]}`, 'utf-8');
+console.log('wrote', key, 'words ~', (a[key] || '').split(/\s+/).length);
+await prisma.$disconnect();

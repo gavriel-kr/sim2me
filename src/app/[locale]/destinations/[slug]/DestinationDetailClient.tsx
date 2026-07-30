@@ -1,9 +1,12 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import type { Destination, Plan } from '@/types';
 import { PlanCard } from '@/components/sections/PlanCard';
+import { CuratedTierCard } from '@/components/sections/CuratedTierCard';
+import { buildTiers } from '@/lib/plan-curation';
+import { planToGaItem, trackViewItemList } from '@/lib/analytics';
 import { X, SlidersHorizontal, ArrowUpDown, Zap, Wifi, Database, Clock, DollarSign, LayoutGrid, Info, BarChart2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { DataUsageCalculator } from '@/components/sections/DataUsageCalculator';
@@ -146,6 +149,25 @@ export function DestinationDetailClient({
   const t = useTranslations('destinations');
   const tc = useTranslations('calculator');
 
+  // Smart shelf (ticket 023): curated trip-intent tiers always on top;
+  // full catalog expands below them on the same page (ticket 025 revision)
+  const curatedTiers = useMemo(() => buildTiers(initialPlans), [initialPlans]);
+  const canCurate = curatedTiers.length >= 3;
+  const [showAll, setShowAll] = useState(!canCurate);
+  const catalogRef = useRef<HTMLDivElement>(null);
+  const curatedRef = useRef<HTMLDivElement>(null);
+
+  const openCatalog = useCallback(() => {
+    setShowAll(true);
+    // scroll after the catalog renders
+    setTimeout(() => catalogRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+  }, []);
+
+  const closeCatalog = useCallback(() => {
+    setShowAll(false);
+    setTimeout(() => curatedRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+  }, []);
+
   const [minDataGB, setMinDataGB] = useState(0);
   const [minDays, setMinDays] = useState(0);
   const [priceMax, setPriceMax] = useState(0);
@@ -162,7 +184,8 @@ export function DestinationDetailClient({
   const handleCalcFindPlan = useCallback((weeklyGB: number) => {
     setMinDataGB(weeklyGbToMinData(weeklyGB));
     setCalcNudgeOpen(false);
-  }, []);
+    openCatalog(); // the data filter lives in the full catalog — make it visible
+  }, [openCatalog]);
 
   const clearAll = useCallback(() => {
     setMinDataGB(0);
@@ -231,6 +254,28 @@ export function DestinationDetailClient({
 
   const has5G = useMemo(() => initialPlans.some((p) => p.networkType === '5G'), [initialPlans]);
 
+  useEffect(() => {
+    const curatedOnly = canCurate && !showAll;
+    const listPlans = curatedOnly ? curatedTiers.map((ti) => ti.plan) : initialPlans;
+    trackViewItemList(`${curatedOnly ? 'curated' : 'all'}:${destination.slug}`, listPlans.map((p) => planToGaItem(p, destination.name)));
+    // fire once per destination page view and once more when the full catalog opens
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [destination.slug, showAll]);
+
+  // Remember this destination for the homepage "For You" shelf (ticket 024)
+  useEffect(() => {
+    try {
+      const KEY = 'sim2me_recent_destinations';
+      const raw = localStorage.getItem(KEY);
+      const list: Array<{ slug: string }> = raw ? JSON.parse(raw) : [];
+      const next = [
+        { code: destination.isoCode, slug: destination.slug, name: destination.name, ts: Date.now() },
+        ...(Array.isArray(list) ? list.filter((x) => x.slug !== destination.slug) : []),
+      ].slice(0, 5);
+      localStorage.setItem(KEY, JSON.stringify(next));
+    } catch { /* storage unavailable — non-critical */ }
+  }, [destination.slug, destination.isoCode, destination.name]);
+
   return (
     <div className="container px-4 py-8">
       {/* ─── Country header ──────────────────────────────────── */}
@@ -251,7 +296,7 @@ export function DestinationDetailClient({
               <>
                 <span className="text-gray-300">·</span>
                 <span className="font-semibold text-emerald-600">
-                  {t('from')} ${destination.fromPrice.toFixed(2)} {t('perDay')}
+                  {t('from')} ${destination.fromPrice.toFixed(2)}
                 </span>
               </>
             )}
@@ -279,6 +324,53 @@ export function DestinationDetailClient({
           <DataUsageCalculator onFindPlan={handleCalcFindPlan} />
         </DialogContent>
       </Dialog>
+
+      {/* ─── Smart shelf: curated trip-intent tiers (always visible) ─── */}
+      {canCurate && (
+        <div ref={curatedRef} className="mt-6 scroll-mt-24">
+          <div className="mb-5">
+            <h2 className="text-lg font-bold text-gray-800">{t('curatedHeading')}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">{t('curatedSubtitle')}</p>
+          </div>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {curatedTiers.map((tier) => (
+              <CuratedTierCard
+                key={tier.plan.id}
+                tierKey={tier.key}
+                plan={tier.plan}
+                isStar={tier.isStar}
+                destinationName={destination.name}
+                destinationSlug={destination.slug}
+              />
+            ))}
+          </div>
+          {!showAll && (
+            <div className="mt-8 flex flex-col items-center gap-2">
+              <p className="text-sm text-muted-foreground">{t('showAllPrompt')}</p>
+              <button
+                onClick={openCatalog}
+                className="inline-flex items-center gap-2 rounded-2xl border border-emerald-200 bg-white px-5 py-2.5 text-sm font-semibold text-emerald-700 shadow-sm transition-colors hover:bg-emerald-50"
+              >
+                <LayoutGrid className="h-4 w-4" />
+                {t('showAllPlans', { count: initialPlans.length })}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {showAll && (
+      <div ref={catalogRef} className="scroll-mt-24">
+      {canCurate && (
+        <div className="mt-10 border-t border-gray-100 pt-6">
+          <button
+            onClick={closeCatalog}
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-700 hover:text-emerald-800 hover:underline underline-offset-2"
+          >
+            {t('showCurated')}
+          </button>
+        </div>
+      )}
 
       {/* ─── Filter bar (glassmorphism, highlighted) ─── */}
       <div className="relative mt-3 overflow-hidden rounded-3xl border border-emerald-100/90 bg-white/80 shadow-lg shadow-emerald-900/5 backdrop-blur-md">
@@ -473,6 +565,8 @@ export function DestinationDetailClient({
             <X className="h-3.5 w-3.5" /> {t('clearFilters')}
           </button>
         </div>
+      )}
+      </div>
       )}
     </div>
   );

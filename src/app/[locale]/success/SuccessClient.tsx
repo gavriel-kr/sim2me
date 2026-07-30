@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { routing } from '@/i18n/routing';
 import { brandConfig } from '@/config/brand';
+import { trackPurchase } from '@/lib/analytics';
 
 const { Link: IntlLink } = createSharedPathnamesNavigation(routing);
 
@@ -18,8 +19,11 @@ interface OrderData {
   status: string;
   customerName: string;
   packageName: string;
+  packageCode?: string;
   dataAmount: string;
   validity: string;
+  totalAmount?: number;
+  currency?: string;
   qrCodeUrl: string | null;
   smdpAddress: string | null;
   activationCode: string | null;
@@ -45,6 +49,16 @@ export function SuccessClient({ transactionId }: { transactionId: string | null 
           setOrder(data.order);
           if (data.order.status === 'COMPLETED') {
             setStatus('completed');
+            trackPurchase(
+              transactionId,
+              [{
+                item_id: data.order.packageCode || data.order.packageName,
+                item_name: data.order.packageName,
+                price: data.order.totalAmount ?? 0,
+                quantity: 1,
+              }],
+              data.order.totalAmount ?? 0,
+            );
             return;
           }
           if (data.order.status === 'FAILED') {

@@ -11,7 +11,7 @@ import { NextResponse } from 'next/server';
 import { verifyPaddleWebhook, safeJsonParse } from '@/lib/paddle';
 import { prisma } from '@/lib/prisma';
 import { purchasePackage, getEsimProfileWithRetry, getPackages, formatDataVolume } from '@/lib/esimaccess';
-import { sendPostPurchaseEmail, sendAdminOrderNotificationEmail, sendFraudAlertEmail, sendOrderFailedEmail } from '@/lib/email';
+import { sendPostPurchaseEmail, sendAdminOrderNotificationEmail, sendFraudAlertEmail, sendOrderFailedEmail, toEmailLocale } from '@/lib/email';
 import { autoBlock, checkAndAutoBlockEmail } from '@/lib/fraud';
 import { hash } from 'bcryptjs';
 
@@ -38,6 +38,7 @@ interface CustomData {
   userId?: string;
   deviceType?: string;
   checkoutIp?: string;
+  locale?: string;
 }
 
 function baseUrl(): string {
@@ -91,6 +92,8 @@ export async function POST(request: Request) {
   const customerEmail = sanitizeString(customData.customerEmail, 320);
   const customerName = sanitizeString(customData.customerName, 200);
   const deviceType = sanitizeString(customData.deviceType, 64);
+  // Buyer's checkout language for transactional email; legacy transactions default to Hebrew
+  const emailLocale = toEmailLocale(customData.locale);
   const userId = typeof customData.userId === 'string' ? customData.userId.trim().slice(0, 64) : null;
   // Validate IP format — customData passes through browser (untrusted), only store valid IPs
   const rawIp = sanitizeString(customData.checkoutIp, 45);
@@ -259,6 +262,9 @@ export async function POST(request: Request) {
             name: nameParts[0] || customerName || '',
             lastName: nameParts.slice(1).join(' ') || null,
             password: hashed,
+            // Purchase email delivery proves inbox ownership — without this flag the
+            // temp password we email below is unusable (login blocks unverified customers)
+            emailVerified: true,
           },
         });
       }
@@ -281,7 +287,7 @@ export async function POST(request: Request) {
         loginLink,
         email: customerEmail,
         tempPassword,
-      }).catch((e) => console.error('[Paddle webhook] Email send failed (non-fatal)', e));
+      }, emailLocale).catch((e) => console.error('[Paddle webhook] Email send failed (non-fatal)', e));
     }
   } catch (e) {
     const errMsg = e instanceof Error ? e.message : String(e);

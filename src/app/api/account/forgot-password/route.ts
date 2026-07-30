@@ -22,6 +22,7 @@ export async function POST(request: Request) {
     }
 
     const email = parsed.data.email.toLowerCase().trim();
+    const locale = body?.locale === 'he' || body?.locale === 'ar' ? body.locale : 'en';
     const customer = await prisma.customer.findUnique({
       where: { email },
     });
@@ -39,7 +40,7 @@ export async function POST(request: Request) {
       data: { resetToken: token, resetExpires: expires },
     });
 
-    await sendPasswordResetEmail(customer.email, token);
+    await sendPasswordResetEmail(customer.email, token, locale);
 
     return NextResponse.json({ success: true, message: 'If an account exists with this email, you will receive a password reset link.' });
   } catch (e) {

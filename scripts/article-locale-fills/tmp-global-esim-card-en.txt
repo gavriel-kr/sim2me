@@ -1,0 +1,27 @@
+Global eSIM Card — One Plan for Every Destination on Your Itinerary
+
+----
+
+
+<div class="quick-summary rounded-xl border border-emerald-100 bg-emerald-50 p-5 mb-8">
+  <h2 class="text-lg font-bold text-emerald-800 mt-0 mb-2">Quick Summary</h2>
+  <ul class="text-sm text-emerald-900 space-y-1 mb-0">
+    <li>✅ One digital SIM, valid across 100+ countries</li>
+    <li>✅ Switches automatically to the best local network in each country</li>
+    <li>✅ Europe, Asia, Americas, Middle East — multiple regions in one plan</li>
+    <li>✅ Activates instantly via QR code — no physical card handling</li>
+  </ul>
+</div>
+
+<h2>Who Needs a Global eSIM Card?</h2>
+<p>Long-term backpackers, digital nomads, business travelers with multi-country meetings, honeymoon travelers, and families — one <strong>global eSIM card</strong> from Sim2Me covers destinations across Europe (40+), Asia, Middle East (UAE, Turkey, Israel, Saudi), Americas (USA, Canada, Mexico), and more.</p>
+
+<h2>How to Activate Your Global eSIM Card</h2>
+<ol>
+  <li>Purchase at Sim2Me.net</li>
+  <li>Receive QR code by email</li>
+  <li>Scan QR in your phone's eSIM settings</li>
+  <li>The eSIM activates automatically per country</li>
+</ol>
+
+<div class="cta-block rounded-xl border border-emerald-200 bg-emerald-50 p-6 my-8 text-center"><p class="text-xl font-bold text-emerald-900 mb-2"><a href="https://www.sim2me.net/destinations" class="text-emerald-900 hover:underline focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 rounded">Get eSIM – Click here</a></p><a href="https://www.sim2me.net/destinations" class="inline-block rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700">Get eSIM</a></div>

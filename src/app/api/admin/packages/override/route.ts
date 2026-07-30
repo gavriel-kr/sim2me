@@ -57,7 +57,9 @@ export async function POST(req: NextRequest) {
       ...(paddlePriceId !== undefined && { paddlePriceId: typeof paddlePriceId === 'string' && paddlePriceId.trim() ? paddlePriceId.trim() : null }),
       saleBadge: saleBadge || null,
       featured: featured ?? false,
-      sortOrder: sortOrder ?? 0,
+      // Only touch sortOrder when explicitly provided — the single-edit form
+      // doesn't send it, and defaulting to 0 was wiping curated ordering
+      ...(sortOrder !== undefined && { sortOrder }),
       notes: notes || null,
     },
   });

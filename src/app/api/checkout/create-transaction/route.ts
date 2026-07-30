@@ -11,6 +11,7 @@ import { NextResponse } from 'next/server';
 import { getSessionForRequest, isCustomerSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { getDbCachedPackages } from '@/lib/packagesCache';
+import { getActiveDealPrice } from '@/lib/hot-deals';
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
 import { verifyTurnstile } from '@/lib/turnstile';
 import { z } from 'zod';
@@ -25,6 +26,7 @@ const bodySchema = z.object({
   customerEmail: z.string().email(),
   customerName: z.string().max(200).optional(),
   deviceType: z.string().max(64).optional(),
+  locale: z.enum(['en', 'he', 'ar']).optional(),
   turnstileToken: z.string().optional(),
 });
 
@@ -45,13 +47,13 @@ export async function POST(request: Request) {
       );
     }
 
-    const { items, customerEmail, customerName, deviceType, turnstileToken } = parsed.data;
+    const { items, customerEmail, customerName, deviceType, locale, turnstileToken } = parsed.data;
     const apiKey = process.env.PADDLE_API_KEY?.trim();
     const item = items[0];
     const planId = item.planId;
 
     // Run all independent async operations in parallel to minimise latency.
-    const [allowed, turnstileOk, session, override, cached] = await Promise.all([
+    const [allowed, turnstileOk, session, override, cached, dealPrice] = await Promise.all([
       checkRateLimit(ip, 'checkout', 10, 60),
       verifyTurnstile(turnstileToken ?? '', ip),
       getSessionForRequest(request),
@@ -60,6 +62,9 @@ export async function POST(request: Request) {
         : Promise.resolve(null),
       apiKey
         ? getDbCachedPackages()
+        : Promise.resolve(null),
+      apiKey
+        ? getActiveDealPrice(planId).catch(() => null)
         : Promise.resolve(null),
     ]);
 
@@ -78,6 +83,7 @@ export async function POST(request: Request) {
       checkoutIp: ip,
     };
     if (deviceType) customData.deviceType = deviceType.trim().slice(0, 64);
+    if (locale) customData.locale = locale;
     if (userId) customData.userId = userId;
 
     if (apiKey) {
@@ -101,6 +107,12 @@ export async function POST(request: Request) {
           );
         }
         serverPrice = pkg.retailPrice ? pkg.retailPrice / 10000 : pkg.price / 10000;
+      }
+
+      // Hot deal (ticket 024): an active deal can only lower the charged price.
+      // Deal prices are profit-gated at creation (net profit >= configured floor).
+      if (dealPrice != null && dealPrice < serverPrice) {
+        serverPrice = dealPrice;
       }
 
       const amountCents = Math.round(serverPrice * 100);

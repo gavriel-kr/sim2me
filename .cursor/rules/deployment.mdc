@@ -1,0 +1,44 @@
+---
+description: Deployment protocol for Sim2Me — mandatory gate before any production deploy
+alwaysApply: true
+---
+
+# Sim2Me Deployment Protocol
+
+Full source of truth: `DEPLOY-PROTOCOL.md` at the repo root. Follow it strictly.
+
+## Absolute rules
+
+1. **Never deploy, never ask to deploy, never discuss deploying** unless the user explicitly requests it in the current conversation.
+2. Production deploy method is **only** `git push origin main` (Vercel GitHub integration).
+3. **Never** run `vercel --prod`, `vercel deploy`, or any Vercel CLI production deploy.
+4. Wrong Vercel team is forbidden. Only **Gabriel's projects** → project `sim2me`. Never valentyns-com.
+
+## Before any push to `main` (when user explicitly asked to deploy)
+
+The agent MUST:
+
+1. Determine risk level (R0–R3) per `DEPLOY-PROTOCOL.md`
+2. Run mandatory checks (lint/tests as relevant, and `npm run build`)
+3. If **anything** fails: **STOP → fix → re-run the failed checks**. Do not continue to push.
+4. Create backup tag for R1+ (`pre-deploy-YYYYMMDD-HHMM`)
+5. Complete the pre-push gate in `DEPLOY-PROTOCOL.md`
+6. Only then `git push origin main`
+7. Run post-deploy smoke. If smoke fails: stop, report, propose rollback — do not keep pushing blindly
+
+## Stop / Fix / Recheck loop
+
+```
+check failed → do not deploy → fix → recheck → only continue when green
+```
+
+Never skip a failed gate. Never “deploy now, fix later.”
+
+## Project mapping
+
+| Service | Value |
+|---------|--------|
+| Local | `C:\sim2me` |
+| GitHub | `gavriel-kr/sim2me` |
+| Vercel | Gabriel's projects / `sim2me` |
+| Prod | `https://www.sim2me.net` |

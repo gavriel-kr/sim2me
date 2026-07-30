@@ -1,0 +1,23 @@
+/** Arabic display name for AR gap slugs (same destinations as EN list subset). */
+export const SLUG_TO_AR_NAME = {
+  'esim-bucharest': 'بوخارست',
+  'esim-paris': 'باريس',
+  'esim-bulgaria': 'بلغاريا',
+  'esim-romania': 'رومانيا',
+  'esim-prague': 'براغ',
+  'esim-panama': 'بنما',
+  'esim-montenegro': 'الجبل الأسود',
+  'esim-chile': 'تشيلي',
+  'esim-zanzibar': 'زنجبار',
+  'esim-guatemala': 'غواتيمالا',
+  'esim-ecuador': 'الإكوادور',
+  'esim-nepal': 'نيبال',
+  'esim-mongolia': 'منغوليا',
+  'esim-bali': 'بالي',
+  'esim-andorra': 'أندورا',
+  'esim-monaco': 'موناكو',
+  'esim-north-cyprus': 'شمال قبرص',
+  'esim-jamaica': 'جامايكا',
+  'esim-puerto-rico': 'بورتوريكو',
+  'esim-el-salvador': 'السلفادور',
+};

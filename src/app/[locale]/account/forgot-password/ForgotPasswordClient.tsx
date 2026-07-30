@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { createSharedPathnamesNavigation } from 'next-intl/navigation';
 import { routing } from '@/i18n/routing';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,6 +13,7 @@ const { Link: IntlLink } = createSharedPathnamesNavigation(routing);
 
 export function ForgotPasswordClient() {
   const t = useTranslations('account');
+  const locale = useLocale();
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [sent, setSent] = useState(false);
@@ -26,7 +27,7 @@ export function ForgotPasswordClient() {
       const res = await fetch('/api/account/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+        body: JSON.stringify({ email: email.trim().toLowerCase(), locale }),
       });
       const data = await res.json();
       if (!res.ok) {

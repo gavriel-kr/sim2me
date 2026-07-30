@@ -11,8 +11,6 @@ export const mockDestinations: Destination[] = [
     popular: true,
     operatorCount: 3,
     planCount: 24,
-    fromPrice: 4.99,
-    fromCurrency: 'USD',
   },
   {
     id: 'gb',
@@ -24,8 +22,6 @@ export const mockDestinations: Destination[] = [
     popular: true,
     operatorCount: 2,
     planCount: 18,
-    fromPrice: 4.99,
-    fromCurrency: 'USD',
   },
   {
     id: 'jp',
@@ -37,8 +33,6 @@ export const mockDestinations: Destination[] = [
     popular: true,
     operatorCount: 2,
     planCount: 15,
-    fromPrice: 4.99,
-    fromCurrency: 'USD',
   },
   {
     id: 'il',
@@ -50,8 +44,6 @@ export const mockDestinations: Destination[] = [
     popular: true,
     operatorCount: 2,
     planCount: 12,
-    fromPrice: 4.99,
-    fromCurrency: 'USD',
   },
   {
     id: 'fr',
@@ -63,8 +55,6 @@ export const mockDestinations: Destination[] = [
     popular: true,
     operatorCount: 2,
     planCount: 14,
-    fromPrice: 4.99,
-    fromCurrency: 'USD',
   },
   {
     id: 'de',
@@ -76,8 +66,6 @@ export const mockDestinations: Destination[] = [
     popular: true,
     operatorCount: 2,
     planCount: 16,
-    fromPrice: 4.99,
-    fromCurrency: 'USD',
   },
   {
     id: 'es',
@@ -89,8 +77,6 @@ export const mockDestinations: Destination[] = [
     popular: false,
     operatorCount: 2,
     planCount: 10,
-    fromPrice: 4.99,
-    fromCurrency: 'USD',
   },
   {
     id: 'it',
@@ -102,8 +88,6 @@ export const mockDestinations: Destination[] = [
     popular: false,
     operatorCount: 2,
     planCount: 11,
-    fromPrice: 4.99,
-    fromCurrency: 'USD',
   },
   {
     id: 'th',
@@ -115,8 +99,6 @@ export const mockDestinations: Destination[] = [
     popular: true,
     operatorCount: 2,
     planCount: 12,
-    fromPrice: 4.99,
-    fromCurrency: 'USD',
   },
   {
     id: 'ae',
@@ -128,8 +110,6 @@ export const mockDestinations: Destination[] = [
     popular: true,
     operatorCount: 2,
     planCount: 10,
-    fromPrice: 4.99,
-    fromCurrency: 'USD',
   },
   {
     id: 'eu',
@@ -141,8 +121,6 @@ export const mockDestinations: Destination[] = [
     popular: true,
     operatorCount: 1,
     planCount: 8,
-    fromPrice: 4.99,
-    fromCurrency: 'USD',
   },
   {
     id: 'au',
@@ -154,7 +132,5 @@ export const mockDestinations: Destination[] = [
     popular: false,
     operatorCount: 2,
     planCount: 9,
-    fromPrice: 4.99,
-    fromCurrency: 'USD',
   },
 ];

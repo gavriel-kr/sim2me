@@ -13,17 +13,30 @@ import { Mail, ArrowRight } from 'lucide-react';
 export function NewsletterSection() {
   const t = useTranslations('home');
   const { toast } = useToast();
-  const { register, handleSubmit, formState: { errors }, reset } = useForm<NewsletterFormData>({
+  const { register, handleSubmit, formState: { errors, isSubmitting }, reset } = useForm<NewsletterFormData>({
     resolver: zodResolver(newsletterSchema),
   });
 
-  function onSubmit(data: NewsletterFormData) {
-    toast({
-      title: 'Subscribed!',
-      description: `We'll send updates to ${data.email}`,
-      variant: 'success',
-    });
-    reset();
+  async function onSubmit(data: NewsletterFormData) {
+    try {
+      const res = await fetch('/api/newsletter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: data.email }),
+      });
+      if (!res.ok) throw new Error('subscribe failed');
+      toast({
+        title: t('newsletterSuccess'),
+        description: t('newsletterSuccessDesc', { email: data.email }),
+        variant: 'success',
+      });
+      reset();
+    } catch {
+      toast({
+        title: t('newsletterError'),
+        variant: 'destructive',
+      });
+    }
   }
 
   return (
@@ -33,7 +46,7 @@ export function NewsletterSection() {
           <Mail className="h-5 w-5" />
         </div>
         <h2 className="text-xl font-bold text-foreground sm:text-2xl">{t('newsletterTitle')}</h2>
-        <p className="mt-2 text-sm text-muted-foreground">Get exclusive deals and travel tips delivered to your inbox</p>
+        <p className="mt-2 text-sm text-muted-foreground">{t('newsletterSubtitle')}</p>
         <form onSubmit={handleSubmit(onSubmit)} className="mt-6 flex flex-col gap-2 sm:flex-row sm:gap-2">
           <div className="flex-1">
             <Label htmlFor="newsletter-email" className="sr-only">
@@ -50,14 +63,14 @@ export function NewsletterSection() {
               <p className="mt-1 text-left text-sm text-destructive">{errors.email.message}</p>
             )}
           </div>
-          <Button type="submit" className="h-12 rounded-xl px-6 text-base font-semibold shadow-sm sm:shrink-0">
+          <Button type="submit" disabled={isSubmitting} className="h-12 rounded-xl px-6 text-base font-semibold shadow-sm sm:shrink-0">
             <span className="flex items-center gap-2">
               {t('newsletterButton')}
               <ArrowRight className="h-4 w-4" />
             </span>
           </Button>
         </form>
-        <p className="mt-3 text-xs text-muted-foreground">No spam, unsubscribe anytime.</p>
+        <p className="mt-3 text-xs text-muted-foreground">{t('newsletterNoSpam')}</p>
       </div>
     </section>
   );

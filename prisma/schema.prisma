@@ -156,6 +156,26 @@ model PackageOverride {
   @@map("package_overrides")
 }
 
+// ─── Hot Deals (homepage daily deals, ticket 024) ───────────────────
+model HotDeal {
+  id              String   @id @default(cuid())
+  packageCode     String
+  dealDay         String                       // "YYYY-MM-DD" UTC rotation key
+  discountPercent Int
+  originalPrice   Decimal  @db.Decimal(10, 2)
+  dealPrice       Decimal  @db.Decimal(10, 2)
+  netProfit       Decimal  @db.Decimal(10, 2)  // frozen at creation for admin display
+  locationCode    String
+  packageName     String
+  pinned          Boolean  @default(false)     // survives daily rotation
+  active          Boolean  @default(true)      // admin kill switch
+  createdAt       DateTime @default(now())
+
+  @@unique([packageCode, dealDay])
+  @@index([dealDay])
+  @@map("hot_deals")
+}
+
 // ─── Featured Destinations (homepage popular section) ──────────────
 model FeaturedDestination {
   id           String   @id @default(cuid())

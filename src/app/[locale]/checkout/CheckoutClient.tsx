@@ -16,6 +16,7 @@ import { createSharedPathnamesNavigation } from 'next-intl/navigation';
 import { routing } from '@/i18n/routing';
 import { usePaddle } from '@/components/paddle/PaddleScript';
 import { TurnstileWidget, type TurnstileWidgetRef } from '@/components/ui/TurnstileWidget';
+import { planToGaItem, trackAddPaymentInfo, trackBeginCheckout } from '@/lib/analytics';
 
 const { Link: IntlLink } = createSharedPathnamesNavigation(routing);
 
@@ -45,6 +46,13 @@ export function CheckoutClient() {
     resolver: zodResolver(travelerInfoSchema),
   });
 
+  const gaItems = () => items.map((i) => planToGaItem(i.plan, i.destinationName));
+
+  const goToTravelerStep = () => {
+    trackBeginCheckout(gaItems(), total);
+    setStep('traveler');
+  };
+
   const onTravelerSubmit = (data: TravelerInfoForm) => {
     setTravelerInfo({ email: data.email, firstName: data.firstName, lastName: data.lastName });
     setStep('payment');
@@ -67,6 +75,7 @@ export function CheckoutClient() {
     }
     setPaymentError(null);
     setPaymentLoading(true);
+    trackAddPaymentInfo(gaItems(), total);
     try {
       const res = await fetch('/api/checkout/create-transaction', {
         method: 'POST',
@@ -80,6 +89,7 @@ export function CheckoutClient() {
           })),
           customerEmail: travelerData.email,
           customerName: [travelerData.firstName, travelerData.lastName].filter(Boolean).join(' ').trim() || undefined,
+          locale,
           turnstileToken: turnstileToken ?? '',
         }),
       });
@@ -197,7 +207,7 @@ export function CheckoutClient() {
                 <Button
                   className="w-full"
                   disabled={belowMinimum}
-                  onClick={() => setStep('traveler')}
+                  onClick={goToTravelerStep}
                 >
                   Continue to details
                 </Button>
@@ -318,7 +328,7 @@ export function CheckoutClient() {
               {step === 'cart' && (
                 <Button
                   className="mt-6 w-full"
-                  onClick={() => setStep('traveler')}
+                  onClick={goToTravelerStep}
                 >
                   Continue
                 </Button>

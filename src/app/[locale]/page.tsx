@@ -1,6 +1,8 @@
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Hero } from '@/components/sections/Hero';
+import { HotDealsSection } from '@/components/sections/HotDealsSection';
+import { ForYouSection } from '@/components/sections/ForYouSection';
 import { ValueProps } from '@/components/sections/ValueProps';
 import { FeaturedPlans } from '@/components/sections/FeaturedPlans';
 import { TrustStrip } from '@/components/sections/TrustStrip';
@@ -97,6 +99,8 @@ export default async function HomePage({ params }: Props) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
       />
       <Hero />
+      <HotDealsSection />
+      <ForYouSection />
       <ValueProps />
       <FeaturedPlans />
       <TrustStrip />

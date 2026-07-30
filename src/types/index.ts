@@ -37,6 +37,8 @@ export interface Plan {
   topUps: boolean;
   operatorName: string;
   popular?: boolean;
+  /** Admin-set promo badge (e.g. "20% OFF", "HOT") — from PackageOverride */
+  saleBadge?: string | null;
 }
 
 export interface FAQ {
