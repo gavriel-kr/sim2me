@@ -230,6 +230,43 @@ their place. On a site whose traffic is mostly phones that is the gap that matte
 - ✅ Verified every box against a 288 px content width (a 320 px phone), computed from the rendered
   custom properties rather than estimated: 255, 129, 101, 89, 86 px, and the CTA pair 199 px together
 
+### 7i — The hero column was wider than the phone, 2026-08-01
+
+7h shipped and Gabriel's phone showed the homepage sliced down its left edge: the headline missing its
+first word, the search field cut, the pair and the offer card half off-screen. 7h's last check had
+measured each figure and found them all comfortably inside 288 px — which was true, and useless,
+because it measured the figures and never their container.
+
+- ✅ **The hero grid's own children were 536 px inside a 343 px track.** A grid item defaults to
+  `min-width: auto`, meaning it will not shrink below its own min-content, so the item simply
+  overflowed the track and the section's `overflow-hidden` hid the evidence. Measured, not guessed:
+  text column and headline at `[-177 .. 359]`, search input 448 px wide, the pair at `[-36 .. 218]`,
+  the card at `[-69 .. 251]`. `min-w-0` on both columns removes the automatic floor and every box
+  returns to `[16 .. 359]`
+- ✅ The deal chip's `whitespace-nowrap` became `lg:whitespace-nowrap`. The single-line guarantee 7g
+  introduced is right where there is room for it, but the longest deal is wider than a phone, and a
+  chip that cannot wrap is precisely the kind of unbreakable content that raises a column's min-content
+- ✅ Clean at 375 px and at 320 px: `scrollWidth` equals the viewport, and the only boxes outside it are
+  the carousel's two inactive slides and the pre-existing decorative blur circles, all inside
+  `overflow-hidden` by design
+
+**Why this was missed, and what now catches it.** Every check to that point was a number computed from
+the source — figure widths derived from custom properties — and the failure lived in a CSS default that
+no source reading would surface. Three throwaway-proof scripts now exist under `agent-workspace/scripts`
+and drive the already-installed Chrome over the DevTools Protocol, with no new dependency, because
+Node 24 has a global `WebSocket`:
+
+- `find-overflow.mjs` — lists every element crossing the viewport edge, innermost first
+- `probe-layout.mjs` — prints the exact box of the hero's named parts
+- `shoot-mobile.mjs` — screenshots at a true phone viewport
+
+The last one exists because of a false alarm worth remembering: `chrome --headless --screenshot
+--window-size=375,...` is **not** a phone. Without `Emulation.setDeviceMetricsOverride` the layout
+viewport came out 512 px and the PNG was cropped to 375 — which looks exactly like the overflow being
+hunted, and briefly suggested the fix had not worked when it had. It also renders lazy images as empty
+reserved boxes, so sections below the fold look stripped of their characters unless the shot scrolls
+to them first.
+
 ### 7g — The deal chip becomes a rotating strip, 2026-07-31
 
 Gabriel's call: the chip under the hero badge should cycle through all of today's deals, not name only

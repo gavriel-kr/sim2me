@@ -67,9 +67,16 @@ export function Hero() {
       <div className="absolute -left-32 bottom-0 h-80 w-80 rounded-full bg-emerald-100/60 blur-3xl" />
 
       <div className="relative container mx-auto max-w-6xl px-4 py-16 sm:py-24 lg:py-28">
+        {/*
+          `min-w-0` on both columns is load-bearing, not tidying. A grid item defaults to
+          `min-width: auto`, which means it refuses to shrink below the widest unbreakable thing inside
+          it — so any single element that cannot wrap silently widens the whole column, and the section
+          clips whatever spills. On a phone that reads as the entire page being cut off down one side,
+          with nothing to point at as the cause.
+        */}
         <div className="grid items-center gap-12 lg:grid-cols-2">
           {/* Left: Text content */}
-          <div className="animate-fade-up">
+          <div className="min-w-0 animate-fade-up">
             {/*
               Stacked rather than wrapped. The deal chip belongs on its own line under the activation
               badge at every width — leaving it to `flex-wrap` meant the line break depended on how
@@ -81,6 +88,11 @@ export function Hero() {
               headline, so it had to reserve the width of the longest deal and short deals paid for it
               with visible empty space. Alone on the line there is nothing beside it to push, and only
               its own trailing edge moves.
+
+              `whitespace-nowrap` only from `lg`. The single-line guarantee is worth having where there
+              is room for it, but on a phone the longest deal — "ארצות הברית 100 GB ב-$127.21 $139.80"
+              — is wider than the screen, and a chip that cannot wrap forces the grid column wider than
+              the viewport and pushes the whole hero off the side.
             */}
             <div className="mb-6 flex flex-col items-start gap-2">
               <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-sm font-medium text-primary">
@@ -91,7 +103,7 @@ export function Hero() {
                 <a
                   href="#hot-deals"
                   {...pauseHandlers}
-                  className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-orange-200 bg-orange-50 px-3.5 py-1.5 text-sm font-medium text-orange-700 transition-colors hover:bg-orange-100"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-orange-200 bg-orange-50 px-3.5 py-1.5 text-sm font-medium text-orange-700 transition-colors hover:bg-orange-100 lg:whitespace-nowrap"
                 >
                   <Flame className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                   {/* Keyed on the deal so each one remounts and fades in; only one is ever in the DOM,
@@ -200,7 +212,7 @@ export function Hero() {
             overlap is impossible — the card alone is 320 px of a 343 px column — so the two simply
             stack, pair above card, and the fixed-height positioning frame switches off.
           */}
-          <div className="mx-auto flex w-full max-w-[536px] flex-col items-center gap-4 lg:relative lg:block lg:h-[470px]">
+          <div className="mx-auto flex w-full min-w-0 max-w-[536px] flex-col items-center gap-4 lg:relative lg:block lg:h-[470px]">
             <CharacterFigure
               slot="heroPair"
               height={200}

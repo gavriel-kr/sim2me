@@ -56,3 +56,6 @@ prisma/75temp.zip
 public/characters/*-proof.png
 agent-workspace/brand-assets/**/*.png
 agent-workspace/tickets/*/proofs/
+
+# Ticket 028: scratch output from the mobile screenshot scripts in agent-workspace/scripts.
+.mobile-check/
