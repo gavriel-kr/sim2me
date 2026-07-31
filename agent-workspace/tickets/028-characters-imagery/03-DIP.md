@@ -376,6 +376,7 @@ assuming it is fine.
 
 ## Status log
 
+- 2026-08-01: **Deployed to production**, commit `5f31def`, backup tag `pre-deploy-20260801-0133` on `c8f304c`. R0 — three class changes in one component. Post-deploy smoke green: three locales 200 with ten character asset references each, Japan destination 200, `/api/checkout/health` `ok: true` on all five steps, both preview pages 404. The check that matters was re-run against production rather than trusted from local: every hero box now spans `[16 .. 359]` at 375 px in all three locales, and at 320 px the only boxes outside the viewport are the carousel's inactive slides and the pre-existing decorative blurs, all inside `overflow-hidden`. **The lesson is about the previous deploy, not this one.** 7h shipped after verifying each figure fitted a 288 px content width — a true statement that measured the figures and never their container, and every check in it was a number computed from the source. The bug lived in a CSS default no source reading surfaces, and it took a browser to see. Three CDP scripts now exist so that is a one-command check rather than a rediscovery.
 - 2026-07-31: **The characters now appear on phones**, which they did not in the first deploy — every beat carried `hidden lg:block`. The real blocker was that `CharacterFigure` sized its box with inline `width` and `height`, and a `style` attribute cannot hold a media query, so sizing moved to custom properties read by a `.character-figure` class. Two things worth keeping: the first version of that class computed width as `height × ratio` and forgot that a cropped figure's width follows the scaled-up image height, which made cropped boxes 54 % too narrow and sliced the figures down both sides — caught by printing the rendered numbers and comparing them against what the old inline styles produced, not by looking at the page. And the CTA pair's mobile height is set by faces rather than by space: full-length figures put a head at a seventh of the box, so the 150 px the layout would happily accept gives a 20 px face. The hero pair and card stack instead of overlapping, the four beside-a-heading beats become columns, and the CTA uses `lg:contents` so one DOM node serves both layouts.
 - 2026-07-31: **Deployed to production**, commit `1dd200e`, backup tag `pre-deploy-20260731-2017` on `1761d90`. R1. Post-deploy smoke green: three locales 200 with five characters in the server HTML each, all fourteen assets 200, the new CTA copy present in all three, `/api/hot-deals` returning today's three deals, `/api/checkout/health` `ok: true`, destinations and checkout unaffected, and both preview pages correctly 404. Three things the deploy prep turned up that are worth more than the deploy itself:
   - **`.env.bak` and `.env.local.bak` were tracked in git** and had been since `70f6b9b`, carrying live `RESEND_API_KEY`, `ESIMACCESS_ACCESS_CODE`, `ESIMACCESS_SECRET_KEY`, `NEXTAUTH_SECRET` and three database URLs. `.gitignore` covered `.env` and `.env.local` but not the `.bak` variants. Untracked here and now ignored, which stops further exposure but does not undo it — **the keys still need rotating**, and that is deliberately not in this commit because it touches eSIM, email and auth
@@ -402,6 +403,15 @@ assuming it is fine.
 
 ## Notes / follow-ups
 
+- **The hero pair is clipped by 14 px per side at exactly 1024 px.** The figure is a fixed 532 px
+  centred in a column that is 472 px at that width, and the section's `overflow-hidden` trims the
+  difference. Confirmed pre-existing — production measured identically before and after the overflow
+  fix — and invisible above about 1100 px. Left alone rather than folded into a deploy that was asked
+  to be uneventful; the fix is a smaller figure between `lg` and `xl`.
+- **The hero's search button is still singular** — "מצא את ה-eSIM שלך" — while the rest of the page
+  has moved to the plural, including "מצאו" in the closing section. It was never flagged, and the
+  transcript confirms the earlier "מצא → מצאו" instruction referred to the green CTA section, so it is
+  recorded rather than changed.
 - **The Arabic CTA heading is singular masculine** (`مستعد للسفر؟`) while the rest of the Arabic copy
   addresses the reader in the plural, the same inconsistency that was just fixed in Hebrew. Not
   changed here because it was not asked for, and Arabic copy deserves a native read rather than a
