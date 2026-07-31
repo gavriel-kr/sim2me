@@ -10,11 +10,11 @@
     "account": "حسابي",
     "cart": "السلة",
     "calculator": "الحاسبة",
-    "searchPlaceholder": "ابحث عن وجهة..."
+    "searchPlaceholder": "ابحثوا عن وجهة..."
   },
   "home": {
-    "heroTitle": "ابقوا متصلين في كل العالم. بدون رسوم تجوال.",
-    "heroSubtitle": "اهبط متصلاً — دون تبديل شريحة ودون البحث عن واي فاي في المطار.",
+    "heroTitle": "متصلون في كل العالم",
+    "heroSubtitle": "اتصال براحة بال",
     "heroContinue": "المتابعة إلى {destination}؟",
     "heroDealChip": "اليوم: {destination} {data} بـ{dealPrice}",
     "heroDealInstead": "بدلاً من {originalPrice}",
@@ -22,7 +22,7 @@
     "heroPhoneHeader": "عروض اليوم الساخنة",
     "heroPhoneSub": "مجموعة جديدة كل يوم",
     "heroFrom": "من",
-    "searchCta": "اعثر على eSIM الخاص بك",
+    "searchCta": "اعثروا على eSIM الخاص بكم",
     "value1Title": "توصيل فوري",
     "value1Desc": "استلم eSIM عبر البريد. بدون شحن، بدون انتظار.",
     "value2Title": "أفضل الأسعار",
@@ -34,7 +34,7 @@
     "hotDealsSubtitle": "خصم إضافي يختفي عند منتصف الليل — مجموعة جديدة كل يوم",
     "hotDealsEndsToday": "اليوم فقط",
     "hotDealsPerDay": "لليوم",
-    "hotDealsAddToCart": "أضف إلى السلة",
+    "hotDealsAddToCart": "أضيفوا إلى السلة",
     "hotDealsViewAll": "جميع باقات {destination}",
     "forYouRecentTitle": "أكمل من حيث توقفت",
     "forYouRecentSubtitle": "أفضل الاختيارات لـ{destination} — الوجهة التي كنت تتصفحها",
@@ -69,7 +69,7 @@
   },
   "destinations": {
     "title": "الوجهات",
-    "subtitle": "اختر دولة أو منطقة لرؤية خطط eSIM المتاحة.",
+    "subtitle": "اختاروا دولة أو منطقة لرؤية خطط eSIM المتاحة.",
     "popular": "شائع",
     "plansCount": "خطط",
     "from": "من",
@@ -143,7 +143,7 @@
     "tierWeekDesc": "أسبوع أو أسبوعان دون التفكير في البيانات",
     "tierMonth": "الرحلة الكاملة",
     "tierMonthDesc": "الباقة التي يختارها معظم المسافرين",
-    "tierHeavy": "مستخدم كثيف",
+    "tierHeavy": "بيانات شبه غير محدودة",
     "tierHeavyDesc": "بث ونقطة اتصال واستخدام كثيف",
     "tierLong": "إقامة طويلة",
     "tierLongDesc": "إقامة ممتدة وعمل عن بُعد"

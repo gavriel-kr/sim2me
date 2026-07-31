@@ -13,8 +13,8 @@
     "searchPlaceholder": "Search destination..."
   },
   "home": {
-    "heroTitle": "Stay connected worldwide. No roaming fees.",
-    "heroSubtitle": "Land connected — no SIM swapping, no hunting for airport Wi-Fi.",
+    "heroTitle": "Connected worldwide",
+    "heroSubtitle": "Connectivity with peace of mind",
     "heroContinue": "Continue to {destination}?",
     "heroDealChip": "Today: {destination} {data} for {dealPrice}",
     "heroDealInstead": "instead of {originalPrice}",
@@ -143,7 +143,7 @@
     "tierWeekDesc": "A week or two without thinking about data",
     "tierMonth": "The Full Trip",
     "tierMonthDesc": "The plan most travelers choose",
-    "tierHeavy": "Heavy Traveler",
+    "tierHeavy": "Almost unlimited data",
     "tierHeavyDesc": "Streaming, hotspot and heavy use",
     "tierLong": "Long Stay",
     "tierLongDesc": "Extended stays and remote work"
