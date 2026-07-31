@@ -41,16 +41,13 @@ export function FeaturedPlans() {
     <section className="relative bg-gradient-to-b from-muted/30 to-white py-20 sm:py-24">
       <div className="container px-4">
         {/*
-          Simi scouting the destinations through binoculars. Cropped to head-and-torso: the
-          binoculars sit at eye level, so that crop is where the whole gesture lives.
-
-          Sides alternate down the page — deals at the inline start, the daily pick at the end, here
-          back at the start, the FAQ at the end — so the characters zigzag instead of stacking into a
-          column along one edge.
+          Simi scouting the destinations through binoculars. He stands at the inline end, the
+          opposite side from Sima two sections up, so the beats alternate instead of forming a column
+          of characters down one edge. Cropped to head-and-torso: the binoculars are at eye level, so
+          that crop is where the whole gesture lives.
         */}
-        <div className="flex items-center justify-center gap-5 lg:gap-8">
-          <CharacterFigure slot="destinationsScout" height={230} crop={0.46} className="hidden lg:block" />
-          <div className="max-w-2xl text-center">
+        <div className="flex items-end justify-center gap-5 lg:gap-8">
+          <div className="max-w-2xl pb-1 text-center">
             <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
               <Sparkles className="h-3 w-3" />
               {t('featuredPlans')}
@@ -62,6 +59,7 @@ export function FeaturedPlans() {
               {tDest('subtitle')}
             </p>
           </div>
+          <CharacterFigure slot="destinationsScout" height={230} crop={0.46} className="hidden lg:block" />
         </div>
 
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

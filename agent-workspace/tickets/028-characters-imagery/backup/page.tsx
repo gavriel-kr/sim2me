@@ -3,7 +3,9 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { Hero } from '@/components/sections/Hero';
 import { HotDealsSection } from '@/components/sections/HotDealsSection';
 import { ForYouSection } from '@/components/sections/ForYouSection';
+import { ValueProps } from '@/components/sections/ValueProps';
 import { FeaturedPlans } from '@/components/sections/FeaturedPlans';
+import { TrustStrip } from '@/components/sections/TrustStrip';
 import { FAQSection } from '@/components/sections/FAQSection';
 import { CTASection } from '@/components/sections/CTASection';
 type Props = { params: Promise<{ locale: string }> };
@@ -96,16 +98,12 @@ export default async function HomePage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
       />
-      {/*
-        `ValueProps` and `TrustStrip` were dropped from the homepage on 2026-07-31 as redundant. Both
-        components are left in the codebase, unreferenced, so restoring either is one import and one
-        line. `TrustStrip` in particular repeated the hero's own micro-trust row almost word for word
-        — 200+ destinations, secure payment, 24/7 support — which is why it read as filler.
-      */}
       <Hero />
       <HotDealsSection />
       <ForYouSection />
+      <ValueProps />
       <FeaturedPlans />
+      <TrustStrip />
       <FAQSection />
       <CTASection />
     </MainLayout>

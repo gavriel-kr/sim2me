@@ -29,8 +29,7 @@ export function FAQSection() {
     <section className="bg-white py-20 sm:py-24">
       {/*
         Sima reading the questions with genuine curiosity, beside the accordion rather than beside
-        the heading — the questions are what she is curious about. At the inline end, continuing the
-        alternation down the page.
+        the heading — the questions are what she is curious about.
 
         Laid out in flow inside a wider wrapper instead of absolutely positioned: the section has no
         `overflow-hidden`, and an absolute figure at the edge of a `max-w-3xl` column overruns the
@@ -38,6 +37,7 @@ export function FAQSection() {
       */}
       <div className="container px-4">
         <div className="mx-auto flex max-w-5xl items-end justify-center gap-8">
+          <CharacterFigure slot="faqCurious" height={300} crop={0.5} className="hidden lg:block" />
           <div className="w-full max-w-3xl">
             <div className="text-center">
               <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
@@ -69,7 +69,6 @@ export function FAQSection() {
               ))}
             </Accordion>
           </div>
-          <CharacterFigure slot="faqCurious" height={300} crop={0.5} className="hidden lg:block" />
         </div>
       </div>
     </section>

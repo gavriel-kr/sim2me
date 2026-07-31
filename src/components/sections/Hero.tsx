@@ -8,52 +8,20 @@ import { createSharedPathnamesNavigation } from 'next-intl/navigation';
 import { routing } from '@/i18n/routing';
 import { getDestinations } from '@/lib/api/repositories/destinationsRepository';
 import { formatPrice } from '@/lib/utils';
-import { Wifi, Globe2, Shield, Zap, Flame, Headphones, History } from 'lucide-react';
+import { localizedCountryName, volumeToDisplay, HOT_DEALS_QUERY } from '@/lib/deals';
+import { CharacterFigure } from '@/components/brand/CharacterFigure';
+import { HeroOfferCard } from '@/components/sections/HeroOfferCard';
+import { useDealRotation } from '@/hooks/useDealRotation';
+import { Shield, Zap, Flame, Headphones, History } from 'lucide-react';
 
 const { Link: IntlLink } = createSharedPathnamesNavigation(routing);
 
 const RECENT_DESTINATIONS_KEY = 'sim2me_recent_destinations';
 
-interface HeroDeal {
-  id: string;
-  name: string;
-  locationCode: string;
-  flagCode: string;
-  volume: number;
-  duration: number;
-  originalPrice: number;
-  dealPrice: number;
-  discountPercent: number;
-  currency: string;
-}
-
 interface RecentDestination {
   code: string;
   slug: string;
   name: string;
-}
-
-function localizedCountryName(isoCode: string, fallback: string, locale: string): string {
-  if (isoCode.length !== 2) return fallback;
-  try {
-    return new Intl.DisplayNames([locale], { type: 'region' }).of(isoCode) || fallback;
-  } catch {
-    return fallback;
-  }
-}
-
-function volumeToDisplay(volumeBytes: number): string {
-  if (volumeBytes < 0) return 'Unlimited';
-  const gb = volumeBytes / (1024 * 1024 * 1024);
-  const mb = volumeBytes / (1024 * 1024);
-  return gb >= 1 ? `${gb % 1 === 0 ? gb.toFixed(0) : gb.toFixed(1)}GB` : `${mb.toFixed(0)}MB`;
-}
-
-async function fetchDeals(): Promise<HeroDeal[]> {
-  const res = await fetch('/api/hot-deals');
-  if (!res.ok) return [];
-  const data = await res.json();
-  return data.deals ?? [];
 }
 
 function readRecent(): RecentDestination | null {
@@ -69,16 +37,11 @@ function readRecent(): RecentDestination | null {
 
 export function Hero() {
   const t = useTranslations('home');
-  const tPlan = useTranslations('plan');
   const locale = useLocale();
   const [recent, setRecent] = useState<RecentDestination | null>(null);
 
-  // Same query keys as HotDealsSection / ForYouSection — shared react-query cache, zero extra requests.
-  const { data: deals = [] } = useQuery({
-    queryKey: ['hot-deals'],
-    queryFn: fetchDeals,
-    staleTime: 5 * 60 * 1000,
-  });
+  // Same query key as HotDealsSection / ForYouSection — shared react-query cache, zero extra requests.
+  const { data: deals = [] } = useQuery(HOT_DEALS_QUERY);
   const { data: destinations = [] } = useQuery({
     queryKey: ['destinations'],
     queryFn: getDestinations,
@@ -88,7 +51,10 @@ export function Hero() {
     setRecent(readRecent());
   }, []);
 
-  const topDeal = deals[0];
+  // One list and one rotation for both the chip and the card, so they always name the same deal.
+  const strip = deals.slice(0, 3);
+  const { active, setIndex, pauseHandlers } = useDealRotation(strip.length);
+
   const chips = destinations
     .filter((d) => d.popular && d.isoCode.length === 2)
     .slice(0, 6);
@@ -104,24 +70,45 @@ export function Hero() {
         <div className="grid items-center gap-12 lg:grid-cols-2">
           {/* Left: Text content */}
           <div className="animate-fade-up">
-            <div className="mb-6 flex flex-wrap items-center gap-2">
+            {/*
+              Stacked rather than wrapped. The deal chip belongs on its own line under the activation
+              badge at every width — leaving it to `flex-wrap` meant the line break depended on how
+              long today's country name happened to be, so the hero's opening lines rearranged
+              themselves from one day to the next.
+
+              Its own line is also what lets the chip size to its content. Both rotate together: a
+              chip that shares a row cannot change width without risking a wrap that drops the
+              headline, so it had to reserve the width of the longest deal and short deals paid for it
+              with visible empty space. Alone on the line there is nothing beside it to push, and only
+              its own trailing edge moves.
+            */}
+            <div className="mb-6 flex flex-col items-start gap-2">
               <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-sm font-medium text-primary">
                 <Zap className="h-3.5 w-3.5" aria-hidden="true" />
                 {t('instantActivation')}
               </div>
-              {topDeal && (
+              {strip[active] && (
                 <a
                   href="#hot-deals"
-                  className="inline-flex items-center gap-1.5 rounded-full border border-orange-200 bg-orange-50 px-3.5 py-1.5 text-sm font-medium text-orange-700 transition-colors hover:bg-orange-100"
+                  {...pauseHandlers}
+                  className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-orange-200 bg-orange-50 px-3.5 py-1.5 text-sm font-medium text-orange-700 transition-colors hover:bg-orange-100"
                 >
-                  <Flame className="h-3.5 w-3.5" aria-hidden="true" />
-                  {t('heroDealChip', {
-                    destination: localizedCountryName(topDeal.locationCode, topDeal.name, locale),
-                    data: volumeToDisplay(topDeal.volume),
-                    dealPrice: formatPrice(topDeal.dealPrice, topDeal.currency),
-                  })}
-                  <span className="text-orange-400 line-through">
-                    {formatPrice(topDeal.originalPrice, topDeal.currency)}
+                  <Flame className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                  {/* Keyed on the deal so each one remounts and fades in; only one is ever in the DOM,
+                      which is what makes the chip exactly as wide as the deal it is showing. */}
+                  <span key={strip[active].id} className="animate-in fade-in duration-500">
+                    {t('heroDealChip', {
+                      destination: localizedCountryName(
+                        strip[active].locationCode,
+                        strip[active].name,
+                        locale
+                      ),
+                      data: volumeToDisplay(strip[active].volume).dataDisplay,
+                      dealPrice: formatPrice(strip[active].dealPrice, strip[active].currency),
+                    })}
+                    <span className="ms-1.5 text-orange-400 line-through">
+                      {formatPrice(strip[active].originalPrice, strip[active].currency)}
+                    </span>
                   </span>
                 </a>
               )}
@@ -199,126 +186,29 @@ export function Hero() {
             </div>
           </div>
 
-          {/* Right: Visual illustration */}
-          <div className="hidden lg:flex items-center justify-center">
-            <div className="relative">
-              {/* Phone mockup */}
-              <div className="animate-float relative h-[420px] w-[220px] rounded-[2.5rem] border-[3px] border-gray-800 bg-gray-900 p-2 shadow-2xl">
-                <div className="h-full w-full overflow-hidden rounded-[2rem] bg-gradient-to-b from-emerald-50 to-white">
-                  {/* Screen content */}
-                  <div className="flex h-full flex-col">
-                    <div className="bg-gradient-to-r from-primary to-emerald-600 px-4 pb-6 pt-10 text-white">
-                      <p className="text-xs font-medium opacity-80">{t('heroPhoneSub')}</p>
-                      <p className="mt-1 text-lg font-bold">{t('heroPhoneHeader')}</p>
-                    </div>
-                    <div className="flex-1 space-y-3 px-3 pt-4">
-                      {deals.length > 0 ? (
-                        deals.slice(0, 3).map((deal, idx) => (
-                          <div
-                            key={deal.id}
-                            className={`rounded-xl border p-3 ${
-                              idx === 0
-                                ? 'border-emerald-200 bg-emerald-50/80 shadow-sm'
-                                : 'border-gray-100 bg-white'
-                            }`}
-                          >
-                            <div className="flex items-center gap-2.5">
-                              <img
-                                src={`https://flagcdn.com/w40/${deal.flagCode}.png`}
-                                alt=""
-                                className="h-4 w-6 rounded-sm object-cover"
-                              />
-                              <div className="flex-1">
-                                <p className="text-xs font-bold text-gray-800">
-                                  {localizedCountryName(deal.locationCode, deal.name, locale)}
-                                </p>
-                                <p className="text-[10px] text-gray-500">
-                                  {volumeToDisplay(deal.volume)} &middot; {deal.duration} {tPlan('days')}
-                                </p>
-                              </div>
-                              <div className="text-end">
-                                <p className="text-xs font-extrabold text-emerald-600">
-                                  {formatPrice(deal.dealPrice, deal.currency)}
-                                </p>
-                                <p className="text-[9px] text-gray-400 line-through">
-                                  {formatPrice(deal.originalPrice, deal.currency)}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        [
-                          { country: 'JP', data: '5GB', days: 7 },
-                          { country: 'FR', data: '3GB', days: 5 },
-                          { country: 'US', data: '10GB', days: 30 },
-                        ].map((esim, idx) => (
-                          <div
-                            key={esim.country}
-                            className={`rounded-xl border p-3 ${
-                              idx === 0
-                                ? 'border-emerald-200 bg-emerald-50/80 shadow-sm'
-                                : 'border-gray-100 bg-white'
-                            }`}
-                          >
-                            <div className="flex items-center gap-2.5">
-                              <img
-                                src={`https://flagcdn.com/w40/${esim.country.toLowerCase()}.png`}
-                                alt=""
-                                className="h-4 w-6 rounded-sm object-cover"
-                              />
-                              <div className="flex-1">
-                                <p className="text-xs font-bold text-gray-800">
-                                  {localizedCountryName(esim.country, esim.country, locale)}
-                                </p>
-                                <p className="text-[10px] text-gray-500">
-                                  {esim.data} &middot; {esim.days} {tPlan('days')}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
+          {/*
+            Right: Simi and Sima present today's deal.
 
-              {/* Floating badges */}
-              <div className="animate-float-delayed absolute -left-16 top-16 rounded-2xl bg-white px-4 py-3 shadow-card">
-                <div className="flex items-center gap-2.5">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-100">
-                    <Wifi className="h-4 w-4 text-emerald-600" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-foreground">Connected</p>
-                    <p className="text-[10px] text-muted-foreground">4G LTE &middot; Tokyo</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="animate-float absolute -right-12 top-52 rounded-2xl bg-white px-4 py-3 shadow-card">
-                <div className="flex items-center gap-2.5">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-100">
-                    <Globe2 className="h-4 w-4 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-foreground">200+</p>
-                    <p className="text-[10px] text-muted-foreground">Countries</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="animate-float-delayed absolute -left-8 bottom-20 rounded-2xl bg-white px-4 py-3 shadow-card">
-                <div className="flex items-center gap-2.5">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-100">
-                    <Shield className="h-4 w-4 text-amber-600" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-foreground">Secure</p>
-                    <p className="text-[10px] text-muted-foreground">Encrypted</p>
-                  </div>
-                </div>
+            The CSS phone mockup that stood here showed the same three deals as HotDealsSection 200 px
+            below, at 10 px, with nothing to click, and it pulled the pair's gaze down and away from
+            the visitor. One actionable card replaces it. The box keeps its height when there are no
+            deals at all, so the grid never collapses.
+          */}
+          <div className="hidden lg:block">
+            <div className="relative mx-auto h-[470px] w-full max-w-[536px]">
+              <CharacterFigure
+                slot="heroPair"
+                height={418}
+                priority
+                className="absolute bottom-[52px] left-1/2 -translate-x-1/2"
+              />
+              <div className="absolute bottom-0 left-1/2 -translate-x-1/2">
+                <HeroOfferCard
+                  deals={strip}
+                  active={active}
+                  onSelect={setIndex}
+                  pauseHandlers={pauseHandlers}
+                />
               </div>
             </div>
           </div>

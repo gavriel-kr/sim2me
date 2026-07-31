@@ -48,9 +48,9 @@
     "trustSecure": "دفع آمن",
     "trustSupport": "دعم 24/7",
     "faqTitle": "الأسئلة الشائعة",
-    "ctaTitle": "مستعد للسفر؟",
-    "ctaSubtitle": "اعثر على eSIM المثالي لرحلتك القادمة.",
-    "ctaButton": "تصفح الوجهات",
+    "ctaTitle": "مستعدون للسفر؟",
+    "ctaSubtitle": "اعثروا على eSIM المثالي لرحلتكم القادمة.",
+    "ctaButton": "تصفحوا كل الوجهات",
     "newsletterTitle": "احصل على نصائح وعروض السفر",
     "newsletterPlaceholder": "بريدك الإلكتروني",
     "newsletterButton": "اشترك",
@@ -65,7 +65,7 @@
     "valueSectionSubtitle": "أبسط طريقة للبقاء متصلاً في الخارج",
     "faqBadge": "هل لديك أسئلة؟",
     "faqSubtitle": "كل ما تحتاج معرفته عن eSIM",
-    "ctaBadge": "ابدأ رحلتك"
+    "ctaBadge": "ابدأوا رحلتكم من هنا"
   },
   "destinations": {
     "title": "الوجهات",

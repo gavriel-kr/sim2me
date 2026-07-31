@@ -22,6 +22,8 @@ yarn-error.log*
 .env.development.local
 .env.test.local
 .env.production.local
+# Backup copies are real credential files. Two of these were committed before this rule existed.
+.env*.bak
 
 # Vercel
 .vercel
@@ -47,3 +49,10 @@ next-env.d.ts
 prisma/extracted-75*.html
 prisma/75docx
 prisma/75temp.zip
+
+# Ticket 028: character workshop output, regenerable by agent-workspace/scripts/cutout.mjs.
+# The proofs are contact sheets for checking cutouts on dark backgrounds and the PNGs are the
+# uncompressed masters — together several megabytes that the site never serves.
+public/characters/*-proof.png
+agent-workspace/brand-assets/**/*.png
+agent-workspace/tickets/*/proofs/

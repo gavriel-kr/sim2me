@@ -50,7 +50,7 @@
     "faqTitle": "Frequently asked questions",
     "ctaTitle": "Ready to travel?",
     "ctaSubtitle": "Find the perfect eSIM for your next trip.",
-    "ctaButton": "Browse destinations",
+    "ctaButton": "See all destinations",
     "newsletterTitle": "Get travel tips and offers",
     "newsletterPlaceholder": "Your email",
     "newsletterButton": "Subscribe",
@@ -65,7 +65,7 @@
     "valueSectionSubtitle": "The simplest way to stay connected abroad",
     "faqBadge": "Got questions?",
     "faqSubtitle": "Everything you need to know about eSIMs",
-    "ctaBadge": "Start your journey"
+    "ctaBadge": "Start your journey here"
   },
   "destinations": {
     "title": "Destinations",
