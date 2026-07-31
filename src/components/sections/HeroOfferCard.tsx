@@ -43,7 +43,7 @@ export function HeroOfferCard({ deals, active, onSelect, pauseHandlers }: Props)
     <div
       role="group"
       aria-label={t('hotDealsTitle')}
-      className="w-[320px] rounded-2xl border border-gray-100 bg-white p-4 shadow-card"
+      className="mx-auto w-[min(320px,100%)] rounded-2xl border border-gray-100 bg-white p-4 shadow-card"
       {...pauseHandlers}
     >
       <div className="mb-3 flex items-center justify-between">

@@ -196,6 +196,41 @@ html.a11y-highlight-focus *:focus-visible {
   .animate-pulse-soft {
     animation: pulseSoft 3s ease-in-out infinite;
   }
+
+  /*
+    Ticket 028 — the box for a brand character.
+
+    A character is sized by height alone; the width follows from the artwork's own ratio so the space
+    is reserved before the image arrives. The figures have to be markedly smaller on a phone than on
+    a desktop, and a media query cannot live in a `style` attribute, so the two heights come in as
+    custom properties and the breakpoint is handled here.
+
+    `--fig-crop` is the fraction of the artwork left visible from the top. The image is scaled up by
+    its inverse so the visible slice fills the shorter box — which means the box's *width* follows the
+    scaled-up image height, not the box height. Dividing by the crop in both places is what keeps a
+    cropped figure's full width on screen; leaving it out of the width narrows the box by the crop
+    factor and slices the figure down both sides.
+  */
+  .character-figure {
+    height: var(--fig-h);
+    width: calc(var(--fig-h) / var(--fig-crop) * var(--fig-ratio));
+  }
+
+  .character-figure img {
+    height: calc(var(--fig-h) / var(--fig-crop));
+    width: auto;
+  }
+
+  @media (min-width: 1024px) {
+    .character-figure {
+      height: var(--fig-h-lg);
+      width: calc(var(--fig-h-lg) / var(--fig-crop) * var(--fig-ratio));
+    }
+
+    .character-figure img {
+      height: calc(var(--fig-h-lg) / var(--fig-crop));
+    }
+  }
 }
 
 @keyframes float {

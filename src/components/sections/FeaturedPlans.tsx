@@ -48,8 +48,8 @@ export function FeaturedPlans() {
           back at the start, the FAQ at the end — so the characters zigzag instead of stacking into a
           column along one edge.
         */}
-        <div className="flex items-center justify-center gap-5 lg:gap-8">
-          <CharacterFigure slot="destinationsScout" height={230} crop={0.46} className="hidden lg:block" />
+        <div className="flex flex-col items-center justify-center gap-4 lg:flex-row lg:gap-8">
+          <CharacterFigure slot="destinationsScout" height={140} heightLg={230} crop={0.46} />
           <div className="max-w-2xl text-center">
             <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
               <Sparkles className="h-3 w-3" />

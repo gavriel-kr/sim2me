@@ -209,7 +209,7 @@ export function ForYouSection() {
           picture: it just worked. Never mirrored: they are seated and turned toward each other over a
           phone, so there is no direction to point in and flipping would only swap who sits where.
         */}
-        <div className="flex items-center justify-center gap-6">
+        <div className="flex flex-col items-center justify-center gap-4 lg:flex-row lg:gap-6">
           <div className="max-w-2xl text-center">
             <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
               <Sparkles className="h-3 w-3" />
@@ -220,7 +220,7 @@ export function ForYouSection() {
             </h2>
             <p className="mt-2 text-muted-foreground">{t(subtitleKey, { destination: destName })}</p>
           </div>
-          <CharacterFigure slot="forYouLounging" height={250} className="hidden lg:block" />
+          <CharacterFigure slot="forYouLounging" height={190} heightLg={250} />
         </div>
 
         <div className="mx-auto mt-8 grid max-w-5xl gap-6 sm:grid-cols-2 lg:grid-cols-3">

@@ -197,6 +197,39 @@ individually.
 - ⬜ Scroll the homepage end to end and judge it as one scene, not a parade: same outfit, same light, each beat advancing the last
 - ⬜ `DestinationDetailClient.tsx` — **deferred with the rest of the destination work**
 
+### 7h — The characters reach mobile, 2026-07-31
+
+Every beat had shipped with `hidden lg:block`, so below 1024 px the homepage had no characters at all.
+The hero's visual column had been hidden below `lg` before this ticket too, so nothing was lost there —
+but with `ValueProps` and `TrustStrip` removed, a phone visitor got two fewer sections and nothing in
+their place. On a site whose traffic is mostly phones that is the gap that mattered.
+
+- ✅ **`CharacterFigure` can now be sized per breakpoint.** This was the blocker, not the layouts: the
+  box was sized by inline `width` and `height`, and a `style` attribute cannot carry a media query.
+  Sizing moved to `--fig-h` / `--fig-h-lg` / `--fig-ratio` / `--fig-crop` custom properties read by a
+  `.character-figure` class in `globals.css`. Tailwind arbitrary values were the alternative and were
+  rejected: they must be static in the source, so every call site would have had to hand-compute its
+  own pixel width from the artwork ratio
+- ✅ **A bug caught by printing the numbers rather than looking at the page.** The first version
+  computed box width as `height × ratio`, but a cropped figure's width follows the *scaled-up* image
+  height, so it must be `height / crop × ratio`. At `crop: 0.46` that made the box 54 % too narrow and
+  sliced the figure down both sides. Verified the corrected desktop widths against the values the old
+  inline styles produced — 211 px and 184 px for the scout and the FAQ figure — so desktop is untouched
+- ✅ Hero: pair and offer card stack on a phone, overlap from `lg`. The overlap is what makes them look
+  like they are holding the card out, but it is impossible at 375 px where the card alone is 320 px of
+  a 343 px column. The card became `w-[min(320px,100%)]` so it survives a 320 px screen
+- ✅ The four beside-a-heading beats became `flex-col lg:flex-row`, which puts the figure above the
+  heading (or below the FAQ accordion) instead of splitting a narrow screen between figure and text
+- ✅ CTA: `lg:contents` on a new wrapper. From `lg` the wrapper generates no box, so both figures still
+  position against the section and flank the text exactly as before; below `lg` it is an ordinary flex
+  row under the button. One DOM node per character, two layouts, no duplicated `<picture>`
+- ✅ **Mobile heights are set by faces, not by available space.** The two CTA figures are full length,
+  so a head is about a seventh of the box: at the 150 px the layout would accept, a face lands near
+  20 px and turns to mush. They are 250 px, which puts a face back near 35 px and still leaves the pair
+  under 200 px wide. Same reasoning raised the lounging pair to 190 px
+- ✅ Verified every box against a 288 px content width (a 320 px phone), computed from the rendered
+  custom properties rather than estimated: 255, 129, 101, 89, 86 px, and the CTA pair 199 px together
+
 ### 7g — The deal chip becomes a rotating strip, 2026-07-31
 
 Gabriel's call: the chip under the hero badge should cycle through all of today's deals, not name only
@@ -306,6 +339,7 @@ assuming it is fine.
 
 ## Status log
 
+- 2026-07-31: **The characters now appear on phones**, which they did not in the first deploy — every beat carried `hidden lg:block`. The real blocker was that `CharacterFigure` sized its box with inline `width` and `height`, and a `style` attribute cannot hold a media query, so sizing moved to custom properties read by a `.character-figure` class. Two things worth keeping: the first version of that class computed width as `height × ratio` and forgot that a cropped figure's width follows the scaled-up image height, which made cropped boxes 54 % too narrow and sliced the figures down both sides — caught by printing the rendered numbers and comparing them against what the old inline styles produced, not by looking at the page. And the CTA pair's mobile height is set by faces rather than by space: full-length figures put a head at a seventh of the box, so the 150 px the layout would happily accept gives a 20 px face. The hero pair and card stack instead of overlapping, the four beside-a-heading beats become columns, and the CTA uses `lg:contents` so one DOM node serves both layouts.
 - 2026-07-31: **Deployed to production**, commit `1dd200e`, backup tag `pre-deploy-20260731-2017` on `1761d90`. R1. Post-deploy smoke green: three locales 200 with five characters in the server HTML each, all fourteen assets 200, the new CTA copy present in all three, `/api/hot-deals` returning today's three deals, `/api/checkout/health` `ok: true`, destinations and checkout unaffected, and both preview pages correctly 404. Three things the deploy prep turned up that are worth more than the deploy itself:
   - **`.env.bak` and `.env.local.bak` were tracked in git** and had been since `70f6b9b`, carrying live `RESEND_API_KEY`, `ESIMACCESS_ACCESS_CODE`, `ESIMACCESS_SECRET_KEY`, `NEXTAUTH_SECRET` and three database URLs. `.gitignore` covered `.env` and `.env.local` but not the `.bak` variants. Untracked here and now ignored, which stops further exposure but does not undo it — **the keys still need rotating**, and that is deliberately not in this commit because it touches eSIM, email and auth
   - **`npm run lint` has never linted anything.** There is no ESLint config in the repo and never has been, so the command only offers to create one and exits 1; `next build` prints "Skipping linting" to match. Gate A's lint step has been vacuous for the project's whole life, and `tsc` was used in its place

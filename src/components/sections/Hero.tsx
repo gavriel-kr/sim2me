@@ -194,22 +194,27 @@ export function Hero() {
             the visitor. One actionable card replaces it. The box keeps its height when there are no
             deals at all, so the grid never collapses.
           */}
-          <div className="hidden lg:block">
-            <div className="relative mx-auto h-[470px] w-full max-w-[536px]">
-              <CharacterFigure
-                slot="heroPair"
-                height={418}
-                priority
-                className="absolute bottom-[52px] left-1/2 -translate-x-1/2"
+          {/*
+            Two layouts, one DOM. From `lg` the card overlaps the pair's lower body, which is the
+            composition that makes them look like they are holding it out to you. On a phone that
+            overlap is impossible — the card alone is 320 px of a 343 px column — so the two simply
+            stack, pair above card, and the fixed-height positioning frame switches off.
+          */}
+          <div className="mx-auto flex w-full max-w-[536px] flex-col items-center gap-4 lg:relative lg:block lg:h-[470px]">
+            <CharacterFigure
+              slot="heroPair"
+              height={200}
+              heightLg={418}
+              priority
+              className="lg:absolute lg:bottom-[52px] lg:left-1/2 lg:-translate-x-1/2"
+            />
+            <div className="w-full lg:absolute lg:bottom-0 lg:left-1/2 lg:w-auto lg:-translate-x-1/2">
+              <HeroOfferCard
+                deals={strip}
+                active={active}
+                onSelect={setIndex}
+                pauseHandlers={pauseHandlers}
               />
-              <div className="absolute bottom-0 left-1/2 -translate-x-1/2">
-                <HeroOfferCard
-                  deals={strip}
-                  active={active}
-                  onSelect={setIndex}
-                  pauseHandlers={pauseHandlers}
-                />
-              </div>
             </div>
           </div>
         </div>

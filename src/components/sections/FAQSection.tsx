@@ -35,9 +35,13 @@ export function FAQSection() {
         Laid out in flow inside a wider wrapper instead of absolutely positioned: the section has no
         `overflow-hidden`, and an absolute figure at the edge of a `max-w-3xl` column overruns the
         container at 1024 px, which costs a horizontal scrollbar on the whole page.
+
+        On a phone the row becomes a column, which puts her underneath the last question rather than
+        beside the set. That reads well enough here — she is still looking at the questions — and it is
+        the one placement on the page where stacking does not change the meaning.
       */}
       <div className="container px-4">
-        <div className="mx-auto flex max-w-5xl items-end justify-center gap-8">
+        <div className="mx-auto flex max-w-5xl flex-col items-center justify-center gap-6 lg:flex-row lg:items-end lg:gap-8">
           <div className="w-full max-w-3xl">
             <div className="text-center">
               <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
@@ -69,7 +73,7 @@ export function FAQSection() {
               ))}
             </Accordion>
           </div>
-          <CharacterFigure slot="faqCurious" height={300} crop={0.5} className="hidden lg:block" />
+          <CharacterFigure slot="faqCurious" height={165} heightLg={300} crop={0.5} />
         </div>
       </div>
     </section>

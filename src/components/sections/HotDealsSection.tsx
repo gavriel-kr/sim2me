@@ -115,9 +115,13 @@ export function HotDealsSection() {
           card: a person next to a price competes with it, and she would then repeat three times.
           Cropped to head-and-torso because a full-length figure this narrow reduces the face, which
           is the entire point of her, to nothing.
+
+          The row becomes a column on a phone, so she sits above the heading instead of beside it.
+          Keeping her alongside would mean splitting a 343 px screen between a figure and a heading,
+          and both would lose.
         */}
-        <div className="flex items-center justify-center gap-5 lg:gap-8">
-          <CharacterFigure slot="dealsReaction" height={230} crop={0.46} className="hidden lg:block" />
+        <div className="flex flex-col items-center justify-center gap-4 lg:flex-row lg:gap-8">
+          <CharacterFigure slot="dealsReaction" height={140} heightLg={230} crop={0.46} />
           <div className="max-w-2xl text-center">
             <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-700">
               <Flame className="h-3 w-3" />
