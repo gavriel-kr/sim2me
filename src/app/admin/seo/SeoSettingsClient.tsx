@@ -6,8 +6,9 @@ import {
   Settings, FileSearch, ChevronDown, ChevronUp, Save, RotateCcw,
   Loader2, ShieldCheck, ShieldAlert,
 } from 'lucide-react';
-import type { GlobalSeoSettings } from '@/lib/global-seo';
-import { GLOBAL_SEO_DEFAULTS } from '@/lib/global-seo';
+// Not from '@/lib/global-seo': that module imports Prisma, which cannot be bundled for the browser.
+import type { GlobalSeoSettings } from '@/lib/global-seo-defaults';
+import { GLOBAL_SEO_DEFAULTS } from '@/lib/global-seo-defaults';
 
 // ── Shared field components ───────────────────────────────────────────────────
 

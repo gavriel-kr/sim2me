@@ -3,10 +3,11 @@
 import { useEffect, useState } from 'react';
 import { Key, Timer } from 'lucide-react';
 
-function useCountdown(expiryMs: number) {
-  const [msLeft, setMsLeft] = useState(() => expiryMs - Date.now());
+function useCountdown(expiryMs: number | null) {
+  const [msLeft, setMsLeft] = useState(() => (expiryMs === null ? 0 : expiryMs - Date.now()));
 
   useEffect(() => {
+    if (expiryMs === null) return;
     const tick = () => setMsLeft(expiryMs - Date.now());
     tick();
     const id = setInterval(tick, 1000);
@@ -31,10 +32,19 @@ function Pad({ n }: { n: number }) {
 }
 
 export function PaddleKeyBanner({ expiresAt }: { expiresAt: string | null }) {
-  const expiry = expiresAt ? new Date(expiresAt) : null;
-  if (!expiry || isNaN(expiry.getTime())) return null;
+  const parsed = expiresAt ? new Date(expiresAt) : null;
+  const expiryMs = parsed && !isNaN(parsed.getTime()) ? parsed.getTime() : null;
 
-  const msLeft = useCountdown(expiry.getTime());
+  /*
+    The hook runs before the early return, and on the renders that draw nothing too. Hooks have to be
+    called in the same order on every render of a mounted component, so bailing out above this line
+    meant that the first render with an expiry date after one without it would leave React counting a
+    hook that had not been there before — and the admin dashboard would throw rather than show a
+    banner. `useCountdown` takes the null itself and skips its timer.
+  */
+  const msLeft = useCountdown(expiryMs);
+  if (expiryMs === null) return null;
+
   const { days, hours, minutes, seconds, expired } = formatCountdown(msLeft);
 
   const urgent = days < 7;
@@ -52,7 +62,7 @@ export function PaddleKeyBanner({ expiresAt }: { expiresAt: string | null }) {
     ? 'bg-amber-100 text-amber-900'
     : 'bg-emerald-100 text-emerald-900';
 
-  const dateStr = expiry.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  const dateStr = new Date(expiryMs).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 
   return (
     <div className={`mt-4 flex flex-wrap items-center gap-3 rounded-xl border px-4 py-3 text-sm ${colorClass}`}>

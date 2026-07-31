@@ -1,0 +1,104 @@
+/**
+ * Global SEO keys, types and defaults — no database, no server-only imports.
+ *
+ * Split out of `global-seo.ts` because the admin settings panel is a client component and needs the
+ * defaults to seed its form. Importing them from `global-seo.ts` pulled that module's Prisma import
+ * into the browser bundle with them, and Prisma cannot run there: `/admin/seo` died on load with a
+ * client-side exception. Anything both sides need lives here; `global-seo.ts` re-exports all of it,
+ * so server callers can keep importing from either.
+ */
+
+export const GLOBAL_SEO_CACHE_TAG = 'global-seo-settings';
+
+// ── Key registry (stored in SiteSetting table with seo_ prefix) ──────────────
+export const SEO_KEYS = {
+  // Core / Search snippet
+  siteName:           'seo_site_name',
+  titleTemplate:      'seo_title_template',
+  defaultTitle:       'seo_default_title',
+  defaultTitleHe:     'seo_default_title_he',
+  defaultTitleAr:     'seo_default_title_ar',
+  defaultDescription: 'seo_default_description',
+  defaultDescriptionHe: 'seo_default_description_he',
+  defaultDescriptionAr: 'seo_default_description_ar',
+  defaultKeywords:    'seo_default_keywords',
+  defaultKeywordsHe:  'seo_default_keywords_he',
+  defaultKeywordsAr:  'seo_default_keywords_ar',
+
+  // Open Graph
+  ogTitle:            'seo_og_title',
+  ogDescription:      'seo_og_description',
+  ogImage:            'seo_og_image',
+
+  // Twitter / X
+  twitterHandle:      'seo_twitter_handle',
+  twitterCard:        'seo_twitter_card',
+
+  // Canonical & domain
+  canonicalDomain:    'seo_canonical_domain',
+
+  // Robots & crawl directives
+  robotsIndex:        'seo_robots_index',
+  robotsFollow:       'seo_robots_follow',
+  googleMaxSnippet:   'seo_google_max_snippet',
+  googleMaxImagePreview: 'seo_google_max_image_preview',
+  googleMaxVideoPreview: 'seo_google_max_video_preview',
+
+  // Search Console verification
+  googleVerification: 'seo_google_verification',
+  bingVerification:   'seo_bing_verification',
+  yandexVerification: 'seo_yandex_verification',
+
+  // Organization Schema (JSON-LD)
+  orgName:      'seo_org_name',
+  orgUrl:       'seo_org_url',
+  orgLogo:      'seo_org_logo',
+  orgTwitter:   'seo_org_twitter',
+  orgFacebook:  'seo_org_facebook',
+  orgLinkedIn:  'seo_org_linkedin',
+} as const;
+
+export type SeoKeys = typeof SEO_KEYS;
+export type SeoKeyName = keyof SeoKeys;
+export type GlobalSeoSettings = Record<SeoKeyName, string>;
+
+// ── Best-practice defaults for sim2me.net ───────────────────────────────────
+export const GLOBAL_SEO_DEFAULTS: GlobalSeoSettings = {
+  siteName:           'Sim2Me',
+  titleTemplate:      '%s | Sim2Me',
+  defaultTitle:       'Sim2Me – Buy eSIM Online for 200+ Countries | Instant Delivery',
+  defaultTitleHe:     'Sim2Me – eSIM אונליין ל-200+ מדינות | משלוח מיידי',
+  defaultTitleAr:     'Sim2Me – اشترِ eSIM لأكثر من 200 دولة | توصيل فوري',
+  defaultDescription: 'Buy prepaid eSIM online for 200+ countries. Instant delivery, no physical SIM needed. Compare plans, scan QR code and get connected in minutes. Best prices for travel data.',
+  defaultDescriptionHe: 'קנה eSIM בתשלום מוקדם אונליין ל-200+ מדינות. משלוח מיידי, ללא כרטיס SIM פיזי. השווה תוכניות, סרוק QR ותתחבר תוך דקות. המחירים הטובים ביותר לגלישה בנסיעות.',
+  defaultDescriptionAr: 'اشترِ eSIM مدفوع مسبقاً لأكثر من 200 دولة. توصيل فوري، لا شريحة SIM مادية. قارن الخطط، امسح رمز QR وابقَ متصلاً في دقائق. أفضل الأسعار لبيانات السفر.',
+  defaultKeywords:    'eSIM, buy eSIM, travel eSIM, prepaid eSIM, eSIM online, international data plan, roaming alternative, travel data, eSIM for iPhone, eSIM for Android, digital SIM card, no roaming fees, global eSIM',
+  defaultKeywordsHe:  'eSIM, קנה eSIM, eSIM לנסיעות, eSIM בתשלום מוקדם, eSIM אונליין, תוכנית דאטה בינלאומית, חלופה לרואמינג, דאטה לנסיעות, eSIM לאייפון, eSIM לאנדרואיד, כרטיס SIM דיגיטלי',
+  defaultKeywordsAr:  'eSIM, شراء eSIM, eSIM للسفر, eSIM مدفوع مسبقاً, eSIM أونلاين, خطة بيانات دولية, بديل التجوال, بيانات السفر, eSIM لآيفون, eSIM لأندرويد, شريحة SIM رقمية',
+
+  ogTitle:       'Sim2Me – Buy eSIM Online for 200+ Countries',
+  ogDescription: 'Instant eSIM delivery for travelers. No physical SIM, no roaming fees. Compare plans and get connected in minutes.',
+  ogImage:       '',
+
+  twitterHandle: '@sim2me',
+  twitterCard:   'summary_large_image',
+
+  canonicalDomain: 'https://www.sim2me.net',
+
+  robotsIndex:  'true',
+  robotsFollow: 'true',
+  googleMaxSnippet:      '-1',
+  googleMaxImagePreview: 'large',
+  googleMaxVideoPreview: '-1',
+
+  googleVerification: '',
+  bingVerification:   '',
+  yandexVerification: '',
+
+  orgName:     'Sim2Me',
+  orgUrl:      'https://www.sim2me.net',
+  orgLogo:     '',
+  orgTwitter:  'https://twitter.com/sim2me',
+  orgFacebook: '',
+  orgLinkedIn: '',
+};
