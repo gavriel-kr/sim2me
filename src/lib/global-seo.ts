@@ -61,7 +61,7 @@ export const GLOBAL_SEO_DEFAULTS: GlobalSeoSettings = {
   siteName:           'Sim2Me',
   titleTemplate:      '%s | Sim2Me',
   defaultTitle:       'Sim2Me – Buy eSIM Online for 200+ Countries | Instant Delivery',
-  defaultTitleHe:     'Sim2Me – קנה eSIM אונליין ל-200+ מדינות | משלוח מיידי',
+  defaultTitleHe:     'Sim2Me – eSIM אונליין ל-200+ מדינות | משלוח מיידי',
   defaultTitleAr:     'Sim2Me – اشترِ eSIM لأكثر من 200 دولة | توصيل فوري',
   defaultDescription: 'Buy prepaid eSIM online for 200+ countries. Instant delivery, no physical SIM needed. Compare plans, scan QR code and get connected in minutes. Best prices for travel data.',
   defaultDescriptionHe: 'קנה eSIM בתשלום מוקדם אונליין ל-200+ מדינות. משלוח מיידי, ללא כרטיס SIM פיזי. השווה תוכניות, סרוק QR ותתחבר תוך דקות. המחירים הטובים ביותר לגלישה בנסיעות.',

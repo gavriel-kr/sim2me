@@ -13,7 +13,7 @@
     "searchPlaceholder": "חפשו יעד..."
   },
   "home": {
-    "heroTitle": "מחוברים בכל העולם",
+    "heroTitle": "מחוברים בכל העולם!",
     "heroSubtitle": "תקשורת בראש שקט",
     "heroContinue": "להמשיך ל{destination}?",
     "heroDealChip": "היום: {destination} {data} ב-{dealPrice}",
@@ -139,7 +139,7 @@
     "showCurated": "חזרה למומלצות",
     "tierWeekend": "סופ״ש רגוע",
     "tierWeekendDesc": "מפות, וואטסאפ וגלישה קלה לנסיעה קצרה",
-    "tierWeek": "שבוע בראש שקט",
+    "tierWeek": "שבוע פלוס מינוס בראש שקט",
     "tierWeekDesc": "שבוע-שבועיים בלי לחשוב על דאטה",
     "tierMonth": "הטיול המלא",
     "tierMonthDesc": "החבילה שרוב המטיילים בוחרים",

@@ -16,7 +16,7 @@ const seoByLocale: Record<string, { title: string; description: string }> = {
     description: 'Get instant eSIM for travel. No physical SIM, no roaming fees. Compare plans for 200+ countries, scan QR code and connect in minutes. Best prices guaranteed.',
   },
   he: {
-    title: 'קנה eSIM אונליין – נתונים מיידיים ל-200+ מדינות',
+    title: 'eSIM אונליין – נתונים מיידיים ל-200+ מדינות',
     description: 'קבל eSIM מיידי לנסיעות. בלי סים פיזי, בלי דמי נדידה. השווה חבילות ל-200+ מדינות, סרוק QR והתחבר תוך דקות.',
   },
   ar: {

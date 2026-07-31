@@ -118,9 +118,23 @@ export function Hero() {
                       data: volumeToDisplay(strip[active].volume).dataDisplay,
                       dealPrice: formatPrice(strip[active].dealPrice, strip[active].currency),
                     })}
-                    <span className="ms-1.5 text-orange-400 line-through">
+                    {/*
+                      `bdi`, not `span`. The deal price ends the translated sentence and the original
+                      opens this element, so in Hebrew and Arabic the two are adjacent left-to-right
+                      runs inside a right-to-left line. Bidi merges them into one run laid out
+                      left-to-right, which parks the struck-through original against "ב-" and throws
+                      the price the sentence is about to the far end of the chip. An isolate keeps this
+                      price a unit of its own, so it follows the deal price in reading order.
+
+                      The margin is symmetric for the same reason it cannot be `ms`: `bdi` defaults to
+                      `dir="auto"`, and a price carries no strongly-directional character, so it
+                      resolves to ltr whatever the surrounding script — a logical margin would answer
+                      to the price rather than to the line and sit on the outer edge. Which side faces
+                      the deal price flips with the writing direction anyway.
+                    */}
+                    <bdi className="mx-1.5 text-orange-400 line-through">
                       {formatPrice(strip[active].originalPrice, strip[active].currency)}
-                    </span>
+                    </bdi>
                   </span>
                 </a>
               )}

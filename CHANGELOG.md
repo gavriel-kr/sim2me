@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+### Changed (Homepage copy — plural voice, Hebrew typography)
+- **Hero headline and subtitle shortened (he/en/ar)** – "מחוברים בכל העולם!" / "תקשורת בראש שקט", replacing two long lines that each carried more than one claim. Same treatment in English ("Connected worldwide!" / "Connectivity with peace of mind") and Arabic.
+- **Singular imperatives moved to plural (he/ar)** – Every call to action that addressed the visitor in the singular now speaks to travellers as a group: מצאו / בחרו / צפו / חפשו / להוסיף לסל, and اعثروا / اختاروا / ابحثوا / أضيفوا. Touches `nav.searchPlaceholder`, `home.searchCta`, `home.hotDealsAddToCart`, `destinations.subtitle`, `destinations.viewPlans`, `destinations.viewAllLocations` — so the destinations page inherits the same voice.
+- **Heavy tier renamed after the benefit** – "גולש כבד" / "Heavy Traveler" / "مستخدم كثيف" → "גלישה כמעט ללא הגבלה" / "Almost unlimited data" / "بيانات شبه غير محدودة". Shown on destination pages, not the homepage.
+- **"קנה" dropped from Hebrew page titles** – Removed from both sources that feed the browser tab: the homepage's own title in `src/app/[locale]/page.tsx` and the site-wide Hebrew default in `src/lib/global-seo.ts` (the fallback every page without its own title uses).
+
+### Fixed (Homepage hero)
+- **Deal chip showed the two prices in the wrong order in Hebrew and Arabic** – The deal price closes the translated sentence and the struck-through original opened the next element, so bidi merged them into a single left-to-right run: the crossed-out price landed against "ב-" and the price the chip is about was pushed to the far end. The original is now a `bdi` isolate, which keeps it a unit of its own and puts it after the deal price in reading order. Its margin is symmetric because `bdi` defaults to `dir="auto"` and a price has no strongly-directional character, so logical margins resolve against the price instead of the line.
+
 ### Changed (Ticket 025 — Commerce-First Hero)
 - **Hero headline/subtitle (he/en/ar)** – "Stay connected worldwide. No roaming fees." + pain-relief subtitle ("Land connected — no SIM swapping, no surprise bill"), replacing the generic brand copy. No QR/scan language; live prices shown in chips/deals rather than a static anchor in the H1.
 - **"From $X per day" mislabel fixed** – `fromPrice` is the cheapest package price (auto-computed from the live catalog), not a daily rate; removed the wrong "per day" suffix in FeaturedPlans, destination page header, and destinations index. Removed the hardcoded `fromPrice: 4.99` from the static fallback list so a wrong price is never shown when the catalog API is down.

@@ -13,7 +13,7 @@
     "searchPlaceholder": "Search destination..."
   },
   "home": {
-    "heroTitle": "Connected worldwide",
+    "heroTitle": "Connected worldwide!",
     "heroSubtitle": "Connectivity with peace of mind",
     "heroContinue": "Continue to {destination}?",
     "heroDealChip": "Today: {destination} {data} for {dealPrice}",
@@ -139,7 +139,7 @@
     "showCurated": "Back to recommended",
     "tierWeekend": "Weekend Trip",
     "tierWeekendDesc": "Maps, WhatsApp and light browsing for a short getaway",
-    "tierWeek": "Easy Week",
+    "tierWeek": "About a Week, Worry-Free",
     "tierWeekDesc": "A week or two without thinking about data",
     "tierMonth": "The Full Trip",
     "tierMonthDesc": "The plan most travelers choose",

@@ -13,7 +13,7 @@
     "searchPlaceholder": "ابحثوا عن وجهة..."
   },
   "home": {
-    "heroTitle": "متصلون في كل العالم",
+    "heroTitle": "متصلون في كل العالم!",
     "heroSubtitle": "اتصال براحة بال",
     "heroContinue": "المتابعة إلى {destination}؟",
     "heroDealChip": "اليوم: {destination} {data} بـ{dealPrice}",
@@ -139,7 +139,7 @@
     "showCurated": "العودة إلى الباقات الموصى بها",
     "tierWeekend": "عطلة نهاية أسبوع هادئة",
     "tierWeekendDesc": "خرائط وواتساب وتصفح خفيف لرحلة قصيرة",
-    "tierWeek": "أسبوع براحة بال",
+    "tierWeek": "أسبوع تقريباً براحة بال",
     "tierWeekDesc": "أسبوع أو أسبوعان دون التفكير في البيانات",
     "tierMonth": "الرحلة الكاملة",
     "tierMonthDesc": "الباقة التي يختارها معظم المسافرين",
