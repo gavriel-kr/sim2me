@@ -5,6 +5,11 @@ import { getCmsPage } from '@/lib/cms';
 export const dynamic = 'force-dynamic';
 
 const siteUrl = 'https://www.sim2me.net';
+const descByLocale: Record<string, string> = {
+  en: 'Learn how Sim2Me uses cookies and how to manage your preferences. Necessary, analytics, and marketing cookies explained.',
+  he: 'איך Sim2Me משתמש בעוגיות ואיך לנהל את ההעדפות שלכם. הסבר על עוגיות הכרחיות, עוגיות אנליטיקה ועוגיות שיווק.',
+  ar: 'كيف يستخدم Sim2Me ملفات تعريف الارتباط وكيفية إدارة تفضيلاتك. شرح للملفات الضرورية والتحليلية والتسويقية.',
+};
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -12,10 +17,9 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const t = await getTranslations('footer');
   const prefix = `/${locale}`;
   return {
-    title: cms?.seoTitle || `${t('cookieSettings')} – Sim2Me`,
-    description:
-      cms?.seoDesc ||
-      'Learn how Sim2Me uses cookies and how to manage your preferences. Necessary, analytics, and marketing cookies explained.',
+    // No brand suffix here: the root layout's title template already appends it.
+    title: cms?.seoTitle || t('cookieSettings'),
+    description: cms?.seoDesc || descByLocale[locale] || descByLocale.en,
     alternates: { canonical: `${siteUrl}${prefix}/cookies` },
   };
 }

@@ -5,6 +5,11 @@ import { getCmsPage } from '@/lib/cms';
 export const dynamic = 'force-dynamic';
 
 const siteUrl = 'https://www.sim2me.net';
+const descByLocale: Record<string, string> = {
+  en: 'Sim2Me refund policy. Unused eSIMs can be refunded within 14 days. Learn about eligibility, the refund process, and how to request a refund.',
+  he: 'מדיניות ההחזרים של Sim2Me. eSIM שלא הותקן ולא נעשה בו שימוש ניתן להחזרה תוך 14 יום. תנאי הזכאות ואיך מגישים בקשה.',
+  ar: 'سياسة الاسترداد في Sim2Me. يمكن استرداد eSIM غير المثبت وغير المستخدم خلال 14 يوماً. شروط الأهلية وكيفية تقديم الطلب.',
+};
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -12,8 +17,9 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const t = await getTranslations({ locale, namespace: 'footer' });
   const prefix = `/${locale}`;
   return {
-    title: cms?.seoTitle || `${t('refund')} – Sim2Me`,
-    description: cms?.seoDesc || 'Sim2Me refund policy. Unused eSIMs can be refunded within 14 days. Learn about eligibility, the refund process, and how to request a refund.',
+    // No brand suffix here: the root layout's title template already appends it.
+    title: cms?.seoTitle || t('refund'),
+    description: cms?.seoDesc || descByLocale[locale] || descByLocale.en,
     alternates: { canonical: `${siteUrl}${prefix}/refund` },
   };
 }

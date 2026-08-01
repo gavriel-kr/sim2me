@@ -5,16 +5,21 @@ import { getCmsPage } from '@/lib/cms';
 export const dynamic = 'force-dynamic';
 
 const siteUrl = 'https://www.sim2me.net';
+const descByLocale: Record<string, string> = {
+  en: 'The terms that apply to buying and using Sim2Me eSIM plans: eligibility, payment, delivery, acceptable use and liability.',
+  he: 'התנאים החלים על רכישה ושימוש בחבילות eSIM של Sim2Me: זכאות, תשלום, אספקה, שימוש מותר ואחריות.',
+  ar: 'الشروط المطبقة على شراء واستخدام باقات eSIM من Sim2Me: الأهلية والدفع والتسليم والاستخدام المقبول والمسؤولية.',
+};
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const cms = await getCmsPage('terms', locale as 'en' | 'he' | 'ar');
   const t = await getTranslations({ locale, namespace: 'footer' });
-  const tLegal = await getTranslations({ locale, namespace: 'legalPages' });
   const prefix = `/${locale}`;
   return {
-    title: cms?.seoTitle || `${t('terms')} – Sim2Me`,
-    description: cms?.seoDesc || tLegal('termsTitle') + ' – Sim2Me',
+    // No brand suffix here: the root layout's title template already appends it.
+    title: cms?.seoTitle || t('terms'),
+    description: cms?.seoDesc || descByLocale[locale] || descByLocale.en,
     alternates: { canonical: `${siteUrl}${prefix}/terms` },
   };
 }
