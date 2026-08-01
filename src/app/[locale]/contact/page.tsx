@@ -10,15 +10,20 @@ import { brandConfig } from '@/config/brand';
 export const dynamic = 'force-dynamic';
 
 const siteUrl = 'https://www.sim2me.net';
+const seoByLocale: Record<string, { title: string; desc: string }> = {
+  en: { title: 'Contact Sim2Me – eSIM Support & Help', desc: 'Need help with your eSIM? Contact Sim2Me support for installation help, activation issues, connectivity problems or refund requests.' },
+  he: { title: 'יצירת קשר ותמיכה – eSIM למעל 200 מדינות', desc: 'צריכים עזרה עם ה-eSIM? צרו קשר עם התמיכה של Sim2Me בנוגע להתקנה, הפעלה, בעיות חיבור או בקשות החזר.' },
+  ar: { title: 'اتصل بـ Sim2Me – دعم ومساعدة eSIM', desc: 'هل تحتاج مساعدة في eSIM؟ تواصل مع دعم Sim2Me بخصوص التثبيت أو التفعيل أو مشاكل الاتصال أو طلبات الاسترداد.' },
+};
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const cms = await getCmsPage('contact', locale as 'en' | 'he' | 'ar');
-  const t = await getTranslations('contact');
+  const seo = seoByLocale[locale] || seoByLocale.en;
   const prefix = `/${locale}`;
   return {
-    title: cms?.seoTitle || `${t('title')} – Sim2Me eSIM Support`,
-    description: cms?.seoDesc || 'Need help with your eSIM? Contact Sim2Me support for installation help, activation issues, connectivity problems or refund requests.',
+    title: cms?.seoTitle || seo.title,
+    description: cms?.seoDesc || seo.desc,
     alternates: { canonical: `${siteUrl}${prefix}/contact` },
   };
 }

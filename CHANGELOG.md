@@ -12,6 +12,10 @@
 - **`/admin/seo` crashed on load** – The settings panel is a client component and imported its defaults from `src/lib/global-seo.ts`, which imports Prisma; the whole chain was bundled for the browser and Prisma refuses to run there, so the page died with a client-side exception and global SEO could not be edited at all. Keys, types and defaults moved to `src/lib/global-seo-defaults.ts`, which touches no database. `global-seo.ts` re-exports them, so every server caller is unchanged. Broken since the panel shipped (`40f175b`).
 - **Paddle key banner could crash the dashboard** – `useCountdown` sat below the early return for a missing or unparseable expiry date, so it was skipped on some renders and not others. React tracks hooks by call order, so the first render with a valid date after one without it would throw. The hook now runs on every render and takes the null itself, skipping its own timer.
 
+### Fixed (SEO — duplicate page titles)
+- **Every CMS page carried the same title** – All ten records in the CMS held one identical meta title per language (`Sim2Me – קנה eSIM אונליין ל-200+ מדינות | משלוח מיידי` in Hebrew), and a CMS title wins over the page's own, so nine pages shipped a duplicate title in each language and the "קנה" that was removed from code kept being served. The fields are now blank, which hands each page back its own title — the ones already written per page, like `מרכז עזרה eSIM ושאלות נפוצות – התקנה, הפעלה ופתרון בעיות`. Data-only change; the descriptions have the same problem and were left alone.
+- **Contact page had no localized title of its own** – Its fallback built one from a translation key plus an English suffix, so blanking the CMS record would have produced `צור קשר – Sim2Me eSIM Support`. It now has a `seoByLocale` map like every other page, with its own Hebrew, English and Arabic title and description.
+
 ### Added (Tooling)
 - **ESLint configuration** – `.eslintrc.json` extending `next/core-web-vitals` and `next/typescript`. `npm run lint` previously dropped into the interactive setup wizard because no config existed, so nothing was ever linted.
 
