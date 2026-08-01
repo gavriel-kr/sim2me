@@ -176,7 +176,7 @@ export function HotDealsClient() {
               />
               Hot deals enabled
             </label>
-            <NumField label="Number of deals" value={config.count} min={1} max={9}
+            <NumField label="Number of deals" value={config.count} min={1} max={6}
               onChange={(v) => setConfig({ ...config, count: v })} />
             <NumField label="Min net profit ($)" value={config.minProfit} min={0} max={1000} step={0.5}
               onChange={(v) => setConfig({ ...config, minProfit: v })} />

@@ -37,6 +37,7 @@
   "exclude": [
     "node_modules",
     "mobile",
+    "agent-workspace",
     "prisma/seed*.ts",
     "prisma/scripts"
   ]

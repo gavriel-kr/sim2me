@@ -7,7 +7,7 @@ import { SearchDestination } from '@/components/forms/SearchDestination';
 import { createSharedPathnamesNavigation } from 'next-intl/navigation';
 import { routing } from '@/i18n/routing';
 import { getDestinations } from '@/lib/api/repositories/destinationsRepository';
-import { formatPrice, localizeDataDisplay } from '@/lib/utils';
+import { formatPrice } from '@/lib/utils';
 import { localizedCountryName, volumeToDisplay, HOT_DEALS_QUERY } from '@/lib/deals';
 import { CharacterFigure } from '@/components/brand/CharacterFigure';
 import { HeroOfferCard } from '@/components/sections/HeroOfferCard';
@@ -52,9 +52,7 @@ export function Hero() {
   }, []);
 
   // One list and one rotation for both the chip and the card, so they always name the same deal.
-  // The whole list, not a slice of it: the server already returns exactly the configured number of
-  // deals, so a cap here would be a second opinion on a number the admin thinks it owns.
-  const strip = deals;
+  const strip = deals.slice(0, 3);
   const { active, setIndex, pauseHandlers } = useDealRotation(strip.length);
 
   const chips = destinations
@@ -117,7 +115,7 @@ export function Hero() {
                         strip[active].name,
                         locale
                       ),
-                      data: localizeDataDisplay(volumeToDisplay(strip[active].volume).dataDisplay, locale),
+                      data: volumeToDisplay(strip[active].volume).dataDisplay,
                       dealPrice: formatPrice(strip[active].dealPrice, strip[active].currency),
                     })}
                     {/*

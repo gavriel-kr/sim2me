@@ -4,6 +4,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import { useCartStore } from '@/stores/cartStore';
 import { useToast } from '@/hooks/useToast';
 import { planToGaItem, trackAddToCart } from '@/lib/analytics';
+import { localizeDataDisplay } from '@/lib/utils';
 import { dealToPlan, localizedCountryName, volumeToDisplay, type HotDeal } from '@/lib/deals';
 
 /**
@@ -19,7 +20,7 @@ export function useAddDeal() {
 
   return (deal: HotDeal) => {
     const countryName = localizedCountryName(deal.locationCode, deal.name, locale);
-    const { dataDisplay } = volumeToDisplay(deal.volume);
+    const dataDisplay = localizeDataDisplay(volumeToDisplay(deal.volume).dataDisplay, locale);
     const plan = dealToPlan(deal, locale);
 
     addItem({

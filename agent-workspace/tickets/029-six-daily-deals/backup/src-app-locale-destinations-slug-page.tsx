@@ -12,7 +12,6 @@ import {
 } from '@/lib/destination-unavailable-copy';
 import { BrandGlobeWaves } from '@/components/icons/BrandGlobeWaves';
 import { translatePlanName } from '@/lib/translate-plan-name';
-import { getTodayDealsForLocation } from '@/lib/hot-deals';
 
 export const dynamic = 'force-dynamic';
 
@@ -101,7 +100,6 @@ type PlanPayload = {
   operatorName: string;
   popular: boolean;
   saleBadge: string | null;
-  originalPrice: number | null;
 };
 
 type PackagesFetchResult =
@@ -131,9 +129,23 @@ const getDestinationData = cache(async function getDestinationData(slug: string,
     const isoCode = firstPkg.locationCode || slug.toUpperCase();
     const isRegional = firstPkg.isRegional || false;
     const englishName = firstPkg.location || slug.toUpperCase();
+    const destination = {
+      id: slug,
+      name: translateCountryName(englishName, isoCode, isRegional, locale),
+      slug,
+      region: '',
+      isoCode,
+      flagUrl: `https://flagcdn.com/w80/${flagCode}.png`,
+      isRegional,
+      popular: packages.some((p: { featured: boolean }) => p.featured),
+      operatorCount: 1,
+      planCount: packages.length,
+      fromPrice: Math.min(...packages.map((p: { price: number }) => p.price)),
+      fromCurrency: 'USD',
+    };
 
     // Convert packages to Plan type
-    const plans: PlanPayload[] = packages.map((pkg: {
+    const plans = packages.map((pkg: {
       packageCode: string;
       name: string;
       price: number;
@@ -189,51 +201,8 @@ const getDestinationData = cache(async function getDestinationData(slug: string,
         operatorName: pkg.speed || 'eSIMaccess',
         popular: pkg.featured,
         saleBadge: pkg.saleBadge,
-        originalPrice: null,
       };
     });
-
-    /*
-      Today's hot deal for this destination, applied to the plan it belongs to.
-
-      Without this the page contradicts two things at once: the homepage, which just sold this
-      package at the deal price and links here, and checkout, which resolves the deal server-side
-      and charges the lower amount regardless. Quoting the catalog price here would mean asking for
-      more than we take, and burying the discount on the one page a visitor arrives at to compare.
-    */
-    try {
-      for (const row of await getTodayDealsForLocation(locationCode)) {
-        const plan = plans.find((p) => p.id === row.packageCode);
-        if (!plan) continue;
-        // A deal may only ever lower a price — the same rule checkout applies.
-        const dealPrice = Number(row.dealPrice);
-        if (dealPrice >= plan.price) continue;
-
-        plan.originalPrice = plan.price;
-        plan.price = dealPrice;
-        plan.saleBadge = `-${row.discountPercent}%`;
-        break; // the generator allows one deal per destination
-      }
-    } catch {
-      /* deals are a bonus, never a reason for a destination page to fail */
-    }
-
-    const destination = {
-      id: slug,
-      name: translateCountryName(englishName, isoCode, isRegional, locale),
-      slug,
-      region: '',
-      isoCode,
-      flagUrl: `https://flagcdn.com/w80/${flagCode}.png`,
-      isRegional,
-      popular: packages.some((p: { featured: boolean }) => p.featured),
-      operatorCount: 1,
-      planCount: packages.length,
-      // From the final prices, so a deal that undercuts the cheapest plan is reflected in the
-      // "from" figure and in the page's metadata rather than contradicting the card below it.
-      fromPrice: Math.min(...plans.map((p) => p.price)),
-      fromCurrency: 'USD',
-    };
 
     return { status: 'ok', destination, plans };
   } catch {
@@ -279,10 +248,7 @@ export default async function DestinationDetailPage({ params }: PageProps) {
   if (data.status === 'ok') {
     return (
       <MainLayout>
-        <DestinationDetailClient
-          destination={data.destination}
-          initialPlans={data.plans}
-        />
+        <DestinationDetailClient destination={data.destination} initialPlans={data.plans} />
       </MainLayout>
     );
   }

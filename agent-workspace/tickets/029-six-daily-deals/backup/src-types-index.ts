@@ -39,12 +39,6 @@ export interface Plan {
   popular?: boolean;
   /** Admin-set promo badge (e.g. "20% OFF", "HOT") — from PackageOverride */
   saleBadge?: string | null;
-  /**
-   * Set only when `price` has been discounted by a hot deal, and holds the catalog price it was
-   * discounted from. Its presence is what tells a card to strike a price through, so it must never
-   * be filled in with the same value as `price`.
-   */
-  originalPrice?: number | null;
 }
 
 export interface FAQ {

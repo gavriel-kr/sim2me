@@ -1,15 +1,11 @@
 'use client';
 
 import { useTranslations, useLocale } from 'next-intl';
-import { createSharedPathnamesNavigation } from 'next-intl/navigation';
-import { routing } from '@/i18n/routing';
-import { formatPrice, localizeDataDisplay } from '@/lib/utils';
+import { formatPrice } from '@/lib/utils';
 import { localizedCountryName, volumeToDisplay, type HotDeal } from '@/lib/deals';
 import { useAddDeal } from '@/hooks/useAddDeal';
 import type { PauseHandlers } from '@/hooks/useDealRotation';
 import { Flame, ShoppingCart } from 'lucide-react';
-
-const { Link: IntlLink } = createSharedPathnamesNavigation(routing);
 
 /**
  * Ticket 028 — the card Simi and Sima present in the hero, cycling through today's hot deals.
@@ -78,18 +74,11 @@ export function HeroOfferCard({ deals, active, onSelect, pauseHandlers }: Props)
           className="flex transition-transform duration-500 ease-out motion-reduce:transition-none"
           style={{ transform: `translateX(${(rtl ? 1 : -1) * active * 100}%)` }}
         >
-          {deals.map((deal, i) => {
+          {deals.map((deal) => {
             const countryName = localizedCountryName(deal.locationCode, deal.name, locale);
-            const dataDisplay = localizeDataDisplay(volumeToDisplay(deal.volume).dataDisplay, locale);
-            const isActive = i === active;
+            const { dataDisplay } = volumeToDisplay(deal.volume);
             return (
-              /*
-                Every slide stays in the DOM, so the slides nobody can see have to be taken out of
-                the keyboard path too. Without this, tabbing off the card walks through five hidden
-                destination links before reaching the page — and a screen reader reads all six
-                countries as though they were on offer at once.
-              */
-              <div key={deal.id} className="w-full shrink-0" aria-hidden={!isActive}>
+              <div key={deal.id} className="w-full shrink-0">
                 <div className="flex items-center gap-3">
                   <img
                     src={`https://flagcdn.com/w80/${deal.flagCode}.png`}
@@ -111,14 +100,6 @@ export function HeroOfferCard({ deals, active, onSelect, pauseHandlers }: Props)
                     </p>
                   </div>
                 </div>
-
-                <IntlLink
-                  href={`/destinations/${deal.locationCode.toLowerCase()}`}
-                  tabIndex={isActive ? undefined : -1}
-                  className="mt-3 block text-center text-xs font-semibold text-emerald-700 underline-offset-2 hover:underline"
-                >
-                  {t('hotDealsViewAll', { destination: countryName })}
-                </IntlLink>
               </div>
             );
           })}

@@ -187,12 +187,12 @@ individually.
 - ✅ Dots for manual control, each labelled with its destination name
 - ✅ Advance direction follows writing direction — `translateX` is physical, so the sign comes from the locale
 - ✅ The add-to-cart acts on `slides[active]`, not on `slides[0]`
-- ⬜ Verify in the browser by adding from the second and third slides
+- ⬜ Verify in the browser by adding from a later slide — **now six slides, not three** (ticket 029 raised the daily deal count and the hero rotates the whole set)
 - ✅ Screen reader: labelled `role="group"`, and deliberately **no** `aria-live` — announcing an auto-rotating card on every tick is noise, so the correct pattern is a labelled region plus working manual controls
 
 ### 7c — Remaining homepage placements
 
-- ✅ `HotDealsSection.tsx` — beat 2, Sima beside the heading rather than inside a card: a person next to a price competes with it, and inside a card she would repeat three times. Cropped to head-and-torso. `id="hot-deals"` anchor untouched
+- ✅ `HotDealsSection.tsx` — beat 2, Sima beside the heading rather than inside a card: a person next to a price competes with it, and inside a card she would repeat once per deal — six times as of ticket 029. Cropped to head-and-torso. `id="hot-deals"` anchor untouched
 - ✅ `CTASection.tsx` — beat 3, Simi, full length and calm. Absolutely positioned so the centred headline keeps its own geometry, and only from `lg` where the room outside the `max-w-3xl` column actually exists
 - ⬜ Scroll the homepage end to end and judge it as one scene, not a parade: same outfit, same light, each beat advancing the last
 - ⬜ `DestinationDetailClient.tsx` — **deferred with the rest of the destination work**

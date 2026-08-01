@@ -151,34 +151,7 @@ export function DestinationDetailClient({
 
   // Smart shelf (ticket 023): curated trip-intent tiers always on top;
   // full catalog expands below them on the same page (ticket 025 revision)
-  //
-  // Curation runs on catalog prices, not on today's discounted ones. The tiers are picked by a
-  // Pareto frontier, so letting a deal price in would let the discounted plan crowd out plans it
-  // does not really beat — and the shelf would reshuffle itself at midnight when the deal expires,
-  // for reasons no one could see. The deal gets its own slot below instead.
-  const curatedTiers = useMemo(
-    () => buildTiers(initialPlans.map((p) => (p.originalPrice != null ? { ...p, price: p.originalPrice } : p))),
-    [initialPlans]
-  );
-
-  /*
-    The discounted plan is the one the server marked with an originalPrice. It gets a full plan card
-    rather than the homepage's compact one: on a page where every neighbour lists data, validity,
-    network and tethering, a card that shows only a headline would read as the thinnest offer on the
-    shelf instead of the best one.
-  */
-  const dealPlan = useMemo(() => initialPlans.find((p) => p.originalPrice != null) ?? null, [initialPlans]);
-
-  /* The deal takes the weekend slot, and whichever tier holds the discounted package steps aside so
-     one package is never offered twice at two prices on the same shelf. */
-  const shelfTiers = useMemo(
-    () =>
-      dealPlan
-        ? curatedTiers.filter((tier) => tier.key !== 'tierWeekend' && tier.plan.id !== dealPlan.id)
-        : curatedTiers,
-    [curatedTiers, dealPlan]
-  );
-
+  const curatedTiers = useMemo(() => buildTiers(initialPlans), [initialPlans]);
   const canCurate = curatedTiers.length >= 3;
   const [showAll, setShowAll] = useState(!canCurate);
   const catalogRef = useRef<HTMLDivElement>(null);
@@ -360,26 +333,7 @@ export function DestinationDetailClient({
             <p className="mt-1 text-sm text-muted-foreground">{t('curatedSubtitle')}</p>
           </div>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {dealPlan && (
-              /* Header mirrors a tier's, so the deal lines up with the cards beside it instead of
-                 floating above them. */
-              <div className="flex flex-col">
-                <div className="mb-2 px-1">
-                  <p className="text-base font-bold text-gray-800">{t('tierDeal')}</p>
-                  <p className="text-xs text-muted-foreground">{t('tierDealDesc')}</p>
-                </div>
-                {/* `[&>*]:h-full` mirrors CuratedTierCard: without it the deal is the one card in
-                    the row that does not reach the shelf's bottom edge. */}
-                <div className="flex-1 [&>*]:h-full">
-                  <PlanCard
-                    plan={dealPlan}
-                    destinationName={destination.name}
-                    destinationSlug={destination.slug}
-                  />
-                </div>
-              </div>
-            )}
-            {shelfTiers.map((tier) => (
+            {curatedTiers.map((tier) => (
               <CuratedTierCard
                 key={tier.plan.id}
                 tierKey={tier.key}

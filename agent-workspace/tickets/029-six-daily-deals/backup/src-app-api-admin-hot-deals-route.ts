@@ -56,7 +56,7 @@ export async function PUT(req: NextRequest) {
   const current = await getHotDealsConfig();
   const next: HotDealsConfig = {
     enabled: typeof body.enabled === 'boolean' ? body.enabled : current.enabled,
-    count: clampInt(body.count, 1, 9, current.count),
+    count: clampInt(body.count, 1, 6, current.count),
     minProfit: clampNum(body.minProfit, 0, 1000, current.minProfit),
     discountMin: clampInt(body.discountMin, 1, 50, current.discountMin),
     discountMax: clampInt(body.discountMax, 1, 50, current.discountMax),

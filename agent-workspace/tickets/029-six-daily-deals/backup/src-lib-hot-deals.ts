@@ -34,7 +34,7 @@ export const HOT_DEALS_CONFIG_KEY = 'hot_deals_config';
 
 export const DEFAULT_HOT_DEALS_CONFIG: HotDealsConfig = {
   enabled: true,
-  count: 6,
+  count: 3,
   minProfit: 3,
   discountMin: 5,
   discountMax: 10,
@@ -163,21 +163,9 @@ async function loadProfitContext(): Promise<ProfitContext> {
 /**
  * Generate deals for a day. Carries over yesterday's pinned deals
  * (re-validated against today's prices), then fills remaining slots
- * with seeded-random eligible candidates — one per destination while
- * that can fill the day, repeating destinations only if it cannot.
- *
- * `alreadyCommitted` are rows that exist for the day and are staying — today's pinned deals during
- * a regenerate. They are not re-created, but they occupy slots and their destinations and packages
- * are taken, so the caller has to hand them over or the day ends up over its configured count.
+ * with seeded-random eligible candidates (max one per destination).
  */
-async function generateDeals(
-  dealDay: string,
-  config: HotDealsConfig,
-  alreadyCommitted: HotDeal[] = []
-): Promise<void> {
-  const slots = config.count - alreadyCommitted.length;
-  if (slots <= 0) return;
-
+async function generateDeals(dealDay: string, config: HotDealsConfig): Promise<void> {
   const [pool, ctx, pinnedYesterday] = await Promise.all([
     buildCandidatePool(config),
     loadProfitContext(),
@@ -187,13 +175,12 @@ async function generateDeals(
 
   const rng = seededRng(dealDay);
   const rows: Prisma.HotDealCreateManyInput[] = [];
-  const usedLocations = new Set<string>(alreadyCommitted.map((r: HotDeal) => r.locationCode));
-  const usedPackages = new Set<string>(alreadyCommitted.map((r: HotDeal) => r.packageCode));
+  const usedLocations = new Set<string>();
+  const usedPackages = new Set<string>();
 
   // 1. Pinned carryover — same discount, prices/profit recomputed for today
   for (const pin of pinnedYesterday) {
-    if (rows.length >= slots) break;
-    if (usedPackages.has(pin.packageCode)) continue; // already kept for today
+    if (rows.length >= config.count) break;
     const candidate = pool.find((c: DealCandidate) => c.packageCode === pin.packageCode);
     if (!candidate) continue;
     const dealPrice = Math.floor(candidate.displayPrice * (1 - pin.discountPercent / 100) * 100) / 100;
@@ -215,43 +202,33 @@ async function generateDeals(
     usedPackages.add(candidate.packageCode);
   }
 
-  // 2. Seeded-random fill, in two passes over the same shuffle.
-  //
-  //    Pass 1 allows one deal per destination, which is what makes the row read as a set of places
-  //    rather than one country on sale six times. Pass 2 runs only if that could not fill the day —
-  //    with six slots and eight featured destinations, a single destination whose packages all fail
-  //    the profit gate would otherwise leave a visibly ragged second row. Variety is the thing worth
-  //    giving up there; the profit gate is not, and it is applied identically in both passes.
+  // 2. Seeded-random fill
   const shuffled = [...pool].sort(() => rng() - 0.5);
-  for (const allowRepeatLocation of [false, true]) {
-    if (rows.length >= slots) break;
+  for (const candidate of shuffled) {
+    if (rows.length >= config.count) break;
+    if (usedPackages.has(candidate.packageCode)) continue;
+    if (usedLocations.has(candidate.locationCode)) continue;
 
-    for (const candidate of shuffled) {
-      if (rows.length >= slots) break;
-      if (usedPackages.has(candidate.packageCode)) continue;
-      if (!allowRepeatLocation && usedLocations.has(candidate.locationCode)) continue;
+    const span = Math.max(0, config.discountMax - config.discountMin);
+    const discountPercent = config.discountMin + Math.floor(rng() * (span + 1));
+    const dealPrice = Math.floor(candidate.displayPrice * (1 - discountPercent / 100) * 100) / 100;
+    const netProfit = dealNetProfit(candidate, dealPrice, ctx);
+    if (netProfit < config.minProfit) continue;
 
-      const span = Math.max(0, config.discountMax - config.discountMin);
-      const discountPercent = config.discountMin + Math.floor(rng() * (span + 1));
-      const dealPrice = Math.floor(candidate.displayPrice * (1 - discountPercent / 100) * 100) / 100;
-      const netProfit = dealNetProfit(candidate, dealPrice, ctx);
-      if (netProfit < config.minProfit) continue;
-
-      rows.push({
-        packageCode: candidate.packageCode,
-        dealDay,
-        discountPercent,
-        originalPrice: candidate.displayPrice,
-        dealPrice,
-        netProfit: Math.round(netProfit * 100) / 100,
-        locationCode: candidate.locationCode,
-        packageName: candidate.packageName,
-        pinned: false,
-        active: true,
-      });
-      usedLocations.add(candidate.locationCode);
-      usedPackages.add(candidate.packageCode);
-    }
+    rows.push({
+      packageCode: candidate.packageCode,
+      dealDay,
+      discountPercent,
+      originalPrice: candidate.displayPrice,
+      dealPrice,
+      netProfit: Math.round(netProfit * 100) / 100,
+      locationCode: candidate.locationCode,
+      packageName: candidate.packageName,
+      pinned: false,
+      active: true,
+    });
+    usedLocations.add(candidate.locationCode);
+    usedPackages.add(candidate.packageCode);
   }
 
   if (rows.length > 0) {
@@ -270,10 +247,7 @@ export async function ensureTodayDeals(): Promise<HotDeal[]> {
   if (!config.enabled) return [];
 
   const dealDay = utcDay();
-  // Ordered, because the result is sliced to `count`: without it the database is free to return the
-  // day's rows in any order and a day holding more rows than the current count would serve a
-  // different, arbitrary subset from one request to the next.
-  const existing = await prisma.hotDeal.findMany({ where: { dealDay }, orderBy: { createdAt: 'asc' } });
+  const existing = await prisma.hotDeal.findMany({ where: { dealDay } });
   if (existing.length > 0) {
     return existing.filter((d: HotDeal) => d.active).slice(0, config.count);
   }
@@ -296,24 +270,10 @@ export async function regenerateTodayDeals(): Promise<HotDeal[]> {
 
   const kept = await prisma.hotDeal.findMany({ where: { dealDay } });
   if (kept.length < config.count) {
-    // The kept rows have to be handed over: they hold slots, destinations and packages that the
-    // generator would otherwise hand out a second time, overshooting the configured count.
-    await generateDeals(dealDay, config, kept);
+    // generateDeals re-checks pins from yesterday; today's kept pins survive via skipDuplicates
+    await generateDeals(dealDay, config);
   }
   return prisma.hotDeal.findMany({ where: { dealDay }, orderBy: { createdAt: 'asc' } });
-}
-
-/**
- * Display hook: today's active deals for one destination.
- *
- * The destination page needs this because checkout already honours the deal price. A page that
- * showed the catalog price for a package on offer would quote more than we intend to charge, and
- * would hide the discount on exactly the page the homepage deal links to.
- */
-export async function getTodayDealsForLocation(locationCode: string): Promise<HotDeal[]> {
-  const deals = await ensureTodayDeals();
-  const code = locationCode.toUpperCase();
-  return deals.filter((d: HotDeal) => d.locationCode.toUpperCase() === code);
 }
 
 /**
