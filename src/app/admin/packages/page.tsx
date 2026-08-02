@@ -8,6 +8,10 @@ export default async function PackagesPage() {
   const session = await getServerSession(authOptions);
   if (!session) redirect('/admin/login');
 
+  // Internal sales spend from the eSIMaccess balance — same bar as the admin users page
+  const role = (session.user as { role?: string })?.role;
+  const canSell = role === 'SUPER_ADMIN' || role === 'ADMIN';
+
   return (
     <div className="p-6 lg:p-8">
       <div className="flex items-start justify-between">
@@ -19,7 +23,7 @@ export default async function PackagesPage() {
         </div>
         <RefreshCacheButton />
       </div>
-      <PackagesClient />
+      <PackagesClient canSell={canSell} />
     </div>
   );
 }

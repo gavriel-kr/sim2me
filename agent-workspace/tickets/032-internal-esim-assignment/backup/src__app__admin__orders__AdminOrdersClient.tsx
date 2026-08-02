@@ -33,7 +33,6 @@ interface DbOrder {
   archivedAt: string | null; // ISO string
   createdAt: string;         // ISO string
   checkoutIp: string | null;
-  orderSource: string;       // Order.source — PADDLE or ADMIN_INTERNAL
 }
 
 interface DisplayOrder {
@@ -56,8 +55,7 @@ interface DisplayOrder {
   notes: string | null;
   archivedAt: string | null;
   createdAt: string;
-  source: 'db' | 'paddle';   // where the row came from, not how it was sold
-  orderSource: string;       // Order.source — PADDLE or ADMIN_INTERNAL
+  source: 'db' | 'paddle';
   checkoutIp: string | null;
 }
 
@@ -500,7 +498,6 @@ export function AdminOrdersClient({
           archivedAt: null,
           createdAt: a.createdAt,
           source: 'paddle' as const,
-          orderSource: 'PADDLE',
           checkoutIp: a.checkoutIp ?? null,
         }));
         setAbandonedOrders(items);
@@ -878,14 +875,6 @@ export function AdminOrdersClient({
                     <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATUS_COLORS[order.status] ?? 'bg-gray-100 text-gray-600'}`}>
                       {order.status}
                     </span>
-                    {order.orderSource === 'ADMIN_INTERNAL' && (
-                      <span
-                        className="inline-flex rounded-full bg-sky-100 px-2 py-0.5 text-xs font-semibold text-sky-700"
-                        title="Sold from the admin panel, not through checkout"
-                      >
-                        INTERNAL
-                      </span>
-                    )}
                     {isArchived && (
                       <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-400">
                         ARCHIVED
@@ -1013,10 +1002,8 @@ export function AdminOrdersClient({
                       <div className="space-y-2">
                         <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Actions</p>
                         <div className="flex flex-col gap-2">
-                          {/* Retry — hidden on an internal sale that already holds a supplier batch,
-                              because retry buys again without checking esimOrderId */}
-                          {order.source === 'db' && ['FAILED', 'PROCESSING', 'PENDING'].includes(order.status)
-                            && !(order.orderSource === 'ADMIN_INTERNAL' && order.esimOrderId) && (
+                          {/* Retry */}
+                          {order.source === 'db' && ['FAILED', 'PROCESSING', 'PENDING'].includes(order.status) && (
                             <button
                               onClick={() => handleRetry(order)}
                               disabled={actionLoading[order.id]}

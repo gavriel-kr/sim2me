@@ -107,18 +107,11 @@ model Order {
   notes                String?    @db.Text // internal admin notes
   archivedAt           DateTime?            // soft delete — null = active
   checkoutIp           String?              // client IP captured at checkout prepare time
-  source               OrderSource @default(PADDLE)
-  idempotencyKey       String?     @unique  // set by admin-created sales; blocks a double purchase
   createdAt            DateTime    @default(now())
   updatedAt            DateTime    @updatedAt
   paidAt               DateTime?
 
   @@map("orders")
-}
-
-enum OrderSource {
-  PADDLE         // paid through checkout
-  ADMIN_INTERNAL // sold from the admin panel
 }
 
 enum OrderStatus {

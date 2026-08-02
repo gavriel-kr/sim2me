@@ -1,12 +1,222 @@
-# Pending release — prepared 2026-08-02
+# Pending release — Ticket 032, prepared 2026-08-02
 
-Everything below is **local and unpushed**. Gabriel asked for the release to be prepared, not sent;
-the push happens only when he says so, and this document is what he approves against.
-
-The protocol is `DEPLOY-PROTOCOL.md` at the repo root and it governs. This file records how each of
-its gates was answered for this particular changeset.
+Everything below is **local and unpushed**. The protocol is `DEPLOY-PROTOCOL.md` at the repo root and
+it governs; this file records how each of its gates was answered for this changeset. The record of the
+release that shipped earlier today is kept further down.
 
 ## Where the repo stands
+
+| | |
+|---|---|
+| HEAD | `361c3d2` — *Tickets 028/030/031*, shipped 2 Aug 2026 13:40 |
+| Branch | `main`, level with `origin/main` |
+| Going up | 10 modified files, 2 new source files, plus the ticket's workspace docs |
+| Rollback target | `361c3d2` |
+| Backup tag | `pre-deploy-20260802-<HHMM>` on `361c3d2`, created before the push |
+
+One ticket, one changeset, one commit. Per-file backups of every edited file sit in
+`agent-workspace/tickets/032-internal-esim-assignment/backup/`, copied before the first edit.
+
+## What the release contains
+
+Selling an eSIM to a customer from the admin panel, without a checkout. One new endpoint,
+`POST /api/admin/orders/internal`, one new component, `InternalSaleModal.tsx`, two entry points, and an
+`INTERNAL` tag on the orders list. Full description in `CHANGELOG.md` and in the ticket's PRD.
+
+## Risk level: R3
+
+The protocol's table names a **Prisma schema change** as R3, and this release adds two columns to
+`Order`. R3 is R2 plus a database backup and a written rollback plan before the push, and R2 itself
+requires a second explicit approval beyond the request to deploy.
+
+It also touches three other B1 areas outright: **eSIMaccess** (it purchases), **emails** (it sends the
+post-purchase email), and **prices** (it sets an order total). So R3 is the level even before the schema
+argument.
+
+### The schema change is already in the production database
+
+This is the unusual part of this release and it deserves stating plainly rather than being discovered
+later. The two columns were applied on 2 Aug while building, because there is one database — local
+development runs against the same Postgres as production — and nothing could be verified without them.
+
+Why that is the safe order rather than the dangerous one:
+
+- The SQL was generated with `prisma migrate diff` and **read before it was applied**: one `CREATE TYPE`,
+  two `ADD COLUMN` with a default, one `CREATE UNIQUE INDEX`. No rename, no retype, no drop, no backfill
+- `source` defaults to `PADDLE`, so all 17 pre-existing rows read exactly what they read before
+- `idempotencyKey` is nullable and was created empty, so the unique index could not fail
+- **The code currently in production does not select either column.** They have been live and inert for
+  several hours, and every dashboard figure was identical before and after, to the cent
+
+So the database is already ahead of the deployed code, in the direction that is safe. The push moves the
+code up to meet it. There is no migration pending at deploy time, and `npm run build` on Vercel will run
+`prisma db push` against a schema that is already in sync.
+
+### Rollback plan, written before the push, as R3 requires
+
+**Code:** `git push origin pre-deploy-20260802-<HHMM>:main`, with Gabriel's approval. This returns the
+site to `361c3d2` exactly.
+
+**Database:** nothing to undo. After a code rollback the two columns simply go back to being unread, as
+they are right now. They are additive and defaulted, so no existing query, export or report can see a
+difference. If they must be removed later — and there is no reason to — the reversal is
+`ALTER TABLE "orders" DROP COLUMN "source", DROP COLUMN "idempotencyKey"; DROP TYPE "OrderSource";` and
+it costs only the internal orders' provenance, not the orders.
+
+**The one thing a rollback cannot undo:** an eSIM already bought from eSIMaccess. If an internal sale is
+made and the release is then rolled back, the balance was still spent and the customer still has a
+working eSIM. The order row survives the rollback intact — only the `INTERNAL` tag and the new button
+disappear — so nothing is lost or orphaned. It is worth knowing before rather than after.
+
+**Per-file:** `agent-workspace/tickets/032-internal-esim-assignment/backup/` holds the pre-edit copy of
+all seven originally listed files, and git holds every tracked file at `361c3d2`.
+
+## Gate A — code builds locally
+
+- ✅ `npx tsc --noEmit` → 0
+- ✅ `npm run lint` → **exit 0, no errors.** Warnings only, all pre-existing; the two new files produce
+  no output at all
+- ✅ `npm run test:profit` → pass
+- ✅ `npm run test:locale-path` → pass
+- ✅ `npx tsx src/app/admin/orders/orderFilters.test.ts` → pass — run because `AdminOrdersClient.tsx`
+  is in the changeset
+- ✅ `npx tsx src/app/admin/orders/ordersExcel.test.ts` → pass — same reason
+- ✅ `npx next build` from a deleted `.next` → **0**, with `/api/admin/orders/internal` in the route
+  table
+- ✅ No `.env`, credential or key file in the changeset
+- ✅ No `console.log`, `debugger`, TODO or FIXME added. The route's two `console.warn` / `console.error`
+  calls match what the webhook and the retry route already do
+- ✅ The two throwaway verification scripts were deleted; their output is preserved in the ticket's
+  `proofs/`
+
+`npm run build` itself is not used, for the same reason as the previous release: it chains
+`prisma db push` and two `tsx` scripts that rewrite article and legal-page rows. `npx next build`
+compiles the identical application without writing to the database. Vercel runs the full script on its
+own side, against a schema already in sync.
+
+## Gate B — risk and environment
+
+### B1 — areas touched
+
+- ✅ **eSIMaccess** — purchases a package, reads the balance, fetches the profile. Uses the existing
+  `purchasePackage`, `getBalance` and `getEsimProfileWithRetry` unchanged
+- ✅ **Emails** — sends the existing `sendPostPurchaseEmail`, fire-and-forget, in the chosen locale
+- ✅ **Prices** — sets an order total, floored server-side at the live wholesale price
+- ✅ **Prisma schema** — two additive columns, discussed above
+- ✅ **Admin orders** — the orders list gained a tag, and Retry is hidden for one new case
+- ❌ Checkout / Paddle client / `create-transaction` / `prepare` — **not touched**
+- ❌ Paddle webhook and fulfillment — **not touched.** Its logic was copied into the new route rather
+  than shared, precisely so this ticket could not reach it
+- ❌ Customer auth, OTP, Admin TOTP — **not touched**
+- ❌ Refund, archive, bulk, Excel — **not touched**
+- ❌ Blocklist / fraud, cron, `vercel.json`, PWA, articles, i18n — **not touched**
+
+### B2 — environment variables
+
+No new variable. The route uses `ESIMACCESS_ACCESS_CODE`, `RESEND_API_KEY`, `RESEND_FROM_EMAIL`,
+`DATABASE_URL` and `NEXT_PUBLIC_SITE_URL`, all already in production and all already used by the paid
+path. Nothing to add, change or delete in Vercel, and no secret appears in the changeset or in any log.
+
+`maxDuration = 60` matches the Paddle webhook and both retry routes, so it is within whatever the plan
+already permits.
+
+### B3 — backup
+
+- ⬜ `git tag pre-deploy-20260802-<HHMM>` on `361c3d2`, immediately before the push
+- ✅ Database rollback plan written above, as R3 requires
+
+## Gate C — smoke
+
+### C0, always
+- ✅ `/en`, `/he`, `/ar` → 200, and a destination page → 200, on the dev server after the final edit
+
+### C1, checkout, money and eSIM
+- ✅ **A real internal sale, driven by Gabriel through a browser.** Spain 3GB 30Days, sold at cost to an
+  existing customer: order `COMPLETED`, ICCID and QR present, customer linked, `paddleTransactionId`
+  null, one audit entry with the right admin, package, price and cost
+- ✅ **The balance dropped by exactly the wholesale price, once**: 55.6700 → 54.0700 on a $1.60 package
+- ✅ **Revenue +1.60 and eSIM cost +1.60, exactly; Fee cost and Net in bank unchanged.** Order count up
+  by exactly one, so nothing that was refused left a row behind. Full table in the ticket's
+  `proofs/phase-6-live-sale.md`
+- ✅ The price floor is enforced on the server against the live wholesale price, not against anything
+  the browser sends. 20 automated checks cover the validation and the floor arithmetic
+- ✅ Nothing on the charge path is in the changeset
+- ✅ `/api/admin/orders/internal` returns **401** without a session, and requires `SUPER_ADMIN` or
+  `ADMIN` with a session
+
+### C2, customer account
+- Not touched. No auth, registration, verification or OTP file is in the changeset. The one customer
+  record this feature can create goes through the same fields and the same bcrypt cost as
+  `api/account/register`
+
+### C3, admin
+- ✅ `/admin/packages`, `/admin/accounts`, `/admin/orders` each compile and redirect correctly behind
+  the guard
+- ✅ Gabriel opened Packages and completed a sale from it in a browser
+- ✅ Dangerous actions were not modified. Refund on an internal order declines cleanly — the route
+  answers "No Paddle transaction on this order" and the UI does not render the button without a
+  transaction id
+
+### C4, content and i18n
+- Not touched. No message file, article or legal page is in the changeset. The modal is admin-only and
+  English, like the rest of the admin panel; the customer's email locale is chosen per sale and uses
+  the existing templates
+
+### C5, mobile
+- Not touched. Admin-only feature, no public page in the changeset
+
+### C6, cron
+- Not touched. No change to `CRON_SECRET` handling or to `vercel.json`
+
+## Known gaps, stated rather than smoothed over
+
+- **Creating a customer during a sale has never been exercised.** The live sale used an existing
+  account. The failure mode is the safe one — the customer is created before the order and before the
+  purchase, so a failure costs nothing and buys nothing — but it will meet production untested
+- **A VIEWER admin has not been observed receiving 403.** Enforced by an explicit role check on the
+  server and by the `canSell` prop in the UI, but not watched with a real VIEWER session
+- **A gift is booked at cost, not at zero.** Deliberate, and the consequence is that revenue gains money
+  that never arrived. Allowing zero behind an explicit confirmation is a one-line change if preferred
+- **`Avg. order` skews**, because its numerator now includes internal revenue and its denominator counts
+  only Paddle orders. Pre-existing for sync stubs, more visible now
+- **The retry double-purchase hole is still open for Paddle orders.** Closed for internal ones. It edits
+  a money path and waits on its own approval
+
+## Gate D — the pre-push checklist
+
+- ✅ Gabriel explicitly asked for the deploy
+- ✅ Risk level determined: **R3**
+- ✅ Gate A green, `npx next build` = 0 from a clean `.next`
+- ✅ Gate B answered; no environment change, no money-path file touched
+- ✅ Gate C passed, including a real sale with the balance and the dashboard reconciled
+- ✅ R3 database rollback plan written before the push
+- ⬜ Backup tag `pre-deploy-20260802-<HHMM>` on `361c3d2`
+- ✅ Commit contains only files belonging to this change. `src/app/[locale]/design-preview/` stays out,
+  and staging is by explicit path — never `git add -A`, which would put that route on the live site
+- ✅ Deploy by `git push origin main` only. No Vercel CLI, ever
+- ⬜ **Second explicit approval, because this is R3**
+
+## Post-deploy smoke, to run once Vercel reports Ready
+
+- `https://www.sim2me.net/en`, `/he`, `/ar` load, no 5xx
+- `https://www.sim2me.net/api/checkout/health` → `ok: true`
+- Admin → Orders loads, and the sale made locally shows its `INTERNAL` tag in production
+- Admin → eSIM Packages loads and the "Internal sale" button is on the cards
+- `POST /api/admin/orders/internal` without a session → 401
+- The dashboard still reads the same Revenue, Fee cost and Net in bank as it does locally
+- No new error class in the Vercel function logs for `/api/admin/orders/internal`
+- **Not part of the smoke:** another purchase. The feature was proven on real money once already;
+  production does not need a second $1.60 to prove the same thing
+
+If any of it fails: stop, report, propose rollback to the tag. Do not push again blind.
+
+---
+
+# Previous release — shipped 2 Aug 2026, `e4a9d48..361c3d2`
+
+Kept for the record. Tickets 028 phase 7j and 10, 030, and 031.
+
+## Where the repo stood
 
 | | |
 |---|---|
@@ -301,3 +511,33 @@ If any of it fails: stop, report, propose rollback to the tag. Do not push again
 
 A partial rollback is not available, because the release is one changeset. If one piece needs
 reverting later, the per-file backups in each ticket's `backup/` folder are the way back.
+
+## Shipped
+
+Pushed 2 Aug 2026, 13:40. `e4a9d48..361c3d2`, 112 files. Tag `pre-deploy-20260802-1334`
+is on the remote and points at `e4a9d48`, the last known good commit.
+
+Production smoke, run against `www.sim2me.net` once the build landed, 30 seconds after the push:
+
+- The three locales return 200. Checkout health `ok: true`, all five steps green,
+  the slowest 273 ms
+- The eleven touched pages return 200
+- The plan page for a package on a live deal: `$15.25` with `$16.40` struck through,
+  the same pair of numbers the destination page and the cart show. Recommendations
+  render. Zero overflow at 375 px, which is the bug found during Gate C5
+- `/ar/contact` has no raw translation keys left in the HTML
+- `character-preview` and `design-preview` both 404, so neither preview route shipped
+
+Two smoke results looked like failures and were not:
+
+- The destinations index reports no characters in its server HTML. It reports none
+  locally either. `DestinationsClient` renders the figure after hydration, so it was
+  never in the SSR markup. In a real browser the figure is there
+- The two pointing figures on a destination page measured `naturalWidth: 0` on mobile.
+  They carry `loading="lazy"` and the button they flank sits below the fold at 375 px.
+  All four files serve 200 with the right content type; after scrolling to them they
+  decode at full size. On desktop they load immediately. Not a regression
+
+Anything checked by string-matching the HTML has to distinguish rendered text from the
+serialised i18n bundle. The `from $` check tripped on `"heroFrom"` sitting in the message
+payload; the rendered count was zero.

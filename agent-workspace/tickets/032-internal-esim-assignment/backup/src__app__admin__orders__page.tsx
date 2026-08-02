@@ -170,8 +170,6 @@ export default async function OrdersPage({ searchParams }: PageProps) {
           totalAmount: Number(o.totalAmount),
           currency: o.currency,
           status: o.status,
-          // `source` is already taken in the client for db-vs-Paddle row origin
-          orderSource: o.source,
           errorMessage: o.errorMessage ?? null,
           qrCodeUrl: o.qrCodeUrl ?? null,
           smdpAddress: o.smdpAddress ?? null,

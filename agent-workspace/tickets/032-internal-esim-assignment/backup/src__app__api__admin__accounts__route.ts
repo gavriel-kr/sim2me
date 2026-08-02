@@ -5,28 +5,14 @@ import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: Request) {
+export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   if ((session.user as { type?: string }).type !== 'admin') {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  // ?q= is the lookup used by the internal-sale modal; without it the full list is returned as before
-  const q = new URL(request.url).searchParams.get('q')?.trim() ?? '';
-
   const customers = await prisma.customer.findMany({
-    where: q
-      ? {
-          OR: [
-            { email: { contains: q, mode: 'insensitive' } },
-            { name: { contains: q, mode: 'insensitive' } },
-            { lastName: { contains: q, mode: 'insensitive' } },
-            { phone: { contains: q } },
-          ],
-        }
-      : undefined,
-    take: q ? 10 : undefined,
     orderBy: { createdAt: 'desc' },
     select: {
       id: true,

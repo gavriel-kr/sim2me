@@ -70,28 +70,6 @@ export const profileSchema = z.object({
   newsletter: z.boolean().optional(),
 });
 
-// ─── Admin: internal eSIM sale ───────────────────────────────
-// Either customerId (picked from an existing account) or email is required.
-// name + phone are only needed when the email has no account yet — the route
-// answers CUSTOMER_NOT_FOUND so the modal can ask for them.
-export const internalSaleSchema = z.object({
-  idempotencyKey: z.string().uuid(),
-  packageCode: z.string().min(1).max(128),
-  customerId: z.string().min(1).max(64).optional(),
-  email: z.string().email('Valid email is required').optional(),
-  name: z.string().min(1).max(100).optional(),
-  lastName: z.string().max(100).optional(),
-  phone: z.string().regex(e164Regex, 'Invalid phone number').optional(),
-  priceToCustomer: z.number().nonnegative('Price cannot be negative').max(100000),
-  paymentNote: z.string().max(500).optional(),
-  emailLocale: z.enum(['he', 'en', 'ar']),
-}).refine((d) => Boolean(d.customerId || d.email), {
-  message: 'A customer id or an email is required',
-  path: ['email'],
-});
-
-export type InternalSaleInput = z.infer<typeof internalSaleSchema>;
-
 export type TravelerInfoForm = z.infer<typeof travelerInfoSchema>;
 export type ContactFormData = z.infer<typeof contactFormSchema>;
 export type NewsletterFormData = z.infer<typeof newsletterSchema>;

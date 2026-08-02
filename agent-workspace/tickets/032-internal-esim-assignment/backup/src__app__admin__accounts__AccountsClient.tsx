@@ -10,7 +10,6 @@ import { AccountFilters } from './AccountFilters';
 import { applyAccountFilters, type AccountFiltersState } from './accountFilterState';
 import { exportAccountsToExcel } from './accountExcel';
 import { CONTACT_SUBJECTS } from '@/lib/validation/schemas';
-import { InternalSaleModal, type PickedCustomer } from '@/components/admin/InternalSaleModal';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -85,12 +84,10 @@ const defaultFilters: AccountFiltersState = {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-interface Props { accounts: Account[]; canSell?: boolean }
+interface Props { accounts: Account[] }
 
-export function AccountsClient({ accounts: initial, canSell = false }: Props) {
+export function AccountsClient({ accounts: initial }: Props) {
   const [accounts, setAccounts] = useState(initial);
-  // Internal sale (ticket 032) — null when the modal is closed
-  const [saleTo, setSaleTo] = useState<PickedCustomer | null>(null);
   const [filters, setFilters] = useState<AccountFiltersState>(defaultFilters);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [fullData, setFullData] = useState<Record<string, AccountFull>>({});
@@ -864,27 +861,9 @@ export function AccountsClient({ accounts: initial, canSell = false }: Props) {
 
                         {/* ── Orders section ── */}
                         <section className="border-t border-gray-100 pt-5">
-                          <div className="mb-3 flex items-center justify-between gap-3">
-                            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                              Orders ({full.orders.length})
-                            </h3>
-                            {canSell && (
-                              <button
-                                onClick={() => setSaleTo({
-                                  id: account.id,
-                                  email: account.email,
-                                  name: account.name,
-                                  lastName: account.lastName,
-                                  phone: account.phone,
-                                })}
-                                className="inline-flex items-center gap-1.5 rounded-lg bg-sky-50 px-2.5 py-1.5 text-xs font-semibold text-sky-700 hover:bg-sky-100"
-                                title="Buy an eSIM from eSIMaccess and assign it to this customer"
-                              >
-                                <Plus className="h-3.5 w-3.5" />
-                                Sell an eSIM
-                              </button>
-                            )}
-                          </div>
+                          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                            Orders ({full.orders.length})
+                          </h3>
                           {full.orders.length === 0 ? (
                             <p className="text-sm text-gray-400">No orders from this customer.</p>
                           ) : (
@@ -941,21 +920,6 @@ export function AccountsClient({ accounts: initial, canSell = false }: Props) {
             );
           })}
         </div>
-      )}
-
-      {saleTo && (
-        <InternalSaleModal
-          presetCustomer={saleTo}
-          onClose={() => setSaleTo(null)}
-          onSold={async () => {
-            // Refresh this customer's order list so the new eSIM is visible behind the modal
-            const res = await fetch(`/api/admin/accounts/${saleTo.id}?full=1`);
-            if (res.ok) {
-              const data = await res.json();
-              setFullData((prev) => ({ ...prev, [saleTo.id]: data }));
-            }
-          }}
-        />
       )}
     </div>
   );

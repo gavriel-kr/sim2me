@@ -1,10 +1,9 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Search, RefreshCw, Globe, Eye, EyeOff, Star, Tag, Save, Filter, ChevronDown, ChevronUp, ArrowUpCircle, Pencil, Trash2, BadgePlus, BadgeMinus, Copy, Download, X, UserPlus } from 'lucide-react';
+import { Search, RefreshCw, Globe, Eye, EyeOff, Star, Tag, Save, Filter, ChevronDown, ChevronUp, ArrowUpCircle, Pencil, Trash2, BadgePlus, BadgeMinus, Copy, Download, X } from 'lucide-react';
 import { computeProfit, computeOtherFeesTotal, type AdditionalFeeItem } from '@/lib/profit';
 import { BulkEditDrawer } from './BulkEditDrawer';
-import { InternalSaleModal, type PickedPackage } from '@/components/admin/InternalSaleModal';
 
 interface Package {
   packageCode: string;
@@ -51,10 +50,8 @@ interface EditState {
   notes: string;
 }
 
-export function PackagesClient({ canSell = false }: { canSell?: boolean }) {
+export function PackagesClient() {
   const [packages, setPackages] = useState<Package[]>([]);
-  // Internal sale (ticket 032) — null when the modal is closed
-  const [saleFor, setSaleFor] = useState<PickedPackage | null>(null);
   const [overrides, setOverrides] = useState<Map<string, Override>>(new Map());
   const [feeSettings, setFeeSettings] = useState<FeeSettings | null>(null);
   const [additionalFees, setAdditionalFees] = useState<AdditionalFeeItem[]>([]);
@@ -1148,22 +1145,6 @@ export function PackagesClient({ canSell = false }: { canSell?: boolean }) {
                     <Tag className="h-3 w-3" />
                     {isEditing ? 'Cancel' : 'Edit'}
                   </button>
-                  {canSell && (
-                    <button
-                      onClick={() => setSaleFor({
-                        packageCode: pkg.packageCode,
-                        name: override?.customTitle || pkg.name,
-                        costUsd: (pkg.price ?? 0) / 10000,
-                        location: pkg.location || pkg.locationCode || '',
-                        meta: `${formatVolume(pkg.volume)} · ${pkg.duration} days`,
-                      })}
-                      className="inline-flex items-center gap-1 rounded-lg bg-sky-50 px-2 py-1 text-xs font-medium text-sky-700 hover:bg-sky-100"
-                      title="Sell this package to a customer from the admin panel"
-                    >
-                      <UserPlus className="h-3 w-3" />
-                      Internal sale
-                    </button>
-                  )}
                   <span className="font-mono text-[9px] text-gray-300 ml-auto">{pkg.packageCode}</span>
                 </div>
 
@@ -1310,13 +1291,6 @@ export function PackagesClient({ canSell = false }: { canSell?: boolean }) {
           clearSelection();
         }}
       />
-
-      {saleFor && (
-        <InternalSaleModal
-          presetPackage={saleFor}
-          onClose={() => setSaleFor(null)}
-        />
-      )}
     </div>
   );
 }

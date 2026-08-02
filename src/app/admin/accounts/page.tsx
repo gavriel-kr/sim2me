@@ -16,6 +16,10 @@ export default async function AdminAccountsPage() {
     );
   }
 
+  // Internal sales spend from the eSIMaccess balance — same bar as the admin users page
+  const role = (session.user as { role?: string }).role;
+  const canSell = role === 'SUPER_ADMIN' || role === 'ADMIN';
+
   const accounts = await prisma.customer.findMany({
     orderBy: { createdAt: 'desc' },
     select: {
@@ -36,6 +40,7 @@ export default async function AdminAccountsPage() {
       <p className="mt-1 text-sm text-gray-500">Customer accounts — view and edit details</p>
       <AccountsClient
         accounts={accounts.map((a: typeof accounts[number]) => ({ ...a, createdAt: a.createdAt.toISOString() }))}
+        canSell={canSell}
       />
     </div>
   );
