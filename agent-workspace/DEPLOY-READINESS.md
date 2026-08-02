@@ -190,11 +190,11 @@ already permits.
 - ✅ Gate B answered; no environment change, no money-path file touched
 - ✅ Gate C passed, including a real sale with the balance and the dashboard reconciled
 - ✅ R3 database rollback plan written before the push
-- ⬜ Backup tag `pre-deploy-20260802-<HHMM>` on `361c3d2`
+- ✅ Backup tag `pre-deploy-20260802-2005` on `361c3d2`, now on the remote
 - ✅ Commit contains only files belonging to this change. `src/app/[locale]/design-preview/` stays out,
   and staging is by explicit path — never `git add -A`, which would put that route on the live site
 - ✅ Deploy by `git push origin main` only. No Vercel CLI, ever
-- ⬜ **Second explicit approval, because this is R3**
+- ✅ **Second explicit approval, because this is R3** — given 2 Aug, 20:08
 
 ## Post-deploy smoke, to run once Vercel reports Ready
 
@@ -209,6 +209,28 @@ already permits.
   production does not need a second $1.60 to prove the same thing
 
 If any of it fails: stop, report, propose rollback to the tag. Do not push again blind.
+
+## Shipped
+
+Pushed 2 Aug 2026, 20:09. `361c3d2..10bdf29`, 23 files. Tag `pre-deploy-20260802-2005` is on the
+remote and points at `361c3d2`, the last known good commit.
+
+Production smoke, run against `www.sim2me.net` once the build landed:
+
+- `GET /api/admin/orders/internal` went from **404 to 405** across the deploy, which is the
+  unambiguous proof that the new route is live: 404 was the route not existing, 405 is it existing
+  and refusing a method it does not export. It was polled every 20 seconds and flipped 41 seconds
+  after the push
+- `POST /api/admin/orders/internal` with no session → **401**, so the guard survived the deploy
+- `/en`, `/he`, `/ar`, the destinations index and a destination page → 200. No 5xx anywhere
+- `/admin/login` → 200; `/admin/orders` and `/admin/packages` → 307, guards intact
+- `/api/checkout/health` → `ok: true`, all five steps green, `paddle-ping` 86 ms. The payment path is
+  untouched and healthy, which was the premise of the whole ticket
+- No second purchase was made in production. The feature was already proven on real money locally,
+  and the balance does not need to prove it twice
+
+The database needed nothing at deploy time. The two columns had been live and inert for hours, so
+Vercel's `prisma db push` ran against a schema already in sync.
 
 ---
 

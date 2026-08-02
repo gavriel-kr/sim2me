@@ -138,12 +138,28 @@ sync, cron, retroactive-assignment and editable-cost phases were removed, not de
 
 ## Phase 7 — Close
 
-- ⬜ Delete the two throwaway harnesses, `scripts/tmp-032-state.mjs` and `scripts/tmp-032-checks.ts`.
-  They are kept until the browser pass so the after-state can be compared with the same arithmetic
-- ⬜ `CHANGELOG.md` under `[Unreleased]`
-- ⬜ Summarise: files changed, what to look at, what was deliberately left alone
-- ⬜ Record the two known consequences: a gift is booked at cost, so Revenue gains money that never
+- ✅ Deleted the two throwaway harnesses, `scripts/tmp-032-state.mjs` and `scripts/tmp-032-checks.ts`.
+  Their output is preserved in `proofs/phase-0-before-state.md`, `proofs/phase-1-6-local-verification.md`
+  and `proofs/phase-6-live-sale.md`
+- ✅ `CHANGELOG.md` under `[Unreleased]`
+- ✅ `agent-workspace/DEPLOY-READINESS.md` — the R3 record, the rollback plan, and the shipped smoke
+- ✅ Both known consequences recorded: a gift is booked at cost, so Revenue gains money that never
   arrived; and Avg. order skews because its denominator is Paddle-only
+- ✅ Shipped 2 Aug 2026, 20:09, as `10bdf29`. Backup tag `pre-deploy-20260802-2005` on `361c3d2`
+
+## Verified in production
+
+- ✅ The route went from 404 to 405 across the deploy, and answers 401 without a session
+- ✅ Three locales, the destinations index, a destination page and `/admin/login` all 200; the admin
+  guards still redirect
+- ✅ `/api/checkout/health` → `ok: true`, all five steps green. The payment path is untouched
+
+## Still open after the release
+
+- ⬜ Creating a customer during a sale — never exercised. Fails before any purchase, so the worst case
+  is an error and no order
+- ⬜ A VIEWER admin observed receiving 403
+- ⬜ The QR email read in Arabic and English; only Hebrew has been sent
 
 ## Notes / follow-ups
 
