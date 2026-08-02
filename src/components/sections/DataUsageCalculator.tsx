@@ -4,6 +4,7 @@ import React, { useState, useMemo } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { createSharedPathnamesNavigation } from 'next-intl/navigation';
 import { routing } from '@/i18n/routing';
+import { CharacterFigure } from '@/components/brand/CharacterFigure';
 import {
   Smartphone, MessageCircle, Video, Music, Map, Globe, Info,
   Youtube, Instagram, Facebook, Plus, Trash2,
@@ -44,9 +45,19 @@ interface DataUsageCalculatorProps {
   /** Called when the user clicks "Find plan". Receives weekly GB estimate.
    *  If omitted, the button navigates to /destinations instead. */
   onFindPlan?: (weeklyGB: number) => void;
+  /**
+   * Ticket 031 — show Sima beside the heading. Off by default, and deliberately not inferred from
+   * `!compact`: the full heading also renders inside a destination page, which has its own
+   * characters, and inside the usage modal, which has no room for one.
+   */
+  withCharacter?: boolean;
 }
 
-export const DataUsageCalculator = ({ compact = false, onFindPlan }: DataUsageCalculatorProps) => {
+export const DataUsageCalculator = ({
+  compact = false,
+  onFindPlan,
+  withCharacter = false,
+}: DataUsageCalculatorProps) => {
   const t = useTranslations('calculator');
   const locale = useLocale();
   const router = useRouter();
@@ -103,9 +114,20 @@ export const DataUsageCalculator = ({ compact = false, onFindPlan }: DataUsageCa
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-8 bg-white" dir={isRTL ? 'rtl' : 'ltr'}>
       {!compact && (
-        <div className="text-center mb-10">
-          <h1 className="text-3xl font-bold text-gray-900 mb-3">{t('title')}</h1>
-          <p className="text-gray-600 max-w-xl mx-auto leading-relaxed">{t('subtitle')}</p>
+        <div className="mb-10 flex flex-col items-center justify-center gap-4 text-center sm:flex-row">
+          <div className="min-w-0">
+            <h1 className="text-3xl font-bold text-gray-900 mb-3">{t('title')}</h1>
+            <p className="text-gray-600 max-w-xl mx-auto leading-relaxed">{t('subtitle')}</p>
+          </div>
+          {withCharacter && (
+            <CharacterFigure
+              slot="calculatorEstimating"
+              height={150}
+              heightLg={200}
+              crop={0.5}
+              className="shrink-0"
+            />
+          )}
         </div>
       )}
 

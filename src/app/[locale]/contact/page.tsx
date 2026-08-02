@@ -1,5 +1,6 @@
 import { getTranslations } from 'next-intl/server';
 import { MainLayout } from '@/components/layout/MainLayout';
+import { CharacterFigure } from '@/components/brand/CharacterFigure';
 import { ContactForm } from './ContactForm';
 import { EmailCopyButton } from './EmailCopyButton';
 import { Mail, Clock, HelpCircle, Smartphone, Wifi, RefreshCw, AlertCircle, Lightbulb } from 'lucide-react';
@@ -57,9 +58,18 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
     <MainLayout>
       <section className="bg-gradient-to-b from-primary/[0.06] to-white py-16 sm:py-20" dir={isRTL ? 'rtl' : 'ltr'}>
         <div className="container mx-auto max-w-5xl px-4">
-          <div className="text-center">
-            <h1 className="text-3xl font-bold text-foreground sm:text-4xl">{cms?.title || t('title')}</h1>
-            <p className="mt-3 text-lg text-muted-foreground">{t('subtitle')}</p>
+          <div className="mx-auto flex max-w-3xl flex-col items-center justify-center gap-4 text-center sm:flex-row">
+            <div className="min-w-0">
+              <h1 className="text-3xl font-bold text-foreground sm:text-4xl">{cms?.title || t('title')}</h1>
+              <p className="mt-3 text-lg text-muted-foreground">{t('subtitle')}</p>
+            </div>
+            <CharacterFigure
+              slot="contactWaving"
+              height={150}
+              heightLg={200}
+              crop={0.5}
+              className="shrink-0"
+            />
           </div>
 
           <div className="mt-12 grid gap-8 lg:grid-cols-5">

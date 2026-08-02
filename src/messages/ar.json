@@ -191,7 +191,9 @@
     "coverageTetheringTooltip": "ما إذا كان بإمكانك مشاركة بيانات هذه الخطة مع أجهزة أخرى عبر نقطة الاتصال.",
     "coverageTopUpsLabel": "إعادة الشحن",
     "coverageTopUpsInfoAria": "ما المقصود بإعادة الشحن؟",
-    "coverageTopUpsTooltip": "ما إذا كان يمكنك إعادة شحن الخطة أو تمديدها بعد الشراء."
+    "coverageTopUpsTooltip": "ما إذا كان يمكنك إعادة شحن الخطة أو تمديدها بعد الشراء.",
+    "recommendedHeading": "قد تناسبك أيضًا",
+    "recommendedSubtitle": "وجدنا لك باقات مجدية قد تهمّك."
   },
   "howItWorks": {
     "title": "كيف يعمل",
@@ -339,7 +341,24 @@
     "issueActivation": "مشاكل التفعيل",
     "issueConnectivity": "مشاكل الاتصال",
     "issueRefund": "طلب استرداد",
-    "issueOther": "استفسار عام"
+    "issueOther": "استفسار عام",
+    "namePlaceholder": "محمد أحمد",
+    "emailPlaceholder": "mohamed@example.com",
+    "phone": "رقم الهاتف",
+    "phonePlaceholder": "رقم هاتف دولي",
+    "subjectPlaceholder": "اختر موضوعًا",
+    "messagePlaceholder": "أخبرنا المزيد...",
+    "marketingConsent": "أود تلقي التحديثات والأخبار والعروض من Sim2Me",
+    "sending": "جارٍ الإرسال...",
+    "messageSent": "تم إرسال الرسالة!",
+    "messageSentDesc": "سنعود إليك قريبًا.",
+    "sendAnother": "إرسال رسالة أخرى",
+    "subject_installation_help": "المساعدة في تثبيت eSIM",
+    "subject_activation_issue": "مشكلة في التفعيل",
+    "subject_connectivity_problem": "مشكلة في الاتصال",
+    "subject_refund_request": "طلب استرداد",
+    "subject_billing_payment": "الفوترة والدفع",
+    "subject_general_inquiry": "استفسار عام"
   },
   "checkout": {
     "title": "إتمام الشراء",

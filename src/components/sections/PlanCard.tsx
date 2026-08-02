@@ -77,7 +77,6 @@ interface PlanCardProps {
 
 export function PlanCard({ plan, destinationName, destinationSlug }: PlanCardProps) {
   const t = useTranslations('plan');
-  const tDest = useTranslations('destinations');
   const tHome = useTranslations('home');
   const locale = useLocale();
   const addItem = useCartStore((s) => s.addItem);
@@ -113,8 +112,6 @@ export function PlanCard({ plan, destinationName, destinationSlug }: PlanCardPro
       });
     }
   };
-
-  const perDay = plan.days > 0 ? (plan.price / plan.days).toFixed(2) : plan.price;
 
   return (
     <Card
@@ -186,11 +183,6 @@ export function PlanCard({ plan, destinationName, destinationSlug }: PlanCardPro
                 </span>
               )}
             </span>
-            {plan.days > 0 && (
-              <span className="inline-flex rounded-full bg-sky-50 px-2.5 py-1 text-xs font-medium text-sky-700 ring-1 ring-sky-100">
-                {formatPrice(plan.price / plan.days, plan.currency)} {t('perDay')}
-              </span>
-            )}
           </div>
         </div>
         <div className="relative z-10 mt-5 flex items-center gap-2">

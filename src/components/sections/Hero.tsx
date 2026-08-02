@@ -178,11 +178,6 @@ export function Hero() {
                       <span className="font-medium">
                         {localizedCountryName(d.isoCode, d.name, locale)}
                       </span>
-                      {typeof d.fromPrice === 'number' && (
-                        <span className="text-xs text-muted-foreground">
-                          {t('heroFrom')}{formatPrice(d.fromPrice, d.fromCurrency || 'USD')}
-                        </span>
-                      )}
                     </IntlLink>
                   ))}
               </div>

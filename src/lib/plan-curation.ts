@@ -1,7 +1,7 @@
 /**
  * Smart-shelf curation for destination pages (ticket 023).
  *
- * Pure functions — given the full plan list of a destination, pick 3–5 "tiers"
+ * Pure functions — given the full plan list of a destination, pick 3–4 "tiers"
  * named by trip intent, after removing duplicate specs and Pareto-dominated
  * plans. Nothing is removed from sale: the full catalog stays behind
  * a "Show all" toggle in the UI.
@@ -11,7 +11,7 @@ import type { Plan } from '@/types';
 
 export type PlanFamily = 'fixed' | 'daily' | 'unlimited';
 
-export type TierKey = 'tierWeekend' | 'tierWeek' | 'tierMonth' | 'tierHeavy' | 'tierLong';
+export type TierKey = 'tierWeek' | 'tierMonth' | 'tierHeavy' | 'tierLong';
 
 export interface CuratedTier {
   key: TierKey;
@@ -64,8 +64,12 @@ interface TierTarget {
   days: number;
 }
 
+/*
+  There is deliberately no sub-week tier. A 1GB/7d target always resolved to the thinnest package
+  in the catalog, which anchored the whole shelf to a price no one should actually buy at, and set
+  travelers up to run out of data mid-trip. The week tier covers short trips well enough.
+*/
 const TIER_TARGETS: TierTarget[] = [
-  { key: 'tierWeekend', gb: 1, days: 7 },
   { key: 'tierWeek', gb: 3, days: 15 },
   { key: 'tierMonth', gb: 10, days: 30 },
   { key: 'tierHeavy', gb: 20, days: 30 },
@@ -79,7 +83,7 @@ function fitScore(plan: Plan, target: TierTarget): number {
   return gbRatio + 0.6 * daysRatio;
 }
 
-/** Reject picks wildly off-target (e.g. a 50GB plan standing in for "weekend"). */
+/** Reject picks wildly off-target (e.g. a 50GB plan standing in for "about a week"). */
 const MAX_FIT_SCORE = 2.2;
 
 /** Value upgrade: prefer more data when it costs almost the same. */
@@ -101,6 +105,29 @@ function valueUpgrade(picked: Plan, target: TierTarget, frontier: Plan[], used: 
     if (gbOf(p) > target.gb * VALUE_UPGRADE_MAX_GB_FACTOR) continue;
     if (p.price > picked.price * VALUE_UPGRADE_MAX_PRICE_RATIO) continue;
     best = p;
+  }
+  return best;
+}
+
+/**
+ * Which shelf slot a given plan sits closest to (ticket 030).
+ *
+ * Scored against the tier's *target*, not against the plan that won the slot, so the answer is
+ * "which trip is this package for" rather than "which of these four packages resembles it". There
+ * is no MAX_FIT_SCORE gate: with only three or four slots one of them is always the nearest, and a
+ * caller asking this question wants an answer, not a rejection.
+ */
+export function nearestTier(tiers: CuratedTier[], plan: Plan): CuratedTier | null {
+  let best: CuratedTier | null = null;
+  let bestScore = Infinity;
+  for (const tier of tiers) {
+    const target = TIER_TARGETS.find((t) => t.key === tier.key);
+    if (!target) continue;
+    const score = fitScore(plan, target);
+    if (score < bestScore) {
+      best = tier;
+      bestScore = score;
+    }
   }
   return best;
 }

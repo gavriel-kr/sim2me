@@ -9,6 +9,9 @@ import { formatPrice } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { CharacterFigure } from '@/components/brand/CharacterFigure';
+import { RecommendedPlans } from '@/components/sections/RecommendedPlans';
+import type { PlanRecommendations } from '@/lib/plan-recommendations';
 import { Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useCartStore } from '@/stores/cartStore';
@@ -125,9 +128,11 @@ function DetailInfo({
 interface PlanDetailClientProps {
   destination: Destination;
   plan: Plan;
+  /** Ticket 030. Optional so the page still renders if the catalogue fetch fell over. */
+  recommendations?: PlanRecommendations;
 }
 
-export function PlanDetailClient({ destination, plan }: PlanDetailClientProps) {
+export function PlanDetailClient({ destination, plan, recommendations }: PlanDetailClientProps) {
   const t = useTranslations('plan');
   const addItem = useCartStore((s) => s.addItem);
   const { toast } = useToast();
@@ -182,14 +187,36 @@ export function PlanDetailClient({ destination, plan }: PlanDetailClientProps) {
           <div className="lg:sticky lg:top-24">
             <Card className="rounded-2xl border border-emerald-100/80 shadow-lg">
               <CardContent className="p-6">
-                <div className="text-2xl font-bold sm:text-3xl">
-                  {formatPrice(plan.price, plan.currency)}
+                {/*
+                  The pair fills the empty half of the price row. Cropped to head and torso rather
+                  than shown at full length: from `lg` this card is a third of the page, and a whole
+                  standing figure in a column that narrow puts the faces at roughly 18 px. The phone
+                  height is the larger of the two because the card is full width there, while the
+                  desktop one has to share a third of the page with the price.
+                */}
+                <div className="flex items-center justify-between gap-3">
+                  {/*
+                    `min-w-0` and `flex-wrap` are load-bearing. A package on offer prints two prices
+                    here, and at 375 px the pair plus both prices do not fit on one line; without
+                    these the row pushed the whole document to 394 px and every page scrolled
+                    sideways. The price must be the thing that reflows, never the thing that is cut.
+                  */}
+                  <div className="flex min-w-0 flex-wrap items-baseline gap-x-2">
+                    <div className={`text-2xl font-bold sm:text-3xl ${plan.originalPrice != null ? 'text-emerald-600' : ''}`}>
+                      {formatPrice(plan.price, plan.currency)}
+                    </div>
+                    {/* Same treatment PlanCard gives a discounted package, so the two pages agree */}
+                    {plan.originalPrice != null && (
+                      <span className="text-base font-medium text-gray-400 line-through">
+                        {formatPrice(plan.originalPrice, plan.currency)}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex shrink-0 items-end gap-1">
+                    <CharacterFigure slot="planPriceSimi" height={116} heightLg={124} crop={0.5} />
+                    <CharacterFigure slot="planPriceSima" height={116} heightLg={124} crop={0.5} />
+                  </div>
                 </div>
-                {plan.days > 0 && (
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {formatPrice(plan.price / plan.days, plan.currency)} {t('perDay')}
-                  </p>
-                )}
                 <Button
                   className="mt-6 w-full rounded-xl shadow-[inset_0_0_12px_rgba(16,185,129,0.15)] hover:shadow-[inset_0_0_16px_rgba(16,185,129,0.22)]"
                   size="lg"
@@ -395,6 +422,14 @@ export function PlanDetailClient({ destination, plan }: PlanDetailClientProps) {
           </Card>
         </div>
       </div>
+
+      {recommendations && (
+        <RecommendedPlans
+          recommendations={recommendations}
+          destinationName={destination.name}
+          destinationSlug={destination.slug}
+        />
+      )}
     </div>
   );
 }

@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PhoneInput } from '@/components/PhoneInput';
+import { CharacterFigure } from '@/components/brand/CharacterFigure';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   User, ShoppingBag, Wifi, Settings, LogOut, Phone, Mail,
@@ -486,6 +487,23 @@ export function AccountClient() {
             <div className="flex-1 min-w-0">
               <h1 className="text-xl font-bold truncate">{displayName}</h1>
               <p className="text-sm text-muted-foreground truncate">{profile.email}</p>
+            </div>
+            {/*
+              Ticket 031. Cropped to head and torso and kept short, because this is a bar and not a
+              hero — at full length the pair would set the height of the whole strip.
+            */}
+            <div className="flex shrink-0 items-end gap-1 self-end">
+              <CharacterFigure slot="genericSimi" height={74} heightLg={104} crop={0.4} />
+              {/* Sima joins from `sm`. Both of them beside the 56 px avatar leave a 375 px row about
+                  130 px for the name and the email, which truncates an ordinary address to nothing;
+                  Simi alone leaves close to 190 px. */}
+              <CharacterFigure
+                slot="genericSima"
+                height={74}
+                heightLg={104}
+                crop={0.4}
+                className="hidden sm:block"
+              />
             </div>
             <Button
               variant="ghost"

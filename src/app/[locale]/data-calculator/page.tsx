@@ -15,7 +15,7 @@ export default function DataCalculatorPage() {
   return (
     <MainLayout>
       <div className="py-10 md:py-16">
-        <DataUsageCalculator />
+        <DataUsageCalculator withCharacter />
       </div>
     </MainLayout>
   );

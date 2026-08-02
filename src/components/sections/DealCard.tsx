@@ -63,11 +63,6 @@ export function DealCard({ deal }: { deal: HotDeal }) {
           <span className="text-sm font-medium text-gray-400 line-through">
             {formatPrice(deal.originalPrice, deal.currency)}
           </span>
-          {deal.duration > 0 && (
-            <span className="ms-auto rounded-full bg-sky-50 px-2 py-0.5 text-[11px] font-medium text-sky-700 ring-1 ring-sky-100">
-              {formatPrice(deal.dealPrice / deal.duration, deal.currency)} {t('hotDealsPerDay')}
-            </span>
-          )}
         </div>
 
         {/*

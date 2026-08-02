@@ -418,7 +418,7 @@ function GlobalSeoTab({ initial }: { initial: GlobalSeoSettings }) {
       {/* 6. Organization Schema */}
       <Section title="Organization Schema (JSON-LD)" icon={Globe} defaultOpen={false}>
         <p className="text-xs text-gray-500 -mt-1">
-          Powers Google's Knowledge Panel and rich results. Injected as structured data on every page.
+          Powers Google&apos;s Knowledge Panel and rich results. Injected as structured data on every page.
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Organization Name">

@@ -17,6 +17,7 @@ import { routing } from '@/i18n/routing';
 import { usePaddle } from '@/components/paddle/PaddleScript';
 import { TurnstileWidget, type TurnstileWidgetRef } from '@/components/ui/TurnstileWidget';
 import { planToGaItem, trackAddPaymentInfo, trackBeginCheckout } from '@/lib/analytics';
+import { CharacterFigure } from '@/components/brand/CharacterFigure';
 
 const { Link: IntlLink } = createSharedPathnamesNavigation(routing);
 
@@ -163,7 +164,19 @@ export function CheckoutClient() {
 
   return (
     <div className="container mx-auto max-w-4xl px-4 py-8">
-      <h1 className="text-2xl font-bold">{t('title')}</h1>
+      {/*
+        Ticket 031. The pair stands at the end of the title row, cropped to head and torso — a page
+        someone is about to pay on is not the place for two full-length figures competing with the
+        total. Nothing else in this file is touched: the steps, the cart, Turnstile and the Paddle
+        handler are all as they were.
+      */}
+      <div className="flex items-end justify-between gap-3">
+        <h1 className="text-2xl font-bold">{t('title')}</h1>
+        <div className="flex shrink-0 items-end gap-1">
+          <CharacterFigure slot="genericSimi" height={92} heightLg={120} crop={0.42} />
+          <CharacterFigure slot="genericSima" height={92} heightLg={120} crop={0.42} />
+        </div>
+      </div>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-2">
         <div>

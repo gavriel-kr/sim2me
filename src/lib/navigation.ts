@@ -21,10 +21,20 @@ export type NavigationConfig = {
   };
 };
 
+/*
+  Must stay identical to `defaultNavLinks` in `components/layout/Header.tsx`.
+
+  Ticket 031. The two had drifted: the Header rendered six entries and this list, which is what the
+  admin navigation screen loads and saves, had five — missing the calculator. Since no `nav_menu`
+  row exists yet, visitors were getting the Header's six, and the first time anyone opened that
+  screen and pressed save, the shorter list would have been written to the database and the
+  calculator would have vanished from the site with nothing to show it had ever been there.
+*/
 const DEFAULT_NAV_MENU: NavLink[] = [
   { href: '/', key: 'home' },
   { href: '/destinations', key: 'destinations' },
   { href: '/how-it-works', key: 'howItWorks' },
+  { href: '/data-calculator', key: 'calculator' },
   { href: '/help', key: 'help' },
   { href: '/contact', key: 'contact' },
 ];

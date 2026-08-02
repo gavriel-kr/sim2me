@@ -7,6 +7,7 @@ import { createSharedPathnamesNavigation } from 'next-intl/navigation';
 import { routing } from '@/i18n/routing';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { CharacterFigure } from '@/components/brand/CharacterFigure';
 import {
   Search, Globe, MapPin, X, Wifi, Zap,
   ChevronDown, ArrowUpDown, Filter, LayoutGrid,
@@ -503,11 +504,26 @@ export function DestinationsClient({
   return (
     <div className="container px-4 py-8" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* ─── Title ────────────────────────────────────────────── */}
-      <div className="flex items-center gap-2">
-        <Globe className="h-6 w-6 text-emerald-600" />
-        <h1 className="text-2xl font-bold sm:text-3xl">{t('title')}</h1>
+      {/*
+        The pair sits beside the heading from `sm` up and drops to its own centred row below it on a
+        phone. Keeping it in the row on a narrow screen would either squeeze the two-line subtitle or
+        shrink the figures past the point where the binoculars read as binoculars.
+      */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <Globe className="h-6 w-6 text-emerald-600" />
+            <h1 className="text-2xl font-bold sm:text-3xl">{t('title')}</h1>
+          </div>
+          <p className="mt-1 text-muted-foreground">{t('subtitle')}</p>
+        </div>
+        <CharacterFigure
+          slot="destinationsListScouting"
+          height={132}
+          heightLg={196}
+          className="shrink-0 self-center sm:self-auto"
+        />
       </div>
-      <p className="mt-1 text-muted-foreground">{t('subtitle')}</p>
 
       {/* ═══ Unified search + filter bar ═════════════════════════ */}
       <div className="mt-6 rounded-2xl border border-emerald-100/80 bg-gradient-to-br from-blue-50/35 via-white to-amber-50/35 shadow-sm">
@@ -709,14 +725,6 @@ export function DestinationsClient({
                     <span className="text-xs text-muted-foreground">
                       {d.planCount} {t('plansCount')}
                     </span>
-                    {d.fromPrice > 0 && (
-                      <>
-                        <span className="text-gray-300">·</span>
-                        <span className="text-xs font-bold text-emerald-600">
-                          {t('from')} ${d.fromPrice.toFixed(2)}
-                        </span>
-                      </>
-                    )}
                   </div>
                   <div className="flex items-center gap-1.5 mt-1">
                     {d.featured && (

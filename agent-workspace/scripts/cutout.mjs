@@ -34,7 +34,8 @@
  *   --feather <n>    blur sigma on the alpha edge     (default: 0.7)
  *   --pad <n>        transparent padding after trim   (default: 8)
  *   --no-trim        keep the original canvas
- *   --proof          also write <out>-proof.png: the cutout on light, dark and brand green
+ *   --proof          write a proof — the cutout on light, dark and brand green — into
+ *                    agent-workspace/brand-assets/characters/proofs/
  *   --debug          also write <out>-mask.png: the raw keep/remove mask
  *   --dry            report only, write nothing
  */
@@ -358,7 +359,20 @@ async function main() {
     const light = await panel('#f8fafc');
     const dark = await panel('#0b1220');
     const mid = await panel('#10b981');
-    const file = `${opts.out}-proof.png`;
+    /*
+      Proofs go to the workspace, never beside the output.
+
+      They used to be written next to `--out`, which is `public/characters` — so QA artefacts landed
+      in the served directory by construction, and twelve of them, 10.8 MB, shipped in every deploy
+      before anyone noticed. Resolved from this file's own location so the destination cannot depend
+      on which directory the script was run from.
+    */
+    const proofDir = path.resolve(
+      path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')),
+      '../brand-assets/characters/proofs',
+    );
+    await fs.mkdir(proofDir, { recursive: true });
+    const file = path.join(proofDir, `${path.basename(opts.out)}-proof.png`);
     await sharp({
       create: { width: (sw + 40) * 3, height: proofH + 40, channels: 4, background: '#ffffff' },
     })

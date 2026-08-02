@@ -1,5 +1,6 @@
 import { getTranslations } from 'next-intl/server';
 import { MainLayout } from '@/components/layout/MainLayout';
+import { CharacterFigure } from '@/components/brand/CharacterFigure';
 import { Card, CardContent } from '@/components/ui/card';
 import {
   MapPin, CreditCard, Smartphone, Apple, Monitor,
@@ -66,9 +67,23 @@ export default async function HowItWorksPage({ params }: { params: Promise<{ loc
       />
       <div className="container px-4 py-12 space-y-16" dir={isRTL ? 'rtl' : 'ltr'}>
         {/* Header */}
-        <div className="text-center max-w-2xl mx-auto">
-          <h1 className="text-3xl font-bold sm:text-4xl">{t('title')}</h1>
-          <p className="mt-3 text-lg text-muted-foreground">{t('subtitle')}</p>
+        {/*
+          Ticket 031. The text keeps its own centring; the pair joins it as a second item in a
+          centred row from `sm` up, and drops beneath it on a phone rather than stealing width from
+          a two-line subtitle. Same shape on all four menu pages.
+        */}
+        <div className="mx-auto flex max-w-3xl flex-col items-center justify-center gap-4 text-center sm:flex-row">
+          <div className="min-w-0">
+            <h1 className="text-3xl font-bold sm:text-4xl">{t('title')}</h1>
+            <p className="mt-3 text-lg text-muted-foreground">{t('subtitle')}</p>
+          </div>
+          <CharacterFigure
+            slot="howItWorksExplaining"
+            height={150}
+            heightLg={196}
+            crop={0.5}
+            className="shrink-0"
+          />
         </div>
 
         {/* 3 Steps */}

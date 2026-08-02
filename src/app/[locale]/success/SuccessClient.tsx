@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { routing } from '@/i18n/routing';
 import { brandConfig } from '@/config/brand';
 import { trackPurchase } from '@/lib/analytics';
+import { CharacterFigure } from '@/components/brand/CharacterFigure';
 
 const { Link: IntlLink } = createSharedPathnamesNavigation(routing);
 
@@ -149,6 +150,16 @@ export function SuccessClient({ transactionId }: { transactionId: string | null 
           </div>
           <h1 className="text-2xl font-bold text-primary">{t('thankYou')}</h1>
           <p className="mt-2 text-muted-foreground">{t('readyToUse')}</p>
+          {/*
+            Ticket 031. Full length here, unlike checkout and the account bar: this is the one page
+            in the three that is a moment rather than a task, and it is a narrow centred column with
+            room below the line to spend. Only the completed branch — a pair standing beside
+            "something went wrong" would be the site smiling at bad news.
+          */}
+          <div className="mt-6 flex items-end justify-center gap-2">
+            <CharacterFigure slot="genericSimi" height={200} heightLg={260} />
+            <CharacterFigure slot="genericSima" height={200} heightLg={260} />
+          </div>
         </div>
 
         <Card className="overflow-hidden">

@@ -12,10 +12,16 @@ const SECTION_LABELS: Record<string, string> = {
   footerGuides: 'Footer – eSIM Guides',
 };
 
-/** Suggestions for translation keys (user can type any value) */
+/**
+ * Suggestions for translation keys (user can type any value).
+ *
+ * Only offer keys that survive `getNavigationConfig`. It strips `app` from every section and
+ * `devices` from the header, so suggesting either there invites someone to add a link, save, and
+ * watch it never appear — with the screen still showing it afterwards.
+ */
 const KEY_SUGGESTIONS: Record<string, string[]> = {
-  navMenu: ['home', 'destinations', 'app', 'howItWorks', 'devices', 'help', 'about', 'contact'],
-  footerProduct: ['destinations', 'app', 'howItWorks', 'devices'],
+  navMenu: ['home', 'destinations', 'howItWorks', 'calculator', 'help', 'about', 'contact'],
+  footerProduct: ['destinations', 'howItWorks', 'devices'],
   footerCompany: ['about', 'contact', 'help'],
   footerLegal: ['terms', 'privacy', 'refund', 'accessibilityStatement'],
   footerGuides: ['guidesAll', 'guidesEurope', 'guidesHowTo', 'guidesVsRoaming'],

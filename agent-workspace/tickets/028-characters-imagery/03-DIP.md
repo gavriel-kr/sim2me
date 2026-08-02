@@ -195,7 +195,99 @@ individually.
 - ✅ `HotDealsSection.tsx` — beat 2, Sima beside the heading rather than inside a card: a person next to a price competes with it, and inside a card she would repeat once per deal — six times as of ticket 029. Cropped to head-and-torso. `id="hot-deals"` anchor untouched
 - ✅ `CTASection.tsx` — beat 3, Simi, full length and calm. Absolutely positioned so the centred headline keeps its own geometry, and only from `lg` where the room outside the `max-w-3xl` column actually exists
 - ⬜ Scroll the homepage end to end and judge it as one scene, not a parade: same outfit, same light, each beat advancing the last
-- ⬜ `DestinationDetailClient.tsx` — **deferred with the rest of the destination work**
+- ✅ `DestinationDetailClient.tsx` — done 2026-08-01/02, along with the rest of the destination work. See 7j
+
+### 7j — The destination pages, 2026-08-01/02
+
+This is the "rest of the destination work" 7c deferred. Six new renders and five placements, built
+over one long session with Gabriel reviewing each in the browser. **Not committed** — see the Gate
+note at the top of ticket 030's DIP. Pre-change copies of every file:
+`agent-workspace/backups/2026-08-01-destination-pages/`, verified byte-identical to `e4a9d48`.
+
+#### The renders
+
+- ✅ Four **destination-header** poses, so 225 pages are not all greeted by the same picture:
+  `pair-suitcases-v1`, `pair-seated-phone-v1`, `pair-checking-phone-v1`, `pair-selfie-v1`
+- ✅ A **pointing pair** to flank the "show all plans" button: `simi-pointing-v1`, `sima-pointing-v1`
+- ✅ A **reaction pair** for the moment the catalogue opens: `pair-peering-down-v1`
+- ✅ A **binoculars pair** for the destinations index: `pair-binoculars-v1`
+- ✅ All generated on magenta and cut with `--tol 60 --grey 0 --key`, each proof checked on dark and
+  on brand green before acceptance
+- ✅ `pair-peering-down-v1` was re-cut at a smaller source size after the first pass came out at
+  244 KB WebP against ~100 KB for its peers. It is a close-up, so it carries far more detail per
+  pixel than the full-length poses; downscaling the source to 760 px tall brought it to 139 KB with
+  no visible loss at a display height of 168 px
+- ✅ `simi-generic` / `sima-generic` reused as-is for the plan page. They already existed and were
+  referenced by nothing but the internal preview route
+
+#### The pointing pair had to be reshot
+
+- ✅ The first version held the arm at shoulder height, which put the fingertips at 11% and 15% of
+  body height — well above a button standing beside them, and **not even level with each other**
+- ✅ Re-rendered pointing down and out at hip height. Fingertips now sit at 49% and 47%, so a figure
+  standing on the bottom of a box as tall as itself lands its finger on a vertically centred button
+  with no per-figure nudging. Recorded in the brand README as a rule for any reshoot
+
+#### Placement 1 — the destination header
+
+- ✅ `destinationHeaderPose()` in `character-art.ts` hashes the destination slug. Chosen over a
+  random pick per view: the server cannot guess what the browser would draw, so a random choice
+  means an empty header until hydration and then a jump. Hashing keeps it on the server, spreads the
+  four evenly, and shows a returning visitor the same picture
+- ✅ First shipped `hidden sm:block`. Gabriel asked why the phone had none, so it now shows at every
+  width
+- ✅ **The phone height is capped at 104 px by the widest pose, not by taste.** The seated pair is
+  1.28 wide per unit of height, so at 104 it takes 133 px and leaves ~97 px of a 358 px row for the
+  country name once the flag and both gaps are paid. Higher, and short names break onto two lines.
+  Reported to Gabriel with the arithmetic rather than silently shipping something smaller than asked
+- ✅ `min-w-0` on the name block so a long country name wraps inside the row instead of pushing the
+  pair out
+- ✅ 200 px from `lg`. Left there on Gabriel's instruction after the size question was raised
+
+#### Placement 2 — flanking "show all plans"
+
+- ✅ Pinned with **physical `left` and `right`**, not `start` and `end`. Each figure was drawn
+  pointing one specific way, so a flip with the writing direction would leave both pointing off the
+  page. Same reasoning as the homepage CTA pair, opposite conclusion: there, mirroring is required
+- ✅ The container shrinks to the button's own width and reserves the figures' space as padding, so
+  they sit against the button rather than out at the page edges
+
+#### Placement 3 — the seam where the catalogue opens
+
+- ✅ `pair-peering-down-v1` sits **directly on the divider**, with no bottom margin. The render is
+  cut at mid-thigh, and a hard photographic edge only reads as deliberate when it lands on a line —
+  on the rule it becomes the pair leaning over it to look down at what appeared underneath
+- ✅ Pair and "back to recommended" button centred in one column, on Gabriel's call. Centring is also
+  what makes it correct in all three locales without a per-direction rule
+- ✅ Tied to `canCurate`: a destination with no shelf has no moment of opening to react to
+
+#### Placement 4 — the destinations index
+
+- ✅ `pair-binoculars-v1` beside the heading, dropping to its own centred row below the heading and
+  above the search bar on a phone
+- ✅ `mirror: 'ltr'` — Simi scans image-right and the pair stands at the inline end, so RTL already
+  has him looking back over the list and only LTR needs the flip. Same case as `faqCurious`
+
+#### Placement 5 — the plan page price card
+
+- ✅ Both generic poses beside the price, `crop={0.5}` to head-and-torso. At full length in a column
+  that is a third of the page the faces come out around 18 px
+- ✅ The phone height (140) is **larger** than the desktop one (124), which looks backwards and is
+  not: below `lg` the card is full width, while from `lg` it shares a third of the page with the price
+- ✅ Price, add-to-cart button and `handleAddToCart` untouched — this is a purchase path
+
+#### One thing here is not a character change
+
+- ✅ A **2-second spinner** on "show all plans", requested by Gabriel because the catalogue appeared
+  with no warning. Nothing is fetched: every plan is already in memory, and the delay exists only so
+  the jump from four cards to seventy-eight reads as an answer to the click. Flagged to Gabriel as
+  longer than it needs to be, with ~800 ms recommended; left at 2000 on his call. One constant,
+  `CATALOG_OPEN_DELAY_MS`. The calculator's route into the catalogue stays instant
+
+#### Open
+
+- ⬜ Gabriel's full browser pass across the four placements in `he`, `en` and `ar`
+- ⬜ `next build` — deferred with the rest of the destination work's verification
 
 ### 7h — The characters reach mobile, 2026-07-31
 
@@ -374,8 +466,73 @@ assuming it is fine.
 - ⬜ Update `brand-assets/characters/README.md` with the final index
 - ⬜ Summarise: files changed, what to look at, what was deliberately left alone
 
+## Phase 10 — Not character work: the shelf and the price badges, 2026-08-01
+
+Logged here because it landed in the same session, in the same files, and is uncommitted alongside
+7j — so at deploy time it is one changeset and needs one record. It is **not** ticket 028's subject,
+and if it is ever split out it should get its own ticket. Pre-change copies are in the same backup
+folder.
+
+### 10a — The weekend tier is gone
+
+Gabriel asked why the weekend package was always seven days with very little data. It was not a bug:
+`TIER_TARGETS` held `{ gb: 1, days: 7 }`, and a 1 GB target resolves to the thinnest package in any
+catalogue.
+
+- ✅ `tierWeekend` dropped from `TierKey` and from `TIER_TARGETS`. Four tiers remain
+- ✅ The reasoning written into the source, not just here: a 1 GB anchor set the shelf's opening
+  price at a package nobody should buy, and set travellers up to run out mid-trip
+- ✅ `DestinationDetailClient.tsx` — the now-dead `tier.key !== 'tierWeekend'` guard removed from the
+  hot-deal filter. Ticket 029 had the deal take the weekend slot; with no weekend slot the deal
+  simply opens the shelf
+- ✅ **The three-tier floor was checked, not assumed.** `buildTiers` returns `[]` below three tiers,
+  so removing one risked destinations silently losing their shelf. A throwaway script ran the real
+  catalogues of 14 destinations: all 14 still produce four tiers
+- ✅ `tierWeekend` / `tierWeekendDesc` left in all three message files, following the precedent set
+  for `heroPhoneHeader` in Phase 9 — dead keys cost almost nothing and keep the revert one line away
+
+### 10b — "from $X" removed
+
+Gabriel's judgement: it does not survive scrutiny and only confuses.
+
+- ✅ Removed from `Hero.tsx`, `DestinationDetailClient.tsx`, `FeaturedPlans.tsx`,
+  `DestinationsClient.tsx`, and from the destination page's SEO title and description
+- ✅ **`fromPrice` itself stays.** `/destinations` filters and sorts on it, and the destination page
+  still computes it from final prices so a deal is reflected. Only the display is gone
+- ✅ `FeaturedPlans` had been falling back to a hardcoded English `"plans"` when no price existed;
+  it now uses `plansCount` and is translated in all three locales
+
+### 10c — "$X per day" removed
+
+- ✅ `PlanCard.tsx`, `DealCard.tsx`, `PlanDetailClient.tsx`, plus the dead `perDay` local
+- ✅ Gabriel's reasoning recorded because it is the useful part: if per-day is worth printing, why
+  not per-gigabyte? Neither is how anyone chooses, and one of them was being presented as if it were
+
+### 10d — Tried and reverted: a validity dimension in `valueUpgrade()`
+
+- ✅ `valueUpgrade()` only ever traded up on **data**, so it missed 3 GB/15 d → 3 GB/30 d for ten
+  cents. A second pass was built to trade up on validity within the same 15% price budget
+- ✅ **Reverted at Gabriel's request.** `valueUpgrade()` is byte-identical to the backup copy
+- ⬜ Worth revisiting on its own. The gap it found is real, and it is written down here so the next
+  person does not have to rediscover it
+
+### 10e — Dead translation keys this phase created
+
+Left in place, per the Phase 9 precedent. Recorded so they are not rediscovered as a mystery:
+
+| Key | Namespace | Dead since |
+|---|---|---|
+| `from` | `destinations` | 10b |
+| `heroFrom` | `home` | 10b |
+| `perDay` | `plan` | 10c |
+| `hotDealsPerDay` | `home` | 10c |
+| `tierWeekend`, `tierWeekendDesc` | `destinations` | 10a |
+
+All confirmed unreferenced anywhere in `src/` on 2026-08-02, and present in all three locale files.
+
 ## Status log
 
+- 2026-08-02: **The destination work is done locally and is logged, in Phases 7j and 10.** Six new renders, five placements, and a session's worth of shelf and pricing changes that are not character work but share the same files and the same uncommitted changeset. Nothing is committed. Three things from it are worth keeping. **The pointing pair had to be reshot before it could be placed** — the first version's fingertips sat at 11% and 15% of body height and were not level with each other, which no amount of CSS fixes; the reshoot put them at 49% and 47% and the alignment then needed no nudging at all. **Removing a tier is a shelf-availability question, not a taste question**: `buildTiers` returns nothing below three tiers, so dropping the weekend tier could have silently removed the shelf from thin destinations, and the only honest way to know was to run the real catalogues of 14 destinations through it. And **the phone-header size was a measurement, not a preference** — Gabriel asked for figures the size of the empty space he could see, and the arithmetic said the widest of the four poses would leave 97 px for a country name; reporting that number was more useful than either silently shipping something smaller or breaking the header on long names. Still open: Gabriel's browser pass in three locales, and `next build`.
 - 2026-08-01: **Deployed to production**, commit `5f31def`, backup tag `pre-deploy-20260801-0133` on `c8f304c`. R0 — three class changes in one component. Post-deploy smoke green: three locales 200 with ten character asset references each, Japan destination 200, `/api/checkout/health` `ok: true` on all five steps, both preview pages 404. The check that matters was re-run against production rather than trusted from local: every hero box now spans `[16 .. 359]` at 375 px in all three locales, and at 320 px the only boxes outside the viewport are the carousel's inactive slides and the pre-existing decorative blurs, all inside `overflow-hidden`. **The lesson is about the previous deploy, not this one.** 7h shipped after verifying each figure fitted a 288 px content width — a true statement that measured the figures and never their container, and every check in it was a number computed from the source. The bug lived in a CSS default no source reading surfaces, and it took a browser to see. Three CDP scripts now exist so that is a one-command check rather than a rediscovery.
 - 2026-07-31: **The characters now appear on phones**, which they did not in the first deploy — every beat carried `hidden lg:block`. The real blocker was that `CharacterFigure` sized its box with inline `width` and `height`, and a `style` attribute cannot hold a media query, so sizing moved to custom properties read by a `.character-figure` class. Two things worth keeping: the first version of that class computed width as `height × ratio` and forgot that a cropped figure's width follows the scaled-up image height, which made cropped boxes 54 % too narrow and sliced the figures down both sides — caught by printing the rendered numbers and comparing them against what the old inline styles produced, not by looking at the page. And the CTA pair's mobile height is set by faces rather than by space: full-length figures put a head at a seventh of the box, so the 150 px the layout would happily accept gives a 20 px face. The hero pair and card stack instead of overlapping, the four beside-a-heading beats become columns, and the CTA uses `lg:contents` so one DOM node serves both layouts.
 - 2026-07-31: **Deployed to production**, commit `1dd200e`, backup tag `pre-deploy-20260731-2017` on `1761d90`. R1. Post-deploy smoke green: three locales 200 with five characters in the server HTML each, all fourteen assets 200, the new CTA copy present in all three, `/api/hot-deals` returning today's three deals, `/api/checkout/health` `ok: true`, destinations and checkout unaffected, and both preview pages correctly 404. Three things the deploy prep turned up that are worth more than the deploy itself:

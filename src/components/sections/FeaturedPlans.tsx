@@ -5,7 +5,6 @@ import { useQuery } from '@tanstack/react-query';
 import { getDestinations } from '@/lib/api/repositories/destinationsRepository';
 import { createSharedPathnamesNavigation } from 'next-intl/navigation';
 import { routing } from '@/i18n/routing';
-import { formatPrice } from '@/lib/utils';
 import { CharacterFigure } from '@/components/brand/CharacterFigure';
 import { ArrowRight, Sparkles } from 'lucide-react';
 
@@ -80,18 +79,9 @@ export function FeaturedPlans() {
                 <span className="block font-bold text-foreground transition-colors group-hover:text-primary">
                   {getLocalizedCountryName(d.isoCode, d.name, locale)}
                 </span>
-                {d.fromPrice != null ? (
-                  <p className="mt-0.5 text-sm flex items-center gap-1">
-                    <span className="text-muted-foreground">{tDest('from')}</span>
-                    <span className="font-bold text-primary">
-                      {formatPrice(d.fromPrice, d.fromCurrency ?? 'USD')}
-                    </span>
-                  </p>
-                ) : (
-                  <p className="mt-0.5 text-sm text-muted-foreground">
-                    {d.planCount} plans
-                  </p>
-                )}
+                <p className="mt-0.5 text-sm text-muted-foreground">
+                  {d.planCount} {tDest('plansCount')}
+                </p>
               </div>
               <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground/40 transition-all group-hover:text-primary group-hover:translate-x-0.5" />
             </IntlLink>

@@ -1,0 +1,763 @@
+﻿'use client';
+
+import { useTranslations } from 'next-intl';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { createSharedPathnamesNavigation } from 'next-intl/navigation';
+import { routing } from '@/i18n/routing';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import {
+  Search, Globe, MapPin, X, Wifi, Zap,
+  ChevronDown, ArrowUpDown, Filter, LayoutGrid,
+} from 'lucide-react';
+
+const { Link: IntlLink, useRouter } = createSharedPathnamesNavigation(routing);
+
+/* ΓפאΓפאΓפא Types ΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפא */
+interface DestItem {
+  id: string;
+  name: string;
+  slug: string;
+  flagCode: string;
+  isRegional: boolean;
+  continent: string;
+  planCount: number;
+  fromPrice: number;
+  maxDataMB: number;
+  speeds: string[];
+  featured: boolean;
+}
+
+/* ΓפאΓפאΓפא Filter preset definitions (labels added dynamically with i18n) ΓפאΓפאΓפא */
+const PRICE_DEFS = [
+  { key: 'anyPrice', min: 0, max: Infinity },
+  { key: 'under5', min: 0, max: 5, tpl: (under: string) => `${under} $5` },
+  { key: 'range5_15', min: 5, max: 15, fixed: '$5 Γאף $15' },
+  { key: 'range15_30', min: 15, max: 30, fixed: '$15 Γאף $30' },
+  { key: 'range30', min: 30, max: Infinity, fixed: '$30+' },
+];
+
+const DATA_DEFS = [
+  { key: 'anyData', min: 0 },
+  { key: '500mb', min: 500, fixed: '500 MB+' },
+  { key: '1gb', min: 1024, fixed: '1 GB+' },
+  { key: '3gb', min: 3072, fixed: '3 GB+' },
+  { key: '5gb', min: 5120, fixed: '5 GB+' },
+  { key: '10gb', min: 10240, fixed: '10 GB+' },
+  { key: '20gb', min: 20480, fixed: '20 GB+' },
+];
+
+const SORT_KEYS = ['name', 'price', 'plans', 'data'] as const;
+
+type MiniSelectAccent = 'blue' | 'amber' | 'emerald' | 'default';
+
+const MINI_SELECT_ACCENTS: Record<
+  MiniSelectAccent,
+  { icon: string; select: string; chevron: string }
+> = {
+  blue: {
+    icon: 'text-blue-600',
+    select:
+      'border-blue-200 bg-blue-50/50 hover:border-blue-400 focus:border-blue-500 focus:ring-blue-500/25',
+    chevron: 'text-blue-500/80',
+  },
+  amber: {
+    icon: 'text-amber-600',
+    select:
+      'border-amber-200 bg-amber-50/50 hover:border-amber-400 focus:border-amber-500 focus:ring-amber-500/25',
+    chevron: 'text-amber-500/80',
+  },
+  emerald: {
+    icon: 'text-emerald-600',
+    select:
+      'border-emerald-200 bg-emerald-50/50 hover:border-emerald-400 focus:border-emerald-500 focus:ring-emerald-500/25',
+    chevron: 'text-emerald-500/80',
+  },
+  default: {
+    icon: 'text-gray-500',
+    select:
+      'border-gray-200 bg-white hover:border-gray-300 focus:border-emerald-500 focus:ring-emerald-500/20',
+    chevron: 'text-gray-400',
+  },
+};
+
+/** Autocomplete row tint Γאפ cycles like plan-card icon accents */
+const SUGGESTION_ROW_CLASSES = [
+  { active: 'bg-blue-50 text-blue-950', idle: 'hover:bg-blue-50/80' },
+  { active: 'bg-amber-50 text-amber-950', idle: 'hover:bg-amber-50/80' },
+  { active: 'bg-emerald-50 text-emerald-950', idle: 'hover:bg-emerald-50/80' },
+] as const;
+
+/* ΓפאΓפאΓפא Select component (tiny) ΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפא */
+function MiniSelect({
+  value,
+  onChange,
+  options,
+  icon,
+  accent = 'default',
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  options: { value: string; label: string }[];
+  icon?: React.ReactNode;
+  accent?: MiniSelectAccent;
+}) {
+  const a = MINI_SELECT_ACCENTS[accent];
+  return (
+    <div className="relative">
+      {icon && (
+        <span
+          className={`pointer-events-none absolute start-2.5 top-1/2 -translate-y-1/2 ${a.icon}`}
+        >
+          {icon}
+        </span>
+      )}
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={`appearance-none rounded-lg border text-sm font-medium transition-colors
+          focus:outline-none focus:ring-2
+          ${a.select}
+          ${icon ? 'ps-8 pe-7 py-2' : 'ps-3 pe-7 py-2'}`}
+      >
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>{o.label}</option>
+        ))}
+      </select>
+      <ChevronDown
+        className={`pointer-events-none absolute end-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 ${a.chevron}`}
+      />
+    </div>
+  );
+}
+
+/* ΓפאΓפאΓפא Active filter chip ΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפא */
+function Chip({ label, onRemove }: { label: string; onRemove: () => void }) {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 ps-2.5 pe-1 py-0.5 text-xs font-medium text-emerald-800 animate-in fade-in-0 zoom-in-95">
+      {label}
+      <button
+        onClick={onRemove}
+        className="ms-0.5 flex h-4 w-4 items-center justify-center rounded-full hover:bg-emerald-200 transition-colors"
+      >
+        <X className="h-2.5 w-2.5" />
+      </button>
+    </span>
+  );
+}
+
+/* ΓפאΓפאΓפא Region name translations ΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפא */
+const REGION_TRANSLATIONS: Record<string, Record<string, string>> = {
+  he: {
+    'Africa': '╫נ╫ñ╫¿╫ש╫º╫פ', 'Europe': '╫נ╫ש╫¿╫ץ╫ñ╫פ', 'Asia': '╫נ╫í╫ש╫פ',
+    'North America': '╫ª╫ñ╫ץ╫ƒ ╫נ╫₧╫¿╫ש╫º╫פ', 'South America': '╫ף╫¿╫ץ╫¥ ╫נ╫₧╫¿╫ש╫º╫פ',
+    'Oceania': '╫נ╫ץ╫º╫ש╫נ╫á╫ש╫פ', 'Middle East': '╫פ╫₧╫צ╫¿╫ק ╫פ╫¬╫ש╫¢╫ץ╫ƒ', 'Caribbean': '╫פ╫º╫¿╫ש╫ס╫ש╫ש╫¥',
+    'Global': '╫ó╫ץ╫£╫₧╫ש', 'N. America': '╫ª╫ñ╫ץ╫ƒ ╫נ╫₧╫¿╫ש╫º╫פ', 'S. America': '╫ף╫¿╫ץ╫¥ ╫נ╫₧╫¿╫ש╫º╫פ',
+  },
+  ar: {
+    'Africa': '╪ú┘ב╪▒┘ך┘ג┘ך╪º', 'Europe': '╪ú┘ט╪▒┘ט╪¿╪º', 'Asia': '╪ó╪│┘ך╪º',
+    'North America': '╪ú┘ו╪▒┘ך┘ד╪º ╪º┘ה╪┤┘ו╪º┘ה┘ך╪⌐', 'South America': '╪ú┘ו╪▒┘ך┘ד╪º ╪º┘ה╪¼┘ז┘ט╪¿┘ך╪⌐',
+    'Oceania': '╪ú┘ט┘ג┘ך╪º┘ז┘ט╪│┘ך╪º', 'Middle East': '╪º┘ה╪┤╪▒┘ג ╪º┘ה╪ú┘ט╪│╪╖', 'Caribbean': '╪º┘ה┘ד╪º╪▒┘ך╪¿┘ך',
+    'Global': '╪╣╪º┘ה┘ו┘ך', 'N. America': '╪ú┘ו╪▒┘ך┘ד╪º ╪º┘ה╪┤┘ו╪º┘ה┘ך╪⌐', 'S. America': '╪ú┘ו╪▒┘ך┘ד╪º ╪º┘ה╪¼┘ז┘ט╪¿┘ך╪⌐',
+  },
+};
+
+/**
+ * Translate a country code to the given locale using Intl.DisplayNames.
+ * For regional destination names, use the manually translated REGION_TRANSLATIONS.
+ */
+function translateName(
+  name: string,
+  locationCode: string,
+  isRegional: boolean,
+  locale: string,
+): string {
+  if (locale === 'en') return name;
+
+  if (!isRegional && locationCode.length === 2) {
+    // Use Intl.DisplayNames for single countries
+    try {
+      const displayName = new Intl.DisplayNames([locale], { type: 'region' }).of(locationCode.toUpperCase());
+      if (displayName) return displayName;
+    } catch { /* fallback */ }
+  }
+
+  // For regions, try partial translation of known terms
+  if (isRegional) {
+    const translations = REGION_TRANSLATIONS[locale];
+    if (translations) {
+      // Try direct match first
+      for (const [en, local] of Object.entries(translations)) {
+        if (name.includes(en)) {
+          return name.replace(en, local);
+        }
+      }
+    }
+  }
+
+  return name;
+}
+
+function translateContinent(continent: string, locale: string): string {
+  if (locale === 'en') return continent;
+  return REGION_TRANSLATIONS[locale]?.[continent] || continent;
+}
+
+/* ΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנ
+   Main component
+   ΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנ */
+export function DestinationsClient({
+  locale = 'en',
+  initialSearchQuery = '',
+}: {
+  locale?: string;
+  /** From server `searchParams.q` Γאפ avoids useSearchParams() (CSR bailout / 500 issues). */
+  initialSearchQuery?: string;
+}) {
+  const t = useTranslations('destinations');
+  const router = useRouter();
+  const searchRef = useRef<HTMLInputElement>(null);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+
+  /* ΓפאΓפא Localized filter labels ΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפא */
+  const PRICE_RANGES = useMemo(() => PRICE_DEFS.map((d) => ({
+    label: d.key === 'anyPrice' ? t('anyPrice') : d.key === 'under5' ? (d.tpl?.(t('under')) ?? '') : (d.fixed ?? ''),
+    min: d.min,
+    max: d.max ?? Infinity,
+  })), [t]);
+
+  const DATA_RANGES = useMemo(() => DATA_DEFS.map((d) => ({
+    label: d.key === 'anyData' ? t('anyData') : (d.fixed ?? ''),
+    min: d.min,
+  })), [t]);
+
+  const SORT_OPTIONS = useMemo(() => [
+    { value: 'name', label: t('sortName') },
+    { value: 'price', label: t('sortPrice') },
+    { value: 'plans', label: t('sortPlans') },
+    { value: 'data', label: t('sortData') },
+  ], [t]);
+
+  /* ΓפאΓפא State ΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפא */
+  const [search, setSearch] = useState(initialSearchQuery);
+  const [suggestionOpen, setSuggestionOpen] = useState(false);
+  const [suggestionIdx, setSuggestionIdx] = useState(-1);
+  const [tab, setTab] = useState<'countries' | 'regions'>('countries');
+  const [continent, setContinent] = useState('all');
+  const [priceIdx, setPriceIdx] = useState(0);
+  const [dataIdx, setDataIdx] = useState(0);
+  const [speedFilter, setSpeedFilter] = useState('all');
+  const [sortBy, setSortBy] = useState<string>('name');
+
+  useEffect(() => {
+    setSearch(initialSearchQuery);
+  }, [initialSearchQuery]);
+
+  /* ΓפאΓפא Data fetching ΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפא */
+  const { data: destinations = [], isLoading, isError, refetch } = useQuery<DestItem[]>({
+    queryKey: ['destinations', locale],
+    queryFn: async () => {
+      const r = await fetch('/api/packages');
+      const data = await r.json();
+      if (!r.ok || data?.error) throw new Error(data?.error || `HTTP ${r.status}`);
+      return (data.destinations || []).map(
+        (d: {
+          locationCode: string;
+          name: string;
+          flagCode: string;
+          isRegional: boolean;
+          continent: string;
+          planCount: number;
+          minPrice: number;
+          maxDataMB: number;
+          speeds: string[];
+          featured: boolean;
+        }) => ({
+          id: d.locationCode.toLowerCase(),
+          name: translateName(d.name, d.locationCode, d.isRegional, locale),
+          slug: d.locationCode.toLowerCase(),
+          flagCode: d.flagCode,
+          isRegional: d.isRegional,
+          continent: translateContinent(d.continent || 'Other', locale),
+          planCount: d.planCount,
+          fromPrice: d.minPrice,
+          maxDataMB: d.maxDataMB || 0,
+          speeds: d.speeds || [],
+          featured: d.featured,
+        })
+      );
+    },
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    retry: 2,
+  });
+
+  /* ΓפאΓפא Derived lists ΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפא */
+  const continents = useMemo(() => {
+    const set = new Set(destinations.map((d) => d.continent));
+    return Array.from(set).sort();
+  }, [destinations]);
+
+  const allSpeeds = useMemo(() => {
+    const set = new Set(destinations.flatMap((d) => d.speeds));
+    return Array.from(set).sort();
+  }, [destinations]);
+
+  const regionCount = useMemo(() => destinations.filter((d) => d.isRegional).length, [destinations]);
+  const countryCount = useMemo(() => destinations.filter((d) => !d.isRegional).length, [destinations]);
+
+  /* ΓפאΓפא Active filter tags (for chips) ΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפא */
+  const activeFilters = useMemo(() => {
+    const tags: { key: string; label: string; clear: () => void }[] = [];
+    if (search.trim()) tags.push({ key: 'search', label: `"${search.trim()}"`, clear: () => setSearch('') });
+    if (continent !== 'all') tags.push({ key: 'continent', label: continent, clear: () => setContinent('all') });
+    if (priceIdx !== 0) tags.push({ key: 'price', label: PRICE_RANGES[priceIdx].label, clear: () => setPriceIdx(0) });
+    if (dataIdx !== 0) tags.push({ key: 'data', label: DATA_RANGES[dataIdx].label, clear: () => setDataIdx(0) });
+    if (speedFilter !== 'all') tags.push({ key: 'speed', label: speedFilter, clear: () => setSpeedFilter('all') });
+    return tags;
+  }, [search, continent, priceIdx, dataIdx, speedFilter]);
+
+  /* ΓפאΓפא Unified filtering engine ΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפא */
+  const filtered = useMemo(() => {
+    let list = destinations;
+
+    // 1. Tab
+    list = tab === 'countries'
+      ? list.filter((d) => !d.isRegional)
+      : list.filter((d) => d.isRegional);
+
+    // 2. Search (name + slug + continent)
+    if (search.trim()) {
+      const q = search.toLowerCase().trim();
+      list = list.filter(
+        (d) =>
+          d.name.toLowerCase().includes(q) ||
+          d.slug.includes(q) ||
+          d.continent.toLowerCase().includes(q)
+      );
+    }
+
+    // 3. Continent
+    if (continent !== 'all') {
+      list = list.filter((d) => d.continent === continent);
+    }
+
+    // 4. Price
+    const pr = PRICE_RANGES[priceIdx];
+    if (priceIdx !== 0 && pr) {
+      list = list.filter((d) => d.fromPrice >= pr.min && d.fromPrice < pr.max);
+    }
+
+    // 5. Data
+    const dr = DATA_RANGES[dataIdx];
+    if (dataIdx !== 0 && dr) {
+      list = list.filter((d) => d.maxDataMB >= dr.min);
+    }
+
+    // 6. Speed
+    if (speedFilter !== 'all') {
+      list = list.filter((d) => d.speeds.includes(speedFilter));
+    }
+
+    // 7. Sort
+    list = [...list];
+    switch (sortBy) {
+      case 'price':
+        list.sort((a, b) => a.fromPrice - b.fromPrice);
+        break;
+      case 'plans':
+        list.sort((a, b) => b.planCount - a.planCount);
+        break;
+      case 'data':
+        list.sort((a, b) => b.maxDataMB - a.maxDataMB);
+        break;
+      default:
+        list.sort((a, b) => {
+          if (a.featured !== b.featured) return a.featured ? -1 : 1;
+          return a.name.localeCompare(b.name);
+        });
+    }
+    return list;
+  }, [destinations, search, tab, continent, priceIdx, dataIdx, speedFilter, sortBy]);
+
+  const clearAll = useCallback(() => {
+    setSearch('');
+    setContinent('all');
+    setPriceIdx(0);
+    setDataIdx(0);
+    setSpeedFilter('all');
+    setSortBy('name');
+  }, []);
+
+  /* ΓפאΓפא Autocomplete suggestions ΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפא */
+  const suggestions = useMemo(() => {
+    if (!search.trim() || search.length < 1) return [];
+    const q = search.toLowerCase();
+    return destinations
+      .filter((d) => !d.isRegional && d.name.toLowerCase().includes(q))
+      .slice(0, 7);
+  }, [search, destinations]);
+
+  const handleSelectSuggestion = useCallback(
+    (slug: string) => {
+      setSuggestionOpen(false);
+      setSearch('');
+      router.push(`/destinations/${slug}`);
+    },
+    [router]
+  );
+
+  const handleSearchKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (!suggestionOpen) return;
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSuggestionIdx((i) => Math.min(i + 1, suggestions.length - 1));
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSuggestionIdx((i) => Math.max(i - 1, -1));
+      } else if (e.key === 'Enter' && suggestionIdx >= 0 && suggestions[suggestionIdx]) {
+        e.preventDefault();
+        handleSelectSuggestion(suggestions[suggestionIdx].slug);
+      } else if (e.key === 'Escape') {
+        setSuggestionOpen(false);
+        setSuggestionIdx(-1);
+      }
+    },
+    [suggestionOpen, suggestionIdx, suggestions, handleSelectSuggestion]
+  );
+
+  const getFlagUrl = useCallback(
+    (flagCode: string) => `https://flagcdn.com/w80/${flagCode}.png`,
+    []
+  );
+
+  /* ΓפאΓפא Keyboard shortcut: / to focus search ΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפא */
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === '/' && document.activeElement?.tagName !== 'INPUT') {
+        e.preventDefault();
+        searchRef.current?.focus();
+      }
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  useEffect(() => {
+    setSuggestionOpen(suggestions.length > 0);
+    setSuggestionIdx(-1);
+  }, [suggestions]);
+
+  /* ΓפאΓפא Close suggestions on outside click ΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפא */
+  useEffect(() => {
+    function handle(e: MouseEvent) {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
+        setSuggestionOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handle);
+    return () => document.removeEventListener('mousedown', handle);
+  }, []);
+
+  /* ΓפאΓפא Loading ΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפא */
+  if (isLoading) {
+    return (
+      <div className="container px-4 py-12">
+        <div className="h-10 w-64 animate-pulse rounded-xl bg-muted" />
+        <div className="mt-6 h-12 animate-pulse rounded-xl bg-muted" />
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {Array.from({ length: 12 }).map((_, i) => (
+            <div key={i} className="h-[88px] animate-pulse rounded-xl bg-muted" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  /* ΓפאΓפא Error state ΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפא */
+  if (isError) {
+    return (
+      <div className="container px-4 py-24 text-center">
+        <Globe className="mx-auto h-12 w-12 text-muted-foreground/50" />
+        <p className="mt-4 text-lg font-semibold text-gray-700">
+          {locale === 'he' ? '╫£╫נ ╫פ╫ª╫£╫ק╫á╫ץ ╫£╫ר╫ó╫ץ╫ƒ ╫נ╫¬ ╫פ╫ש╫ó╫ף╫ש╫¥' : locale === 'ar' ? '╪¬╪╣╪░╪▒ ╪¬╪¡┘ו┘ך┘ה ╪º┘ה┘ט╪¼┘ח╪º╪¬' : 'Could not load destinations'}
+        </p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {locale === 'he' ? '╫נ╫á╫נ ╫á╫í╫פ ╫⌐╫ץ╫ס' : locale === 'ar' ? '┘ך╪▒╪¼┘י ╪º┘ה┘ו╪¡╪º┘ט┘ה╪⌐ ┘ו╪▒╪⌐ ╪ú╪«╪▒┘י' : 'Please try again'}
+        </p>
+        <button
+          onClick={() => refetch()}
+          className="mt-6 rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors"
+        >
+          {locale === 'he' ? '╫á╫í╫פ ╫⌐╫ץ╫ס' : locale === 'ar' ? '╪¡╪º┘ט┘ה ┘ו╪¼╪»╪»╪º┘כ' : 'Try again'}
+        </button>
+      </div>
+    );
+  }
+
+  const isRTL = locale === 'he' || locale === 'ar';
+
+  /* ΓץנΓץנΓץנ Render ΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנ */
+  return (
+    <div className="container px-4 py-8" dir={isRTL ? 'rtl' : 'ltr'}>
+      {/* ΓפאΓפאΓפא Title ΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפא */}
+      <div className="flex items-center gap-2">
+        <Globe className="h-6 w-6 text-emerald-600" />
+        <h1 className="text-2xl font-bold sm:text-3xl">{t('title')}</h1>
+      </div>
+      <p className="mt-1 text-muted-foreground">{t('subtitle')}</p>
+
+      {/* ΓץנΓץנΓץנ Unified search + filter bar ΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנΓץנ */}
+      <div className="mt-6 rounded-2xl border border-emerald-100/80 bg-gradient-to-br from-blue-50/35 via-white to-amber-50/35 shadow-sm">
+        {/* Row 1: Search + Sort */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 sm:p-4">
+          {/* Search input */}
+          <div className="relative flex-1 sm:max-w-xs" ref={searchContainerRef}>
+            <span
+              className="pointer-events-none absolute start-2.5 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-lg bg-blue-100 text-blue-600"
+              aria-hidden
+            >
+              <Search className="h-3.5 w-3.5 shrink-0" />
+            </span>
+            <input
+              ref={searchRef}
+              type="text"
+              placeholder={t('searchPlaceholder')}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={handleSearchKeyDown}
+              onFocus={() => suggestions.length > 0 && setSuggestionOpen(true)}
+              autoComplete="off"
+              className="w-full rounded-xl border border-blue-100 bg-blue-50/50 py-2.5 ps-11 pe-10 text-sm text-foreground
+                placeholder:text-muted-foreground focus:border-blue-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/25
+                transition-colors"
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch('')}
+                className="absolute end-3 top-1/2 -translate-y-1/2 text-blue-400 hover:text-blue-700"
+                aria-label="Clear"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+            {/* Autocomplete dropdown */}
+            {suggestionOpen && suggestions.length > 0 && (
+              <ul
+                role="listbox"
+                className="absolute z-50 mt-1 w-full rounded-xl border border-blue-100/80 bg-white shadow-lg overflow-hidden"
+              >
+                {suggestions.map((dest, idx) => (
+                  <li
+                    key={dest.id}
+                    role="option"
+                    aria-selected={idx === suggestionIdx}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      handleSelectSuggestion(dest.slug);
+                    }}
+                    onMouseEnter={() => setSuggestionIdx(idx)}
+                    className={`flex items-center gap-3 px-3 py-2 cursor-pointer text-sm transition-colors
+                      ${idx === suggestionIdx
+                        ? SUGGESTION_ROW_CLASSES[idx % 3].active
+                        : `bg-white ${SUGGESTION_ROW_CLASSES[idx % 3].idle}`}`}
+                  >
+                    <img
+                      src={`https://flagcdn.com/w40/${dest.flagCode}.png`}
+                      alt=""
+                      className="h-4 w-6 rounded-sm object-cover shrink-0"
+                      loading="lazy"
+                    />
+                    <span className="font-medium">{dest.name}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          {/* Sort */}
+          <MiniSelect
+            value={sortBy}
+            onChange={setSortBy}
+            icon={<ArrowUpDown className="h-3.5 w-3.5" />}
+            options={SORT_OPTIONS}
+            accent="amber"
+          />
+        </div>
+
+        {/* Row 2: Tabs + Filters (always visible, scrollable on mobile) */}
+        <div className="flex items-center gap-2 overflow-x-auto border-t border-gray-100 px-3 py-2.5 sm:px-4 scrollbar-hide">
+          {/* Tabs */}
+          {(['countries', 'regions'] as const).map((v) => (
+            <button
+              key={v}
+              onClick={() => setTab(v)}
+              className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all
+                ${tab === v
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+            >
+              {v === 'countries' ? `${t('countries')} (${countryCount})` : `${t('regions')} (${regionCount})`}
+            </button>
+          ))}
+
+          {/* Divider */}
+          <div className="mx-1 h-5 w-px shrink-0 bg-gray-200" />
+
+          {/* Continent */}
+          <MiniSelect
+            value={continent}
+            onChange={setContinent}
+            accent="amber"
+            options={[
+              { value: 'all', label: t('allContinents') },
+              ...continents.map((c) => ({ value: c, label: c })),
+            ]}
+          />
+
+          {/* Price */}
+          <MiniSelect
+            value={String(priceIdx)}
+            onChange={(v) => setPriceIdx(Number(v))}
+            accent="emerald"
+            options={PRICE_RANGES.map((r, i) => ({ value: String(i), label: r.label }))}
+          />
+
+          {/* Data */}
+          <MiniSelect
+            value={String(dataIdx)}
+            onChange={(v) => setDataIdx(Number(v))}
+            accent="blue"
+            options={DATA_RANGES.map((r, i) => ({ value: String(i), label: r.label }))}
+          />
+
+          {/* Speed */}
+          {allSpeeds.length > 0 && (
+            <MiniSelect
+              value={speedFilter}
+              onChange={setSpeedFilter}
+              accent="emerald"
+              options={[
+                { value: 'all', label: t('anySpeed') },
+                ...allSpeeds.map((s) => ({ value: s, label: s })),
+              ]}
+            />
+          )}
+        </div>
+
+        {/* Row 3: Active filter chips (only if filters active) */}
+        {activeFilters.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1.5 border-t border-gray-100 px-3 py-2 sm:px-4">
+            <Filter className="h-3 w-3 text-gray-400 shrink-0" />
+            {activeFilters.map((f) => (
+              <Chip key={f.key} label={f.label} onRemove={f.clear} />
+            ))}
+            <button
+              onClick={clearAll}
+              className="ms-1 text-xs font-medium text-red-500 hover:text-red-700 transition-colors"
+            >
+              {t('clearAll')}
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* ΓפאΓפאΓפא Result count ΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפא */}
+      <div className="mt-4 flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">
+          <LayoutGrid className="inline h-4 w-4 me-1" />
+          <strong>{filtered.length}</strong> {filtered.length === 1 ? t('destination') : t('destinationsCount')}
+          {activeFilters.length > 0 && <span className="text-gray-400"> ({t('filtered')})</span>}
+        </p>
+        {activeFilters.length > 0 && filtered.length === 0 && (
+          <button
+            onClick={clearAll}
+            className="text-xs font-medium text-emerald-600 hover:text-emerald-700"
+          >
+            {t('resetFilters')}
+          </button>
+        )}
+      </div>
+
+      {/* ΓפאΓפאΓפא Destinations grid ΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפא */}
+      <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {filtered.map((d) => (
+          <IntlLink key={d.id} href={`/destinations/${d.slug}`}>
+            <Card className="group h-full transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 border-gray-200/80 hover:border-emerald-200">
+              <CardContent className="flex items-center gap-3.5 p-3.5">
+                {d.isRegional ? (
+                  <div className="flex h-11 w-[60px] shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-100 to-emerald-50 shadow-sm">
+                    <Globe className="h-5 w-5 text-emerald-600" />
+                  </div>
+                ) : (
+                  <img
+                    src={getFlagUrl(d.flagCode)}
+                    alt={d.name}
+                    className="h-11 w-[60px] shrink-0 rounded-lg object-cover shadow-sm ring-1 ring-black/5"
+                    loading="lazy"
+                  />
+                )}
+                <div className="min-w-0 flex-1">
+                  <span className="block font-semibold text-gray-900 truncate group-hover:text-emerald-700 transition-colors text-[15px]">
+                    {d.name}
+                  </span>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-xs text-muted-foreground">
+                      {d.planCount} {t('plansCount')}
+                    </span>
+                    {d.fromPrice > 0 && (
+                      <>
+                        <span className="text-gray-300">┬╖</span>
+                        <span className="text-xs font-bold text-emerald-600">
+                          {t('from')} ${d.fromPrice.toFixed(2)}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1.5 mt-1">
+                    {d.featured && (
+                      <Badge variant="secondary" className="h-4 px-1.5 text-[9px] leading-none">
+                        {t('popular')}
+                      </Badge>
+                    )}
+                    {d.speeds.slice(0, 1).map((s) => (
+                      <span
+                        key={s}
+                        className="inline-flex items-center gap-0.5 rounded bg-blue-50 px-1.5 py-0.5 text-[9px] font-medium text-blue-700"
+                      >
+                        {s.includes('5G') ? <Zap className="h-2 w-2" /> : <Wifi className="h-2 w-2" />}
+                        {s}
+                      </span>
+                    ))}
+                    <span className="text-[9px] text-gray-400">{d.continent}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </IntlLink>
+        ))}
+      </div>
+
+      {/* ΓפאΓפאΓפא Empty state ΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפאΓפא */}
+      {filtered.length === 0 && (
+        <div className="py-20 text-center">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
+            <Search className="h-7 w-7 text-gray-400" />
+          </div>
+          <p className="mt-5 text-lg font-semibold text-gray-700">{t('noResults')}</p>
+          <p className="mt-1 text-sm text-gray-400">{t('noResultsHint')}</p>
+          <button
+            onClick={clearAll}
+            className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 transition-colors"
+          >
+            <X className="h-3.5 w-3.5" /> {t('clearAllFilters')}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}

@@ -120,6 +120,10 @@ quoting more than we take, and hiding the discount on the page the deal links to
 - ✅ Scope held to the destination page per Gabriel. **Still inconsistent and deliberately left:**
   the "For You" section on the homepage and the single-plan page both still show catalog prices for
   a package on offer
+  - **The single-plan page half is fixed, in ticket 030 Phase 3** (2026-08-02). It reads the
+    destination's catalogue rather than `getPlanById`, so it quotes the deal price with the catalog
+    price struck through — Australia's `JC101` went from `$9.40` to `$8.64`, matching the
+    destination page. The homepage "For You" section is still open
 
 ### 6d — Gabriel's browser pass: three corrections ✅
 
@@ -165,7 +169,7 @@ comparison: it was a teaser, and a teaser on the page it was teasing.
   `fr` both 200
 - ✅ Deal card confirmed carrying ribbon, "only today", one `-X%`, struck original, Hebrew data
   unit, and every detail row through to the details and add-to-cart buttons
-- ⬜ **Gabriel's browser pass** on a deal destination and a non-deal one, in all three locales
+- ✅ **Gabriel's browser pass** on `/he/destinations/fr`, which produced the three corrections in 6d
 
 ## Phase 5 — Wrap-up ✅
 
@@ -173,4 +177,31 @@ comparison: it was a teaser, and a teaser on the page it was teasing.
 - ✅ `CHANGELOG.md` updated under `[Unreleased]`
 - ✅ Ticket 028's open verification items amended from three slides to six
 - ✅ Existing functionality confirmed intact: hero, deals row, For You, cart, checkout, admin
-- ✅ **Local only.** No commit, no push, no deploy
+
+## Phase 6 — Deploy ✅
+
+Risk **R2** — not for touching checkout or auth, which this does not, but because gate B1 counts
+"prices" and this changes how many discounted prices a day holds and how the slots are filled. The
+profit gate itself is untouched and applied identically in both fill passes.
+
+- ✅ `npx tsc --noEmit`, `npx next build` (exit 0, types checked, 100 pages), `npm run test:profit`,
+  `npm run test:locale-path`
+- ⚠️ `npm run build` cannot complete locally: its first step is `prisma db push`, and `DIRECT_URL`
+  is absent from the local `.env` while `schema.prisma` requires it. Pre-existing and environmental
+  — `directUrl` entered the schema on 2026-07-30 and every deploy since has built on Vercel, which
+  has the variable. No value was guessed and `prisma db push` was never pointed at production from
+  this machine. Gabriel approved proceeding on the strength of `next build`
+- ⚠️ `npm run lint` exits 1 on five errors, none in a file this ticket touches: `ui/input.tsx`,
+  `theme/tokens.ts` (×3) and `admin/seo/SeoSettingsClient.tsx`. Two more come from the untracked
+  preview pages, which were deliberately left out of the commit. `next.config.mjs` sets
+  `eslint.ignoreDuringBuilds`, so the Vercel build is unaffected. Left for their own ticket
+- ✅ Backup tag `pre-deploy-20260801-0521` on `fcb7bbb`
+- ✅ Commit `e4a9d48`, pushed to `main` — 42 files, ticket scope only. `character-preview`,
+  `design-preview` and the four generic character images stayed local: exploration leftovers from
+  ticket 028, and one of them carries a lint error
+- ✅ Post-deploy smoke: `/en` `/he` `/ar` 200; `/api/hot-deals` serves **six**; `/he/destinations/au`
+  renders the deal card with ribbon, "רק היום", struck original, Hebrew data unit, every detail row
+  and both buttons, weekend tier gone; `/he/destinations/{gb,es,th}` keep the weekend tier and show
+  no deal; `en`/`ar` on a deal destination 200; `/admin/login` 200; `/api/checkout/health` `ok:true`
+  with all five steps green
+- ✅ Rollback if needed: `git push origin pre-deploy-20260801-0521:main` (only on Gabriel's word)

@@ -5,11 +5,23 @@ import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import type { Destination, Plan } from '@/types';
 import { PlanCard } from '@/components/sections/PlanCard';
 import { CuratedTierCard } from '@/components/sections/CuratedTierCard';
+import { CharacterFigure } from '@/components/brand/CharacterFigure';
+import { destinationHeaderPose } from '@/lib/character-art';
 import { buildTiers } from '@/lib/plan-curation';
 import { planToGaItem, trackViewItemList } from '@/lib/analytics';
-import { X, SlidersHorizontal, ArrowUpDown, Zap, Wifi, Database, Clock, DollarSign, LayoutGrid, Info, BarChart2 } from 'lucide-react';
+import { X, SlidersHorizontal, ArrowUpDown, Zap, Wifi, Database, Clock, DollarSign, LayoutGrid, Info, BarChart2, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { DataUsageCalculator } from '@/components/sections/DataUsageCalculator';
+
+/*
+  How long the "show all plans" button spins before the catalogue appears.
+
+  Nothing is being fetched — every plan is already in memory. Without the pause the four curated
+  cards are replaced by the whole catalogue inside the same frame, which reads as the page having
+  jumped on its own rather than as an answer to the click. The spinner is there to attribute the
+  change to the button.
+*/
+const CATALOG_OPEN_DELAY_MS = 2000;
 
 /* ─── Filter presets (pills) + continuous slider ranges ──────── */
 const DATA_MAX_GB = 20;
@@ -169,13 +181,10 @@ export function DestinationDetailClient({
   */
   const dealPlan = useMemo(() => initialPlans.find((p) => p.originalPrice != null) ?? null, [initialPlans]);
 
-  /* The deal takes the weekend slot, and whichever tier holds the discounted package steps aside so
+  /* The deal opens the shelf, and whichever tier holds the discounted package steps aside so
      one package is never offered twice at two prices on the same shelf. */
   const shelfTiers = useMemo(
-    () =>
-      dealPlan
-        ? curatedTiers.filter((tier) => tier.key !== 'tierWeekend' && tier.plan.id !== dealPlan.id)
-        : curatedTiers,
+    () => (dealPlan ? curatedTiers.filter((tier) => tier.plan.id !== dealPlan.id) : curatedTiers),
     [curatedTiers, dealPlan]
   );
 
@@ -189,6 +198,19 @@ export function DestinationDetailClient({
     // scroll after the catalog renders
     setTimeout(() => catalogRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
   }, []);
+
+  /*
+    Only the shelf's own button waits. `openCatalog` is also reached from the data calculator, where
+    the user has already sat through a dialog and a spinner would just be a second delay.
+  */
+  const [isOpeningCatalog, setIsOpeningCatalog] = useState(false);
+  const openCatalogWithSpinner = useCallback(() => {
+    setIsOpeningCatalog(true);
+    setTimeout(() => {
+      setIsOpeningCatalog(false);
+      openCatalog();
+    }, CATALOG_OPEN_DELAY_MS);
+  }, [openCatalog]);
 
   const closeCatalog = useCallback(() => {
     setShowAll(false);
@@ -312,23 +334,28 @@ export function DestinationDetailClient({
           alt={destination.name}
           className="h-16 w-24 rounded-2xl object-cover shadow-md ring-1 ring-black/10"
         />
-        <div>
+        {/* `min-w-0` so a long country name wraps inside the row instead of pushing the pair out. */}
+        <div className="min-w-0">
           <h1 className="text-2xl font-bold sm:text-3xl">{destination.name}</h1>
           <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
             <span className="flex items-center gap-1">
               <LayoutGrid className="h-3.5 w-3.5" />
               {destination.planCount} {t('plansCount')}
             </span>
-            {destination.fromPrice != null && destination.fromPrice > 0 && (
-              <>
-                <span className="text-gray-300">·</span>
-                <span className="font-semibold text-emerald-600">
-                  {t('from')} ${destination.fromPrice.toFixed(2)}
-                </span>
-              </>
-            )}
           </div>
         </div>
+        {/*
+          104 px is the ceiling on a phone, set by the widest pose rather than by taste: the seated
+          pair is 1.28 wide per unit of height, so at 104 it takes 133 px and leaves ~97 px of the
+          358 px row for the name once the flag and both gaps are paid for. Going higher starts
+          breaking short country names onto two lines.
+        */}
+        <CharacterFigure
+          slot={destinationHeaderPose(destination.slug)}
+          height={104}
+          heightLg={200}
+          className="shrink-0"
+        />
       </div>
 
       {/* ─── Calculator nudge (opens popup) ─────────────────── */}
@@ -391,15 +418,43 @@ export function DestinationDetailClient({
             ))}
           </div>
           {!showAll && (
-            <div className="mt-8 flex flex-col items-center gap-2">
-              <p className="text-sm text-muted-foreground">{t('showAllPrompt')}</p>
-              <button
-                onClick={openCatalog}
-                className="inline-flex items-center gap-2 rounded-2xl border border-emerald-200 bg-white px-5 py-2.5 text-sm font-semibold text-emerald-700 shadow-sm transition-colors hover:bg-emerald-50"
-              >
-                <LayoutGrid className="h-4 w-4" />
-                {t('showAllPlans', { count: initialPlans.length })}
-              </button>
+            /*
+              The two figures are pinned with physical `left` and `right`, not `start` and `end`.
+              Each was drawn pointing one specific way, so the one on the left has to stay on the
+              left in Hebrew, English and Arabic alike — swapping them with the writing direction
+              would leave both pointing out of the page.
+            */
+            <div className="mt-8 flex justify-center">
+              {/* Shrinks to the width of the button, so the side padding that holds the figures
+                  puts them against it instead of out at the edges of the page. */}
+              <div className="relative flex min-h-[92px] flex-col items-center justify-center gap-2 px-[52px] lg:min-h-[168px] lg:px-[90px]">
+                <CharacterFigure
+                  slot="showAllSima"
+                  height={92}
+                  heightLg={168}
+                  className="pointer-events-none absolute bottom-0 left-0"
+                />
+                <CharacterFigure
+                  slot="showAllSimi"
+                  height={92}
+                  heightLg={168}
+                  className="pointer-events-none absolute bottom-0 right-0"
+                />
+                <p className="text-center text-sm text-muted-foreground">{t('showAllPrompt')}</p>
+                <button
+                  onClick={openCatalogWithSpinner}
+                  disabled={isOpeningCatalog}
+                  aria-busy={isOpeningCatalog}
+                  className="inline-flex items-center gap-2 rounded-2xl border border-emerald-200 bg-white px-5 py-2.5 text-sm font-semibold text-emerald-700 shadow-sm transition-colors hover:bg-emerald-50 disabled:cursor-default disabled:hover:bg-white"
+                >
+                  {isOpeningCatalog ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <LayoutGrid className="h-4 w-4" />
+                  )}
+                  {t('showAllPlans', { count: initialPlans.length })}
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -408,14 +463,27 @@ export function DestinationDetailClient({
       {showAll && (
       <div ref={catalogRef} className="scroll-mt-24">
       {canCurate && (
-        <div className="mt-10 border-t border-gray-100 pt-6">
-          <button
-            onClick={closeCatalog}
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-700 hover:text-emerald-800 hover:underline underline-offset-2"
-          >
-            {t('showCurated')}
-          </button>
-        </div>
+        <>
+          {/*
+            The pair reacts to the catalogue that just opened, so it belongs on the seam between the
+            shelf and the catalogue rather than beside the button. It stands directly on the rule
+            with no gap: the render is cut at mid-thigh, and a hard photographic edge only reads as
+            deliberate when it lands on a line — here it turns into the pair leaning over the divider
+            to look down at what appeared underneath. The pair and the button share one centred
+            column, so what they are reacting to sits directly below them in every language.
+          */}
+          <div className="mt-10 flex justify-center">
+            <CharacterFigure slot="catalogReaction" height={104} heightLg={168} />
+          </div>
+          <div className="border-t border-gray-100 pt-6 text-center">
+            <button
+              onClick={closeCatalog}
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-700 hover:text-emerald-800 hover:underline underline-offset-2"
+            >
+              {t('showCurated')}
+            </button>
+          </div>
+        </>
       )}
 
       {/* ─── Filter bar (glassmorphism, highlighted) ─── */}

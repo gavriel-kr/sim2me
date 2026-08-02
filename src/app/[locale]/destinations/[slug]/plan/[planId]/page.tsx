@@ -4,6 +4,8 @@ import { getPlanById } from '@/lib/api/repositories/plansRepository';
 import { translatePlanName } from '@/lib/translate-plan-name';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { PlanDetailClient } from './PlanDetailClient';
+import { getDestinationData } from '@/lib/api/destination-data';
+import { recommendPlans, type PlanRecommendations } from '@/lib/plan-recommendations';
 import type { Plan } from '@/types';
 
 export const dynamic = 'force-dynamic';
@@ -80,18 +82,51 @@ export async function generateMetadata({ params }: PageProps) {
 export default async function PlanDetailPage({ params }: PageProps) {
   const { slug, planId, locale } = await params;
   const destination = await getDestinationBySlug(slug);
-  const plan = await getPlanById(planId);
-  if (!destination || !plan) notFound();
+  if (!destination) notFound();
 
   const localizedDestination = {
     ...destination,
     name: translateDestinationName(destination.name, destination.isoCode, locale),
   };
-  const planLocalized = localizedPlan(plan, localizedDestination, locale);
+
+  /*
+    The destination's whole catalogue, not just this one package (ticket 030).
+
+    Two things need it. The recommendations below need siblings to choose from, and the price at the
+    top needs to be the one the destination page quotes: `getPlanById` reads the raw supplier
+    catalogue and knows nothing about today's hot deal, so a discounted package used to be listed
+    here at a price higher than checkout would actually charge.
+
+    Everything is inside the try, and a failure leaves `plan` null so the original path below still
+    runs. A recommendation block is not worth a purchase page.
+  */
+  let plan: Plan | null = null;
+  let recommendations: PlanRecommendations = { similar: null, star: null };
+  try {
+    const data = await getDestinationData(slug, locale);
+    if (data.status === 'ok') {
+      // Already localized by getDestinationData, so localizedPlan must not run over it again.
+      plan = data.plans.find((p) => p.id === planId) ?? null;
+      if (plan) recommendations = recommendPlans(data.plans, planId);
+    }
+  } catch {
+    /* fall through to the single-package path */
+  }
+
+  // The package is not in this location's feed, or the feed is down. Unchanged from before 030.
+  if (!plan) {
+    const single = await getPlanById(planId);
+    if (!single) notFound();
+    plan = localizedPlan(single, localizedDestination, locale) as Plan;
+  }
 
   return (
     <MainLayout>
-      <PlanDetailClient destination={localizedDestination} plan={planLocalized as Plan} />
+      <PlanDetailClient
+        destination={localizedDestination}
+        plan={plan}
+        recommendations={recommendations}
+      />
     </MainLayout>
   );
 }

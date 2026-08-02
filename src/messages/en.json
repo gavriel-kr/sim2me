@@ -191,7 +191,9 @@
     "coverageTetheringTooltip": "Whether you can share this plan's data with other devices using hotspot.",
     "coverageTopUpsLabel": "Top-ups",
     "coverageTopUpsInfoAria": "What are top-ups?",
-    "coverageTopUpsTooltip": "Whether you can recharge or extend the plan after purchase."
+    "coverageTopUpsTooltip": "Whether you can recharge or extend the plan after purchase.",
+    "recommendedHeading": "You might also like",
+    "recommendedSubtitle": "We found some good-value packages that might interest you."
   },
   "howItWorks": {
     "title": "How It Works",

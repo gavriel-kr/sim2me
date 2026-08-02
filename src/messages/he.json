@@ -191,7 +191,9 @@
     "coverageTetheringTooltip": "האם אפשר לשתף את חיבור הנתונים של החבילה עם מכשירים אחרים דרך Hotspot.",
     "coverageTopUpsLabel": "תוספות",
     "coverageTopUpsInfoAria": "מה זה תוספות?",
-    "coverageTopUpsTooltip": "האם אפשר להטעין או להאריך את החבילה לאחר הרכישה."
+    "coverageTopUpsTooltip": "האם אפשר להטעין או להאריך את החבילה לאחר הרכישה.",
+    "recommendedHeading": "אולי יתאים לכם גם",
+    "recommendedSubtitle": "מצאנו עבורך חבילות משתלמות שיכולות לעניין אותך."
   },
   "howItWorks": {
     "title": "איך זה עובד",

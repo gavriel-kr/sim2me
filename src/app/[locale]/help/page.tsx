@@ -1,5 +1,6 @@
 import { getTranslations } from 'next-intl/server';
 import { MainLayout } from '@/components/layout/MainLayout';
+import { CharacterFigure } from '@/components/brand/CharacterFigure';
 import { HelpClient } from './HelpClient';
 import { getCmsPage } from '@/lib/cms';
 
@@ -70,9 +71,18 @@ export default async function HelpPage({ params }: { params: Promise<{ locale: s
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
       <div className="container mx-auto max-w-3xl px-4 py-12" dir={isRTL ? 'rtl' : 'ltr'}>
-        <div className="text-center mb-10">
-          <h1 className="text-3xl font-bold sm:text-4xl">{cms?.title || t('title')}</h1>
-          <p className="mt-3 text-lg text-muted-foreground">{t('subtitle')}</p>
+        <div className="mx-auto mb-10 flex flex-col items-center justify-center gap-4 text-center sm:flex-row">
+          <div className="min-w-0">
+            <h1 className="text-3xl font-bold sm:text-4xl">{cms?.title || t('title')}</h1>
+            <p className="mt-3 text-lg text-muted-foreground">{t('subtitle')}</p>
+          </div>
+          <CharacterFigure
+            slot="helpReassuring"
+            height={148}
+            heightLg={176}
+            crop={0.5}
+            className="shrink-0"
+          />
         </div>
         <HelpClient />
       </div>
