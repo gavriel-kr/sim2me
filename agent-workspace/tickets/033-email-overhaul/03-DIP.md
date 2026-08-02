@@ -116,24 +116,28 @@ in one body, which is what the rest of the ticket set out to end.
   was tuned to the long templates and failed a single-language OTP mail for being concise
 - ✅ tsc, lint, `next build`, `email-verify`, `email-behavior` all green
 
-## Phase 9 — Deploy (R3) — HELD
+## Phase 9 — Deploy (R3) — ✅ SHIPPED 2026-08-03 02:46
 
-- ✅ Gate A: build, lint, tests, typecheck all green
+- ✅ Gate A: `npm run lint` 0, `test:locale-path`, `test:profit`, full `npm run build` 0
 - ✅ Gate B: money path answered — the underpayment branch is untouched and proven so; the balance
-  lookup is detached and timeout-capped; no change to pricing, charging or auth
-- ⬜ Backup tag `pre-deploy-YYYYMMDD-HHMM`
-- ⬜ Written rollback plan
-- ⬜ `git push origin main`
-- ⬜ Post-deploy smoke
+  lookup is detached and timeout-capped; no change to pricing or charging. The one auth-adjacent
+  change (`emailVerified` on reset) was approved explicitly
+- ✅ Schema drift checked before the push: `prisma migrate diff` reported an empty migration, so
+  `Order.locale` was already applied and the deploy altered no structure
+- ✅ Gate C local smoke on the built output: `/en` `/he` `/ar` and the account pages all 200,
+  `checkout/health` ok, `design-preview` 404 in both locales
+- ✅ Backup tag `pre-deploy-20260803-0241` on `f285aa7`, pushed to the remote
+- ✅ Rollback plan: `git push origin pre-deploy-20260803-0241:main`. No database rollback needed —
+  the column predates this deploy and is nullable, so the previous build ignores it
+- ✅ Commit `8856470`, 44 files, staged by explicit path. No `git add -A`, no secrets
+- ✅ `git push origin main` — the only deploy method. No Vercel CLI
+- ✅ Post-deploy smoke: three locales 200, account pages 200, `checkout/health` ok in 294 ms, all
+  four character PNGs 200, `design-preview` 404
+- ✅ Live re-send with the images resolving: 16 templates, 14 `delivered` and 2 `sent` at the time
+  of writing, zero bounced or failed
 
-**Held for approval only.** The delivery blocker below cleared on 2026-08-03, so the reason for
-holding is no longer technical.
-
-One thing cannot be proven until the deploy happens: the character images resolve against
-`https://www.sim2me.net/characters/email/*.png`, and those four files exist only locally. Every
-sample sent so far shows a broken image where Simi and Sima belong. Nothing to fix — the files ship
-with the deploy — but the design cannot be judged from the current samples. Either push a branch and
-let Vercel build a preview URL that serves them, or deploy and re-send one sample to confirm.
+`src/app/[locale]/design-preview/` was deleted rather than ignored, on Gabriel's instruction. The
+standing hazard recorded in DEPLOY-READINESS is gone with it.
 
 ## ✅ The blocker — CLEARED 2026-08-03
 
