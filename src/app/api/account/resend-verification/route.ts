@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { sendVerificationEmail } from '@/lib/email';
+import { sendVerificationEmail, toEmailLocale } from '@/lib/email';
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
 import crypto from 'crypto';
 import { z } from 'zod';
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
     data: { emailVerifyToken: token, emailVerifyExpires: expires },
   });
 
-  sendVerificationEmail(emailLower, token).catch(() => {});
+  sendVerificationEmail(emailLower, token, toEmailLocale(body?.locale)).catch(() => {});
 
   return NextResponse.json({ success: true });
 }

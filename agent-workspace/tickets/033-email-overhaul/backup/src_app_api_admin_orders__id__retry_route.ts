@@ -6,7 +6,7 @@ import { authOptions } from '@/lib/auth';
 import { requireAdmin } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { purchasePackage, getEsimProfileWithRetry, getPackages } from '@/lib/esimaccess';
-import { sendPostPurchaseEmail, sendRetrySucceededEmail, sendRetryFailedEmail, toEmailLocale } from '@/lib/email';
+import { sendPostPurchaseEmail, sendRetrySucceededEmail, sendRetryFailedEmail } from '@/lib/email';
 import { checkAndAutoBlockEmail } from '@/lib/fraud';
 import { hash } from 'bcryptjs';
 
@@ -95,9 +95,6 @@ export async function POST(
     }
 
     if (firstProfile) {
-      // The buyer's own language, stored on the order at checkout. Orders placed before that column
-      // existed read null, which `toEmailLocale` maps to Hebrew — exactly what they got before.
-      const emailLocale = toEmailLocale(order.locale);
       sendPostPurchaseEmail(order.customerEmail, {
         customerName: order.customerName || 'Customer',
         planName: order.packageName,
@@ -106,15 +103,10 @@ export async function POST(
         qrCodeUrl: firstProfile.qrCodeUrl || null,
         smdpAddress: firstProfile.smdpAddress,
         activationCode: firstProfile.activationCode,
-        loginLink: `${baseUrl()}/${emailLocale}/account`,
+        loginLink: `${baseUrl()}/account`,
         email: order.customerEmail,
         tempPassword,
-        orderNo: order.orderNo,
-        amountPaid: Number(order.totalAmount),
-        currency: order.currency,
-        orderDate: order.paidAt ?? order.createdAt,
-        iccid: firstProfile.iccid ?? null,
-      }, emailLocale).catch((e) => console.error('[Retry] Email failed (non-fatal)', e));
+      }).catch((e) => console.error('[Retry] Email failed (non-fatal)', e));
     }
 
     sendRetrySucceededEmail({

@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { signIn } from 'next-auth/react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { createSharedPathnamesNavigation } from 'next-intl/navigation';
 import { routing } from '@/i18n/routing';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,6 +18,7 @@ type Step = 'credentials' | 'otp';
 
 export function AccountLoginClient() {
   const t = useTranslations('account');
+  const locale = useLocale();
   const [step, setStep] = useState<Step>('credentials');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -75,6 +76,7 @@ export function AccountLoginClient() {
       const res = await signIn('credentials-customer', {
         email: email.trim().toLowerCase(),
         password,
+        locale,
         redirect: false,
       });
 
@@ -162,7 +164,7 @@ export function AccountLoginClient() {
       await fetch('/api/account/otp/resend', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+        body: JSON.stringify({ email: email.trim().toLowerCase(), locale }),
       });
       setResendSent(true);
       setOtpCode('');
@@ -177,7 +179,7 @@ export function AccountLoginClient() {
     await fetch('/api/account/resend-verification', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email.trim().toLowerCase() }),
+      body: JSON.stringify({ email: email.trim().toLowerCase(), locale }),
     });
     setResendSent(true);
   }

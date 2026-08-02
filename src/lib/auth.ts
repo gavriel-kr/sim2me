@@ -7,7 +7,7 @@ import { checkRateLimit } from '@/lib/rateLimit';
 import { verifyTotp } from '@/lib/totp';
 import { createAuditLog } from '@/lib/audit';
 import { generateOtpCode, hashOtpCode, isOtpValid, otpExpiresAt } from '@/lib/otp';
-import { sendOtpEmail } from '@/lib/email';
+import { sendOtpEmail, toEmailLocale } from '@/lib/email';
 
 export type SessionUserType = 'admin' | 'customer';
 
@@ -97,17 +97,18 @@ export const authOptions: NextAuthOptions = {
         // OTP_DISABLED: email OTP temporarily disabled — password-only login
         /* OTP_RESTORE: remove the line above and uncomment the block below to re-enable
         const submittedCode = (credentials as { otpCode?: string }).otpCode?.trim();
+        const otpLocale = toEmailLocale((credentials as { locale?: string }).locale);
         if (!submittedCode) {
           const code = generateOtpCode();
           await prisma.customer.update({ where: { id: customer.id }, data: { otpCodeHash: hashOtpCode(code), otpCodeExpires: otpExpiresAt(), otpAttempts: 0 } });
-          sendOtpEmail(customer.email, code).catch(() => {});
+          sendOtpEmail(customer.email, code, otpLocale).catch(() => {});
           throw new Error('OTP_REQUIRED');
         }
         if (customer.otpAttempts >= 5) throw new Error('OTP_TOO_MANY_ATTEMPTS');
         if (!customer.otpCodeHash || !customer.otpCodeExpires) {
           const code = generateOtpCode();
           await prisma.customer.update({ where: { id: customer.id }, data: { otpCodeHash: hashOtpCode(code), otpCodeExpires: otpExpiresAt(), otpAttempts: 0 } });
-          sendOtpEmail(customer.email, code).catch(() => {});
+          sendOtpEmail(customer.email, code, otpLocale).catch(() => {});
           throw new Error('OTP_REQUIRED');
         }
         if (new Date() > customer.otpCodeExpires) throw new Error('OTP_EXPIRED');

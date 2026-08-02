@@ -43,6 +43,10 @@ export async function POST(request: Request) {
         resetToken: null,
         resetExpires: null,
         passwordChangedAt: new Date(),
+        // Reaching this line means the reset link was opened from the inbox, which proves ownership
+        // exactly as the verification link does. Without it an unverified customer can complete a
+        // reset, be told to sign in, and still be refused by the emailVerified check in auth.ts.
+        emailVerified: true,
       },
     });
 

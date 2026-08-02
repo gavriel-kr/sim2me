@@ -9,7 +9,7 @@ import { prisma } from '@/lib/prisma';
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
 import { getSessionForRequest, isCustomerSession } from '@/lib/session';
 import { generateOtpCode, hashOtpCode, otpExpiresAt } from '@/lib/otp';
-import { sendOtpEmail } from '@/lib/email';
+import { sendOtpEmail, toEmailLocale } from '@/lib/email';
 
 export async function POST(request: Request) {
   const session = await getSessionForRequest(request);
@@ -22,6 +22,10 @@ export async function POST(request: Request) {
   if (!allowed) {
     return NextResponse.json({ error: 'Too many requests. Please wait before requesting a new code.' }, { status: 429 });
   }
+
+  // The body carries only the page's locale, and older clients send none at all.
+  const body = await request.json().catch(() => ({}));
+  const locale = toEmailLocale(body?.locale);
 
   const customerId = session.user.id;
   const customer = await prisma.customer.findUnique({ where: { id: customerId } });
@@ -39,7 +43,7 @@ export async function POST(request: Request) {
     },
   });
 
-  const sent = await sendOtpEmail(customer.email, code);
+  const sent = await sendOtpEmail(customer.email, code, locale);
   if (!sent) {
     return NextResponse.json({ error: 'Failed to send email. Please try again.' }, { status: 500 });
   }

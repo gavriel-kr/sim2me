@@ -3,7 +3,7 @@ import { hash } from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 import { registerSchema } from '@/lib/validation/schemas';
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
-import { sendVerificationEmail } from '@/lib/email';
+import { sendVerificationEmail, toEmailLocale } from '@/lib/email';
 import crypto from 'crypto';
 // import { checkBotId } from 'botid/server'; // BotID disabled
 
@@ -65,7 +65,7 @@ export async function POST(request: Request) {
       },
     });
 
-    sendVerificationEmail(emailLower, emailVerifyToken).catch(() => {});
+    sendVerificationEmail(emailLower, emailVerifyToken, toEmailLocale(body?.locale)).catch(() => {});
 
     return NextResponse.json({
       success: true,

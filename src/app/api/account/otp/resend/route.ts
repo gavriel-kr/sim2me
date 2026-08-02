@@ -9,7 +9,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
 import { generateOtpCode, hashOtpCode, otpExpiresAt } from '@/lib/otp';
-import { sendOtpEmail } from '@/lib/email';
+import { sendOtpEmail, toEmailLocale, type EmailLocale } from '@/lib/email';
 
 export async function POST(request: Request) {
   const ip = getClientIp(request);
@@ -19,9 +19,11 @@ export async function POST(request: Request) {
   }
 
   let email: string;
+  let locale: EmailLocale;
   try {
     const body = await request.json();
     email = typeof body?.email === 'string' ? body.email.trim().toLowerCase() : '';
+    locale = toEmailLocale(body?.locale);
   } catch {
     return NextResponse.json({ error: 'Invalid request.' }, { status: 400 });
   }
@@ -47,7 +49,7 @@ export async function POST(request: Request) {
     },
   });
 
-  sendOtpEmail(customer.email, code).catch(() => {});
+  sendOtpEmail(customer.email, code, locale).catch(() => {});
 
   return NextResponse.json({ ok: true });
 }

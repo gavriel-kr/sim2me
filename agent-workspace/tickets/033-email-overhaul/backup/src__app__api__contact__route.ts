@@ -51,9 +51,7 @@ export async function POST(request: Request) {
 
     await resend.emails.send({
       from: `Sim2Me Contact <${process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'}>`,
-      // Was a hardcoded personal address, which meant contact-form mail went somewhere the rest of
-      // the site's admin notifications did not.
-      to: [process.env.ADMIN_NOTIFICATION_EMAIL || 'info.sim2me@gmail.com'],
+      to: ['gavriel.kr@gmail.com'],
       replyTo: email,
       subject: `[Sim2Me Contact] ${subject}`,
       html: `

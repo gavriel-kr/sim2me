@@ -1,8 +1,7 @@
 /**
  * Paddle Billing webhook: signature verification + transaction.completed fulfillment.
  * - HMAC-SHA256 verification (no processing if invalid).
- * - On transaction.completed: create Order, call eSIM provider, update order, email the customer
- *   in the language they bought in.
+ * - On transaction.completed: create Order, call eSIM provider, update order, send Hebrew email.
  */
 
 // Allow up to 60s for eSIMaccess profile provisioning retries
@@ -11,8 +10,8 @@ export const maxDuration = 60;
 import { NextResponse } from 'next/server';
 import { verifyPaddleWebhook, safeJsonParse } from '@/lib/paddle';
 import { prisma } from '@/lib/prisma';
-import { purchasePackage, getEsimProfileWithRetry, getPackages, formatDataVolume, getBalance } from '@/lib/esimaccess';
-import { sendPostPurchaseEmail, sendOrderDelayedEmail, sendAdminOrderNotificationEmail, sendFraudAlertEmail, sendOrderFailedEmail, toEmailLocale } from '@/lib/email';
+import { purchasePackage, getEsimProfileWithRetry, getPackages, formatDataVolume } from '@/lib/esimaccess';
+import { sendPostPurchaseEmail, sendAdminOrderNotificationEmail, sendFraudAlertEmail, sendOrderFailedEmail, toEmailLocale } from '@/lib/email';
 import { autoBlock, checkAndAutoBlockEmail } from '@/lib/fraud';
 import { hash } from 'bcryptjs';
 
@@ -51,22 +50,6 @@ function sanitizeString(s: unknown, maxLen: number): string {
   if (s == null) return '';
   const t = String(s).trim().slice(0, maxLen);
   return t.replace(/[<>\"'&]/g, '');
-}
-
-/**
- * eSIMaccess wallet balance in USD for the admin notification, or null.
- *
- * Wrapped twice over: the supplier call already has its own timeout, and a hung socket would still
- * leave a promise open, so a race caps it hard. Called from a detached chain, never awaited on the
- * fulfillment path — the admin wanting a fuel gauge must not be able to slow down a customer's
- * order. The supplier reports cents at $1 = 10000, the same conversion the admin dashboard uses.
- */
-async function safeEsimBalanceUsd(): Promise<number | null> {
-  const data = await Promise.race([
-    getBalance().catch(() => null),
-    new Promise<null>((resolve) => setTimeout(() => resolve(null), 4000)),
-  ]);
-  return data ? (data.balance ?? 0) / 10000 : null;
 }
 
 export async function POST(request: Request) {
@@ -171,33 +154,24 @@ export async function POST(request: Request) {
       deviceType: deviceType || null,
       supplierCost: supplierCostUsd ?? null,
       checkoutIp: checkoutIp || null,
-      // Persisted so a later resend or retry speaks the language the customer bought in. Without
-      // it every follow-up email fell back to Hebrew, whoever the buyer was.
-      locale: emailLocale,
       paidAt: new Date(),
     },
   });
 
-  // Notify admin of every new order — fire-and-forget. The balance lookup rides inside the detached
-  // chain so it cannot add its latency to fulfillment.
-  void safeEsimBalanceUsd()
-    .then((esimBalanceUsd) =>
-      sendAdminOrderNotificationEmail({
-        customerName: customerName || customerEmail,
-        customerEmail,
-        packageName,
-        destination,
-        dataAmount: dataAmountStr,
-        validity: validityStr,
-        amountCharged: totalAmount,
-        supplierCost: supplierCostUsd ?? 0,
-        orderId: order.id,
-        orderNo: order.orderNo,
-        adminOrdersUrl: `${baseUrl()}/admin/orders`,
-        esimBalanceUsd,
-      }),
-    )
-    .catch(() => {});
+  // Notify admin of every new order — fire-and-forget
+  sendAdminOrderNotificationEmail({
+    customerName: customerName || customerEmail,
+    customerEmail,
+    packageName,
+    destination,
+    dataAmount: dataAmountStr,
+    validity: validityStr,
+    amountCharged: totalAmount,
+    supplierCost: supplierCostUsd ?? 0,
+    orderId: order.id,
+    orderNo: order.orderNo,
+    adminOrdersUrl: `${baseUrl()}/admin/orders`,
+  }).catch(() => {});
 
   // Safety guard: if payment is below supplier cost, block fulfillment immediately.
   // supplierCostUsd is undefined only when the package could not be resolved from the API —
@@ -300,8 +274,8 @@ export async function POST(request: Request) {
     }
 
     // Send email independently — never fail the order if email fails
-    const accountLink = `${baseUrl()}/${emailLocale}/account`;
     if (firstProfile) {
+      const loginLink = `${baseUrl()}/account`;
       sendPostPurchaseEmail(customerEmail, {
         customerName: customerName || 'Customer',
         planName: packageName,
@@ -310,26 +284,10 @@ export async function POST(request: Request) {
         qrCodeUrl: firstProfile.qrCodeUrl || null,
         smdpAddress: firstProfile.smdpAddress,
         activationCode: firstProfile.activationCode,
-        loginLink: accountLink,
+        loginLink,
         email: customerEmail,
         tempPassword,
-        orderNo: order.orderNo,
-        amountPaid: totalAmount,
-        currency,
-        orderDate: order.paidAt ?? order.createdAt,
-        iccid: firstProfile.iccid ?? null,
       }, emailLocale).catch((e) => console.error('[Paddle webhook] Email send failed (non-fatal)', e));
-    } else {
-      // Paid, provisioned at the supplier, but no profile came back within the retry window. This
-      // branch used to send nothing at all, so a customer who had just been charged heard silence.
-      sendOrderDelayedEmail(customerEmail, {
-        customerName: customerName || 'Customer',
-        orderNo: order.orderNo,
-        planName: packageName,
-        amountPaid: totalAmount,
-        currency,
-        accountLink,
-      }, emailLocale).catch((e) => console.error('[Paddle webhook] Delayed email failed (non-fatal)', e));
     }
   } catch (e) {
     const errMsg = e instanceof Error ? e.message : String(e);
@@ -348,16 +306,6 @@ export async function POST(request: Request) {
       currency,
       errorMessage: errMsg.slice(0, 300),
     });
-    // The customer paid. Whatever broke on our side, they get told something — never the error
-    // itself, which is for the admin alert above.
-    sendOrderDelayedEmail(customerEmail, {
-      customerName: customerName || 'Customer',
-      orderNo: order.orderNo,
-      planName: packageName,
-      amountPaid: totalAmount,
-      currency,
-      accountLink: `${baseUrl()}/${emailLocale}/account`,
-    }, emailLocale).catch(() => {});
     checkAndAutoBlockEmail(customerEmail).catch(() => {});
   }
 

@@ -231,8 +231,6 @@ export async function POST(request: Request) {
         supplierCost,
         source: 'ADMIN_INTERNAL',
         idempotencyKey,
-        // The language the admin picked for this buyer, so a later resend matches the first send.
-        locale: emailLocale,
         notes: paymentNote?.trim()
           ? `Internal sale by ${session!.user!.email} — ${paymentNote.trim()}`
           : `Internal sale by ${session!.user!.email}`,
@@ -318,14 +316,9 @@ export async function POST(request: Request) {
           qrCodeUrl: profile.qrCodeUrl || null,
           smdpAddress: profile.smdpAddress,
           activationCode: profile.activationCode,
-          loginLink: `${baseUrl()}/${toEmailLocale(emailLocale)}/account`,
+          loginLink: `${baseUrl()}/account`,
           email: customer.email,
           tempPassword,
-          orderNo: completed.orderNo,
-          amountPaid: priceToCustomer,
-          currency: completed.currency,
-          orderDate: completed.paidAt ?? completed.createdAt,
-          iccid: profile.iccid ?? null,
         },
         toEmailLocale(emailLocale),
       ).catch((e) => console.error('[internal sale] Email send failed (non-fatal)', e));

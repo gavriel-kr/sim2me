@@ -109,7 +109,6 @@ model Order {
   checkoutIp           String?              // client IP captured at checkout prepare time
   source               OrderSource @default(PADDLE)
   idempotencyKey       String?     @unique  // set by admin-created sales; blocks a double purchase
-  locale               String?              // buyer's checkout language, so a later resend speaks it
   createdAt            DateTime    @default(now())
   updatedAt            DateTime    @updatedAt
   paidAt               DateTime?

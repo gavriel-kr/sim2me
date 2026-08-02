@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 import { getSessionForRequest, isCustomerSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { purchasePackage, getEsimProfileWithRetry } from '@/lib/esimaccess';
-import { sendPostPurchaseEmail, sendRetrySucceededEmail, sendRetryFailedEmail, toEmailLocale } from '@/lib/email';
+import { sendPostPurchaseEmail, sendRetrySucceededEmail, sendRetryFailedEmail } from '@/lib/email';
 import { checkAndAutoBlockEmail } from '@/lib/fraud';
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
 
@@ -72,7 +72,6 @@ export async function POST(
     });
 
     if (firstProfile) {
-      const emailLocale = toEmailLocale(order.locale);
       sendPostPurchaseEmail(order.customerEmail, {
         customerName: order.customerName || 'Customer',
         planName: order.packageName,
@@ -81,14 +80,9 @@ export async function POST(
         qrCodeUrl: firstProfile.qrCodeUrl || null,
         smdpAddress: firstProfile.smdpAddress,
         activationCode: firstProfile.activationCode,
-        loginLink: `${baseUrl()}/${emailLocale}/account`,
+        loginLink: `${baseUrl()}/account`,
         email: order.customerEmail,
-        orderNo: order.orderNo,
-        amountPaid: Number(order.totalAmount),
-        currency: order.currency,
-        orderDate: order.paidAt ?? order.createdAt,
-        iccid: firstProfile.iccid ?? null,
-      }, emailLocale).catch(() => {});
+      }).catch(() => {});
     }
 
     sendRetrySucceededEmail({

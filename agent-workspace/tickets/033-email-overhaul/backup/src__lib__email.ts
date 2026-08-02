@@ -1,31 +1,17 @@
 /**
- * Every email the site sends, and the one function that sends them.
- *
- * Templates are inline HTML strings rather than a template engine: mail clients need table-ish,
- * inline-styled markup anyway, and a build step for six emails would cost more than it saves.
- *
- * Ticket 033 added, on top of the original account emails:
- *  - the receipt block on the purchase email, so a buyer has an order number and an amount
- *  - `sendOrderDelayedEmail`, so nobody who paid is ever left with silence
- *  - the QR as a real attachment, because Gmail and Outlook block remote images by default
- *  - Simi and Sima, from `public/characters/email` — PNG, because Outlook renders neither AVIF nor WebP
- *  - a plain-text alternative and a reply-to on customer mail, both deliverability
+ * Account emails: password reset, etc.
+ * Uses Resend when RESEND_API_KEY is set.
+ * (Email verification removed — sign up works without it.)
  */
 
 import { getSiteBranding } from '@/lib/site-branding';
-import { brandConfig } from '@/config/brand';
 
 const FROM = `Sim2Me <${process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'}>`;
 const SITE_NAME = 'Sim2Me';
-const SUPPORT_EMAIL = brandConfig.supportEmail;
 
 function baseUrl(): string {
   if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, '');
   return 'https://www.sim2me.net';
-}
-
-function adminRecipient(): string {
-  return process.env.ADMIN_NOTIFICATION_EMAIL || 'info.sim2me@gmail.com';
 }
 
 async function logoImgTag(): Promise<string> {
@@ -35,35 +21,23 @@ async function logoImgTag(): Promise<string> {
   return `<p style="margin:0 0 20px 0;"><img src="${url}" alt="Sim2Me" width="160" height="48" style="display:block; max-height:48px; object-fit:contain;" /></p>`;
 }
 
-/*
-  Simi and Sima in the inbox.
-
-  Separate files from `public/characters`, and separate from the `character-art.ts` slot map, for two
-  reasons that only apply to email. Outlook for Windows renders through Word and supports neither
-  AVIF nor WebP, so the site's assets would show as broken images; and Outlook ignores CSS
-  `transform`, so the mirroring that turns a figure inward for RTL cannot work. Only pair poses and
-  camera-facing figures are used here — nothing that points — so one file is correct in all three
-  languages. Sizes are baked in because a mail client will not infer them.
-
-  Decorative, like everywhere else on the site: `alt=""`, so a blocked image leaves a clean gap
-  rather than a line of placeholder text.
-*/
-const EMAIL_CHARACTERS = {
-  /** Delighted at a working phone — the eSIM is ready. */
-  checkingPhone: { file: 'pair-checking-phone-v1', w: 187, h: 150 },
-  /** Simi mid-explanation over a phone — beside the install steps. */
-  explaining: { file: 'pair-explaining-v1', w: 159, h: 150 },
-  /** Open palm, hand on chest — reassurance when something is late. */
-  reassuring: { file: 'pair-reassuring-v1', w: 198, h: 150 },
-  /** Simi waving hello — account mail. */
-  waving: { file: 'simi-waving-v1', w: 127, h: 150 },
-} as const;
-
-type CharacterKey = keyof typeof EMAIL_CHARACTERS;
-
-function characterImg(key: CharacterKey): string {
-  const c = EMAIL_CHARACTERS[key];
-  return `<img src="${baseUrl()}/characters/email/${c.file}.png" width="${c.w}" height="${c.h}" alt="" style="display:block; border:0; outline:none; text-decoration:none; max-width:100%; height:auto;" />`;
+export async function sendVerificationEmail(to: string, token: string): Promise<boolean> {
+  const verifyUrl = `${baseUrl()}/api/account/verify-email?token=${encodeURIComponent(token)}`;
+  const logo = await logoImgTag();
+  const html = `
+    <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto;">
+      ${logo}
+      <h2 style="color: #059669;">אמת את כתובת האימייל שלך / Verify your email</h2>
+      <p style="direction:rtl; text-align:right;">שלום! כדי להשלים את הרישום שלך ל-Sim2Me, לחץ על הכפתור למטה לאימות האימייל שלך.</p>
+      <p>Hi! To complete your Sim2Me registration, click the button below to verify your email.</p>
+      <p style="margin: 24px 0;">
+        <a href="${verifyUrl}" style="display: inline-block; background: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600;">Verify Email / אמת אימייל</a>
+      </p>
+      <p style="font-size: 13px; color: #64748b;">Or copy this link: ${verifyUrl}</p>
+      <p style="font-size: 12px; color: #94a3b8; margin-top: 32px;">This link expires in 24 hours. If you did not register, you can safely ignore this email.</p>
+    </div>
+  `;
+  return sendEmail(to, 'Verify your Sim2Me account / אמת את חשבונך', html);
 }
 
 /** Supported email locales. Falls back to 'he' for legacy flows without a locale. */
@@ -71,139 +45,6 @@ export type EmailLocale = 'he' | 'en' | 'ar';
 
 export function toEmailLocale(value: unknown): EmailLocale {
   return value === 'en' || value === 'ar' || value === 'he' ? value : 'he';
-}
-
-// ─── Formatting helpers ───────────────────────────────────────────────────────
-
-const EN_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-/**
- * A date a human reads the same way in every client.
- *
- * Written out rather than handed to `Intl`, which resolves Arabic to Eastern Arabic numerals on
- * some runtimes and Western on others. An order number that renders differently depending on where
- * the mail was generated is not a reference anybody can quote back to support.
- */
-function formatDate(d: Date, locale: EmailLocale): string {
-  const day = String(d.getUTCDate()).padStart(2, '0');
-  const month = d.getUTCMonth();
-  const year = d.getUTCFullYear();
-  if (locale === 'en') return `${EN_MONTHS[month]} ${day}, ${year}`;
-  return `${day}/${String(month + 1).padStart(2, '0')}/${year}`;
-}
-
-function formatMoney(amount: number, currency: string): string {
-  const c = (currency || 'USD').toUpperCase();
-  const n = amount.toFixed(2);
-  return c === 'USD' ? `$${n}` : `${c} ${n}`;
-}
-
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
-/**
- * A plain-text alternative derived from the HTML we already built.
- *
- * Generated rather than authored so the copy stays in one place — a second hand-written body is a
- * second thing to forget to update. It exists because an HTML-only message with no text part is a
- * spam signal, and because some clients still render the text part by preference.
- */
-function htmlToText(html: string): string {
-  return html
-    .replace(/<style[\s\S]*?<\/style>/gi, '')
-    .replace(/<head[\s\S]*?<\/head>/gi, '')
-    // Links sitting side by side in one paragraph — the iPhone and Android install buttons — would
-    // otherwise run together into a single unreadable string once the tags come off.
-    .replace(/<\/a>\s*<a\b/gi, '</a>\n<a')
-    .replace(/<a\b[^>]*href="([^"]*)"[^>]*>([\s\S]*?)<\/a>/gi, (_m, href, label) => {
-      const text = String(label).replace(/<[^>]+>/g, '').trim();
-      const url = String(href);
-      // A mailto whose label is the address itself would otherwise read "x@y: mailto:x@y".
-      if (url.startsWith('mailto:') && url.slice(7) === text) return text;
-      return text && text !== url ? `${text}: ${url}` : url;
-    })
-    // Middot separators are a visual device between inline links; on their own line they are noise.
-    .replace(/\s·\s/g, '\n')
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/(p|div|li|tr|h1|h2|h3|ul|table)>/gi, '\n')
-    .replace(/<li\b[^>]*>/gi, '- ')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .split('\n')
-    .map((l) => l.trim())
-    .join('\n')
-    .replace(/\n{3,}/g, '\n\n')
-    // Source indentation between `<li>` tags turns into a blank line between every bullet.
-    .replace(/\n{2,}(?=- )/g, '\n')
-    .trim();
-}
-
-// ─── Account emails ───────────────────────────────────────────────────────────
-
-const VERIFY_COPY: Record<EmailLocale, {
-  subject: string; title: string; body: string; button: string; copyLink: string; expiry: string;
-}> = {
-  en: {
-    subject: `Verify your ${SITE_NAME} account`,
-    title: 'Verify your email',
-    body: `Hi! To complete your ${SITE_NAME} registration, click the button below to verify your email address.`,
-    button: 'Verify email',
-    copyLink: 'Or copy this link:',
-    expiry: 'This link expires in 24 hours. If you did not register, you can safely ignore this email.',
-  },
-  he: {
-    subject: `אימות חשבון ${SITE_NAME}`,
-    title: 'אמת את כתובת האימייל שלך',
-    body: `שלום! כדי להשלים את הרישום שלך ל-${SITE_NAME}, לחץ על הכפתור למטה לאימות כתובת האימייל.`,
-    button: 'אימות אימייל',
-    copyLink: 'או העתק את הקישור:',
-    expiry: 'הקישור תקף ל-24 שעות. אם לא נרשמת, ניתן להתעלם מהודעה זו.',
-  },
-  ar: {
-    subject: `تأكيد حسابك في ${SITE_NAME}`,
-    title: 'تأكيد بريدك الإلكتروني',
-    body: `مرحبًا! لإكمال تسجيلك في ${SITE_NAME}، اضغط على الزر أدناه لتأكيد بريدك الإلكتروني.`,
-    button: 'تأكيد البريد الإلكتروني',
-    copyLink: 'أو انسخ هذا الرابط:',
-    expiry: 'تنتهي صلاحية هذا الرابط خلال 24 ساعة. إذا لم تسجّل، يمكنك تجاهل هذه الرسالة.',
-  },
-};
-
-/** Verification, on sign-up. */
-export async function sendVerificationEmail(to: string, token: string, locale: EmailLocale = 'he'): Promise<boolean> {
-  const c = VERIFY_COPY[locale];
-  const dir = locale === 'en' ? 'ltr' : 'rtl';
-  const align = dir === 'rtl' ? 'right' : 'left';
-  const verifyUrl = `${baseUrl()}/api/account/verify-email?token=${encodeURIComponent(token)}`;
-  const logo = await logoImgTag();
-  const html = `
-    <div dir="${dir}" style="font-family: sans-serif; max-width: 560px; margin: 0 auto; text-align: ${align};">
-      ${logo}
-      <p style="margin:0 0 12px 0;">${characterImg('waving')}</p>
-      <h2 style="color: #059669;">${c.title}</h2>
-      <p>${c.body}</p>
-      <p style="margin: 24px 0;">
-        <a href="${verifyUrl}" style="display: inline-block; background: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600;">${c.button}</a>
-      </p>
-      <p style="font-size: 13px; color: #64748b;">${c.copyLink} ${verifyUrl}</p>
-      <p style="font-size: 12px; color: #94a3b8; margin-top: 32px;">${c.expiry}</p>
-    </div>
-  `;
-  return sendEmail(to, c.subject, html, {
-    text: htmlToText(html),
-    replyTo: SUPPORT_EMAIL,
-  });
 }
 
 const RESET_COPY: Record<EmailLocale, {
@@ -244,7 +85,6 @@ export async function sendPasswordResetEmail(to: string, token: string, locale: 
   const html = `
     <div dir="${dir}" style="font-family: sans-serif; max-width: 560px; margin: 0 auto; text-align: ${align};">
       ${logo}
-      <p style="margin:0 0 12px 0;">${characterImg('reassuring')}</p>
       <h2 style="color: #059669;">${c.title}</h2>
       <p>${c.body}</p>
       <p style="margin: 24px 0;">
@@ -254,10 +94,8 @@ export async function sendPasswordResetEmail(to: string, token: string, locale: 
       <p style="font-size: 12px; color: #94a3b8; margin-top: 32px;">${c.expiry}</p>
     </div>
   `;
-  return sendEmail(to, c.subject, html, { text: htmlToText(html), replyTo: SUPPORT_EMAIL });
+  return sendEmail(to, c.subject, html);
 }
-
-// ─── Purchase ─────────────────────────────────────────────────────────────────
 
 export interface PostPurchaseEmailData {
   customerName: string;
@@ -270,21 +108,6 @@ export interface PostPurchaseEmailData {
   loginLink: string;
   email: string;
   tempPassword?: string | null;
-  /*
-    Ticket 033 — the receipt half of the email. All optional: the five call sites were migrated one
-    at a time, and a caller that genuinely does not hold a field should omit it rather than invent
-    one. Anything absent is left out of the rendered block, never printed as an empty row.
-
-    No destination field, deliberately. `Order.destination` holds whatever the supplier returned in
-    `location || locationCode`, which is sometimes "Turkey" and sometimes "TR" — and the plan name
-    beside it already reads "Turkey 1GB 7Days". A row that is redundant when it works and looks
-    unfinished when it does not is worth leaving out. Admin mail keeps it; admins read codes fine.
-  */
-  orderNo?: string | null;
-  amountPaid?: number | null;
-  currency?: string | null;
-  orderDate?: Date | null;
-  iccid?: string | null;
 }
 
 const POST_PURCHASE_COPY: Record<EmailLocale, {
@@ -297,9 +120,6 @@ const POST_PURCHASE_COPY: Record<EmailLocale, {
   accountTitle: string; accountText: string; usernameLabel: string;
   tempPasswordLabel: string; tempPasswordHint: string;
   tip: string; signOff: string;
-  receiptTitle: string; labelOrderNo: string;
-  labelPaid: string; labelDate: string; labelIccid: string;
-  supportTitle: string; supportText: string; guideLabel: string; contactLabel: string;
 }> = {
   he: {
     subject: 'ה-eSIM שלך מ-SIM2ME מוכן להפעלה! ✈️',
@@ -315,7 +135,7 @@ const POST_PURCHASE_COPY: Record<EmailLocale, {
     quickInstall: 'התקנה מהירה בלחיצה:',
     quickInstallHint: 'לחץ על הכפתור המתאים למכשיר שלך להתקנה ישירה. אם לא עובד, השתמש בפרטים הידניים למטה.',
     qrTitle: 'סריקת QR:',
-    qrAttached: 'מצורף להודעה זו קוד ה-QR שלך, גם כקובץ להורדה. סרוק אותו דרך הגדרות הסלולר במכשיר.',
+    qrAttached: 'מצורף להודעה זו קוד ה-QR שלך. סרוק אותו דרך הגדרות הסלולר במכשיר.',
     qrInAccount: 'קוד ה-QR זמין בעמוד ההזמנה ובחשבון שלך.',
     manualTitle: 'התקנה ידנית:',
     manualIntro: 'אם אינך יכול לסרוק, השתמש בפרטים הבאים:',
@@ -326,15 +146,6 @@ const POST_PURCHASE_COPY: Record<EmailLocale, {
     tempPasswordHint: '(מומלץ לשנות לאחר הכניסה)',
     tip: 'חשוב לדעת: מומלץ להפעיל את ה-eSIM עוד בארץ תחת רשת Wi-Fi יציבה, ולהפעיל \'נדידת נתונים\' (Data Roaming) רק ברגע הנחיתה בחו"ל.',
     signOff: 'נסיעה טובה!<br/>צוות SIM2ME',
-    receiptTitle: 'אישור הזמנה:',
-    labelOrderNo: 'מספר הזמנה:',
-    labelPaid: 'סכום ששולם:',
-    labelDate: 'תאריך:',
-    labelIccid: 'מספר ICCID:',
-    supportTitle: 'צריכים עזרה?',
-    supportText: 'אפשר להשיב ישירות להודעה הזו, ואנחנו כאן:',
-    guideLabel: 'מדריך התקנה מלא',
-    contactLabel: 'יצירת קשר',
   },
   en: {
     subject: 'Your SIM2ME eSIM is ready to activate! ✈️',
@@ -350,7 +161,7 @@ const POST_PURCHASE_COPY: Record<EmailLocale, {
     quickInstall: 'One-tap quick install:',
     quickInstallHint: 'Tap the button matching your device for direct installation. If it does not work, use the manual details below.',
     qrTitle: 'QR scan:',
-    qrAttached: 'Your QR code is in this email and attached as a file. Scan it from your device cellular settings.',
+    qrAttached: 'Your QR code is included in this email. Scan it from your device cellular settings.',
     qrInAccount: 'Your QR code is available on the order page and in your account.',
     manualTitle: 'Manual installation:',
     manualIntro: 'If you cannot scan, use the following details:',
@@ -361,15 +172,6 @@ const POST_PURCHASE_COPY: Record<EmailLocale, {
     tempPasswordHint: '(we recommend changing it after signing in)',
     tip: 'Good to know: install the eSIM at home over stable Wi-Fi, and turn on Data Roaming only when you land abroad.',
     signOff: 'Have a great trip!<br/>The SIM2ME Team',
-    receiptTitle: 'Order confirmation:',
-    labelOrderNo: 'Order number:',
-    labelPaid: 'Amount paid:',
-    labelDate: 'Date:',
-    labelIccid: 'ICCID:',
-    supportTitle: 'Need a hand?',
-    supportText: 'Just reply to this email — or reach us here:',
-    guideLabel: 'Full installation guide',
-    contactLabel: 'Contact us',
   },
   ar: {
     subject: 'شريحة eSIM الخاصة بك من SIM2ME جاهزة للتفعيل! ✈️',
@@ -385,7 +187,7 @@ const POST_PURCHASE_COPY: Record<EmailLocale, {
     quickInstall: 'تثبيت سريع بنقرة واحدة:',
     quickInstallHint: 'اضغط على الزر المناسب لجهازك للتثبيت المباشر. إذا لم ينجح، استخدم البيانات اليدوية أدناه.',
     qrTitle: 'مسح رمز QR:',
-    qrAttached: 'رمز QR الخاص بك موجود في هذه الرسالة ومرفق أيضًا كملف. امسحه من إعدادات شبكة الجوال في جهازك.',
+    qrAttached: 'رمز QR الخاص بك مرفق في هذه الرسالة. امسحه من إعدادات شبكة الجوال في جهازك.',
     qrInAccount: 'رمز QR متاح في صفحة الطلب وفي حسابك.',
     manualTitle: 'التثبيت اليدوي:',
     manualIntro: 'إذا تعذّر عليك المسح، استخدم البيانات التالية:',
@@ -396,47 +198,8 @@ const POST_PURCHASE_COPY: Record<EmailLocale, {
     tempPasswordHint: '(ننصح بتغييرها بعد تسجيل الدخول)',
     tip: 'من المهم أن تعرف: يُفضّل تفعيل شريحة eSIM قبل السفر عبر شبكة Wi-Fi مستقرة، وتشغيل "تجوال البيانات" (Data Roaming) فقط عند الهبوط في الخارج.',
     signOff: 'رحلة سعيدة!<br/>فريق SIM2ME',
-    receiptTitle: 'تأكيد الطلب:',
-    labelOrderNo: 'رقم الطلب:',
-    labelPaid: 'المبلغ المدفوع:',
-    labelDate: 'التاريخ:',
-    labelIccid: 'رقم ICCID:',
-    supportTitle: 'تحتاج مساعدة؟',
-    supportText: 'يمكنك الرد مباشرة على هذه الرسالة، ونحن هنا:',
-    guideLabel: 'دليل التثبيت الكامل',
-    contactLabel: 'تواصل معنا',
   },
 };
-
-interface EmailAttachment {
-  filename: string;
-  content: string;
-}
-
-/**
- * The supplier's QR, pulled down so it can ride along as a file.
- *
- * Gmail and Outlook block remote images until the reader clicks "show images", which today means a
- * customer can open the one email that matters and find no QR code in it. An attachment survives
- * that. Fetched with a short timeout and a size ceiling, and any failure returns null so the email
- * goes out exactly as it does now.
- *
- * Not generated locally from the activation payload, even though `qrcode` is installed: the
- * supplier's image is the authoritative artifact, and re-encoding it ourselves creates a way to
- * hand somebody a QR that does not match their eSIM.
- */
-async function fetchQrAttachment(url: string | null | undefined): Promise<EmailAttachment | null> {
-  if (!url || !/^https?:\/\//i.test(url)) return null;
-  try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
-    if (!res.ok) return null;
-    const buf = Buffer.from(await res.arrayBuffer());
-    if (buf.length === 0 || buf.length > 2_000_000) return null;
-    return { filename: 'sim2me-esim-qr.png', content: buf.toString('base64') };
-  } catch {
-    return null;
-  }
-}
 
 /** Localized post-purchase email (he/en/ar). Defaults to Hebrew for legacy flows. */
 export async function sendPostPurchaseEmail(to: string, data: PostPurchaseEmailData, locale: EmailLocale = 'he'): Promise<boolean> {
@@ -451,31 +214,13 @@ export async function sendPostPurchaseEmail(to: string, data: PostPurchaseEmailD
   const validityDays = data.validityDays || '—';
   const smdp = data.smdpAddress || '—';
   const code = data.activationCode || '—';
-  const loginLink = data.loginLink || `${baseUrl()}/${locale}/account`;
+  const loginLink = data.loginLink || baseUrl() + '/account';
   const email = data.email || to;
 
   const hasLinks = smdp !== '—' && code !== '—';
   const lpa = hasLinks ? ('LPA:1$' + smdp + '$' + code) : null;
   const iosUrl = lpa ? ('https://esimsetup.apple.com/esim_qrcode_provisioning?carddata=' + encodeURIComponent(lpa)) : null;
   const androidUrl = lpa ? ('https://esimsetup.android.com/esim_qrcode_provisioning?carddata=' + encodeURIComponent(lpa)) : null;
-
-  /*
-    The receipt. Every row is conditional on its own field, because the five call sites hold
-    different amounts of context — the resend route, for instance, has an order but no live currency
-    figure — and a row reading "Amount paid: —" is worse than no row.
-  */
-  const receiptRows: string[] = [];
-  const row = (label: string, value: string) =>
-    `<li><strong>${label}</strong> ${value}</li>`;
-  if (data.orderNo) receiptRows.push(row(c.labelOrderNo, `<code style="background:#f1f5f9; padding:2px 6px; border-radius:4px;">${escapeHtml(data.orderNo)}</code>`));
-  if (data.amountPaid != null) receiptRows.push(row(c.labelPaid, `<strong>${escapeHtml(formatMoney(data.amountPaid, data.currency || 'USD'))}</strong>`));
-  if (data.orderDate) receiptRows.push(row(c.labelDate, escapeHtml(formatDate(data.orderDate, locale))));
-  if (data.iccid) receiptRows.push(row(c.labelIccid, `<code style="background:#f1f5f9; padding:2px 6px; border-radius:4px;">${escapeHtml(data.iccid)}</code>`));
-
-  const receiptBlock = receiptRows.length
-    ? `<p style="margin: 0 0 8px 0; font-weight: 600;">${c.receiptTitle}</p>
-    <ul style="margin: 0 0 20px 0; ${listPad}">${receiptRows.join('')}</ul>`
-    : '';
 
   const installBlock = lpa
     ? '<p style="margin:16px 0 8px 0; font-weight:600;">' + c.quickInstall + '</p>' +
@@ -492,14 +237,6 @@ export async function sendPostPurchaseEmail(to: string, data: PostPurchaseEmailD
     ? '<p style="margin:16px 0;"><strong>' + c.qrTitle + '</strong> ' + c.qrAttached + '</p><p style="margin:12px 0;"><img src="' + data.qrCodeUrl + '" alt="QR Code" width="200" height="200" style="display:block; border-radius:8px;" /></p>'
     : '<p style="margin:16px 0;"><strong>' + c.qrTitle + '</strong> ' + c.qrInAccount + '</p>';
 
-  const supportBlock = `
-    <p style="margin: 24px 0 6px 0; font-weight: 600;">${c.supportTitle}</p>
-    <p style="margin: 0 0 4px 0; line-height: 1.6;">${c.supportText}
-      <a href="${baseUrl()}/${locale}/installation-guide" style="color:#0d9f6e;">${c.guideLabel}</a> ·
-      <a href="${baseUrl()}/${locale}/contact" style="color:#0d9f6e;">${c.contactLabel}</a> ·
-      <a href="mailto:${SUPPORT_EMAIL}" style="color:#0d9f6e;">${SUPPORT_EMAIL}</a>
-    </p>`;
-
   const logo = await logoImgTag();
   const html = `
 <!DOCTYPE html>
@@ -512,18 +249,15 @@ export async function sendPostPurchaseEmail(to: string, data: PostPurchaseEmailD
 <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background: #f8fafc; color: #1e293b;">
   <div style="background: white; border-radius: 12px; padding: 28px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
     ${logo}
-    <p style="margin:0 0 12px 0;">${characterImg('checkingPhone')}</p>
     <h1 style="color: #0d9f6e; font-size: 1.5rem; margin: 0 0 16px 0;">${subject}</h1>
     <p style="margin: 0 0 20px 0; line-height: 1.6;">${c.greeting} ${escapeHtml(name)},</p>
     <p style="margin: 0 0 20px 0; line-height: 1.6;">${c.intro}</p>
-    ${receiptBlock}
     <p style="margin: 0 0 8px 0; font-weight: 600;">${c.detailsTitle}</p>
     <ul style="margin: 0 0 20px 0; ${listPad}">
       <li><strong>${c.labelPlan}</strong> ${escapeHtml(planName)}</li>
       <li><strong>${c.labelData}</strong> ${escapeHtml(dataGb)}</li>
       <li><strong>${c.labelValidity}</strong> ${escapeHtml(validityDays)}</li>
     </ul>
-    <p style="margin:20px 0 4px 0;">${characterImg('explaining')}</p>
     <p style="margin: 0 0 8px 0; font-weight: 600;">${c.howToInstall}</p>
     ${installBlock}
     ${qrBlock}
@@ -537,154 +271,14 @@ export async function sendPostPurchaseEmail(to: string, data: PostPurchaseEmailD
     <p style="margin: 0 0 4px 0;">${c.usernameLabel} <strong>${escapeHtml(email)}</strong></p>
     ${data.tempPassword ? `<p style="margin: 4px 0 0 0;">${c.tempPasswordLabel} <strong style="font-family:monospace; background:#f1f5f9; padding:2px 8px; border-radius:4px;">${escapeHtml(data.tempPassword)}</strong> ${c.tempPasswordHint}</p>` : ''}
     <p style="margin: 24px 0 0 0; font-size: 0.9rem; color: #64748b;">${c.tip}</p>
-    ${supportBlock}
     <p style="margin: 20px 0 0 0;">${c.signOff}</p>
   </div>
 </body>
 </html>
   `.trim();
 
-  const qrAttachment = await fetchQrAttachment(data.qrCodeUrl);
-
-  return sendEmail(to, subject, html, {
-    text: htmlToText(html),
-    replyTo: SUPPORT_EMAIL,
-    attachments: qrAttachment ? [qrAttachment] : undefined,
-  });
+  return sendEmail(to, subject, html);
 }
-
-// ─── Fulfillment is late ──────────────────────────────────────────────────────
-
-export interface OrderDelayedEmailData {
-  customerName: string;
-  orderNo: string;
-  planName: string;
-  amountPaid?: number | null;
-  currency?: string | null;
-  accountLink: string;
-}
-
-const DELAYED_COPY: Record<EmailLocale, {
-  subject: string; nameFallback: string; greeting: string;
-  intro: string; whatNowTitle: string; whatNowText: string;
-  detailsTitle: string; labelOrderNo: string; labelPlan: string;
-  labelPaid: string;
-  supportTitle: string; supportText: string; contactLabel: string;
-  accountLabel: string; signOff: string;
-}> = {
-  he: {
-    subject: 'קיבלנו את ההזמנה שלך — ה-eSIM בדרך',
-    nameFallback: 'לקוח/ה',
-    greeting: 'שלום',
-    intro: 'התשלום שלך התקבל וההזמנה נקלטה במערכת. הפעלת ה-eSIM לוקחת הפעם קצת יותר זמן מהרגיל, וכבר מטפלים בזה.',
-    whatNowTitle: 'מה קורה עכשיו?',
-    whatNowText: 'ברגע שה-eSIM יהיה מוכן תקבלו מאיתנו הודעה נוספת עם קוד ה-QR והוראות ההתקנה. אין צורך לעשות דבר, ואין צורך להזמין שוב.',
-    detailsTitle: 'פרטי ההזמנה:',
-    labelOrderNo: 'מספר הזמנה:',
-    labelPlan: 'חבילה:',
-    labelPaid: 'סכום ששולם:',
-    supportTitle: 'רוצים לדבר איתנו?',
-    supportText: 'אפשר להשיב ישירות להודעה הזו עם מספר ההזמנה, או לכתוב לנו:',
-    contactLabel: 'יצירת קשר',
-    accountLabel: 'צפייה בהזמנות שלי',
-    signOff: 'תודה על הסבלנות,<br/>צוות SIM2ME',
-  },
-  en: {
-    subject: 'We have your order — your eSIM is on its way',
-    nameFallback: 'Traveler',
-    greeting: 'Hi',
-    intro: 'Your payment went through and your order is in our system. Activating this eSIM is taking a little longer than usual, and we are already on it.',
-    whatNowTitle: 'What happens now?',
-    whatNowText: 'As soon as your eSIM is ready you will get a second email with the QR code and install instructions. There is nothing for you to do, and no need to order again.',
-    detailsTitle: 'Your order:',
-    labelOrderNo: 'Order number:',
-    labelPlan: 'Plan:',
-    labelPaid: 'Amount paid:',
-    supportTitle: 'Want to talk to us?',
-    supportText: 'Reply straight to this email with your order number, or reach us here:',
-    contactLabel: 'Contact us',
-    accountLabel: 'View my orders',
-    signOff: 'Thanks for your patience,<br/>The SIM2ME Team',
-  },
-  ar: {
-    subject: 'استلمنا طلبك — شريحة eSIM في الطريق',
-    nameFallback: 'عميلنا العزيز',
-    greeting: 'مرحبًا',
-    intro: 'تم استلام دفعتك وتسجيل طلبك لدينا. تفعيل شريحة eSIM يستغرق هذه المرة وقتًا أطول قليلًا من المعتاد، ونحن نعمل على ذلك بالفعل.',
-    whatNowTitle: 'ماذا يحدث الآن؟',
-    whatNowText: 'بمجرد أن تصبح شريحتك جاهزة ستصلك رسالة أخرى تحتوي على رمز QR وتعليمات التثبيت. لا حاجة لفعل أي شيء، ولا داعي لإعادة الطلب.',
-    detailsTitle: 'تفاصيل الطلب:',
-    labelOrderNo: 'رقم الطلب:',
-    labelPlan: 'الباقة:',
-    labelPaid: 'المبلغ المدفوع:',
-    supportTitle: 'هل تريد التحدث إلينا؟',
-    supportText: 'يمكنك الرد مباشرة على هذه الرسالة مع ذكر رقم الطلب، أو التواصل معنا هنا:',
-    contactLabel: 'تواصل معنا',
-    accountLabel: 'عرض طلباتي',
-    signOff: 'شكرًا لصبرك،<br/>فريق SIM2ME',
-  },
-};
-
-/**
- * Sent when a paid order does not produce an eSIM profile.
- *
- * This is the gap ticket 033 exists to close: fulfilment used to email the admin and say nothing at
- * all to the person who had just been charged.
- *
- * It carries no error message on purpose. An English exception fragment inside a Hebrew apology
- * tells the customer nothing they can act on and tells anyone else who reads the mailbox more about
- * our internals than they need.
- */
-export async function sendOrderDelayedEmail(to: string, data: OrderDelayedEmailData, locale: EmailLocale = 'he'): Promise<boolean> {
-  const c = DELAYED_COPY[locale];
-  const dir = locale === 'en' ? 'ltr' : 'rtl';
-  const listPad = dir === 'rtl' ? 'padding-right: 20px;' : 'padding-left: 20px;';
-  const name = data.customerName || c.nameFallback;
-
-  const rows: string[] = [
-    `<li><strong>${c.labelOrderNo}</strong> <code style="background:#f1f5f9; padding:2px 6px; border-radius:4px;">${escapeHtml(data.orderNo)}</code></li>`,
-    `<li><strong>${c.labelPlan}</strong> ${escapeHtml(data.planName)}</li>`,
-  ];
-  if (data.amountPaid != null) rows.push(`<li><strong>${c.labelPaid}</strong> ${escapeHtml(formatMoney(data.amountPaid, data.currency || 'USD'))}</li>`);
-
-  const logo = await logoImgTag();
-  const html = `
-<!DOCTYPE html>
-<html dir="${dir}" lang="${locale}">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${c.subject}</title>
-</head>
-<body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background: #f8fafc; color: #1e293b;">
-  <div style="background: white; border-radius: 12px; padding: 28px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
-    ${logo}
-    <p style="margin:0 0 12px 0;">${characterImg('reassuring')}</p>
-    <h1 style="color: #0d9f6e; font-size: 1.4rem; margin: 0 0 16px 0;">${c.subject}</h1>
-    <p style="margin: 0 0 20px 0; line-height: 1.6;">${c.greeting} ${escapeHtml(name)},</p>
-    <p style="margin: 0 0 20px 0; line-height: 1.6;">${c.intro}</p>
-    <p style="margin: 0 0 8px 0; font-weight: 600;">${c.detailsTitle}</p>
-    <ul style="margin: 0 0 20px 0; ${listPad}">${rows.join('')}</ul>
-    <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:16px 20px; margin:0 0 20px 0;">
-      <p style="margin:0 0 6px 0; font-weight:600; color:#047857;">${c.whatNowTitle}</p>
-      <p style="margin:0; line-height:1.6;">${c.whatNowText}</p>
-    </div>
-    <p style="margin: 0 0 6px 0; font-weight: 600;">${c.supportTitle}</p>
-    <p style="margin: 0 0 20px 0; line-height: 1.6;">${c.supportText}
-      <a href="${baseUrl()}/${locale}/contact" style="color:#0d9f6e;">${c.contactLabel}</a> ·
-      <a href="mailto:${SUPPORT_EMAIL}" style="color:#0d9f6e;">${SUPPORT_EMAIL}</a>
-    </p>
-    <p style="margin: 0 0 20px 0;"><a href="${escapeHtml(data.accountLink)}" style="color:#0d9f6e;">${c.accountLabel}</a></p>
-    <p style="margin: 20px 0 0 0;">${c.signOff}</p>
-  </div>
-</body>
-</html>
-  `.trim();
-
-  return sendEmail(to, c.subject, html, { text: htmlToText(html), replyTo: SUPPORT_EMAIL });
-}
-
-// ─── Admin ────────────────────────────────────────────────────────────────────
 
 export interface AdminOrderNotificationData {
   customerName: string;
@@ -698,28 +292,13 @@ export interface AdminOrderNotificationData {
   orderId: string;
   orderNo: string;
   adminOrdersUrl: string;
-  /**
-   * eSIMaccess wallet balance in USD, or null when the lookup failed.
-   *
-   * Admin-only, by explicit instruction. It is deliberately not a field on
-   * `PostPurchaseEmailData`, so there is no type-level route by which it could reach a customer.
-   */
-  esimBalanceUsd?: number | null;
 }
-
-/** Below this the balance renders as a warning. */
-const BALANCE_ALERT_USD = Number(process.env.ESIM_BALANCE_ALERT_USD ?? 20);
 
 /** Sends an order notification to the admin email. Fire-and-forget — never blocks order flow. */
 export async function sendAdminOrderNotificationEmail(data: AdminOrderNotificationData): Promise<void> {
-  const to = adminRecipient();
+  const to = process.env.ADMIN_NOTIFICATION_EMAIL || 'info.sim2me@gmail.com';
   const profit = (data.amountCharged - data.supplierCost).toFixed(2);
   const profitColor = data.amountCharged >= data.supplierCost ? '#059669' : '#dc2626';
-
-  const bal = data.esimBalanceUsd;
-  const balLow = bal != null && bal < BALANCE_ALERT_USD;
-  const balanceRow = `<tr><td style="padding: 6px 12px 6px 0; color: #64748b; white-space:nowrap;">eSIMaccess Balance</td><td style="padding: 6px 0; color: ${balLow ? '#dc2626' : '#0f172a'};"><strong>${bal != null ? `$${bal.toFixed(2)}` : '—'}</strong>${balLow ? ' ⚠️ low — top up' : ''}</td></tr>`;
-
   const html = `
 <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; padding: 24px;">
   <h2 style="margin: 0 0 16px 0; color: #0f172a;">🧾 New Order — Sim2Me</h2>
@@ -731,7 +310,6 @@ export async function sendAdminOrderNotificationEmail(data: AdminOrderNotificati
     <tr><td style="padding: 6px 12px 6px 0; color: #64748b;">Charged</td><td style="padding: 6px 0;"><strong>$${data.amountCharged.toFixed(2)}</strong></td></tr>
     <tr><td style="padding: 6px 12px 6px 0; color: #64748b;">Supplier Cost</td><td style="padding: 6px 0;">$${data.supplierCost.toFixed(2)}</td></tr>
     <tr><td style="padding: 6px 12px 6px 0; color: #64748b;">Profit</td><td style="padding: 6px 0; color: ${profitColor};"><strong>$${profit}</strong></td></tr>
-    ${balanceRow}
     <tr><td style="padding: 6px 12px 6px 0; color: #64748b;">Order ID</td><td style="padding: 6px 0; font-family: monospace; font-size: 12px;">${escapeHtml(data.orderNo)}</td></tr>
   </table>
   <p style="margin: 20px 0 0 0;">
@@ -758,7 +336,7 @@ export interface FraudAlertEmailData {
 
 /** Sends an urgent fraud alert when payment is below supplier cost. Fire-and-forget. */
 export async function sendFraudAlertEmail(data: FraudAlertEmailData): Promise<void> {
-  const to = adminRecipient();
+  const to = process.env.ADMIN_NOTIFICATION_EMAIL || 'info.sim2me@gmail.com';
   const html = `
 <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; padding: 24px;">
   <div style="background: #fef2f2; border: 2px solid #dc2626; border-radius: 10px; padding: 20px 24px; margin-bottom: 20px;">
@@ -816,7 +394,7 @@ function orderTable(d: AdminOrderEventData): string {
 
 /** Admin alert: order reached FAILED status (eSIM or fraud). Fire-and-forget. */
 export function sendOrderFailedEmail(data: AdminOrderEventData & { errorMessage: string }): void {
-  const to = adminRecipient();
+  const to = process.env.ADMIN_NOTIFICATION_EMAIL || 'info.sim2me@gmail.com';
   const html = `
 <div style="font-family:sans-serif; max-width:560px; margin:0 auto; padding:24px;">
   <div style="background:#fef2f2; border:2px solid #dc2626; border-radius:10px; padding:16px 20px; margin-bottom:16px;">
@@ -830,7 +408,7 @@ export function sendOrderFailedEmail(data: AdminOrderEventData & { errorMessage:
 
 /** Admin alert: admin retry succeeded. Fire-and-forget. */
 export function sendRetrySucceededEmail(data: AdminOrderEventData & { iccid?: string | null }): void {
-  const to = adminRecipient();
+  const to = process.env.ADMIN_NOTIFICATION_EMAIL || 'info.sim2me@gmail.com';
   const iccidRow = data.iccid
     ? `<tr><td style="padding: 6px 12px 6px 0; color: #64748b;">ICCID</td><td style="padding: 6px 0; font-family:monospace; font-size:12px;">${escapeHtml(data.iccid)}</td></tr>`
     : '';
@@ -852,7 +430,7 @@ export function sendRetrySucceededEmail(data: AdminOrderEventData & { iccid?: st
 
 /** Admin alert: admin retry failed again. Fire-and-forget. */
 export function sendRetryFailedEmail(data: AdminOrderEventData & { errorMessage: string }): void {
-  const to = adminRecipient();
+  const to = process.env.ADMIN_NOTIFICATION_EMAIL || 'info.sim2me@gmail.com';
   const html = `
 <div style="font-family:sans-serif; max-width:560px; margin:0 auto; padding:24px;">
   <div style="background:#fef2f2; border:2px solid #dc2626; border-radius:10px; padding:16px 20px; margin-bottom:16px;">
@@ -866,7 +444,7 @@ export function sendRetryFailedEmail(data: AdminOrderEventData & { errorMessage:
 
 /** Admin alert: eSIM was cancelled via admin. Fire-and-forget. */
 export function sendEsimCancelledEmail(data: AdminOrderEventData): void {
-  const to = adminRecipient();
+  const to = process.env.ADMIN_NOTIFICATION_EMAIL || 'info.sim2me@gmail.com';
   const html = `
 <div style="font-family:sans-serif; max-width:560px; margin:0 auto; padding:24px;">
   <div style="background:#fff7ed; border:2px solid #f97316; border-radius:10px; padding:16px 20px; margin-bottom:16px;">
@@ -879,7 +457,7 @@ export function sendEsimCancelledEmail(data: AdminOrderEventData): void {
 
 /** Admin alert: refund issued via Paddle. Fire-and-forget. */
 export function sendRefundIssuedEmail(data: AdminOrderEventData): void {
-  const to = adminRecipient();
+  const to = process.env.ADMIN_NOTIFICATION_EMAIL || 'info.sim2me@gmail.com';
   const html = `
 <div style="font-family:sans-serif; max-width:560px; margin:0 auto; padding:24px;">
   <div style="background:#eff6ff; border:2px solid #3b82f6; border-radius:10px; padding:16px 20px; margin-bottom:16px;">
@@ -900,7 +478,7 @@ export interface AbandonedCheckoutItem {
 
 /** Admin digest: new abandoned checkouts detected by cron. Fire-and-forget. */
 export function sendAbandonedCheckoutEmail(items: AbandonedCheckoutItem[]): void {
-  const to = adminRecipient();
+  const to = process.env.ADMIN_NOTIFICATION_EMAIL || 'info.sim2me@gmail.com';
   const rows = items.map((it) => `
   <tr>
     <td style="padding:6px 8px; font-family:monospace; font-size:12px;">${escapeHtml(it.paddleTransactionId)}</td>
@@ -929,87 +507,34 @@ export function sendAbandonedCheckoutEmail(items: AbandonedCheckoutItem[]): void
 
 // ──────────────────────────────────────────────────────────────────────────────
 
-const OTP_COPY: Record<EmailLocale, {
-  subject: (code: string) => string; title: string; body: string; ignore: string;
-}> = {
-  en: {
-    subject: (code) => `${code} — your ${SITE_NAME} login code`,
-    title: 'Your login code',
-    body: `Use this code to complete your ${SITE_NAME} login. It expires in <strong>10 minutes</strong>.`,
-    ignore: 'If you did not try to log in, you can safely ignore this email.',
-  },
-  he: {
-    subject: (code) => `${code} — קוד הכניסה שלך ל-${SITE_NAME}`,
-    title: 'קוד הכניסה שלך',
-    body: `השתמש בקוד הזה כדי להשלים את הכניסה ל-${SITE_NAME}. הקוד תקף ל-<strong>10 דקות</strong>.`,
-    ignore: 'אם לא ניסית להיכנס, ניתן להתעלם מהודעה זו.',
-  },
-  ar: {
-    subject: (code) => `${code} — رمز الدخول إلى ${SITE_NAME}`,
-    title: 'رمز الدخول الخاص بك',
-    body: `استخدم هذا الرمز لإكمال تسجيل الدخول إلى ${SITE_NAME}. تنتهي صلاحيته خلال <strong>10 دقائق</strong>.`,
-    ignore: 'إذا لم تحاول تسجيل الدخول، يمكنك تجاهل هذه الرسالة.',
-  },
-};
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
-/**
- * Sends a 6-digit OTP login code to the customer.
- *
- * Login OTP is currently disabled in `src/lib/auth.ts`; this template is kept working so that
- * re-enabling it is a one-line change rather than a rewrite.
- */
-export async function sendOtpEmail(to: string, code: string, locale: EmailLocale = 'he'): Promise<boolean> {
-  const c = OTP_COPY[locale];
-  const dir = locale === 'en' ? 'ltr' : 'rtl';
-  const align = dir === 'rtl' ? 'right' : 'left';
+/** Sends a 6-digit OTP login code to the customer. */
+export async function sendOtpEmail(to: string, code: string): Promise<boolean> {
   const logo = await logoImgTag();
   const html = `
-    <div dir="${dir}" style="font-family: sans-serif; max-width: 480px; margin: 0 auto; text-align: ${align};">
+    <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
       ${logo}
-      <p style="margin:0 0 12px 0;">${characterImg('waving')}</p>
-      <h2 style="color: #0f172a; margin: 0 0 8px 0;">${c.title}</h2>
-      <p style="color: #475569; margin: 0 0 24px 0;">${c.body}</p>
+      <h2 style="color: #0f172a; margin: 0 0 8px 0;">קוד הכניסה שלך / Your Login Code</h2>
+      <p style="color: #475569; margin: 0 0 24px 0;">Use this code to complete your Sim2Me login. It expires in <strong>10 minutes</strong>.</p>
       <div style="background: #f1f5f9; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 24px;">
-        <span dir="ltr" style="font-size: 40px; font-weight: 700; letter-spacing: 12px; color: #0f172a; font-family: monospace;">${escapeHtml(code)}</span>
+        <span style="font-size: 40px; font-weight: 700; letter-spacing: 12px; color: #0f172a; font-family: monospace;">${escapeHtml(code)}</span>
       </div>
-      <p style="font-size: 12px; color: #94a3b8; margin-top: 24px;">${c.ignore}</p>
+      <p style="direction:rtl; text-align:right; color: #475569;">זהו קוד חד-פעמי לכניסה לאתר Sim2Me. הקוד פג תוקף תוך 10 דקות.</p>
+      <p style="font-size: 12px; color: #94a3b8; margin-top: 24px;">If you did not try to log in, you can safely ignore this email.</p>
     </div>
   `;
-  return sendEmail(to, c.subject(code), html, {
-    text: htmlToText(html),
-    replyTo: SUPPORT_EMAIL,
-  });
+  return sendEmail(to, `${code} — Your Sim2Me login code / קוד הכניסה שלך`, html);
 }
 
-interface SendOptions {
-  /** Plain-text alternative. Its absence is a spam signal on an HTML-only message. */
-  text?: string;
-  /** Where a reply lands. Without it, a customer who hits reply reaches nobody. */
-  replyTo?: string;
-  attachments?: EmailAttachment[];
-}
-
-async function sendEmail(to: string, subject: string, html: string, opts?: SendOptions): Promise<boolean> {
-  /*
-    Preview sink, for `agent-workspace/scripts/email-preview.ts`.
-
-    The point of a preview is to show what would actually arrive, so it is taken from inside the one
-    function every email passes through rather than from a parallel set of render helpers that could
-    drift from the real thing. Guarded by an env var that exists only on a developer's machine, and
-    the fs import is dynamic so nothing is pulled into the server bundle when it is unset.
-  */
-  const previewDir = process.env.EMAIL_PREVIEW_DIR;
-  if (previewDir) {
-    const { writeFile, mkdir } = await import('node:fs/promises');
-    const { join } = await import('node:path');
-    const slug = `${to.replace(/[^a-z0-9]/gi, '_')}__${subject.replace(/[^a-z0-9]/gi, '_').slice(0, 60)}`;
-    await mkdir(previewDir, { recursive: true });
-    await writeFile(join(previewDir, `${slug}.html`), html, 'utf8');
-    if (opts?.text) await writeFile(join(previewDir, `${slug}.txt`), opts.text, 'utf8');
-    console.log(`[Email preview] ${slug}.html${opts?.attachments?.length ? ` (+${opts.attachments.length} attachment)` : ''}`);
-    return true;
-  }
-
+async function sendEmail(to: string, subject: string, html: string): Promise<boolean> {
   if (!process.env.RESEND_API_KEY) {
     console.log('[Email] No RESEND_API_KEY — would send:', { to, subject });
     return true;
@@ -1017,15 +542,7 @@ async function sendEmail(to: string, subject: string, html: string, opts?: SendO
   try {
     const { Resend } = await import('resend');
     const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({
-      from: FROM,
-      to: [to],
-      subject,
-      html,
-      ...(opts?.text ? { text: opts.text } : {}),
-      ...(opts?.replyTo ? { replyTo: opts.replyTo } : {}),
-      ...(opts?.attachments?.length ? { attachments: opts.attachments } : {}),
-    });
+    await resend.emails.send({ from: FROM, to: [to], subject, html });
     return true;
   } catch (e) {
     console.error('[Email] Send failed:', e);

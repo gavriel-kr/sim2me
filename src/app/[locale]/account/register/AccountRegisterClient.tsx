@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { createSharedPathnamesNavigation } from 'next-intl/navigation';
 import { routing } from '@/i18n/routing';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,6 +15,7 @@ const { Link: IntlLink } = createSharedPathnamesNavigation(routing);
 
 export function AccountRegisterClient() {
   const t = useTranslations('account');
+  const locale = useLocale();
   const router = useRouter();
   const [form, setForm] = useState({
     email: '',
@@ -43,6 +44,7 @@ export function AccountRegisterClient() {
           lastName: form.lastName.trim() || undefined,
           phone: form.phone || undefined,
           newsletter: form.newsletter,
+          locale,
         }),
       });
       const data = await res.json();

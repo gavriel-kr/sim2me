@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { signOut } from 'next-auth/react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { createSharedPathnamesNavigation } from 'next-intl/navigation';
 import { routing } from '@/i18n/routing';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -221,6 +221,7 @@ function UsageBar({ orderId, iccid, onStatusChange }: { orderId: string; iccid: 
 
 export function AccountClient() {
   const t = useTranslations('account');
+  const locale = useLocale();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -377,7 +378,11 @@ export function AccountClient() {
     setOtpSuccess('');
     setOtpLoading(true);
     try {
-      const res = await fetch('/api/account/otp/send-setup', { method: 'POST' });
+      const res = await fetch('/api/account/otp/send-setup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ locale }),
+      });
       const data = await res.json();
       if (!res.ok) { setOtpError(data.error || 'Failed to send code.'); return; }
       setOtpPanel('enable-verify');
@@ -421,7 +426,7 @@ export function AccountClient() {
       const res = await fetch('/api/account/otp/disable', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: otpDisablePassword }),
+        body: JSON.stringify({ password: otpDisablePassword, locale }),
       });
       const data = await res.json();
       if (!res.ok) { setOtpError(data.error || 'Incorrect password.'); return; }

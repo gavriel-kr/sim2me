@@ -9,7 +9,7 @@ import { compare } from 'bcryptjs';
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
 import { getSessionForRequest, isCustomerSession } from '@/lib/session';
 import { generateOtpCode, hashOtpCode, isOtpValid, otpExpiresAt } from '@/lib/otp';
-import { sendOtpEmail } from '@/lib/email';
+import { sendOtpEmail, toEmailLocale, type EmailLocale } from '@/lib/email';
 
 export async function POST(request: Request) {
   const session = await getSessionForRequest(request);
@@ -23,11 +23,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Too many attempts. Please try again later.' }, { status: 429 });
   }
 
-  let password: string, otpCode: string;
+  let password: string, otpCode: string, locale: EmailLocale;
   try {
     const body = await request.json();
     password = typeof body?.password === 'string' ? body.password : '';
     otpCode = typeof body?.otpCode === 'string' ? body.otpCode.trim() : '';
+    locale = toEmailLocale(body?.locale);
   } catch {
     return NextResponse.json({ error: 'Invalid request.' }, { status: 400 });
   }
@@ -58,7 +59,7 @@ export async function POST(request: Request) {
         otpAttempts: 0,
       },
     });
-    sendOtpEmail(customer.email, code).catch(() => {});
+    sendOtpEmail(customer.email, code, locale).catch(() => {});
     return NextResponse.json({ codeSent: true });
   }
 
