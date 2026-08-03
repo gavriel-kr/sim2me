@@ -34,7 +34,11 @@ criteria, so the browser showed its own install prompt on mobile.
   theme_color; `mobile-web-app-capable` and `apple-mobile-web-app-capable` absent from `/en` `/he` `/ar`;
   manifest/icon/apple-touch-icon/theme-color links intact; 15 routes incl. checkout, login, admin login,
   sitemap and `/api/checkout/health` all 200; `/he/app` still 307 → `/he`
-- [ ] **E.6** Post-deploy check on a real phone: no install prompt
+- [✅] **E.6** Deployed 2026-08-03 (`a2754c2`, backup tag `pre-deploy-20260803-0320`). Post-deploy smoke
+  on `www.sim2me.net`: live `/manifest` serves `display: browser` with icons and theme_color; both
+  capable metas absent from `/en` `/he` `/ar`; 14 routes 200 incl. checkout, admin login, `/sw.js`,
+  `/api/checkout/health` → `ok: true`; `/he/app` still 307
+- [ ] **E.7** Final confirmation by Gabriel on his own phone: no install prompt appears
 
 ## Phase D — Verify
 
