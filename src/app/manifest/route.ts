@@ -15,7 +15,9 @@ const BASE_MANIFEST = {
   short_name: brandConfig.name,
   description: 'Buy eSIM online for 200+ countries. Instant delivery, best prices.',
   start_url: '/',
-  display: 'standalone' as const,
+  // 'browser' (not 'standalone') keeps the site intentionally non-installable, so browsers
+  // do not show their own "Install app" prompt. Sim2Me is web-only — see ticket 020.
+  display: 'browser' as const,
   orientation: 'portrait' as const,
   theme_color: '#0d9f6e',
   background_color: '#ffffff',

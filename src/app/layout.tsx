@@ -139,12 +139,12 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     manifest: '/manifest',
     appleWebApp: {
-      capable: true,
-      statusBarStyle: 'black-translucent',
+      // Must be explicit: Next defaults `capable` to true whenever this object exists, which
+      // emits mobile-web-app-capable and re-enables the install prompt we removed.
+      capable: false,
       title: globalSeo.siteName || 'Sim2Me',
     },
     formatDetection: { telephone: false },
-    other: { 'mobile-web-app-capable': 'yes' },
     ...(Object.keys(verificationObj).length > 0 && { verification: verificationObj }),
   };
 }
