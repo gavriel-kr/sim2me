@@ -296,7 +296,13 @@ const POST_PURCHASE_COPY: Record<EmailLocale, {
   manualTitle: string; manualIntro: string;
   accountTitle: string; accountText: string; usernameLabel: string;
   tempPasswordLabel: string; tempPasswordHint: string;
-  tip: string; signOff: string;
+  /*
+    Ticket 036 — the golden tip, in the one message every buyer opens. Deliberately the same wording
+    as `howItWorks.golden*` in the message files: a customer who reads the email and then the site
+    must not find two different sequences.
+  */
+  goldenTitle: string; goldenSteps: readonly string[]; goldenWarning: string;
+  signOff: string;
   receiptTitle: string; labelOrderNo: string;
   labelPaid: string; labelDate: string; labelIccid: string;
   supportTitle: string; supportText: string; guideLabel: string; contactLabel: string;
@@ -324,7 +330,15 @@ const POST_PURCHASE_COPY: Record<EmailLocale, {
     usernameLabel: 'שם משתמש:',
     tempPasswordLabel: 'סיסמה זמנית:',
     tempPasswordHint: '(מומלץ לשנות לאחר הכניסה)',
-    tip: 'חשוב לדעת: מומלץ להפעיל את ה-eSIM עוד בארץ תחת רשת Wi-Fi יציבה, ולהפעיל \'נדידת נתונים\' (Data Roaming) רק ברגע הנחיתה בחו"ל.',
+    goldenTitle: 'הטיפ הזהב: מה לעשות ברגע שנחתתם',
+    goldenSteps: [
+      'התקינו את ה-eSIM לפני הנסיעה, בזמן שאתם על Wi-Fi. ההתקנה לבדה לא מפעילה את החבילה ולא מתחילה את התוקף.',
+      'אחרי הנחיתה — ורק אחרי הנחיתה — כבו את המכשיר ל-10 שניות והדליקו אותו מחדש.',
+      'הפעילו נדידת נתונים על קו ה-eSIM, והשאירו אותה כבויה על הקו הישראלי.',
+      'הגדירו את קו ה-eSIM כקו שדרכו עוברים הנתונים הסלולריים.',
+      'תנו לזה 2–3 דקות. אם עדיין אין חיבור, בחרו רשת ידנית: הגדרות → סלולרי → בחירת רשת → כבו "אוטומטי" ובחרו רשת מהרשימה.',
+    ],
+    goldenWarning: 'אל תפעילו את קו ה-eSIM בעודכם בארץ. אם הוא נתפס לרשת עוד לפני הנסיעה, ספירת התוקף עלולה להתחיל מוקדם מהמתוכנן.',
     signOff: 'נסיעה טובה!<br/>צוות SIM2ME',
     receiptTitle: 'אישור הזמנה:',
     labelOrderNo: 'מספר הזמנה:',
@@ -359,7 +373,15 @@ const POST_PURCHASE_COPY: Record<EmailLocale, {
     usernameLabel: 'Username:',
     tempPasswordLabel: 'Temporary password:',
     tempPasswordHint: '(we recommend changing it after signing in)',
-    tip: 'Good to know: install the eSIM at home over stable Wi-Fi, and turn on Data Roaming only when you land abroad.',
+    goldenTitle: 'The golden tip: what to do the moment you land',
+    goldenSteps: [
+      'Install the eSIM before you travel, while you are on Wi-Fi. Installing on its own does not start the plan and does not start the validity period.',
+      'After you land — and only after you land — turn the phone off for ten seconds and back on.',
+      'Turn Data Roaming on for the eSIM line, and leave it off on your home line.',
+      'Set the eSIM line as the one your mobile data goes through.',
+      'Give it two or three minutes. If there is still nothing, pick a network by hand: Settings → Cellular → Network Selection → turn off Automatic and choose an operator from the list.',
+    ],
+    goldenWarning: 'Do not switch the eSIM line on while you are still at home. If it attaches to a network before you travel, the validity period can start earlier than you planned.',
     signOff: 'Have a great trip!<br/>The SIM2ME Team',
     receiptTitle: 'Order confirmation:',
     labelOrderNo: 'Order number:',
@@ -394,7 +416,15 @@ const POST_PURCHASE_COPY: Record<EmailLocale, {
     usernameLabel: 'اسم المستخدم:',
     tempPasswordLabel: 'كلمة مرور مؤقتة:',
     tempPasswordHint: '(ننصح بتغييرها بعد تسجيل الدخول)',
-    tip: 'من المهم أن تعرف: يُفضّل تفعيل شريحة eSIM قبل السفر عبر شبكة Wi-Fi مستقرة، وتشغيل "تجوال البيانات" (Data Roaming) فقط عند الهبوط في الخارج.',
+    goldenTitle: 'النصيحة الذهبية: ما تفعله لحظة الوصول',
+    goldenSteps: [
+      'ثبّت شريحة eSIM قبل السفر وأنت متصل بشبكة Wi-Fi. التثبيت وحده لا يبدأ الخطة ولا يبدأ فترة الصلاحية.',
+      'بعد الوصول — وبعده فقط — أطفئ الهاتف عشر ثوانٍ ثم أعد تشغيله.',
+      'فعّل تجوال البيانات لخط eSIM، واتركه مُطفأً على خطك الأصلي.',
+      'اجعل خط eSIM هو الخط الذي تمر عبره بيانات الجوال.',
+      'انتظر دقيقتين أو ثلاثًا. إن لم يحدث شيء، اختر شبكة يدويًا: الإعدادات → خلوي → اختيار الشبكة → أوقف «تلقائي» واختر مشغلًا من القائمة.',
+    ],
+    goldenWarning: 'لا تشغّل خط eSIM وأنت ما زلت في بلدك. إذا اتصل بشبكة قبل السفر فقد تبدأ فترة الصلاحية أبكر مما خططت.',
     signOff: 'رحلة سعيدة!<br/>فريق SIM2ME',
     receiptTitle: 'تأكيد الطلب:',
     labelOrderNo: 'رقم الطلب:',
@@ -492,6 +522,15 @@ export async function sendPostPurchaseEmail(to: string, data: PostPurchaseEmailD
     ? '<p style="margin:16px 0;"><strong>' + c.qrTitle + '</strong> ' + c.qrAttached + '</p><p style="margin:12px 0;"><img src="' + data.qrCodeUrl + '" alt="QR Code" width="200" height="200" style="display:block; border-radius:8px;" /></p>'
     : '<p style="margin:16px 0;"><strong>' + c.qrTitle + '</strong> ' + c.qrInAccount + '</p>';
 
+  const goldenBlock = `
+    <div style="margin: 24px 0 0 0; background:#ecfdf5; border:1px solid #a7f3d0; border-radius:10px; padding:16px;">
+      <p style="margin:0 0 10px 0; font-weight:600; color:#065f46;">${c.goldenTitle}</p>
+      <ol style="margin:0; ${listPad} color:#065f46; font-size:0.9rem; line-height:1.7;">
+        ${c.goldenSteps.map((s) => `<li>${s}</li>`).join('')}
+      </ol>
+      <p style="margin:12px 0 0 0; font-size:0.85rem; font-weight:600; color:#92400e;">${c.goldenWarning}</p>
+    </div>`;
+
   const supportBlock = `
     <p style="margin: 24px 0 6px 0; font-weight: 600;">${c.supportTitle}</p>
     <p style="margin: 0 0 4px 0; line-height: 1.6;">${c.supportText}
@@ -536,7 +575,7 @@ export async function sendPostPurchaseEmail(to: string, data: PostPurchaseEmailD
     <p style="margin: 0 0 20px 0; line-height: 1.6;">${c.accountText} <a href="${escapeHtml(loginLink)}" style="color: #0d9f6e;">${escapeHtml(loginLink)}</a></p>
     <p style="margin: 0 0 4px 0;">${c.usernameLabel} <strong>${escapeHtml(email)}</strong></p>
     ${data.tempPassword ? `<p style="margin: 4px 0 0 0;">${c.tempPasswordLabel} <strong style="font-family:monospace; background:#f1f5f9; padding:2px 8px; border-radius:4px;">${escapeHtml(data.tempPassword)}</strong> ${c.tempPasswordHint}</p>` : ''}
-    <p style="margin: 24px 0 0 0; font-size: 0.9rem; color: #64748b;">${c.tip}</p>
+    ${goldenBlock}
     ${supportBlock}
     <p style="margin: 20px 0 0 0;">${c.signOff}</p>
   </div>
@@ -925,6 +964,200 @@ export function sendAbandonedCheckoutEmail(items: AbandonedCheckoutItem[]): void
   <p style="margin: 20px 0 0 0;"><a href="${escapeHtml(adminUrl())}" style="display:inline-block; background:#0f172a; color:white; padding:10px 20px; text-decoration:none; border-radius:6px; font-size:14px;">View Orders</a></p>
 </div>`.trim();
   sendEmail(to, `👻 ${items.length} Abandoned Checkout${items.length === 1 ? '' : 's'} Detected`, html).catch(() => {});
+}
+
+// ─── Contact form ─────────────────────────────────────────────────────────────
+
+export interface ContactAutoReplyData {
+  customerName: string;
+  /** `SM-XXXXXX`, from `contactRef()`. The same token the admin notification carries. */
+  ref: string;
+  /** One of `CONTACT_SUBJECTS`, used to pick which self-help links are worth offering. */
+  subject: string;
+}
+
+/**
+ * Ticket 026. Deliberately free of any timing promise, in any language.
+ *
+ * That is a product decision, not an omission: the site makes no response-time claim anywhere, so an
+ * acknowledgement that quietly invented one here would be the same false promise moved into the inbox.
+ * It says the message arrived, gives the reference, and points at the pages that answer the most common
+ * version of the question.
+ */
+const CONTACT_AUTOREPLY_COPY: Record<EmailLocale, {
+  subject: (ref: string) => string;
+  nameFallback: string; greeting: string; title: string;
+  intro: string; refLabel: string;
+  meanwhileTitle: string; meanwhileText: string;
+  replyNote: string; signOff: string;
+}> = {
+  he: {
+    subject: (ref) => `קיבלנו את ההודעה שלך — ${ref}`,
+    nameFallback: 'לקוח/ה',
+    greeting: 'שלום',
+    title: 'ההודעה שלך הגיעה',
+    intro: 'תודה שכתבתם לנו. ההודעה נקלטה אצלנו ואנחנו קוראים כל אחת מהן. נחזור אליכם במייל.',
+    refLabel: 'מספר האסמכתא שלכם:',
+    meanwhileTitle: 'בינתיים, אולי זה יעזור',
+    meanwhileText: 'הרבה שאלות מקבלות תשובה מיידית בעמודים האלה:',
+    replyNote: 'אפשר להשיב ישירות להודעה הזו, ומספר האסמכתא יישאר צמוד לפנייה.',
+    signOff: 'תודה,<br/>צוות SIM2ME',
+  },
+  en: {
+    subject: (ref) => `We have your message — ${ref}`,
+    nameFallback: 'Traveler',
+    greeting: 'Hi',
+    title: 'Your message reached us',
+    intro: 'Thank you for writing to us. Your message is in our inbox and we read every one of them. We will get back to you by email.',
+    refLabel: 'Your reference:',
+    meanwhileTitle: 'In the meantime, this might help',
+    meanwhileText: 'A lot of questions are answered straight away on these pages:',
+    replyNote: 'You can reply directly to this email, and your reference stays attached to the conversation.',
+    signOff: 'Thank you,<br/>The SIM2ME Team',
+  },
+  ar: {
+    subject: (ref) => `استلمنا رسالتك — ${ref}`,
+    nameFallback: 'عميلنا العزيز',
+    greeting: 'مرحبًا',
+    title: 'وصلتنا رسالتك',
+    intro: 'شكرًا لتواصلك معنا. رسالتك وصلت إلينا ونقرأ كل رسالة. سنعود إليك عبر البريد الإلكتروني.',
+    refLabel: 'رقم مرجعك:',
+    meanwhileTitle: 'في الأثناء، قد يساعدك هذا',
+    meanwhileText: 'الكثير من الأسئلة تجد جوابها فورًا في هذه الصفحات:',
+    replyNote: 'يمكنك الرد مباشرة على هذه الرسالة، وسيبقى رقم المرجع مرتبطًا بمحادثتك.',
+    signOff: 'شكرًا،<br/>فريق SIM2ME',
+  },
+};
+
+/** Paths, not URLs — the locale prefix is added when the mail is built. */
+const AUTOREPLY_LINKS: Record<string, readonly string[]> = {
+  'Installation Help': ['/installation-guide', '/compatible-devices', '/help'],
+  'Activation Issue': ['/installation-guide', '/help', '/account'],
+  'Connectivity Problem': ['/help', '/installation-guide'],
+  'Refund Request': ['/refund', '/terms'],
+  'Billing & Payment': ['/account', '/terms'],
+  'General Inquiry': ['/help'],
+};
+
+const LINK_LABELS: Record<EmailLocale, Record<string, string>> = {
+  he: {
+    '/installation-guide': 'מדריך התקנה',
+    '/compatible-devices': 'מכשירים תואמים',
+    '/help': 'מרכז העזרה',
+    '/refund': 'מדיניות החזרים',
+    '/terms': 'תנאי שימוש',
+    '/account': 'החשבון שלי',
+  },
+  en: {
+    '/installation-guide': 'Installation guide',
+    '/compatible-devices': 'Compatible devices',
+    '/help': 'Help centre',
+    '/refund': 'Refund policy',
+    '/terms': 'Terms of service',
+    '/account': 'My account',
+  },
+  ar: {
+    '/installation-guide': 'دليل التثبيت',
+    '/compatible-devices': 'الأجهزة المتوافقة',
+    '/help': 'مركز المساعدة',
+    '/refund': 'سياسة الاسترداد',
+    '/terms': 'شروط الاستخدام',
+    '/account': 'حسابي',
+  },
+};
+
+/** Confirms to the customer that their message arrived, and hands them a reference. */
+export async function sendContactAutoReplyEmail(to: string, data: ContactAutoReplyData, locale: EmailLocale = 'he'): Promise<boolean> {
+  const c = CONTACT_AUTOREPLY_COPY[locale];
+  const dir = locale === 'en' ? 'ltr' : 'rtl';
+  const listPad = dir === 'rtl' ? 'padding-right: 20px;' : 'padding-left: 20px;';
+  const name = data.customerName || c.nameFallback;
+  const subject = c.subject(data.ref);
+
+  const paths = AUTOREPLY_LINKS[data.subject] ?? AUTOREPLY_LINKS['General Inquiry'];
+  const links = paths
+    .map((p) => `<li><a href="${baseUrl()}/${locale}${p}" style="color:#0d9f6e;">${LINK_LABELS[locale][p] ?? p}</a></li>`)
+    .join('');
+
+  const logo = await logoImgTag();
+  const html = `
+<!DOCTYPE html>
+<html dir="${dir}" lang="${locale}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${subject}</title>
+</head>
+<body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background: #f8fafc; color: #1e293b;">
+  <div style="background: white; border-radius: 12px; padding: 28px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
+    ${logo}
+    <p style="margin:0 0 12px 0;">${characterImg('reassuring')}</p>
+    <h1 style="color: #0d9f6e; font-size: 1.4rem; margin: 0 0 16px 0;">${c.title}</h1>
+    <p style="margin: 0 0 20px 0; line-height: 1.6;">${c.greeting} ${escapeHtml(name)},</p>
+    <p style="margin: 0 0 20px 0; line-height: 1.6;">${c.intro}</p>
+    <p style="margin: 0 0 20px 0;"><strong>${c.refLabel}</strong>
+      <code style="background:#f1f5f9; padding:2px 6px; border-radius:4px;">${escapeHtml(data.ref)}</code>
+    </p>
+    <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:16px 20px; margin:0 0 20px 0;">
+      <p style="margin:0 0 6px 0; font-weight:600; color:#047857;">${c.meanwhileTitle}</p>
+      <p style="margin:0 0 8px 0; line-height:1.6;">${c.meanwhileText}</p>
+      <ul style="margin:0; ${listPad}">${links}</ul>
+    </div>
+    <p style="margin: 0 0 20px 0; line-height: 1.6;">${c.replyNote}</p>
+    <p style="margin: 20px 0 0 0;">${c.signOff}</p>
+  </div>
+</body>
+</html>
+  `.trim();
+
+  return sendEmail(to, subject, html, { text: htmlToText(html), replyTo: SUPPORT_EMAIL });
+}
+
+export interface ContactAdminNotificationData {
+  name: string;
+  email: string;
+  phone: string | null;
+  subject: string;
+  message: string;
+  ref: string;
+  /** Raised for the subjects where someone is standing in an airport unable to connect. */
+  urgent: boolean;
+  marketingConsent: boolean;
+}
+
+/**
+ * The admin side of a contact submission.
+ *
+ * Moved out of the route and onto `sendEmail` so it inherits the preview sink, the plain-text part and
+ * the no-API-key development branch that every other email already had. The phone number, the
+ * reference and the deep link are here because the previous version left Gabriel with a name, an email
+ * and no way to act without first going to look the person up.
+ */
+export function sendContactAdminNotificationEmail(data: ContactAdminNotificationData): void {
+  const to = adminRecipient();
+  const subject = `${data.urgent ? '[URGENT] ' : ''}[Sim2Me] ${data.subject} — ${data.ref}`;
+  const phoneRow = data.phone
+    ? `<tr><td style="padding:6px 0; font-weight:bold; color:#555;">Phone:</td><td style="padding:6px 0;"><a href="tel:${escapeHtml(data.phone)}">${escapeHtml(data.phone)}</a></td></tr>`
+    : '';
+  const html = `
+<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+  ${data.urgent ? '<p style="margin:0 0 12px 0; padding:10px 14px; background:#fef2f2; border:1px solid #fecaca; border-radius:8px; color:#b91c1c; font-weight:600;">Urgent subject — a customer may be unable to connect right now.</p>' : ''}
+  <h2 style="color: #0d9668; margin:0 0 12px 0;">New contact submission</h2>
+  <table style="width: 100%; border-collapse: collapse;">
+    <tr><td style="padding:6px 0; font-weight:bold; color:#555; width:110px;">Reference:</td><td style="padding:6px 0;"><code>${escapeHtml(data.ref)}</code></td></tr>
+    <tr><td style="padding:6px 0; font-weight:bold; color:#555;">Name:</td><td style="padding:6px 0;">${escapeHtml(data.name)}</td></tr>
+    <tr><td style="padding:6px 0; font-weight:bold; color:#555;">Email:</td><td style="padding:6px 0;"><a href="mailto:${escapeHtml(data.email)}">${escapeHtml(data.email)}</a></td></tr>
+    ${phoneRow}
+    <tr><td style="padding:6px 0; font-weight:bold; color:#555;">Subject:</td><td style="padding:6px 0;">${escapeHtml(data.subject)}</td></tr>
+    <tr><td style="padding:6px 0; font-weight:bold; color:#555;">Marketing:</td><td style="padding:6px 0;">${data.marketingConsent ? 'Opted in' : 'No'}</td></tr>
+  </table>
+  <div style="margin-top: 16px; padding: 16px; background: #f5f5f5; border-radius: 8px;">
+    <p style="margin: 0; white-space: pre-wrap;">${escapeHtml(data.message)}</p>
+  </div>
+  <p style="margin-top: 20px;"><a href="${baseUrl()}/admin/contact" style="display:inline-block; background:#0f172a; color:white; padding:10px 20px; text-decoration:none; border-radius:6px; font-size:14px;">Open in admin</a></p>
+</div>`.trim();
+
+  sendEmail(to, subject, html, { text: htmlToText(html), replyTo: data.email }).catch(() => {});
 }
 
 // ──────────────────────────────────────────────────────────────────────────────

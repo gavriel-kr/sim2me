@@ -1,14 +1,20 @@
 import { NextResponse } from 'next/server';
+import { createHash } from 'node:crypto';
 import { contactFormSchema } from '@/lib/validation/schemas';
 import { prisma } from '@/lib/prisma';
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
 // import { checkBotId } from 'botid/server'; // BotID disabled
 import { verifyTurnstile } from '@/lib/turnstile';
-
-const escapeHtml = (s: string) =>
-  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+import { contactRef } from '@/lib/contactRef';
+import { sendContactAutoReplyEmail, sendContactAdminNotificationEmail, toEmailLocale } from '@/lib/email';
 
 export const dynamic = 'force-dynamic';
+
+/**
+ * Ticket 026. Subjects where someone is likely standing in an airport with no connection. They change
+ * the notification subject line only — nothing about how the submission is stored or answered.
+ */
+const URGENT_SUBJECTS = new Set(['Activation Issue', 'Connectivity Problem']);
 
 export async function POST(request: Request) {
   try {
@@ -34,56 +40,44 @@ export async function POST(request: Request) {
     }
 
     const { name, email, phone, subject, message, marketingConsent } = parsed.data;
+    const locale = toEmailLocale(body?.locale);
 
-    // Always save to DB regardless of email config
-    await prisma.contactSubmission.create({
+    // The database write is the only step allowed to fail the request: a stored message can always be
+    // answered by hand, an unstored one is gone.
+    const submission = await prisma.contactSubmission.create({
       data: { name, email, phone: phone ?? null, subject, message, marketingConsent: marketingConsent ?? false },
     });
+    const ref = contactRef(submission.id);
 
-    if (!process.env.RESEND_API_KEY) {
-      console.log('[Contact Form] No RESEND_API_KEY set — logging instead:');
-      console.log({ name, email, subject, message });
-      return NextResponse.json({ success: true, dev: true });
-    }
-
-    const { Resend } = await import('resend');
-    const resend = new Resend(process.env.RESEND_API_KEY);
-
-    await resend.emails.send({
-      from: `Sim2Me Contact <${process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'}>`,
-      // Was a hardcoded personal address, which meant contact-form mail went somewhere the rest of
-      // the site's admin notifications did not.
-      to: [process.env.ADMIN_NOTIFICATION_EMAIL || 'info.sim2me@gmail.com'],
-      replyTo: email,
-      subject: `[Sim2Me Contact] ${subject}`,
-      html: `
-        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #0d9668;">New Contact Form Submission</h2>
-          <table style="width: 100%; border-collapse: collapse;">
-            <tr>
-              <td style="padding: 8px 0; font-weight: bold; color: #555; width: 100px;">Name:</td>
-              <td style="padding: 8px 0;">${escapeHtml(name)}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px 0; font-weight: bold; color: #555;">Email:</td>
-              <td style="padding: 8px 0;"><a href="mailto:${escapeHtml(email)}">${escapeHtml(email)}</a></td>
-            </tr>
-            <tr>
-              <td style="padding: 8px 0; font-weight: bold; color: #555;">Subject:</td>
-              <td style="padding: 8px 0;">${escapeHtml(subject)}</td>
-            </tr>
-          </table>
-          <div style="margin-top: 16px; padding: 16px; background: #f5f5f5; border-radius: 8px;">
-            <p style="margin: 0; white-space: pre-wrap;">${escapeHtml(message)}</p>
-          </div>
-          <p style="margin-top: 24px; font-size: 12px; color: #999;">
-            This message was sent from the Sim2Me contact form.
-          </p>
-        </div>
-      `,
+    /* Both emails are fire-and-forget. A mail provider having a bad afternoon must not turn a message
+       we have already stored into an error on the customer's screen. `sendEmail` swallows and logs its
+       own failures, and returns early with a log line when there is no API key locally. */
+    sendContactAdminNotificationEmail({
+      name,
+      email,
+      phone: phone ?? null,
+      subject,
+      message,
+      ref,
+      urgent: URGENT_SUBJECTS.has(subject),
+      marketingConsent: marketingConsent ?? false,
     });
 
-    return NextResponse.json({ success: true });
+    /* The auto-reply is the one thing this endpoint sends to an address a stranger chose, so it is
+       limited per address as well as per IP: three a day means someone cannot use the form to post
+       our branded mail into a person's inbox over and over from changing addresses. The submission is
+       still stored and still notified — only the courtesy copy is withheld. The key is a hash so the
+       rate-limit table does not accumulate email addresses. */
+    const recipientKey = createHash('sha256').update(email.trim().toLowerCase()).digest('hex').slice(0, 32);
+    const autoReplyAllowed = await checkRateLimit(recipientKey, 'contact-autoreply', 3, 86400);
+    if (autoReplyAllowed) {
+      sendContactAutoReplyEmail(email, { customerName: name, ref, subject }, locale)
+        .catch((e) => console.error('[Contact] Auto-reply failed (non-fatal)', e));
+    } else {
+      console.warn(`[Contact] Auto-reply suppressed for ${ref}: recipient limit reached`);
+    }
+
+    return NextResponse.json({ success: true, ref });
   } catch (error) {
     console.error('[Contact API Error]', error);
     return NextResponse.json(

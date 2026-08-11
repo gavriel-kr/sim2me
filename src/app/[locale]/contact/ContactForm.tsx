@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { contactFormSchema, type ContactFormData, CONTACT_SUBJECTS } from '@/lib/validation/schemas';
@@ -30,9 +30,13 @@ const SUBJECT_KEYS: Record<string, string> = {
 
 export function ContactForm() {
   const t = useTranslations('contact');
+  const locale = useLocale();
   const { toast } = useToast();
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  /* The reference the auto-reply carries, shown here too so the customer has it even if the email is
+     slow to arrive or lands in spam. */
+  const [ref, setRef] = useState<string | null>(null);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const {
     register,
@@ -51,9 +55,11 @@ export function ContactForm() {
       const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...data, turnstileToken }),
+        body: JSON.stringify({ ...data, turnstileToken, locale }),
       });
       if (!res.ok) throw new Error('Failed to send');
+      const payload = await res.json().catch(() => ({} as { ref?: string }));
+      setRef(payload.ref ?? null);
       setSent(true);
       toast({ title: t('messageSent'), description: t('messageSentDesc'), variant: 'success' });
       reset();
@@ -76,7 +82,12 @@ export function ContactForm() {
         </div>
         <h3 className="mt-4 text-lg font-semibold text-foreground">{t('messageSent')}</h3>
         <p className="mt-1 text-sm text-muted-foreground">{t('messageSentDesc')}</p>
-        <Button variant="outline" className="mt-6" onClick={() => setSent(false)}>
+        {ref && (
+          <p className="mt-3 text-sm text-muted-foreground">
+            {t('refSent')} <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-foreground">{ref}</code>
+          </p>
+        )}
+        <Button variant="outline" className="mt-6" onClick={() => { setSent(false); setRef(null); }}>
           {t('sendAnother')}
         </Button>
       </div>
@@ -93,6 +104,7 @@ export function ContactForm() {
             id="name"
             className="mt-1.5 h-11 rounded-xl"
             placeholder={t('namePlaceholder')}
+            maxLength={100}
             aria-invalid={!!errors.name}
             {...register('name')}
           />
@@ -157,9 +169,12 @@ export function ContactForm() {
       {/* Message */}
       <div>
         <Label htmlFor="message" className="text-sm font-medium">{t('message')}</Label>
+        {/* The field limits match `contactFormSchema`, so the ceiling is reached by the input refusing
+            more characters rather than by a validation message the visitor did not expect. */}
         <textarea
           id="message"
           rows={5}
+          maxLength={5000}
           className="mt-1.5 flex w-full rounded-xl border border-input bg-background px-4 py-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none"
           placeholder={t('messagePlaceholder')}
           aria-invalid={!!errors.message}

@@ -1,0 +1,150 @@
+export const maxDuration = 60;
+
+import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { requireAdmin } from '@/lib/session';
+import { prisma } from '@/lib/prisma';
+import { purchasePackage, getEsimProfileWithRetry, getPackages } from '@/lib/esimaccess';
+import { sendPostPurchaseEmail, sendRetrySucceededEmail, sendRetryFailedEmail, toEmailLocale } from '@/lib/email';
+import { checkAndAutoBlockEmail } from '@/lib/fraud';
+import { hash } from 'bcryptjs';
+
+function baseUrl(): string {
+  const u = process.env.NEXT_PUBLIC_SITE_URL;
+  return u ? u.replace(/\/$/, '') : 'https://www.sim2me.net';
+}
+
+export async function POST(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const session = await getServerSession(authOptions);
+  const denied = requireAdmin(session);
+  if (denied) return denied;
+
+  const order = await prisma.order.findUnique({ where: { id } });
+  if (!order) return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+
+  if (order.status === 'COMPLETED') {
+    return NextResponse.json({ error: 'Order already completed' }, { status: 400 });
+  }
+
+  try {
+    await prisma.order.update({ where: { id: order.id }, data: { status: 'PROCESSING', errorMessage: null } });
+
+    // Refresh supplierCost at retry time (price may have changed; also ensures cost is tracked)
+    let retryCost: number | undefined;
+    try {
+      const { packageList } = await getPackages();
+      const pkg = packageList?.find((p: { packageCode: string }) => p.packageCode === order.packageCode);
+      if (pkg?.price != null) retryCost = pkg.price / 10000;
+    } catch {
+      // Non-fatal: proceed without refreshing cost
+    }
+
+    const purchase = await purchasePackage(order.packageCode, 1);
+    const orderNo = purchase.orderNo;
+
+    await prisma.order.update({
+      where: { id: order.id },
+      data: {
+        esimOrderId: orderNo,
+        esimTransactionId: purchase.transactionId,
+        ...(retryCost != null && { supplierCost: retryCost }),
+      },
+    });
+
+    const profileResult = await getEsimProfileWithRetry(orderNo, 5, 5000);
+    const firstProfile = profileResult?.esimList?.[0];
+
+    await prisma.order.update({
+      where: { id: order.id },
+      data: {
+        status: 'COMPLETED',
+        ...(firstProfile && {
+          iccid: firstProfile.iccid,
+          qrCodeUrl: firstProfile.qrCodeUrl,
+          smdpAddress: firstProfile.smdpAddress,
+          activationCode: firstProfile.activationCode,
+        }),
+      },
+    });
+
+    // Auto-create or link customer account
+    let tempPassword: string | null = null;
+    try {
+      let customer = await prisma.customer.findUnique({ where: { email: order.customerEmail } });
+      if (!customer) {
+        tempPassword = Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 10);
+        const hashed = await hash(tempPassword, 10);
+        const nameParts = (order.customerName || '').trim().split(' ');
+        customer = await prisma.customer.create({
+          data: {
+            email: order.customerEmail,
+            name: nameParts[0] || order.customerName || '',
+            lastName: nameParts.slice(1).join(' ') || null,
+            password: hashed,
+          },
+        });
+      }
+      await prisma.order.update({ where: { id: order.id }, data: { customerId: customer.id } });
+    } catch (e) {
+      console.warn('[Retry] Customer upsert failed (non-fatal)', e);
+    }
+
+    if (firstProfile) {
+      // The buyer's own language, stored on the order at checkout. Orders placed before that column
+      // existed read null, which `toEmailLocale` maps to Hebrew — exactly what they got before.
+      const emailLocale = toEmailLocale(order.locale);
+      sendPostPurchaseEmail(order.customerEmail, {
+        customerName: order.customerName || 'Customer',
+        planName: order.packageName,
+        dataGb: order.dataAmount,
+        validityDays: order.validity,
+        qrCodeUrl: firstProfile.qrCodeUrl || null,
+        smdpAddress: firstProfile.smdpAddress,
+        activationCode: firstProfile.activationCode,
+        loginLink: `${baseUrl()}/${emailLocale}/account`,
+        email: order.customerEmail,
+        tempPassword,
+        orderNo: order.orderNo,
+        amountPaid: Number(order.totalAmount),
+        currency: order.currency,
+        orderDate: order.paidAt ?? order.createdAt,
+        iccid: firstProfile.iccid ?? null,
+      }, emailLocale).catch((e) => console.error('[Retry] Email failed (non-fatal)', e));
+    }
+
+    sendRetrySucceededEmail({
+      orderNo: order.orderNo,
+      customerName: order.customerName || order.customerEmail,
+      customerEmail: order.customerEmail,
+      packageName: order.packageName,
+      destination: order.destination,
+      totalAmount: Number(order.totalAmount),
+      currency: order.currency,
+      iccid: firstProfile?.iccid ?? null,
+    });
+    return NextResponse.json({ success: true, message: 'Order fulfilled successfully' });
+  } catch (e) {
+    const errMsg = e instanceof Error ? e.message : String(e);
+    await prisma.order.update({
+      where: { id: order.id },
+      data: { status: 'FAILED', errorMessage: errMsg.slice(0, 1000) },
+    });
+    sendRetryFailedEmail({
+      orderNo: order.orderNo,
+      customerName: order.customerName || order.customerEmail,
+      customerEmail: order.customerEmail,
+      packageName: order.packageName,
+      destination: order.destination,
+      totalAmount: Number(order.totalAmount),
+      currency: order.currency,
+      errorMessage: errMsg.slice(0, 300),
+    });
+    checkAndAutoBlockEmail(order.customerEmail).catch(() => {});
+    return NextResponse.json({ error: errMsg }, { status: 500 });
+  }
+}

@@ -29,6 +29,10 @@ export type NavigationConfig = {
   row exists yet, visitors were getting the Header's six, and the first time anyone opened that
   screen and pressed save, the shorter list would have been written to the database and the
   calculator would have vanished from the site with nothing to show it had ever been there.
+
+  `/contact` left this list. It is still a live page, still in the footer, and its form is
+  now also at the foot of the help centre; only the header entry is gone. Restoring it means adding the
+  entry back here and in the Header, or adding it on the admin navigation screen.
 */
 const DEFAULT_NAV_MENU: NavLink[] = [
   { href: '/', key: 'home' },
@@ -36,7 +40,6 @@ const DEFAULT_NAV_MENU: NavLink[] = [
   { href: '/how-it-works', key: 'howItWorks' },
   { href: '/data-calculator', key: 'calculator' },
   { href: '/help', key: 'help' },
-  { href: '/contact', key: 'contact' },
 ];
 
 const DEFAULT_FOOTER_PRODUCT: NavLink[] = [

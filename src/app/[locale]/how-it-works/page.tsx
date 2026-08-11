@@ -4,7 +4,7 @@ import { CharacterFigure } from '@/components/brand/CharacterFigure';
 import { Card, CardContent } from '@/components/ui/card';
 import {
   MapPin, CreditCard, Smartphone, Apple, Monitor,
-  Lightbulb, Zap, AlertTriangle, ChevronRight, CheckCircle2,
+  Lightbulb, Zap, AlertTriangle, CheckCircle2,
   Wifi, QrCode, Link2, Settings,
 } from 'lucide-react';
 import { getCmsPage } from '@/lib/cms';
@@ -201,6 +201,34 @@ export default async function HowItWorksPage({ params }: { params: Promise<{ loc
             </div>
             <h2 className="text-2xl font-bold">{t('troubleTitle')}</h2>
           </div>
+
+          {/*
+            Ticket 036. The sequence that resolves almost every "it isn't connecting", placed above the
+            four cards because a stuck traveller reads the first block and stops. The order of the steps
+            is the point, so it is a numbered list, and the last line is the early-attach warning.
+          */}
+          <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-6 sm:p-8">
+            <div className="flex items-center gap-2 mb-3">
+              <Wifi className="h-6 w-6 shrink-0 text-emerald-700" />
+              <h3 className="text-xl font-bold text-emerald-900">{t('goldenTitle')}</h3>
+            </div>
+            <p className="text-sm text-emerald-900/80 leading-relaxed">{t('goldenIntro')}</p>
+            <ol className="mt-5 space-y-3">
+              {(['goldenStep1', 'goldenStep2', 'goldenStep3', 'goldenStep4', 'goldenStep5'] as const).map((step, i) => (
+                <li key={step} className="flex items-start gap-3">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold text-white">
+                    {i + 1}
+                  </span>
+                  <span className="text-sm text-emerald-900/90 leading-relaxed">{t(step)}</span>
+                </li>
+              ))}
+            </ol>
+            <p className="mt-5 flex items-start gap-2 rounded-xl bg-white/70 p-3 text-sm font-medium text-emerald-900">
+              <AlertTriangle className="h-5 w-5 shrink-0 text-amber-600" />
+              <span className="leading-relaxed">{t('goldenWarning')}</span>
+            </p>
+          </div>
+
           <div className="grid gap-4 sm:grid-cols-2">
             {(['trouble1', 'trouble2', 'trouble3', 'trouble4'] as const).map((key) => (
               <Card key={key} className="border-gray-200">

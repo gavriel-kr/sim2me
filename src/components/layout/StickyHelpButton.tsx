@@ -4,11 +4,21 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { MessageCircle } from 'lucide-react';
 
+/**
+ * Hidden, not deleted: flip to `true` and the button is back exactly as it was.
+ *
+ * The flag lives here rather than in `MainLayout` so nothing else has to know about it, and so turning
+ * it back on is one word in one file.
+ */
+const SHOW_STICKY_HELP = false;
+
 export function StickyHelpButton() {
   const pathname = usePathname();
   // Extract locale from pathname (e.g. /he/... → he)
   const locale = pathname?.split('/')[1] || 'he';
   const contactHref = `/${locale}/contact`;
+
+  if (!SHOW_STICKY_HELP) return null;
 
   return (
     <div className="fixed bottom-6 end-6 z-40 flex flex-col gap-2" dir="ltr">

@@ -55,6 +55,9 @@ async function main() {
     sendVerificationEmail,
     sendOtpEmail,
     sendAdminOrderNotificationEmail,
+    // Ticket 026 — the contact auto-reply joins the matrix, in all three languages.
+    sendContactAutoReplyEmail,
+    sendContactAdminNotificationEmail,
   } = await import('../../src/lib/email');
   const { PrismaClient } = await import('@prisma/client');
 
@@ -116,7 +119,24 @@ async function main() {
     await sendPasswordResetEmail(recipient, 'preview-reset-token-0000', locale);
     await sendVerificationEmail(recipient, 'preview-verify-token-0000', locale);
     await sendOtpEmail(recipient, '482913', locale);
+
+    await sendContactAutoReplyEmail(recipient, {
+      customerName: purchase.customerName,
+      ref: 'SM-4KD91Z',
+      subject: 'Installation Help',
+    }, locale);
   }
+
+  sendContactAdminNotificationEmail({
+    name: purchase.customerName,
+    email: purchase.email,
+    phone: '+972501234567',
+    subject: 'Activation Issue',
+    message: 'Scanned the QR in Rome and it says no service.',
+    ref: 'SM-4KD91Z',
+    urgent: true,
+    marketingConsent: true,
+  });
 
   // Admin only. Included so the wallet balance can be eyeballed in the one place it is allowed to
   // appear — and so its absence everywhere else is visible by comparison.

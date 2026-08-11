@@ -7,15 +7,59 @@ import { Input } from '@/components/ui/input';
 import { createSharedPathnamesNavigation } from 'next-intl/navigation';
 import { routing } from '@/i18n/routing';
 import { useQuery } from '@tanstack/react-query';
+import { translatePlanName } from '@/lib/translate-plan-name';
 
 const { useRouter } = createSharedPathnamesNavigation(routing);
 
-/** Match DestinationsClient search dropdown — cycle tints */
-const SUGGESTION_ROW_CLASSES = [
-  { active: 'bg-blue-50 text-blue-950', idle: 'hover:bg-blue-50/80' },
-  { active: 'bg-amber-50 text-amber-950', idle: 'hover:bg-amber-50/80' },
-  { active: 'bg-emerald-50 text-emerald-950', idle: 'hover:bg-emerald-50/80' },
-] as const;
+/**
+ * Ticket 034 — the strings a visitor actually types that no name in the catalogue contains.
+ *
+ * Two tables, not one, because a country code and a region prefix can be the same two letters: `SA` is
+ * Saudi Arabia as a country and South America as a region, and a single table made "אמריקה" return
+ * Saudi Arabia.
+ *
+ * Regions are keyed by the letters before the dash. The supplier ships one region under several codes
+ * (`EU-30`, `EU-42`, `EU-43`, `EU-7`) and names half of them `Region (EU-33)`, so the prefix is the
+ * only stable thing to hang "אירופה" on.
+ *
+ * Kept in the component rather than a lib file: it is input tolerance for one field, and nothing else
+ * consumes it.
+ */
+const COUNTRY_ALIASES: Record<string, readonly string[]> = {
+  US: ['ארהב', 'אמריקה', 'ארצות הברית', 'usa', 'america', 'united states', 'أمريكا'],
+  GB: ['אנגליה', 'בריטניה', 'uk', 'england', 'britain', 'إنجلترا', 'بريطانيا'],
+  AE: ['דובאי', 'איחוד האמירויות', 'dubai', 'emirates', 'دبي'],
+  GR: ['יוון', 'greece', 'اليونان'],
+  NL: ['הולנד', 'holland', 'هولندا'],
+  CZ: ['צכיה', 'פראג', 'czech', 'prague'],
+  KR: ['קוריאה', 'korea', 'كوريا'],
+  CN: ['סין', 'china', 'الصين'],
+};
+
+const REGION_ALIASES: Record<string, readonly string[]> = {
+  EU: ['אירופה', 'اوروبا', 'أوروبا'],
+  AS: ['אסיה', 'آسيا'],
+  AF: ['אפריקה', 'افريقيا', 'أفريقيا'],
+  ME: ['המזרח התיכון', 'מזרח תיכון', 'الشرق الأوسط'],
+  NA: ['אמריקה הצפונית', 'צפון אמריקה'],
+  SA: ['אמריקה הדרומית', 'דרום אמריקה', 'أمريكا الجنوبية'],
+  CB: ['קריביים', 'הקריביים', 'الكاريبي'],
+  GL: ['גלובלי', 'עולמי', 'כל העולם', 'global', 'عالمي'],
+  CN: ['סין', 'china', 'الصين'],
+  USCA: ['ארהב וקנדה', 'אמריקה וקנדה', 'אמריקה'],
+  AUNZ: ['אוסטרליה', 'ניו זילנד', 'australia'],
+  SAAEQAKWOMBH: ['מדינות המפרץ', 'המפרץ', 'الخليج'],
+};
+
+function aliasesFor(locationCode: string): readonly string[] | undefined {
+  if (locationCode.length <= 2) return COUNTRY_ALIASES[locationCode];
+  return REGION_ALIASES[locationCode] ?? REGION_ALIASES[locationCode.split('-')[0]];
+}
+
+/** Punctuation and spacing an Israeli visitor types inconsistently: ארה"ב, ארה״ב, ארהב. */
+function normalize(value: string): string {
+  return value.toLowerCase().replace(/["'׳״`.\-\s]/g, '');
+}
 
 interface SearchDestinationProps {
   ctaLabel?: string;
@@ -23,18 +67,19 @@ interface SearchDestinationProps {
 
 interface DestOption {
   slug: string;
-  name: string;        // English name from API
+  name: string;         // localized for display and matching
+  englishName: string;  // as the API returned it — `japan` must find יפן
   flagCode: string;
-  locationCode: string; // ISO-2 for Intl.DisplayNames
+  locationCode: string; // ISO-2 for countries, a supplier code for regional bundles
 }
 
-function translateCountryName(name: string, locationCode: string, locale: string): string {
-  if (locale === 'en' || locationCode.length !== 2) return name;
-  try {
-    const displayName = new Intl.DisplayNames([locale], { type: 'region' }).of(locationCode.toUpperCase());
-    if (displayName) return displayName;
-  } catch { /* fallback to English */ }
-  return name;
+/**
+ * Countries came through `Intl.DisplayNames` here and regions were filtered out, so nothing needed to
+ * translate a region name. Now that regional bundles appear in the list, the shared translator does
+ * both — including the "(30+ countries)" tail — rather than this file growing a second region table.
+ */
+function localizedName(name: string, locationCode: string, locale: string): string {
+  return translatePlanName(name, name, locationCode, locationCode.length > 2, locale);
 }
 
 export function SearchDestination({ ctaLabel }: SearchDestinationProps = {}) {
@@ -52,14 +97,17 @@ export function SearchDestination({ ctaLabel }: SearchDestinationProps = {}) {
     queryFn: async () => {
       const r = await fetch('/api/packages');
       const data = await r.json();
-      return (data.destinations || [])
-        .filter((d: { isRegional: boolean }) => !d.isRegional)
-        .map((d: { locationCode: string; name: string; flagCode: string }) => ({
+      /* Regional bundles are on sale and are reached by the same slug rule as any country — the
+         destinations list already links them that way — so they belong in the autocomplete. */
+      return (data.destinations || []).map(
+        (d: { locationCode: string; name: string; flagCode: string }) => ({
           slug: d.locationCode.toLowerCase(),
           name: d.name,
+          englishName: d.name,
           flagCode: d.flagCode,
           locationCode: d.locationCode,
-        }));
+        })
+      );
     },
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
@@ -69,7 +117,7 @@ export function SearchDestination({ ctaLabel }: SearchDestinationProps = {}) {
   const destinations = useMemo<DestOption[]>(
     () => rawDestinations.map((d) => ({
       ...d,
-      name: translateCountryName(d.name, d.locationCode, locale),
+      name: localizedName(d.englishName, d.locationCode, locale),
     })),
     [rawDestinations, locale]
   );
@@ -77,17 +125,26 @@ export function SearchDestination({ ctaLabel }: SearchDestinationProps = {}) {
   /* ── Filtered suggestions ── */
   const suggestions = useMemo<DestOption[]>(() => {
     if (!query.trim()) return [];
-    const q = query.toLowerCase();
+    const q = normalize(query);
+    if (!q) return [];
     return destinations
-      .filter((d) => d.name.toLowerCase().includes(q))
+      .filter((d) => {
+        if (normalize(d.name).includes(q)) return true;
+        if (normalize(d.englishName).includes(q)) return true;
+        if (normalize(d.locationCode).includes(q)) return true;
+        const aliases = aliasesFor(d.locationCode);
+        return aliases ? aliases.some((a) => normalize(a).includes(q)) : false;
+      })
       .slice(0, 7);
   }, [query, destinations]);
 
+  const noResults = query.trim().length > 0 && suggestions.length === 0;
+
   /* ── Show/hide dropdown ── */
   useEffect(() => {
-    setOpen(suggestions.length > 0);
+    setOpen(suggestions.length > 0 || noResults);
     setActiveIdx(-1);
-  }, [suggestions]);
+  }, [suggestions, noResults]);
 
   /* ── Close on outside click ── */
   useEffect(() => {
@@ -161,20 +218,35 @@ export function SearchDestination({ ctaLabel }: SearchDestinationProps = {}) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
-          onFocus={() => suggestions.length > 0 && setOpen(true)}
-          className="h-12 ps-14 pe-4 text-base rounded-xl border-blue-100 bg-blue-50/50 text-foreground
-            placeholder:text-muted-foreground focus-visible:border-blue-400 focus-visible:ring-blue-500/25"
+          onFocus={() => (suggestions.length > 0 || noResults) && setOpen(true)}
+          /* White fill and a border dark enough to clear the 3:1 minimum for a user-interface
+             component. The previous pale blue on pale blue read as a disabled field.
+             The native clear control is suppressed because the action button occupies that corner. */
+          className={`h-14 ps-14 text-base rounded-xl border-slate-500 bg-white text-foreground shadow-md
+            placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-primary/25
+            [&::-webkit-search-cancel-button]:appearance-none ${ctaLabel ? 'pe-36' : 'pe-4'}`}
           aria-label={t('searchPlaceholder')}
           aria-autocomplete="list"
           aria-expanded={open}
           autoComplete="off"
         />
 
+        {/* Inside the field, so the field and its action read as one control. */}
+        {ctaLabel && (
+          <button
+            type="button"
+            onClick={handleNavigate}
+            className="absolute end-2 top-1/2 inline-flex h-10 -translate-y-1/2 items-center justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:shadow-glow hover:brightness-105"
+          >
+            {ctaLabel}
+          </button>
+        )}
+
         {/* Autocomplete dropdown */}
-        {open && suggestions.length > 0 && (
+        {open && (suggestions.length > 0 || noResults) && (
           <ul
             role="listbox"
-            className="absolute z-50 mt-1 w-full rounded-xl border border-blue-100/80 bg-white shadow-lg overflow-hidden"
+            className="absolute z-50 mt-1 w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg"
           >
             {suggestions.map((dest, idx) => (
               <li
@@ -183,10 +255,8 @@ export function SearchDestination({ ctaLabel }: SearchDestinationProps = {}) {
                 aria-selected={idx === activeIdx}
                 onMouseDown={(e) => { e.preventDefault(); handleSelect(dest.slug); }}
                 onMouseEnter={() => setActiveIdx(idx)}
-                className={`flex items-center gap-3 px-4 py-2.5 cursor-pointer text-sm transition-colors
-                  ${idx === activeIdx
-                    ? SUGGESTION_ROW_CLASSES[idx % 3].active
-                    : `bg-white ${SUGGESTION_ROW_CLASSES[idx % 3].idle}`}`}
+                className={`flex cursor-pointer items-center gap-3 px-4 py-2.5 text-sm transition-colors
+                  ${idx === activeIdx ? 'bg-primary/10 text-foreground' : 'bg-white hover:bg-primary/5'}`}
               >
                 <img
                   src={`https://flagcdn.com/w40/${dest.flagCode}.png`}
@@ -197,19 +267,12 @@ export function SearchDestination({ ctaLabel }: SearchDestinationProps = {}) {
                 <span className="font-medium">{dest.name}</span>
               </li>
             ))}
+            {noResults && (
+              <li className="px-4 py-3 text-sm text-muted-foreground">{t('searchNoResults')}</li>
+            )}
           </ul>
         )}
       </div>
-
-      {ctaLabel && (
-        <button
-          type="button"
-          onClick={handleNavigate}
-          className="mt-3 w-full inline-flex items-center justify-center rounded-xl bg-primary px-8 py-3.5 text-base font-semibold text-primary-foreground shadow-md transition-all hover:shadow-glow hover:brightness-105"
-        >
-          {ctaLabel}
-        </button>
-      )}
     </div>
   );
 }

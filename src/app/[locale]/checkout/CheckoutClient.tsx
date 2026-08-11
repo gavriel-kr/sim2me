@@ -25,6 +25,7 @@ type Step = 'cart' | 'traveler' | 'payment';
 
 export function CheckoutClient() {
   const t = useTranslations('checkout');
+  const tPlan = useTranslations('plan');
   const router = useRouter();
   const locale = useLocale();
   const items = useCartStore((s) => s.items);
@@ -36,16 +37,34 @@ export function CheckoutClient() {
 
   const MIN_PURCHASE = 1.20;
   const belowMinimum = total < MIN_PURCHASE;
+  /* Money in messages goes through the same formatter as money on screen, so a warning and the total
+     it refers to can never disagree about how a price is written. */
+  const currency = items[0]?.plan.currency || 'USD';
+  const minDisplay = formatPrice(MIN_PURCHASE, currency);
+  const totalDisplay = formatPrice(total, currency);
 
   const [step, setStep] = useState<Step>('cart');
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  /* Kept in component state rather than in the cart store: consent belongs to this purchase attempt, and
+     the store is persisted to localStorage — an acceptance should not outlive the session that gave it. */
+  const [consentGiven, setConsentGiven] = useState(false);
   const turnstileRef = useRef<TurnstileWidgetRef>(null);
 
   const { register, handleSubmit, formState: { errors } } = useForm<TravelerInfoForm>({
     resolver: zodResolver(travelerInfoSchema),
+    defaultValues: { consent: false },
   });
+
+  /* The schema carries codes rather than sentences, because a zod message renders as-is and this form
+     is read in three languages. */
+  const errorText = (code?: string): string | null => {
+    if (!code) return null;
+    if (code === 'invalidEmail') return t('errEmail');
+    if (code === 'consentRequired') return t('errConsent');
+    return t('errRequired');
+  };
 
   const gaItems = () => items.map((i) => planToGaItem(i.plan, i.destinationName));
 
@@ -56,6 +75,7 @@ export function CheckoutClient() {
 
   const onTravelerSubmit = (data: TravelerInfoForm) => {
     setTravelerInfo({ email: data.email, firstName: data.firstName, lastName: data.lastName });
+    setConsentGiven(data.consent);
     setStep('payment');
   };
 
@@ -71,7 +91,12 @@ export function CheckoutClient() {
       return;
     }
     if (belowMinimum) {
-      setPaymentError(`Minimum purchase is $${MIN_PURCHASE.toFixed(2)}. Only plans priced $1.20 or above can be purchased.`);
+      setPaymentError(t('minError', { min: minDisplay }));
+      return;
+    }
+    if (!consentGiven) {
+      setPaymentError(t('errConsent'));
+      setStep('traveler');
       return;
     }
     setPaymentError(null);
@@ -92,6 +117,7 @@ export function CheckoutClient() {
           customerName: [travelerData.firstName, travelerData.lastName].filter(Boolean).join(' ').trim() || undefined,
           locale,
           turnstileToken: turnstileToken ?? '',
+          consent: consentGiven,
         }),
       });
 
@@ -113,12 +139,12 @@ export function CheckoutClient() {
 
       if (!res.ok) {
         const detail = data.details ? ` (${data.details})` : '';
-        const msg = data.error || `Error ${res.status}`;
+        const msg = data.error || t('genericError');
         setPaymentError(msg + detail);
         return;
       }
       if (!paddleReady || !openCheckout) {
-        setPaymentError('Payment is loading. Please try again in a moment.');
+        setPaymentError(t('paddleLoading'));
         return;
       }
       if (data.mode === 'transaction' && data.transactionId) {
@@ -154,9 +180,9 @@ export function CheckoutClient() {
     return (
       <div className="container mx-auto max-w-2xl px-4 py-12 text-center">
         <h1 className="text-2xl font-bold">{t('cart')}</h1>
-        <p className="mt-4 text-muted-foreground">Your cart is empty.</p>
+        <p className="mt-4 text-muted-foreground">{t('emptyCart')}</p>
         <IntlLink href="/destinations">
-          <Button className="mt-4">Browse destinations</Button>
+          <Button className="mt-4">{t('browseDestinations')}</Button>
         </IntlLink>
       </div>
     );
@@ -194,7 +220,7 @@ export function CheckoutClient() {
                     <div>
                       <p className="font-medium">{item.destinationName}</p>
                       <p className="text-sm text-muted-foreground">
-                        {item.plan.dataDisplay} / {item.plan.days} days
+                        {item.plan.dataDisplay} / {item.plan.days} {tPlan('days')}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -206,15 +232,15 @@ export function CheckoutClient() {
                         size="sm"
                         onClick={() => removeItem(item.planId)}
                       >
-                        Remove
+                        {t('remove')}
                       </Button>
                     </div>
                   </div>
                 ))}
                 {belowMinimum && (
                   <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                    <strong>Minimum purchase is $1.20.</strong> Your current total is ${total.toFixed(2)}.
-                    Only plans priced $1.20 or above can be purchased.
+                    <strong>{t('minTitle', { min: minDisplay })}</strong>{' '}
+                    {t('minDesc', { total: totalDisplay, min: minDisplay })}
                   </div>
                 )}
                 <Button
@@ -222,7 +248,7 @@ export function CheckoutClient() {
                   disabled={belowMinimum}
                   onClick={goToTravelerStep}
                 >
-                  Continue to details
+                  {t('continueToDetails')}
                 </Button>
               </CardContent>
             </Card>
@@ -246,7 +272,7 @@ export function CheckoutClient() {
                       {...register('email')}
                     />
                     {errors.email && (
-                      <p id="checkout-email-error" className="mt-1 text-sm text-destructive" role="alert">{errors.email.message}</p>
+                      <p id="checkout-email-error" className="mt-1 text-sm text-destructive" role="alert">{errorText(errors.email.message)}</p>
                     )}
                   </div>
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -260,7 +286,7 @@ export function CheckoutClient() {
                         {...register('firstName')}
                       />
                       {errors.firstName && (
-                        <p id="checkout-firstName-error" className="mt-1 text-sm text-destructive" role="alert">{errors.firstName.message}</p>
+                        <p id="checkout-firstName-error" className="mt-1 text-sm text-destructive" role="alert">{errorText(errors.firstName.message)}</p>
                       )}
                     </div>
                     <div>
@@ -273,11 +299,46 @@ export function CheckoutClient() {
                         {...register('lastName')}
                       />
                       {errors.lastName && (
-                        <p id="checkout-lastName-error" className="mt-1 text-sm text-destructive" role="alert">{errors.lastName.message}</p>
+                        <p id="checkout-lastName-error" className="mt-1 text-sm text-destructive" role="alert">{errorText(errors.lastName.message)}</p>
                       )}
                     </div>
                   </div>
-                  <Button type="submit">Continue to payment</Button>
+
+                  {/* Ticket 037. Express consent to immediate delivery is what makes the published refund
+                      policy enforceable, so it is captured here and re-checked on the server. */}
+                  <div className="rounded-lg border border-border bg-muted/40 px-3 py-3">
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        id="checkout-consent"
+                        className="mt-0.5 h-4 w-4 shrink-0 rounded border-input accent-primary"
+                        aria-invalid={!!errors.consent}
+                        aria-describedby={errors.consent ? 'checkout-consent-error' : undefined}
+                        {...register('consent')}
+                      />
+                      <Label htmlFor="checkout-consent" className="cursor-pointer text-sm font-normal leading-relaxed">
+                        {t.rich('consentLabel', {
+                          terms: (chunks) => (
+                            <IntlLink href="/terms" target="_blank" className="font-medium text-primary underline underline-offset-2">
+                              {chunks}
+                            </IntlLink>
+                          ),
+                          refund: (chunks) => (
+                            <IntlLink href="/refund" target="_blank" className="font-medium text-primary underline underline-offset-2">
+                              {chunks}
+                            </IntlLink>
+                          ),
+                        })}
+                      </Label>
+                    </div>
+                    {errors.consent && (
+                      <p id="checkout-consent-error" className="mt-2 text-sm text-destructive" role="alert">
+                        {errorText(errors.consent.message)}
+                      </p>
+                    )}
+                  </div>
+
+                  <Button type="submit">{t('continueToPayment')}</Button>
                 </form>
               </CardContent>
             </Card>
@@ -291,7 +352,7 @@ export function CheckoutClient() {
               <CardContent>
                 {belowMinimum && (
                   <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                    <strong>Minimum purchase is $1.20.</strong> This plan (${total.toFixed(2)}) cannot be purchased individually.
+                    {t('minPayment', { total: totalDisplay, min: minDisplay })}
                   </div>
                 )}
                 <TurnstileWidget
@@ -310,6 +371,12 @@ export function CheckoutClient() {
                 >
                   {paymentLoading ? (t('processing') || 'Processing…') : (t('payNow') || 'Pay now')}
                 </Button>
+                {/* A disabled pay button with no explanation reads as a broken page rather than a
+                    pending check. The gate itself is unchanged — this only says why. */}
+                {!turnstileToken && !belowMinimum && (
+                  <p className="mt-2 text-xs text-muted-foreground">{t('turnstilePending')}</p>
+                )}
+                <p className="mt-4 text-xs leading-relaxed text-muted-foreground">{t('secureNote')}</p>
               </CardContent>
             </Card>
           )}
@@ -318,7 +385,7 @@ export function CheckoutClient() {
         <div>
           <Card>
             <CardHeader>
-              <h2 className="font-semibold">Summary</h2>
+              <h2 className="font-semibold">{t('summary')}</h2>
             </CardHeader>
             <CardContent>
               {items.map((item) => (
@@ -327,7 +394,7 @@ export function CheckoutClient() {
                   className="flex justify-between text-sm py-2"
                 >
                   <span>
-                    {item.destinationName} – {item.plan.dataDisplay} / {item.plan.days}d
+                    {item.destinationName} – {item.plan.dataDisplay} / {item.plan.days} {tPlan('days')}
                   </span>
                   <span>
                     {formatPrice(item.plan.price * item.quantity, item.plan.currency)}
@@ -335,15 +402,19 @@ export function CheckoutClient() {
                 </div>
               ))}
               <div className="mt-4 flex justify-between border-t pt-4 font-semibold">
-                <span>Total</span>
-                <span>{items.length > 0 ? formatPrice(total, items[0].plan.currency) : '$0'}</span>
+                <span>{t('total')}</span>
+                <span>{items.length > 0 ? totalDisplay : formatPrice(0, currency)}</span>
               </div>
+              {/* Paddle adds VAT inside its own overlay, so the number here is not the number charged.
+                  Saying so before the overlay opens is cheaper than losing the cart at the last step. */}
+              <p className="mt-3 text-xs leading-relaxed text-muted-foreground">{t('vatNote')}</p>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{t('currencyNote')}</p>
               {step === 'cart' && (
                 <Button
                   className="mt-6 w-full"
                   onClick={goToTravelerStep}
                 >
-                  Continue
+                  {t('continue')}
                 </Button>
               )}
             </CardContent>

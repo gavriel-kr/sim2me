@@ -166,13 +166,16 @@ export default async function RootLayout({
   const globalSeo = await getGlobalSeoSettings();
   const siteUrl = globalSeo.canonicalDomain || 'https://www.sim2me.net';
 
+  const orgProfiles = [globalSeo.orgTwitter, globalSeo.orgFacebook, globalSeo.orgLinkedIn].filter(Boolean);
+
   const orgSchema = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: globalSeo.orgName || globalSeo.siteName || 'Sim2Me',
     url: globalSeo.orgUrl || siteUrl,
     ...(globalSeo.orgLogo && { logo: makeAbsolute(globalSeo.orgLogo, siteUrl) }),
-    sameAs: [globalSeo.orgTwitter, globalSeo.orgFacebook, globalSeo.orgLinkedIn].filter(Boolean),
+    /* Omitted rather than published empty — every other optional key here follows the same rule. */
+    ...(orgProfiles.length > 0 && { sameAs: orgProfiles }),
   };
 
   return (

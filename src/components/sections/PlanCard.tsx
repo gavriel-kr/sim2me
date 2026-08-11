@@ -10,6 +10,7 @@ import { Info, Flame } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useCartStore } from '@/stores/cartStore';
 import { useToast } from '@/hooks/useToast';
+import { ToastAction } from '@/components/ui/toast';
 import { createSharedPathnamesNavigation } from 'next-intl/navigation';
 import { routing } from '@/i18n/routing';
 import { DataUsageModal } from '@/components/sections/DataUsageModal';
@@ -109,6 +110,12 @@ export function PlanCard({ plan, destinationName, destinationSlug }: PlanCardPro
         title: t('toastAdded'),
         description: `${plan.dataDisplay} / ${plan.days} ${t('days')} ${t('forDestination')} ${destinationName}`,
         variant: 'success',
+        duration: 9000,
+        action: (
+          <ToastAction asChild altText={t('toastGoToCheckout')}>
+            <IntlLink href="/checkout">{t('toastGoToCheckout')}</IntlLink>
+          </ToastAction>
+        ),
       });
     }
   };

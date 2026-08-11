@@ -17,6 +17,13 @@ import { autoBlock, checkAndAutoBlockEmail } from '@/lib/fraud';
 import { hash } from 'bcryptjs';
 
 const EVENT_TRANSACTION_COMPLETED = 'transaction.completed';
+/* Ticket 037. Paddle reports money going back out as an *adjustment* against the transaction, not as a
+   transaction event: `adjustment.created` when it is raised, `adjustment.updated` when a refund that
+   needed Paddle's approval becomes `approved` or `rejected`. Verified against Paddle's webhook
+   reference for adjustment.created / adjustment.updated (payload: `data.action`, `data.status`,
+   `data.transaction_id`). */
+const EVENT_ADJUSTMENT_CREATED = 'adjustment.created';
+const EVENT_ADJUSTMENT_UPDATED = 'adjustment.updated';
 
 interface PaddleWebhookPayload {
   event_id?: string;
@@ -30,6 +37,59 @@ interface PaddleWebhookPayload {
     items?: Array<{ price?: { id?: string }; quantity?: number }>;
     details?: { totals?: { total?: string }; tax?: string };
   };
+}
+
+interface PaddleAdjustmentPayload {
+  event_type?: string;
+  data?: {
+    id?: string;
+    action?: string;
+    status?: string;
+    transaction_id?: string;
+  };
+}
+
+/**
+ * Money that went back to the customer, reflected on the order it belongs to.
+ *
+ * Deliberately narrow: it only ever *updates* an order it can find by Paddle transaction id, it never
+ * creates one, and it can never set `COMPLETED`. An unknown transaction id is acknowledged rather than
+ * failed, so Paddle does not retry an event we will never be able to match. Setting `REFUNDED` twice is
+ * a no-op, which is what makes a replayed delivery harmless.
+ */
+async function handleAdjustment(payload: PaddleAdjustmentPayload): Promise<void> {
+  const action = (payload.data?.action || '').toLowerCase();
+  const status = (payload.data?.status || '').toLowerCase();
+  const transactionId = payload.data?.transaction_id;
+  if (!transactionId) return;
+
+  /* An approved refund and a chargeback both mean the customer's money is gone from us. A refund still
+     waiting on Paddle's approval, a rejected one, and a plain credit all mean nothing has moved yet. */
+  const isApprovedRefund = action === 'refund' && status === 'approved';
+  const isChargeback = action === 'chargeback' || action === 'chargeback_warning';
+  if (!isApprovedRefund && !isChargeback) {
+    console.log('[Paddle webhook] Adjustment ignored', { action, status, transactionId });
+    return;
+  }
+
+  const order = await prisma.order.findUnique({
+    where: { paddleTransactionId: transactionId },
+    select: { id: true, orderNo: true, status: true },
+  });
+  if (!order) {
+    console.warn('[Paddle webhook] Adjustment for unknown transaction', { transactionId, action });
+    return;
+  }
+  if (order.status === 'REFUNDED') return;
+
+  await prisma.order.update({
+    where: { id: order.id },
+    data: {
+      status: 'REFUNDED',
+      errorMessage: isChargeback ? `Chargeback raised at Paddle (${action}).` : 'Refunded at Paddle.',
+    },
+  });
+  console.log('[Paddle webhook] Order marked REFUNDED', { orderNo: order.orderNo, action, status });
 }
 
 interface CustomData {
@@ -89,7 +149,21 @@ export async function POST(request: Request) {
   }
 
   const payload = safeJsonParse<PaddleWebhookPayload>(rawBody);
-  if (!payload || payload.event_type !== EVENT_TRANSACTION_COMPLETED) {
+  if (!payload) {
+    return NextResponse.json({ received: true });
+  }
+
+  /* Runs inside the already-verified request — same signature check, no second entry point. */
+  if (payload.event_type === EVENT_ADJUSTMENT_CREATED || payload.event_type === EVENT_ADJUSTMENT_UPDATED) {
+    try {
+      await handleAdjustment(payload as PaddleAdjustmentPayload);
+    } catch (e) {
+      console.error('[Paddle webhook] Adjustment handling failed', e);
+    }
+    return NextResponse.json({ received: true });
+  }
+
+  if (payload.event_type !== EVENT_TRANSACTION_COMPLETED) {
     return NextResponse.json({ received: true });
   }
 
@@ -261,17 +335,22 @@ export async function POST(request: Request) {
     const profileResult = await getEsimProfileWithRetry(orderNo, 5, 5000);
     const firstProfile = profileResult?.esimList?.[0];
 
+    /* Ticket 037. COMPLETED used to be set unconditionally, so an order with no profile in it told the
+       customer their eSIM was ready and showed them an empty install panel. The status is now
+       conditional on the same thing the profile fields are: no profile means fulfilment is still in
+       flight, which is `PROCESSING`. The supplier order id is already recorded above, so the retry
+       guard can re-fetch rather than buy a second eSIM. */
     await prisma.order.update({
       where: { id: order.id },
-      data: {
-        status: 'COMPLETED',
-        ...(firstProfile && {
-          iccid: firstProfile.iccid,
-          qrCodeUrl: firstProfile.qrCodeUrl,
-          smdpAddress: firstProfile.smdpAddress,
-          activationCode: firstProfile.activationCode,
-        }),
-      },
+      data: firstProfile
+        ? {
+            status: 'COMPLETED',
+            iccid: firstProfile.iccid,
+            qrCodeUrl: firstProfile.qrCodeUrl,
+            smdpAddress: firstProfile.smdpAddress,
+            activationCode: firstProfile.activationCode,
+          }
+        : { status: 'PROCESSING' },
     });
 
     // Auto-create or find customer account, link order

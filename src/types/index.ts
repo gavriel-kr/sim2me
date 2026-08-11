@@ -52,10 +52,17 @@ export interface FAQ {
   questionKey: string;
   answerKey: string;
   category?: string;
+  /**
+   * Which section of the help centre this belongs under. The value is a key in the `help` namespace,
+   * so a group heading is translated like everything else. Ticket 036.
+   */
+  group?: FaqGroup;
   /** Optional CTA under the answer (e.g. link to personal account). */
   ctaHref?: string;
   ctaLabelKey?: string;
 }
+
+export type FaqGroup = 'gettingStartedTitle' | 'troubleshootingTitle' | 'dataPlansTitle' | 'accountTitle';
 
 export interface CartItem {
   planId: string;

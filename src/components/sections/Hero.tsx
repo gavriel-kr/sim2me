@@ -59,7 +59,7 @@ export function Hero() {
 
   const chips = destinations
     .filter((d) => d.popular && d.isoCode.length === 2)
-    .slice(0, 6);
+    .slice(0, 4);
 
   return (
     <section className="relative overflow-hidden bg-gradient-hero">
@@ -141,13 +141,27 @@ export function Hero() {
                 </a>
               )}
             </div>
-            <h1 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl lg:text-6xl lg:leading-[1.1]">
+            {/*
+              One line, sized to the column rather than to a breakpoint.
+
+              At `lg` the headline lives in half of a 1152 px container — 536 px, and 472 px at exactly
+              1024 px — so a fixed 60 px broke "Connected worldwide!" into two lines that towered over
+              everything under them. The size now grows with the viewport and stops where the longest of
+              the three headlines still fits one line: roughly 13.5 em of text against the column width.
+
+              Deliberately no `whitespace-nowrap`. If a translation ever outgrows these numbers the
+              headline wraps — which is a headline on two lines, not a hero pushed off the side of the
+              screen with a horizontal scrollbar. `text-balance` keeps those two lines even.
+            */}
+            <h1 className="text-balance text-4xl font-extrabold leading-[1.15] tracking-tight text-foreground sm:text-[clamp(2.25rem,5.5vw,2.75rem)] lg:text-[clamp(2rem,3.1vw,2.4rem)]">
               {t('heroTitle')}
             </h1>
             <p className="mt-5 max-w-lg text-lg leading-relaxed text-muted-foreground sm:text-xl">
               {t('heroSubtitle')}
             </p>
-            <div className="mt-8 max-w-md">
+            {/* `max-w-lg` matches the chip row below and the subtitle above; the component's own
+                `max-w-xl` is the wider ceiling it uses when nothing constrains it. */}
+            <div className="mt-8 max-w-lg">
               <SearchDestination ctaLabel={t('searchCta')} />
             </div>
 
@@ -167,7 +181,7 @@ export function Hero() {
                 )}
                 {chips
                   .filter((d) => d.slug !== recent?.slug)
-                  .slice(0, recent ? 4 : 6)
+                  .slice(0, recent ? 3 : 4)
                   .map((d) => (
                     <IntlLink
                       key={d.id}
@@ -183,10 +197,12 @@ export function Hero() {
               </div>
             )}
 
-            <div className="mt-6 flex flex-wrap gap-3">
+            {/* A text link, not a button. The search action is the only button-weight call to action in
+                the hero; two identically weighted buttons side by side mean neither one leads. */}
+            <div className="mt-6">
               <IntlLink
                 href="/how-it-works"
-                className="inline-flex items-center justify-center rounded-xl border border-border bg-white px-8 py-3.5 text-base font-semibold text-foreground shadow-sm transition-all hover:bg-muted hover:shadow-md"
+                className="text-base font-medium text-primary underline-offset-4 hover:underline"
               >
                 {t('howItWorksButton')}
               </IntlLink>

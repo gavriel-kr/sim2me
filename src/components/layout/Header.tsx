@@ -17,13 +17,19 @@ import { buildLocalePath } from '@/lib/locale-path';
 
 const { usePathname: useIntlPathname, Link: IntlLink } = createSharedPathnamesNavigation(routing);
 
+/*
+  Must stay identical to `DEFAULT_NAV_MENU` in `lib/navigation.ts`.
+
+  `/contact` was dropped from here. The page itself is untouched and still reachable — the
+  footer links to it and the help centre carries the same form at the foot of the page — so putting it
+  back is one line here and one there, or an entry added on the admin navigation screen.
+*/
 const defaultNavLinks = [
   { href: '/', key: 'home' },
   { href: '/destinations', key: 'destinations' },
   { href: '/how-it-works', key: 'howItWorks' },
   { href: '/data-calculator', key: 'calculator' },
   { href: '/help', key: 'help' },
-  { href: '/contact', key: 'contact' },
 ];
 
 const locales = [
@@ -149,7 +155,12 @@ export function Header() {
           >
             <ShoppingCart className="h-[18px] w-[18px]" />
             {count > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground shadow-sm">
+              /* `key={count}` remounts the badge whenever the number changes, which replays the pop —
+                 a visible acknowledgement without adding state to the header. */
+              <span
+                key={count}
+                className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[11px] font-bold text-primary-foreground shadow-md ring-2 ring-white animate-in zoom-in-50 duration-300"
+              >
                 {count}
               </span>
             )}

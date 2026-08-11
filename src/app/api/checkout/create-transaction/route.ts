@@ -28,6 +28,9 @@ const bodySchema = z.object({
   deviceType: z.string().max(64).optional(),
   locale: z.enum(['en', 'he', 'ar']).optional(),
   turnstileToken: z.string().optional(),
+  /* Ticket 037. Optional in the schema so a request without it fails the explicit check below with a
+     message a human can act on, rather than a generic shape error. */
+  consent: z.boolean().optional(),
 });
 
 const PADDLE_API = 'https://api.paddle.com';
@@ -47,7 +50,17 @@ export async function POST(request: Request) {
       );
     }
 
-    const { items, customerEmail, customerName, deviceType, locale, turnstileToken } = parsed.data;
+    const { items, customerEmail, customerName, deviceType, locale, turnstileToken, consent } = parsed.data;
+
+    /* Ticket 037. The checkbox is how a human expresses consent; this is the control. Rejected before
+       anything is created, so a crafted request cannot buy without accepting the terms. */
+    if (consent !== true) {
+      return NextResponse.json(
+        { error: 'Terms must be accepted before payment.' },
+        { status: 400 }
+      );
+    }
+
     const apiKey = process.env.PADDLE_API_KEY?.trim();
     const item = items[0];
     const planId = item.planId;
@@ -76,11 +89,15 @@ export async function POST(request: Request) {
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') || 'https://www.sim2me.net';
     const successUrl = `${baseUrl}/success`;
 
+    /* `termsAcceptedAt` rides along in Paddle's `custom_data`, which Paddle retains on the transaction
+       and echoes back to the webhook. That is the evidence trail — no column of our own is needed. */
     const customData: Record<string, string> = {
       planId,
       customerEmail: customerEmail.trim().slice(0, 320),
       customerName: (customerName ?? '').trim().slice(0, 200),
       checkoutIp: ip,
+      termsAccepted: 'true',
+      termsAcceptedAt: new Date().toISOString(),
     };
     if (deviceType) customData.deviceType = deviceType.trim().slice(0, 64);
     if (locale) customData.locale = locale;

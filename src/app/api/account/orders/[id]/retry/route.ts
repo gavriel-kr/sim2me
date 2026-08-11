@@ -30,11 +30,14 @@ export async function POST(
   const customer = await prisma.customer.findUnique({ where: { id: userId }, select: { id: true, email: true } });
   if (!customer) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  // Only allow retrying orders that belong to this customer
+  /* Only this customer's own order, and never a COMPLETED one. Ticket 037 widened the accepted status
+     to include `PROCESSING`, because an order whose supplier purchase succeeded and whose profile did
+     not arrive now stays `PROCESSING` instead of turning into a lie — and that is precisely the order a
+     customer needs to be able to check again. */
   const order = await prisma.order.findFirst({
     where: {
       id,
-      status: 'FAILED',
+      status: { in: ['FAILED', 'PROCESSING'] },
       OR: [{ customerId: customer.id }, { customerEmail: customer.email }],
     },
   });
@@ -43,35 +46,56 @@ export async function POST(
     return NextResponse.json({ error: 'Order not found or cannot be retried' }, { status: 404 });
   }
 
+  /* A `PROCESSING` order with no supplier order behind it is mid-flight, not stuck. Buying against it
+     would be the double purchase this guard exists to prevent. */
+  if (order.status === 'PROCESSING' && !order.esimOrderId) {
+    return NextResponse.json({ error: 'This order is still being processed. Please try again shortly.' }, { status: 409 });
+  }
+
   try {
     await prisma.order.update({ where: { id: order.id }, data: { status: 'PROCESSING', errorMessage: null } });
 
-    const purchase = await purchasePackage(order.packageCode, 1);
-    const orderNo = purchase.orderNo;
-
-    await prisma.order.update({
-      where: { id: order.id },
-      data: { esimOrderId: orderNo, esimTransactionId: purchase.transactionId },
-    });
+    /* The guard. If the supplier already sold us this eSIM, the only thing missing is the profile, so
+       we fetch it. Calling `purchasePackage` again here paid the supplier twice for one sale. */
+    let orderNo = order.esimOrderId;
+    if (!orderNo) {
+      const purchase = await purchasePackage(order.packageCode, 1);
+      orderNo = purchase.orderNo;
+      await prisma.order.update({
+        where: { id: order.id },
+        data: { esimOrderId: orderNo, esimTransactionId: purchase.transactionId },
+      });
+    } else {
+      console.log('[Order retry] Supplier order already exists, fetching profile only', {
+        orderId: order.id, esimOrderId: orderNo,
+      });
+    }
 
     const profileResult = await getEsimProfileWithRetry(orderNo, 5, 5000);
     const firstProfile = profileResult?.esimList?.[0];
 
+    /* No profile yet means still pending, not complete — same rule as the webhook. */
     await prisma.order.update({
       where: { id: order.id },
-      data: {
-        status: 'COMPLETED',
-        customerId: customer.id,
-        ...(firstProfile && {
-          iccid: firstProfile.iccid,
-          qrCodeUrl: firstProfile.qrCodeUrl,
-          smdpAddress: firstProfile.smdpAddress,
-          activationCode: firstProfile.activationCode,
-        }),
-      },
+      data: firstProfile
+        ? {
+            status: 'COMPLETED',
+            customerId: customer.id,
+            iccid: firstProfile.iccid,
+            qrCodeUrl: firstProfile.qrCodeUrl,
+            smdpAddress: firstProfile.smdpAddress,
+            activationCode: firstProfile.activationCode,
+          }
+        : { status: 'PROCESSING', customerId: customer.id },
     });
 
-    if (firstProfile) {
+    /* Still no profile: the order stays pending and no success mail goes out. The customer sees the
+       same "being prepared" state, and nothing was bought a second time. */
+    if (!firstProfile) {
+      return NextResponse.json({ success: false, pending: true }, { status: 202 });
+    }
+
+    {
       const emailLocale = toEmailLocale(order.locale);
       sendPostPurchaseEmail(order.customerEmail, {
         customerName: order.customerName || 'Customer',
@@ -99,7 +123,7 @@ export async function POST(
       destination: order.destination,
       totalAmount: Number(order.totalAmount),
       currency: order.currency,
-      iccid: firstProfile?.iccid ?? null,
+      iccid: firstProfile.iccid ?? null,
     });
     return NextResponse.json({ success: true });
   } catch (e) {

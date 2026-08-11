@@ -1,0 +1,124 @@
+export const maxDuration = 60;
+
+import { NextResponse } from 'next/server';
+import { getSessionForRequest, isCustomerSession } from '@/lib/session';
+import { prisma } from '@/lib/prisma';
+import { purchasePackage, getEsimProfileWithRetry } from '@/lib/esimaccess';
+import { sendPostPurchaseEmail, sendRetrySucceededEmail, sendRetryFailedEmail, toEmailLocale } from '@/lib/email';
+import { checkAndAutoBlockEmail } from '@/lib/fraud';
+import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
+
+function baseUrl() {
+  return (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.sim2me.net').replace(/\/$/, '');
+}
+
+export async function POST(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const ip = getClientIp(request);
+  const allowed = await checkRateLimit(ip, 'order-retry', 3, 3600);
+  if (!allowed) return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 });
+
+  const session = await getSessionForRequest(request);
+  if (!isCustomerSession(session)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  const userId = session.user.id;
+
+  const customer = await prisma.customer.findUnique({ where: { id: userId }, select: { id: true, email: true } });
+  if (!customer) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+  // Only allow retrying orders that belong to this customer
+  const order = await prisma.order.findFirst({
+    where: {
+      id,
+      status: 'FAILED',
+      OR: [{ customerId: customer.id }, { customerEmail: customer.email }],
+    },
+  });
+
+  if (!order) {
+    return NextResponse.json({ error: 'Order not found or cannot be retried' }, { status: 404 });
+  }
+
+  try {
+    await prisma.order.update({ where: { id: order.id }, data: { status: 'PROCESSING', errorMessage: null } });
+
+    const purchase = await purchasePackage(order.packageCode, 1);
+    const orderNo = purchase.orderNo;
+
+    await prisma.order.update({
+      where: { id: order.id },
+      data: { esimOrderId: orderNo, esimTransactionId: purchase.transactionId },
+    });
+
+    const profileResult = await getEsimProfileWithRetry(orderNo, 5, 5000);
+    const firstProfile = profileResult?.esimList?.[0];
+
+    await prisma.order.update({
+      where: { id: order.id },
+      data: {
+        status: 'COMPLETED',
+        customerId: customer.id,
+        ...(firstProfile && {
+          iccid: firstProfile.iccid,
+          qrCodeUrl: firstProfile.qrCodeUrl,
+          smdpAddress: firstProfile.smdpAddress,
+          activationCode: firstProfile.activationCode,
+        }),
+      },
+    });
+
+    if (firstProfile) {
+      const emailLocale = toEmailLocale(order.locale);
+      sendPostPurchaseEmail(order.customerEmail, {
+        customerName: order.customerName || 'Customer',
+        planName: order.packageName,
+        dataGb: order.dataAmount,
+        validityDays: order.validity,
+        qrCodeUrl: firstProfile.qrCodeUrl || null,
+        smdpAddress: firstProfile.smdpAddress,
+        activationCode: firstProfile.activationCode,
+        loginLink: `${baseUrl()}/${emailLocale}/account`,
+        email: order.customerEmail,
+        orderNo: order.orderNo,
+        amountPaid: Number(order.totalAmount),
+        currency: order.currency,
+        orderDate: order.paidAt ?? order.createdAt,
+        iccid: firstProfile.iccid ?? null,
+      }, emailLocale).catch(() => {});
+    }
+
+    sendRetrySucceededEmail({
+      orderNo: order.orderNo,
+      customerName: order.customerName || order.customerEmail,
+      customerEmail: order.customerEmail,
+      packageName: order.packageName,
+      destination: order.destination,
+      totalAmount: Number(order.totalAmount),
+      currency: order.currency,
+      iccid: firstProfile?.iccid ?? null,
+    });
+    return NextResponse.json({ success: true });
+  } catch (e) {
+    const errMsg = e instanceof Error ? e.message : String(e);
+    await prisma.order.update({
+      where: { id: order.id },
+      data: { status: 'FAILED', errorMessage: errMsg.slice(0, 1000) },
+    });
+    sendRetryFailedEmail({
+      orderNo: order.orderNo,
+      customerName: order.customerName || order.customerEmail,
+      customerEmail: order.customerEmail,
+      packageName: order.packageName,
+      destination: order.destination,
+      totalAmount: Number(order.totalAmount),
+      currency: order.currency,
+      errorMessage: errMsg.slice(0, 300),
+    });
+    checkAndAutoBlockEmail(order.customerEmail).catch(() => {});
+    return NextResponse.json({ error: 'Retry failed. Please contact support.' }, { status: 500 });
+  }
+}

@@ -11,11 +11,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PhoneInput } from '@/components/PhoneInput';
 import { CharacterFigure } from '@/components/brand/CharacterFigure';
+import { brandConfig } from '@/config/brand';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   User, ShoppingBag, Wifi, Settings, LogOut, Phone, Mail,
   Calendar, Shield, CheckCircle, AlertCircle, ChevronRight, QrCode,
-  RotateCcw, ChevronDown, ChevronUp, HelpCircle, Download, MessageSquare,
+  RotateCcw, ChevronDown, ChevronUp, HelpCircle, Download, MessageSquare, Clock,
 } from 'lucide-react';
 
 const { Link: IntlLink } = createSharedPathnamesNavigation(routing);
@@ -283,19 +284,27 @@ export function AccountClient() {
     setRetryMsg(null);
     try {
       const res = await fetch(`/api/account/orders/${orderId}/retry`, { method: 'POST' });
-      if (res.ok) {
+      const data = await res.json().catch(() => ({} as { error?: string; pending?: boolean }));
+      /* Ticket 037: the route now answers 202 when the supplier order exists but the profile does not,
+         so "ok" is no longer the same as "done". Claiming COMPLETED here was the client's own version of
+         the lie the webhook used to tell. */
+      if (res.ok && !data.pending) {
         setOrders((prev) => prev.map((o) => o.id === orderId ? { ...o, status: 'COMPLETED' } : o));
-        setRetryMsg({ id: orderId, ok: true, text: '✓ eSIM activated successfully! Check your email.' });
+        setRetryMsg({ id: orderId, ok: true, text: t('retrySuccess') });
+      } else if (res.ok) {
+        setRetryMsg({ id: orderId, ok: false, text: t('pendingStillPending') });
       } else {
-        const data = await res.json();
-        setRetryMsg({ id: orderId, ok: false, text: data.error || 'Retry failed. Please contact support.' });
+        setRetryMsg({ id: orderId, ok: false, text: data.error || t('retryFailed') });
       }
     } catch {
-      setRetryMsg({ id: orderId, ok: false, text: 'Network error. Please try again.' });
+      setRetryMsg({ id: orderId, ok: false, text: t('retryNetworkError') });
     } finally {
       setRetrying(null);
     }
   }
+
+  /* Paid but not yet fulfilled. Kept as its own list because it is shown in two places. */
+  const pendingOrders = orders.filter((o) => o.status === 'PROCESSING' || o.status === 'PENDING');
 
   async function handleSaveProfile(e: React.FormEvent) {
     e.preventDefault();
@@ -639,6 +648,9 @@ export function AccountClient() {
                       const isExpanded = expandedOrder === order.id;
                       const isFailed = order.status === 'FAILED';
                       const isCompleted = order.status === 'COMPLETED';
+                      /* Ticket 037. A paid order whose profile has not arrived stays PROCESSING, so this
+                         state is now something a customer actually lands on rather than a transient. */
+                      const isPending = order.status === 'PROCESSING' || order.status === 'PENDING';
                       return (
                         <div key={order.id} className="rounded-xl border overflow-hidden">
                           {/* Row */}
@@ -674,6 +686,29 @@ export function AccountClient() {
                                 </div>
                               )}
 
+                              {/* PROCESSING: say what is happening, and offer a check that re-fetches
+                                  rather than buys */}
+                              {isPending && (
+                                <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 space-y-2">
+                                  <p className="text-sm font-medium text-blue-800 flex items-center gap-1.5">
+                                    <Clock className="w-4 h-4" />
+                                    {t('pendingTitle')}
+                                  </p>
+                                  <p className="text-xs text-blue-700 leading-relaxed">{t('pendingDesc')}</p>
+                                  <div className="pt-1">
+                                    <Button
+                                      size="sm"
+                                      onClick={() => handleRetryOrder(order.id)}
+                                      disabled={retrying === order.id}
+                                      className="h-8 bg-blue-600 text-white text-xs hover:bg-blue-700"
+                                    >
+                                      <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
+                                      {retrying === order.id ? t('pendingChecking') : t('pendingCheckAgain')}
+                                    </Button>
+                                  </div>
+                                </div>
+                              )}
+
                               {/* FAILED: retry + support */}
                               {isFailed && (
                                 <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 space-y-2">
@@ -695,7 +730,7 @@ export function AccountClient() {
                                       {retrying === order.id ? 'Retrying…' : 'Retry Activation'}
                                     </Button>
                                     <a
-                                      href="mailto:support@sim2me.net?subject=Order%20Issue"
+                                      href={`mailto:${brandConfig.supportEmail}?subject=Order%20Issue`}
                                       className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 px-3 py-1.5 text-xs font-medium text-amber-800 hover:bg-amber-100 transition-colors"
                                     >
                                       Contact Support
@@ -803,7 +838,7 @@ export function AccountClient() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {orders.filter((o) => o.status === 'COMPLETED').length === 0 ? (
+                {orders.filter((o) => o.status === 'COMPLETED').length === 0 && pendingOrders.length === 0 ? (
                   <div className="text-center py-12">
                     <Wifi className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
                     <p className="font-medium text-muted-foreground">{t('noEsims')}</p>
@@ -819,6 +854,34 @@ export function AccountClient() {
                   </div>
                 ) : (
                   <div className="space-y-6">
+                    {/* Ticket 037. "My eSIMs" is where someone who has just paid looks first, so a paid
+                        order still waiting on its profile belongs here rather than nowhere. */}
+                    {pendingOrders.map((order) => (
+                      <div key={order.id} className="rounded-xl border border-blue-200 bg-blue-50/60 p-4 space-y-2">
+                        <p className="font-semibold">
+                          {order.destination ? `${order.destination} — ` : ''}{order.packageName}
+                        </p>
+                        <p className="text-sm font-medium text-blue-800 flex items-center gap-1.5">
+                          <Clock className="w-4 h-4" />
+                          {t('pendingTitle')}
+                        </p>
+                        <p className="text-xs text-blue-700 leading-relaxed">{t('pendingDesc')}</p>
+                        {retryMsg?.id === order.id && (
+                          <p className={`text-xs font-medium ${retryMsg.ok ? 'text-green-700' : 'text-red-700'}`}>{retryMsg.text}</p>
+                        )}
+                        <div className="pt-1">
+                          <Button
+                            size="sm"
+                            onClick={() => handleRetryOrder(order.id)}
+                            disabled={retrying === order.id}
+                            className="h-8 bg-blue-600 text-white text-xs hover:bg-blue-700"
+                          >
+                            <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
+                            {retrying === order.id ? t('pendingChecking') : t('pendingCheckAgain')}
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
                     {orders
                       .filter((o) => o.status === 'COMPLETED')
                       .map((order) => (
@@ -975,7 +1038,7 @@ export function AccountClient() {
                               </div>
                               <div>
                                 <p className="font-semibold">Still need help?</p>
-                                <a href="mailto:support@sim2me.net" className="text-primary underline">Contact support</a>
+                                <a href={`mailto:${brandConfig.supportEmail}`} className="text-primary underline">Contact support</a>
                               </div>
                             </div>
                           )}

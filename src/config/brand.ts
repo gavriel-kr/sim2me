@@ -23,11 +23,14 @@ export const brandConfig = {
   /** Optional phone (e.g. for RTL regions) */
   supportPhone: null as string | null,
 
-  /** Social links (null = hide) */
+  /**
+   * Social links (null = hide). All null until the accounts exist — the footer icons and the
+   * homepage's `sameAs` both read from here, so a link cannot be published for a profile we do not own.
+   */
   social: {
     twitter: null as string | null,
-    facebook: 'https://facebook.com/sim2me' as string | null,
-    instagram: 'https://instagram.com/sim2me' as string | null,
+    facebook: null as string | null,
+    instagram: null as string | null,
     linkedin: null as string | null,
   },
 

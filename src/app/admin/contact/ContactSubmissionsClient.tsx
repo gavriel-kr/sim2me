@@ -6,6 +6,7 @@ import { applyContactFilters, type ContactFiltersState } from './contactFilterSt
 import { ContactFilters } from './ContactFilters';
 import { exportContactsToExcel, parseContactExcelFile } from './contactExcel';
 import { CONTACT_SUBJECTS } from '@/lib/validation/schemas';
+import { contactRef } from '@/lib/contactRef';
 
 interface Note {
   id: string;
@@ -376,7 +377,12 @@ export function ContactSubmissionsClient({ submissions: initial }: { submissions
                       )}
                     </div>
                     <p className="text-xs text-gray-500 truncate mt-0.5">{s.email}{s.phone ? ` · ${s.phone}` : ''}</p>
-                    <p className="text-sm text-gray-700 truncate mt-0.5">{s.subject}</p>
+                    <p className="text-sm text-gray-700 truncate mt-0.5">
+                      {s.subject}
+                      {/* Ticket 026. The same reference the customer was emailed, so a reply in the
+                          mailbox can be matched to a row by eye. */}
+                      <span className="ml-2 font-mono text-xs text-gray-400">{contactRef(s.id)}</span>
+                    </p>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
                     <span className="text-xs text-gray-400">{s.createdAt}</span>

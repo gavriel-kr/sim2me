@@ -6,6 +6,7 @@ import { ForYouSection } from '@/components/sections/ForYouSection';
 import { FeaturedPlans } from '@/components/sections/FeaturedPlans';
 import { FAQSection } from '@/components/sections/FAQSection';
 import { CTASection } from '@/components/sections/CTASection';
+import { brandConfig } from '@/config/brand';
 type Props = { params: Promise<{ locale: string }> };
 
 const siteUrl = 'https://www.sim2me.net';
@@ -67,6 +68,15 @@ export default async function HomePage({ params }: Props) {
     },
   };
 
+  /* Derived from the brand config rather than listed here, so a profile we do not own cannot be
+     published. Every entry is null today, and the key is omitted entirely rather than sent empty. */
+  const socialProfiles = [
+    brandConfig.social.facebook,
+    brandConfig.social.instagram,
+    brandConfig.social.twitter,
+    brandConfig.social.linkedin,
+  ].filter((url): url is string => Boolean(url));
+
   const orgJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
@@ -75,15 +85,11 @@ export default async function HomePage({ params }: Props) {
     logo: `${siteUrl}/logo.png`,
     contactPoint: {
       '@type': 'ContactPoint',
-      email: 'gavriel.kr@gmail.com',
+      email: brandConfig.supportEmail,
       contactType: 'customer service',
       availableLanguage: ['English', 'Hebrew', 'Arabic'],
     },
-    sameAs: [
-      'https://twitter.com/sim2me',
-      'https://facebook.com/sim2me',
-      'https://instagram.com/sim2me',
-    ],
+    ...(socialProfiles.length > 0 && { sameAs: socialProfiles }),
   };
 
   return (
@@ -97,10 +103,11 @@ export default async function HomePage({ params }: Props) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
       />
       {/*
-        `ValueProps` and `TrustStrip` were dropped from the homepage on 2026-07-31 as redundant. Both
-        components are left in the codebase, unreferenced, so restoring either is one import and one
-        line. `TrustStrip` in particular repeated the hero's own micro-trust row almost word for word
-        — 200+ destinations, secure payment, 24/7 support — which is why it read as filler.
+        `ValueProps` was dropped from the homepage on 2026-07-31 as redundant, and is left in the
+        codebase unreferenced so restoring it is one import and one line. `TrustStrip` was dropped the
+        same day and deleted in ticket 026: it repeated the hero's micro-trust row almost word for word,
+        including the "24/7 support" claim, so an unreferenced file kept a false promise alive in every
+        future audit of the copy.
       */}
       <Hero />
       <HotDealsSection />

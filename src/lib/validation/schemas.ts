@@ -1,9 +1,17 @@
 import { z } from 'zod';
 
+/**
+ * Ticket 037. Messages are codes, not sentences: this form renders in Hebrew, English and Arabic, and
+ * a zod message goes straight to the screen. `CheckoutClient` maps each code to a translated string.
+ *
+ * `consent` is the purchase-time acceptance of the terms and of immediate delivery. It is enforced again
+ * in `api/checkout/create-transaction` — this schema is the convenience for humans, not the control.
+ */
 export const travelerInfoSchema = z.object({
-  email: z.string().email(),
-  firstName: z.string().min(1, 'Required'),
-  lastName: z.string().min(1, 'Required'),
+  email: z.string().email('invalidEmail'),
+  firstName: z.string().min(1, 'required'),
+  lastName: z.string().min(1, 'required'),
+  consent: z.boolean().refine((v) => v === true, { message: 'consentRequired' }),
 });
 
 export const CONTACT_SUBJECTS = [
@@ -17,12 +25,17 @@ export const CONTACT_SUBJECTS = [
 
 export type ContactSubject = typeof CONTACT_SUBJECTS[number];
 
+/*
+  Upper bounds are as much a part of validation as the lower ones: the message column is `Text`, the
+  form is public, and nothing else between the request and the database says how big a submission may
+  be. The ceilings are far above anything a person types.
+*/
 export const contactFormSchema = z.object({
-  name: z.string().min(1, 'Required'),
-  email: z.string().email(),
+  name: z.string().min(1, 'Required').max(100, 'Name is too long'),
+  email: z.string().email().max(254),
   phone: z.string().regex(/^\+[1-9]\d{6,14}$/, 'Invalid phone number'),
   subject: z.enum(CONTACT_SUBJECTS),
-  message: z.string().min(10, 'Message must be at least 10 characters'),
+  message: z.string().min(10, 'Message must be at least 10 characters').max(5000, 'Message is too long'),
   marketingConsent: z.boolean().optional(),
 });
 

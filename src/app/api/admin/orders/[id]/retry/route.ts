@@ -44,32 +44,44 @@ export async function POST(
       // Non-fatal: proceed without refreshing cost
     }
 
-    const purchase = await purchasePackage(order.packageCode, 1);
-    const orderNo = purchase.orderNo;
-
-    await prisma.order.update({
-      where: { id: order.id },
-      data: {
-        esimOrderId: orderNo,
-        esimTransactionId: purchase.transactionId,
-        ...(retryCost != null && { supplierCost: retryCost }),
-      },
-    });
+    /* Ticket 037. If the supplier already sold us this eSIM, the profile is the only thing missing —
+       purchasing again paid twice for one sale. Same guard as the customer-facing retry route. */
+    let orderNo = order.esimOrderId;
+    if (!orderNo) {
+      const purchase = await purchasePackage(order.packageCode, 1);
+      orderNo = purchase.orderNo;
+      await prisma.order.update({
+        where: { id: order.id },
+        data: {
+          esimOrderId: orderNo,
+          esimTransactionId: purchase.transactionId,
+          ...(retryCost != null && { supplierCost: retryCost }),
+        },
+      });
+    } else {
+      console.log('[Admin retry] Supplier order already exists, fetching profile only', {
+        orderId: order.id, esimOrderId: orderNo,
+      });
+      if (retryCost != null) {
+        await prisma.order.update({ where: { id: order.id }, data: { supplierCost: retryCost } });
+      }
+    }
 
     const profileResult = await getEsimProfileWithRetry(orderNo, 5, 5000);
     const firstProfile = profileResult?.esimList?.[0];
 
+    /* No profile means fulfilment is still in flight, so the order stays `PROCESSING`. */
     await prisma.order.update({
       where: { id: order.id },
-      data: {
-        status: 'COMPLETED',
-        ...(firstProfile && {
-          iccid: firstProfile.iccid,
-          qrCodeUrl: firstProfile.qrCodeUrl,
-          smdpAddress: firstProfile.smdpAddress,
-          activationCode: firstProfile.activationCode,
-        }),
-      },
+      data: firstProfile
+        ? {
+            status: 'COMPLETED',
+            iccid: firstProfile.iccid,
+            qrCodeUrl: firstProfile.qrCodeUrl,
+            smdpAddress: firstProfile.smdpAddress,
+            activationCode: firstProfile.activationCode,
+          }
+        : { status: 'PROCESSING' },
     });
 
     // Auto-create or link customer account
@@ -117,6 +129,13 @@ export async function POST(
       }, emailLocale).catch((e) => console.error('[Retry] Email failed (non-fatal)', e));
     }
 
+    if (!firstProfile) {
+      return NextResponse.json(
+        { success: false, pending: true, message: 'Supplier order exists but no profile yet. Order left as PROCESSING.' },
+        { status: 202 }
+      );
+    }
+
     sendRetrySucceededEmail({
       orderNo: order.orderNo,
       customerName: order.customerName || order.customerEmail,
@@ -125,7 +144,7 @@ export async function POST(
       destination: order.destination,
       totalAmount: Number(order.totalAmount),
       currency: order.currency,
-      iccid: firstProfile?.iccid ?? null,
+      iccid: firstProfile.iccid ?? null,
     });
     return NextResponse.json({ success: true, message: 'Order fulfilled successfully' });
   } catch (e) {

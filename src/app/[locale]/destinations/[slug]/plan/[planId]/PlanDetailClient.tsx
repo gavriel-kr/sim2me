@@ -16,6 +16,7 @@ import { Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useCartStore } from '@/stores/cartStore';
 import { useToast } from '@/hooks/useToast';
+import { ToastAction } from '@/components/ui/toast';
 import { createSharedPathnamesNavigation } from 'next-intl/navigation';
 import { routing } from '@/i18n/routing';
 import { brandConfig } from '@/config/brand';
@@ -168,6 +169,12 @@ export function PlanDetailClient({ destination, plan, recommendations }: PlanDet
         title: t('toastAdded'),
         description: `${plan.dataDisplay} / ${plan.days} ${t('days')} ${t('forDestination')} ${destination.name}`,
         variant: 'success',
+        duration: 9000,
+        action: (
+          <ToastAction asChild altText={t('toastGoToCheckout')}>
+            <IntlLink href="/checkout">{t('toastGoToCheckout')}</IntlLink>
+          </ToastAction>
+        ),
       });
     }
   };
@@ -224,6 +231,9 @@ export function PlanDetailClient({ destination, plan, recommendations }: PlanDet
                 >
                   {t('addToCart')}
                 </Button>
+                {/* Ticket 036. The one expectation a first-time eSIM buyer gets wrong, stated where the
+                    purchase decision is made rather than only in the FAQ. */}
+                <p className="mt-3 text-xs leading-relaxed text-muted-foreground">{t('dataOnlyNote')}</p>
               </CardContent>
             </Card>
           </div>

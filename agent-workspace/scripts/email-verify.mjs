@@ -102,8 +102,13 @@ check('no character in the admin email', !!admin && !/characters\/email/.test(ad
 // ── Plain-text alternative ───────────────────────────────────────────────────
 console.log('');
 const texts = (await readdir(DIR)).filter((f) => f.endsWith('.txt'));
-check('every customer email has a text part', texts.length === docs.filter((d) => !d.isAdmin).length,
-  `${texts.length} text files for ${docs.filter((d) => !d.isAdmin).length} customer emails`);
+/* The assertion is about customer mail, so admin text parts are excluded from the count rather than
+   forbidden. Ticket 026's contact notification carries one — an admin email is welcome to be as
+   deliverable as a customer one. */
+const customerTexts = texts.filter((f) => !f.startsWith('info_sim2me_gmail_com'));
+const customerDocs = docs.filter((d) => !d.isAdmin);
+check('every customer email has a text part', customerTexts.length === customerDocs.length,
+  `${customerTexts.length} text files for ${customerDocs.length} customer emails`);
 for (const t of texts) {
   const body = await readFile(join(DIR, t), 'utf8');
   // Counted in lines rather than characters: a one-language OTP mail is legitimately short, and a

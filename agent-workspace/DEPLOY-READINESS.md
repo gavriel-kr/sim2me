@@ -1,4 +1,307 @@
-# Pending release — Ticket 032, prepared 2026-08-02
+# Pending release — Tickets 026 / 034 / 036 / 037 plus the menu and hero pass, prepared 2026-08-10
+
+Everything below is **local and unpushed**. `DEPLOY-PROTOCOL.md` governs; this file records how each of
+its gates was answered for this changeset.
+
+## Where the repo stands
+
+| | |
+|---|---|
+| HEAD | `f8040bb` — *Ticket 020: record the deploy and the post-deploy smoke* |
+| Branch | `main`, level with `origin/main` |
+| Going up | 31 modified files under `src`, 2 new (`ContactBlock.tsx`, `contactRef.ts`), 1 renamed (`useAddDeal.ts` → `.tsx`), 1 deleted (`TrustStrip.tsx`), 4 prisma content/seed files, the changelog and the workspace docs — 91 paths added, 4 removed |
+| Rollback target | `f8040bb` |
+| Backup tag | `pre-deploy-20260810-2325`, created on `f8040bb` **before** anything is pushed |
+
+Four tickets and one follow-up pass are in a single uncommitted changeset, so there is no per-commit
+rollback inside it. Per-file copies of everything each ticket touched sit in
+`agent-workspace/tickets/034-conversion-checkout/backup/`,
+`agent-workspace/backups/2026-08-10-pre-launch-tickets/` and
+`agent-workspace/backups/2026-08-10-menu-help-hero/`, each with a `RESTORE.md`.
+
+## What the release contains
+
+Full prose in `CHANGELOG.md` under `[Unreleased]`. In one line each:
+
+- **026 — support readiness.** Every claim of round-the-clock or same-day support removed; the contact
+  form now auto-replies in the sender's language and notifies the admin with an `[URGENT]` prefix for
+  activation issues; `SM-XXXXXX` reference on the success screen, in both emails and in the admin list;
+  one support address, `info@sim2me.net`, everywhere.
+- **034 — the checkout spoke English to everyone.** Sixteen hardcoded strings localized, VAT and
+  currency stated by the total, a "go to checkout" action on the add-to-cart toast, a search field that
+  looks like a search field and matches English names, ISO codes and aliases.
+- **036 — the FAQ contradicted itself.** Reinstallation, pre-activation validity and top-ups corrected
+  against what the supplier actually supports; five missing questions added; the help centre grouped;
+  the golden tip on `/how-it-works` and in the purchase email.
+- **037 — a customer could pay and be told nothing was wrong.** `COMPLETED` only when a profile exists,
+  a retry guard that cannot buy a second eSIM, refund and chargeback adjustments handled, `PROCESSING`
+  orders visible and explained in the account area, and a consent checkbox enforced server-side.
+- **Menu and hero pass (10 Aug).** `/contact` out of the header menu with its form at the foot of the
+  help centre, the floating chat button hidden behind a flag, the hero headline sized to one line, an
+  ellipsis on the subtitle.
+- **Two hardenings** found while reviewing the above: ceilings on the contact fields, and a
+  per-recipient limit on the auto-reply.
+
+## Risk level: R2
+
+Gate B1 is marked in four places at once: **checkout** (`create-transaction`), **the Paddle webhook and
+fulfilment**, **emails**, and **admin orders** (both retry routes). Any one of those is R2 on its own.
+
+It is **not** R3. No Prisma schema change is in the changeset — `prisma/schema.prisma` is byte-identical
+to `f8040bb` — and no script in this release writes to production at deploy time beyond what every
+deploy already runs, which is examined below.
+
+R2 requires gate A + gate B + full gate C + gate D, a backup tag, and **a second explicit approval**
+beyond the request to prepare.
+
+### The database edits already happened, and are not part of the push
+
+Two writes to the production database were made earlier, each with explicit approval at the time, and
+both are already live and independent of this deploy:
+
+1. `site_settings.support_email`: `support@sim2me.net` → `info@sim2me.net`. Reversal is the same script
+   with the old value, or the admin settings screen.
+2. Five published article bodies had a 24/7 or "within a few hours" claim replaced with what is true.
+   `agent-workspace/scripts/026-article-claims-fix.mjs` holds both the before and after strings
+   literally, so the reversal is mechanical if it is ever wanted.
+
+The code going up does not depend on either, and neither depends on the code. A rollback of the code
+does not need a rollback of these.
+
+### What the deploy's own build chain does to production data
+
+`npm run build` on Vercel is `prisma db push && next build && tsx prisma/update-articles-phase7.ts &&
+tsx prisma/update-legal-pages-i18n.ts`. That chain runs on every deploy, so the question is only whether
+this release changes what it does. Checked rather than assumed:
+
+- `prisma db push` — the schema is unchanged, so it is a no-op against a database already in sync.
+- `update-articles-phase7.ts` rewrites 75 article bodies from two HTML files in `prisma/`. Both files
+  were scanned: **zero** occurrences of `24/7`, `round-the-clock`, `within a few hours`, `תוך מספר שעות`
+  or `على مدار الساعة`, and its slug list does not contain `esim-italy`, `esim-switzerland`,
+  `esim-colombia` or `best-esim-for-travel` — the four articles corrected in the database. **The deploy
+  cannot undo the 026 corrections.**
+- `update-legal-pages-i18n.ts` rewrites `terms`, `privacy` and `refund` (Hebrew and Arabic) from the
+  script's own copy. No support-hours claim and no support address appears in it. Unchanged by this
+  release, and worth knowing generally: hand edits to those three pages in the admin are overwritten on
+  every deploy.
+
+## Gate A — the code builds locally
+
+- ✅ `npx tsc --noEmit` → **0**
+- ✅ `npm run lint` → **0**. Warnings only, all pre-existing; the two new files produce no output
+- ✅ `npm run test:profit` → pass
+- ✅ `npm run test:locale-path` → pass
+- ✅ `npx tsx src/app/admin/orders/orderFilters.test.ts` → pass
+- ✅ `npx tsx src/app/admin/orders/ordersExcel.test.ts` → pass
+- ✅ `npx next build` → **0**, 95 static pages generated, route table intact
+- ✅ No `.env`, credential or key file in the changeset; `.gitignore` unchanged
+- ✅ No `console.log`, `debugger`, TODO or FIXME added. The one new log line is a `console.warn` in
+  `api/contact` when an auto-reply is suppressed, matching what the webhook and retry routes already do
+- ✅ `src/app/[locale]/design-preview/` no longer exists, so the standing "one `git add -A` publishes a
+  preview route" hazard is gone. Staging is by explicit path anyway
+
+`npm run build` itself is not run locally, for the third release in a row and for the same two reasons:
+its first step needs `DIRECT_URL`, which is not set locally, and its last two steps write article and
+legal-page rows in the live database. `npx next build` compiles the identical application.
+
+## Gate B — risk and environment
+
+### B1 — areas touched
+
+- ✅ **Checkout / `create-transaction`** — a consent field, enforced before any Paddle call. The price
+  resolution, the rate limit and Turnstile are untouched
+- ✅ **Paddle webhook / fulfilment** — `COMPLETED` is now conditional on a profile existing, and
+  `adjustment.created` / `adjustment.updated` are handled. Signature verification is untouched
+- ✅ **eSIMaccess** — no new call. The retry routes now *avoid* a call they used to make
+- ✅ **Emails** — the golden tip replaces the one-line tip in the purchase email; two new contact-form
+  emails. `sendEmail` itself is untouched
+- ✅ **Admin orders** — the retry route gained the same guard as the customer's
+- ✅ **Articles / i18n / legal** — message files in three languages, `faq.ts`, seed copy
+- ❌ Auth, OTP, Admin TOTP — **not touched**
+- ❌ Refund, archive, bulk, Excel — **not touched**
+- ❌ Prices, price floor, fees, overrides — **not touched**
+- ❌ Blocklist / fraud, cron, `vercel.json`, PWA, mobile — **not touched**
+
+### B2 — environment variables
+
+**No new variable, and nothing to change in Vercel.** Everything used is already in production and
+already used by the live paid path: `DATABASE_URL`, `NEXTAUTH_*`, `PADDLE_API_KEY`,
+`PADDLE_WEBHOOK_SECRET`, `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN`, `ESIMACCESS_ACCESS_CODE`, `RESEND_API_KEY`,
+`RESEND_FROM_EMAIL`, `ADMIN_NOTIFICATION_EMAIL`, `CRON_SECRET`, `TURNSTILE_*`. No secret appears in the
+changeset or in any log line added by it.
+
+### B3 — backup
+
+- ✅ `git tag pre-deploy-20260810-2325` on `f8040bb`, created before the push
+- Not R3, so no database backup is required. The two content edits above have written reversals
+
+## Gate C — smoke, run against the local dev server after the final edit
+
+`agent-workspace/scripts/predeploy-smoke.mjs` — **62 checks, all green.** Four assertions failed on the
+first pass and all four were the check being wrong rather than the site: the destinations index renders
+its slugs after hydration, an empty POST body fails JSON parsing before it can fail the consent gate,
+next-intl escapes rich-text tags inside the serialised bundle, and `check-abandoned` answers 503 rather
+than 401 when `CRON_SECRET` is absent locally. Each was corrected and the whole gate re-run.
+
+### C0, always
+- ✅ `/en`, `/he`, `/ar` → 200; destinations index → 200; a destination page → 200
+
+### C1, checkout, money and eSIM
+- ✅ `GET /api/checkout/health` → `ok: true`, all five steps green including `paddle-ping`
+- ✅ `/he`, `/en`, `/ar` `/checkout` → 200, and the consent copy shipped to all three
+- ✅ **`POST /api/checkout/create-transaction` with a body the schema accepts and no consent → 400
+  "Terms must be accepted before payment."** — refused before Turnstile and before Paddle. Deliberately
+  not probed with `consent: true`, because a pass through Turnstile would create a real transaction in
+  the live Paddle account
+- ✅ Unsigned `POST /api/webhooks/paddle` → refused
+- ✅ `POST /api/account/orders/<id>/retry` and the admin equivalent without a session → refused
+- ✅ No price, floor or fee file is in the changeset
+
+### C2, customer account
+- ✅ `/account/login` → 200 in all three locales, `/he/account/register` → 200
+- ✅ `/he/account` → 3xx, guard intact; `GET /api/account/orders` without a session → 401
+
+### C3, admin
+- ✅ `/admin/login` → 200
+- ✅ `/admin/orders`, `/admin/contact`, `/admin/articles`, `/admin/navigation`, `/admin/settings` → 3xx,
+  guards intact
+
+### C4, content and i18n
+- ✅ **33 page/locale combinations** — the eleven pages this release can reach × three locales — all
+  200, `dir` correct, no `MISSING_MESSAGE`, and no support-hours claim in the rendered markup
+- ✅ An article renders in all three locales
+- ✅ `036-content-check.mjs` — 60 checks: the golden tip in three languages with its five steps, the
+  help centre's JSON-LD complete at 20 unique questions with no leaked keys, the homepage's five
+  questions unchanged, no support-hours claim on any key page, the data-only line on a plan page
+- ✅ `contact-in-help-check.mjs` — 38 checks: the contact page still renders its form, the help centre
+  carries the same form with the new lead-in in three languages, the header has no contact link, the
+  footer still has one, the subtitle ellipsis, and the headline no longer set to `text-6xl`
+
+### C5, mobile
+- Not touched. No PWA, manifest or `/app` file is in the changeset
+
+### C6, cron
+- ✅ Both cron routes refuse an unauthenticated caller; `CRON_SECRET` handling and `vercel.json` untouched
+
+### Production baseline, taken before the push
+`agent-workspace/scripts/prod-baseline.mjs` — eleven paths, all as expected: three locales 200,
+`/admin/orders` 307, `/api/checkout/health` `ok: true` in 332 ms. It also records the two visible
+before-states this release changes: the header carries **one** `/he/contact` link, and the hero headline
+still carries `lg:text-6xl`. Both should flip after the deploy.
+
+## Known gaps, stated rather than smoothed over
+
+- **The email templates were not re-rendered in this pass.** `email-preview.ts` needs a direct
+  connection to the Postgres endpoint to borrow a real order, and that endpoint is refusing connections
+  from scripts locally right now while the app's pooled connection works fine. The templates were
+  rendered and verified when the changes were made, and the send path itself is unchanged
+- **The local environment is intermittently unreliable, and it is the environment rather than the code.**
+  During the smoke window `/api/packages` failed twice — once on an eSIMaccess timeout, once on a Prisma
+  connection error — and recovered on its own. Checked again afterwards: locally and in production the
+  endpoint returns 200 with an identical 1,288,391-byte body, and a destination page renders. Nothing in
+  this changeset touches that route
+- **Nothing in this release has been through a real paid purchase.** The consent checkbox, the
+  conditional `COMPLETED` and the refund handling are proved by code and by refusals, not by money. The
+  first real purchase after the deploy is the real test
+- **The retry guard has not been proved against the supplier**, and the adjustment webhook has not been
+  replayed with a real signed payload. Both need credentials that are not local
+- **Fourteen published articles still contradict the corrected FAQ** on top-ups and on 180 days. Listed
+  by `036-article-facts-check.mjs`. Several are general advice rather than a promise and need a judgement
+  each, so they want their own ticket
+- **The mobile app bundle still says "24/7 Support".** Out of this changeset; `/app` is untouched
+- **Admin retry is still missing two guards the customer's route has** — no block on a `PROCESSING`
+  order without a batch id, and none on a refunded order. Admin-operational, not a security hole
+- **`verifyTurnstile` fails open on a Cloudflare timeout.** Pre-existing; worth knowing that
+  `TURNSTILE_SECRET_KEY` must be present in production for the bot protection to mean anything
+- **The contact form's validation messages are still English literals** in all three languages, unlike
+  the checkout's, which this release converted to keys. Only visible on a validation failure
+
+## Gate D — the pre-push checklist
+
+Ready to tick, in order, when Gabriel approves:
+
+- ✅ Gabriel asked for the release to be prepared
+- ✅ Risk level determined: **R2**
+- ✅ Gate A green, `npx next build` = 0
+- ✅ Gate B answered; no environment change; the money path traced
+- ✅ Gate C green — 62 + 60 + 38 checks
+- ✅ Backup tag `pre-deploy-20260810-2325` on `f8040bb`
+- ✅ Staging is by explicit path; scratch output, the unrelated `phone-lookup.mjs` and
+  `agent-workspace/backups/` stay out
+- ✅ Deploy by `git push origin main` only. No Vercel CLI, ever
+- ⬜ **Gabriel's own pass in a browser** — the local review list is in the CHANGELOG and below
+- ⬜ **Second explicit approval, because this is R2**
+
+### The exact commands, to run only on approval
+
+```powershell
+git add CHANGELOG.md prisma src agent-workspace/DEPLOY-READINESS.md
+git add agent-workspace/tickets/026-support-readiness agent-workspace/tickets/034-conversion-checkout
+git add agent-workspace/tickets/036-faq-golden-tip agent-workspace/tickets/037-purchase-reliability
+git add agent-workspace/tickets/_paused/026-support-readiness
+git add agent-workspace/scripts/026-article-claims-check.mjs agent-workspace/scripts/026-article-claims-fix.mjs
+git add agent-workspace/scripts/026-cleanup-test-submission.mjs agent-workspace/scripts/026-support-email-check.mjs
+git add agent-workspace/scripts/034-search-match-check.mjs agent-workspace/scripts/036-article-facts-check.mjs
+git add agent-workspace/scripts/036-content-check.mjs agent-workspace/scripts/contact-in-help-check.mjs
+git add agent-workspace/scripts/help-box-check.mjs agent-workspace/scripts/nav-menu-check.mjs
+git add agent-workspace/scripts/predeploy-smoke.mjs agent-workspace/scripts/prod-baseline.mjs
+git add agent-workspace/scripts/email-preview.ts agent-workspace/scripts/email-verify.mjs
+git status                      # read the staged list before committing
+git commit -m "..."             # message drafted below
+git push origin main            # this is the deploy
+```
+
+Commit message, for approval:
+
+```
+Tickets 026/034/036/037: honest support claims, a checkout in the visitor's language,
+a purchase that cannot lie about itself, and the tip that fixes most eSIMs
+
+026: no claim of round-the-clock or same-day support anywhere; the contact form
+     answers, references itself and reaches the admin; one support address
+034: sixteen hardcoded English strings out of the checkout, VAT and currency
+     stated, a route from the toast to the cart, a search field that finds things
+036: the FAQ no longer contradicts the supplier; five missing questions; the
+     golden tip on the site and in the purchase email
+037: COMPLETED only with a profile in hand, a retry that cannot buy twice,
+     refunds visible where the sale is, and consent taken before payment
+plus: contact out of the header menu with its form at the foot of the help centre,
+      a hero headline on one line, and two hardenings on the contact endpoint
+```
+
+## Post-deploy smoke, to run once Vercel reports Ready
+
+- `https://www.sim2me.net/en`, `/he`, `/ar` → 200, no 5xx
+- `https://www.sim2me.net/api/checkout/health` → `ok: true`
+- **The header has no Contact entry** in all three locales, and `/he/contact` still returns 200
+- `/he/help` ends with the message form and the "לא מצאת פתרון?" heading
+- The hero headline is one line and no longer carries `lg:text-6xl`; the floating chat button is gone
+- `POST /api/checkout/create-transaction` with no consent → 400 "Terms must be accepted before payment."
+- Admin → Orders loads; Admin → Contact shows the `SM-XXXXXX` reference beside a subject
+- A real contact form submission in Hebrew: success screen shows a reference, the auto-reply arrives in
+  Hebrew with working links, and the admin notification arrives
+- No new error class in the Vercel function logs for `/api/contact`, `/api/webhooks/paddle` or either
+  retry route
+- **Not part of the smoke:** a real purchase. It is the first thing to watch on the next genuine order,
+  and the eSIM balance should not be spent to prove a status field
+
+If any of it fails: stop, report, propose rollback to `pre-deploy-20260810-2325`. Do not push again blind.
+
+## Rollback
+
+```powershell
+# only with Gabriel's approval
+git push origin pre-deploy-20260810-2325:main
+```
+
+That returns the site to `f8040bb` exactly. The database needs nothing: no schema changed, and the two
+content edits are independent of the code, with written reversals above. A partial rollback is not
+available — the release is one changeset — so a single piece needing reversal goes through the per-file
+backups listed at the top.
+
+---
+
+# Previous release — Ticket 032, prepared 2026-08-02
 
 Everything below is **local and unpushed**. The protocol is `DEPLOY-PROTOCOL.md` at the repo root and
 it governs; this file records how each of its gates was answered for this changeset. The record of the

@@ -34,7 +34,7 @@ Sim2Me עובדת עם רשתות מובילות באיטליה, כולל TIM, V
 - **הפעלה מיידית** – סרקו QR ותהיו מחוברים תוך דקות
 - **תוכניות גמישות** – 1 GB, 5 GB, 10 GB ועד ללא הגבלה
 - **אין עלויות הפתעה** – מחיר קבוע, ללא חיובים נסתרים
-- **תמיכה בעברית** – צוות שירות דובר עברית זמין 24/7
+- **תמיכה בעברית** – במייל, לכל הזמנה
 
 ### כמה עולה איסים לאיטליה?
 
@@ -349,7 +349,7 @@ Sim2Me partners with Italy's top three carriers – **TIM, Vodafone Italy, and W
 - **Instant digital delivery** – no waiting, no queues
 - **Flexible plans** – from 3 days to 30 days
 - **No contracts** – pay only for what you need
-- **English & Hebrew support** – 24/7 customer service
+- **Support in English and Hebrew** – by email, on every order
 
 ## Compatible Devices
 

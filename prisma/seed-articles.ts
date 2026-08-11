@@ -112,7 +112,7 @@ const articles = [
 <h3>Can I make phone calls with a travel eSIM?</h3>
 <p>Sim2Me eSIMs are data-only. Keep your physical SIM active for voice calls and SMS. Use WhatsApp, FaceTime, or any VoIP app for international calls over the eSIM data.</p>
 <h3>What if I need help?</h3>
-<p>Our support team is available via the <a href="${SITE}/help">Help Center</a> or email. We typically respond within a few hours.</p>
+<p>You can reach us through the <a href="${SITE}/help">Help Center</a> or by email, and we read every message that comes in.</p>
 
 <h2>Frequently Asked Questions</h2>
 <div id="faq">
