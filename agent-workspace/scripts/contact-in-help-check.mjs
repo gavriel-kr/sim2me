@@ -57,8 +57,10 @@ for (const locale of locales) {
   check(`/${locale}/help has the lead-in heading`, shown.includes(m.notFoundTitle), m.notFoundTitle);
   check(`/${locale}/help has the lead-in text`, shown.includes(m.notFoundDesc));
   check(`/${locale}/help renders the message form`, html.includes('id="message"') && html.includes('id="subject"'));
+  /* The anchor stays — the footer and any deep link use it. What used to jump to it was the "still need
+     help" box at the top of the page, and that box was removed afterwards, so there is nothing left to
+     assert about a link to it. `help-box-check.mjs` covers its absence. */
   check(`/${locale}/help has the #contact anchor`, html.includes('id="contact"'));
-  check(`/${locale}/help top box jumps to the anchor`, html.includes('href="#contact"'));
   check(
     `/${locale}/help drops the "check the help centre" tip`,
     !shown.includes(messages[locale].contact.beforeTip1),

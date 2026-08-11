@@ -299,6 +299,54 @@ content edits are independent of the code, with written reversals above. A parti
 available — the release is one changeset — so a single piece needing reversal goes through the per-file
 backups listed at the top.
 
+## Shipped
+
+Pushed 11 Aug 2026, 10:20. `f8040bb..9cabe54`, 94 paths. Second explicit approval given the same
+minute. Tag `pre-deploy-20260810-2325` is on the remote and points at `f8040bb`, the last known good
+commit.
+
+The new build was live **45 seconds after the push**, confirmed by the two markers recorded in the
+baseline flipping together: the header's `/he/contact` link went from one to zero, and the hero headline
+went from `lg:text-6xl` to `lg:text-[clamp(2rem,3.1vw,2.4rem)]`.
+
+Post-deploy smoke, run against `www.sim2me.net`:
+
+- ✅ The whole gate C suite, re-run against production — **62 checks, all green.** Three locales 200, a
+  destination page 200, `/api/checkout/health` `ok: true` with all five steps green and `paddle-ping` at
+  136 ms, every admin route 3xx, both cron routes refusing, 33 page/locale combinations clean
+- ✅ **`POST /api/checkout/create-transaction` without consent → 400 "Terms must be accepted before
+  payment."** in production. The gate that was the point of 037 is live and refusing
+- ✅ Unsigned webhook refused; both retry routes refuse without a session
+- ✅ `contact-in-help-check.mjs` against production — **all checks passed.** No contact entry in the
+  header in any locale, the footer link intact, `/he/contact` still 200 with its form, the help centre
+  carrying the same form under its new lead-in in three languages, the subtitle ellipsis, the fluid
+  headline
+- ✅ `help-box-check.mjs` — the "still need help" box gone in all three languages, the form and the
+  lead-in still present
+- ✅ `036-content-check.mjs` against production — **60 checks, all passed:** the golden tip with its five
+  steps in three languages, 20 unique JSON-LD questions with no leaked keys, no support-hours claim on
+  any key page
+- ✅ The floating chat button is absent from all three locale roots — no sticky container, no icon
+
+Two smoke results needed reading rather than reacting to, both the check being stale rather than the
+site being wrong:
+
+- `contact-in-help-check.mjs` asserted that the help page contains `href="#contact"`. It was written
+  before the "still need help" box was removed, and that link lived inside the box. The assertion was
+  deleted; the anchor itself is still there and still asserted
+- `help-box-check.mjs` reported the English lead-in missing. It compares copy without decoding entities,
+  and the English heading contains an apostrophe, which arrives as `&#x27;`. Decoding added, same class
+  of false negative as the one recorded at the end of the previous release
+
+### Not verified after the deploy, deliberately
+
+- **No real purchase.** The consent gate, the conditional `COMPLETED` and the refund handling meet real
+  money on the next genuine order. Spending the supplier balance to prove a status field is not worth it
+- **No contact form submitted in production.** It writes a row and sends two emails, so it is Gabriel's
+  to do in a browser as part of his own pass, or mine to do and clean up on request
+- **Vercel function logs not read.** That needs the dashboard or the CLI; the endpoints themselves answer
+  correctly from outside
+
 ---
 
 # Previous release — Ticket 032, prepared 2026-08-02
