@@ -59,7 +59,9 @@ export async function POST(request: Request) {
         otpAttempts: 0,
       },
     });
-    sendOtpEmail(customer.email, code, locale).catch(() => {});
+    // Ticket 039. Awaited: the response claims a code was sent, so it had better have been.
+    const sent = await sendOtpEmail(customer.email, code, locale);
+    if (!sent) console.error('[OTP disable] Code email was not accepted', { customerId: customer.id });
     return NextResponse.json({ codeSent: true });
   }
 

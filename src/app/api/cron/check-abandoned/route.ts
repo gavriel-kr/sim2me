@@ -110,7 +110,8 @@ export async function GET(request: Request) {
     };
   });
 
-  sendAbandonedCheckoutEmail(items);
+  // Ticket 039: awaited, so the digest is not lost when the cron invocation ends.
+  await sendAbandonedCheckoutEmail(items).catch(() => false);
 
   // Write audit log entries (fire-and-forget)
   await Promise.all(

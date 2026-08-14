@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 import { getSessionForRequest, isCustomerSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { purchasePackage, getEsimProfileWithRetry } from '@/lib/esimaccess';
-import { sendPostPurchaseEmail, sendRetrySucceededEmail, sendRetryFailedEmail, toEmailLocale } from '@/lib/email';
+import { sendPostPurchaseEmail, sendRetrySucceededEmail, sendRetryFailedEmail, sendCustomerEmailFailedAlert, toEmailLocale } from '@/lib/email';
 import { checkAndAutoBlockEmail } from '@/lib/fraud';
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
 
@@ -95,9 +95,11 @@ export async function POST(
       return NextResponse.json({ success: false, pending: true }, { status: 202 });
     }
 
+    // Ticket 039: awaited, so the customer's own retry cannot end with a frozen, undelivered mail.
+    let customerEmailSent = true;
     {
       const emailLocale = toEmailLocale(order.locale);
-      sendPostPurchaseEmail(order.customerEmail, {
+      customerEmailSent = await sendPostPurchaseEmail(order.customerEmail, {
         customerName: order.customerName || 'Customer',
         planName: order.packageName,
         dataGb: order.dataAmount,
@@ -112,19 +114,33 @@ export async function POST(
         currency: order.currency,
         orderDate: order.paidAt ?? order.createdAt,
         iccid: firstProfile.iccid ?? null,
-      }, emailLocale).catch(() => {});
+      }, emailLocale).catch(() => false);
     }
 
-    sendRetrySucceededEmail({
-      orderNo: order.orderNo,
-      customerName: order.customerName || order.customerEmail,
-      customerEmail: order.customerEmail,
-      packageName: order.packageName,
-      destination: order.destination,
-      totalAmount: Number(order.totalAmount),
-      currency: order.currency,
-      iccid: firstProfile.iccid ?? null,
-    });
+    const adminAlerts: Promise<unknown>[] = [
+      sendRetrySucceededEmail({
+        orderNo: order.orderNo,
+        customerName: order.customerName || order.customerEmail,
+        customerEmail: order.customerEmail,
+        packageName: order.packageName,
+        destination: order.destination,
+        totalAmount: Number(order.totalAmount),
+        currency: order.currency,
+        iccid: firstProfile.iccid ?? null,
+      }),
+    ];
+    if (!customerEmailSent) {
+      console.error('[Account retry] Post-purchase email was not accepted', { orderNo: order.orderNo });
+      adminAlerts.push(
+        sendCustomerEmailFailedAlert({
+          kind: 'eSIM delivery (customer retry)',
+          customerEmail: order.customerEmail,
+          orderNo: order.orderNo,
+          locale: toEmailLocale(order.locale),
+        }),
+      );
+    }
+    await Promise.allSettled(adminAlerts);
     return NextResponse.json({ success: true });
   } catch (e) {
     const errMsg = e instanceof Error ? e.message : String(e);
@@ -132,17 +148,19 @@ export async function POST(
       where: { id: order.id },
       data: { status: 'FAILED', errorMessage: errMsg.slice(0, 1000) },
     });
-    sendRetryFailedEmail({
-      orderNo: order.orderNo,
-      customerName: order.customerName || order.customerEmail,
-      customerEmail: order.customerEmail,
-      packageName: order.packageName,
-      destination: order.destination,
-      totalAmount: Number(order.totalAmount),
-      currency: order.currency,
-      errorMessage: errMsg.slice(0, 300),
-    });
-    checkAndAutoBlockEmail(order.customerEmail).catch(() => {});
+    await Promise.allSettled([
+      sendRetryFailedEmail({
+        orderNo: order.orderNo,
+        customerName: order.customerName || order.customerEmail,
+        customerEmail: order.customerEmail,
+        packageName: order.packageName,
+        destination: order.destination,
+        totalAmount: Number(order.totalAmount),
+        currency: order.currency,
+        errorMessage: errMsg.slice(0, 300),
+      }),
+      checkAndAutoBlockEmail(order.customerEmail),
+    ]);
     return NextResponse.json({ error: 'Retry failed. Please contact support.' }, { status: 500 });
   }
 }

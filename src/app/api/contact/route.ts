@@ -49,10 +49,14 @@ export async function POST(request: Request) {
     });
     const ref = contactRef(submission.id);
 
-    /* Both emails are fire-and-forget. A mail provider having a bad afternoon must not turn a message
-       we have already stored into an error on the customer's screen. `sendEmail` swallows and logs its
-       own failures, and returns early with a log line when there is no API key locally. */
-    sendContactAdminNotificationEmail({
+    /* A mail provider having a bad afternoon must not turn a message we have already stored into an
+       error on the customer's screen, so a refused send is still a successful submission. `sendEmail`
+       logs its own failures and returns early with a log line when there is no API key locally.
+
+       Ticket 039: started here but joined before the response rather than left detached, because a
+       detached send is suspended the moment the instance freezes — which turned "we emailed you a
+       copy" into a promise we kept several minutes later, or not at all. */
+    const adminNotified = sendContactAdminNotificationEmail({
       name,
       email,
       phone: phone ?? null,
@@ -61,6 +65,9 @@ export async function POST(request: Request) {
       ref,
       urgent: URGENT_SUBJECTS.has(subject),
       marketingConsent: marketingConsent ?? false,
+    }).catch((e) => {
+      console.error('[Contact] Admin notification failed (non-fatal)', e);
+      return false;
     });
 
     /* The auto-reply is the one thing this endpoint sends to an address a stranger chose, so it is
@@ -70,12 +77,21 @@ export async function POST(request: Request) {
        rate-limit table does not accumulate email addresses. */
     const recipientKey = createHash('sha256').update(email.trim().toLowerCase()).digest('hex').slice(0, 32);
     const autoReplyAllowed = await checkRateLimit(recipientKey, 'contact-autoreply', 3, 86400);
-    if (autoReplyAllowed) {
-      sendContactAutoReplyEmail(email, { customerName: name, ref, subject }, locale)
-        .catch((e) => console.error('[Contact] Auto-reply failed (non-fatal)', e));
-    } else {
+    const autoReplied = autoReplyAllowed
+      ? sendContactAutoReplyEmail(email, { customerName: name, ref, subject }, locale)
+          .catch((e) => {
+            console.error('[Contact] Auto-reply failed (non-fatal)', e);
+            return false;
+          })
+      : Promise.resolve(false);
+    if (!autoReplyAllowed) {
       console.warn(`[Contact] Auto-reply suppressed for ${ref}: recipient limit reached`);
     }
+
+    // Both sends overlap each other; this is the point where the handler stops before the freeze.
+    const [adminOk, replyOk] = await Promise.all([adminNotified, autoReplied]);
+    if (!adminOk) console.error('[Contact] Admin notification was not accepted', { ref });
+    if (autoReplyAllowed && !replyOk) console.error('[Contact] Auto-reply was not accepted', { ref });
 
     return NextResponse.json({ success: true, ref });
   } catch (error) {

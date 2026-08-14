@@ -46,7 +46,8 @@ export async function POST(
     details: { orderNo: order.orderNo, esimOrderId: order.esimOrderId },
   }).catch(() => {});
 
-  sendEsimCancelledEmail({
+  // Ticket 039: awaited, so the cancellation record cannot be lost to a frozen instance.
+  await sendEsimCancelledEmail({
     orderNo: order.orderNo,
     customerName: order.customerName || order.customerEmail,
     customerEmail: order.customerEmail,
@@ -54,7 +55,7 @@ export async function POST(
     destination: order.destination,
     totalAmount: Number(order.totalAmount),
     currency: order.currency,
-  });
+  }).catch(() => false);
 
   return NextResponse.json({ ok: true });
 }

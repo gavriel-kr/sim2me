@@ -2,6 +2,50 @@
 
 ## [Unreleased]
 
+### Fixed (Ticket 039 — every transactional email was one frozen instance away from never arriving)
+
+A live purchase exposed it: the order was captured at 04:41:14, the admin was notified at
+04:41:15, and the customer's eSIM email arrived at 04:49:58 — eight minutes and forty-three
+seconds later, three minutes after the customer had already complained. A second purchase the
+same night, in English, was fulfilled with a working QR code and its email was **never sent at
+all**.
+
+Cause: every mail was dispatched as a floating promise and the route then returned. On Vercel the
+instance freezes the moment the response is flushed, suspending the in-flight request to Resend
+until that same instance happened to be thawed by a later request — or losing it outright if the
+instance was recycled first. The admin notification escaped because it was started early enough to
+finish while the eSIM was being provisioned; the customer's mail, started on the last line before
+the response, was always the one caught. Hence the shape of the complaint: admin notified,
+customer silent. The same customer's 3 August order, in Hebrew, was 2m55s late for the identical
+reason, so this had been shipping quietly for as long as the webhook existed.
+
+- Paddle webhook now collects every send and joins them with `Promise.allSettled` immediately
+  before the response. Sends still start where they started, so nothing new waits on provisioning;
+  `allSettled` rather than `all` keeps a refused mail from turning a captured payment into a
+  non-2xx that would make Paddle retry a fulfilled transaction.
+- Registration, verification resend, OTP resend and OTP disable now await their mail. A login code
+  that arrives after the instance thaws is a code nobody could use.
+- Contact form, both retry routes, refund, eSIM cancellation, internal sale and the abandoned
+  checkout cron all await their mail.
+- Nine admin-alert helpers in `email.ts` swallowed `sendEmail` internally with `.catch(() => {})`
+  behind a `Promise<void>` signature, so awaiting them at the call site would not have awaited the
+  send. They now return the promise.
+
+### Fixed (Ticket 039 — a refused email was reported to the application as a success)
+
+`resend.emails.send` resolves with `{ data, error }` and only throws on a transport failure. The
+funnel awaited it without reading `error`, so anything Resend refused — quota, suppression,
+invalid recipient, bad attachment — was indistinguishable from a delivery. Every past "the
+customer never got it" report was unfalsifiable, because the only record lived in Resend's
+dashboard.
+
+- The funnel now reads `error`, logs `[Email] Resend rejected` with recipient, subject and reason,
+  and returns `false`. Verified against a deliberately invalid recipient.
+- A successful send logs the Resend message id, so the next delivery question is a log search
+  rather than an archaeological dig.
+- New `sendCustomerEmailFailedAlert`: when a customer-facing mail on the purchase path is refused,
+  the admin is told, with order number, recipient and language, before the customer writes in.
+
 ### Added (Ticket 038 — Hindi, offered rather than imposed)
 - **A fourth locale, `/hi`, with all 563 interface strings translated** – `hi` is in `routing.locales`, the middleware matcher, `locale-path`'s regex and the language switcher, and `src/messages/hi.json` matches `en.json` key for key, placeholder for placeholder, checked rather than assumed. Devanagari comes from `Noto_Sans_Devanagari` with `preload: false` and a class attached to `<html>` only when the page is Hindi, so English, Hebrew and Arabic visitors never download a font they cannot read — verified by comparing the served `<html class>` on `/en` and `/hi`, which carries one font variable and two respectively. The copy outside the message files came with it: cookie consent, the empty, error and 404 states, region and continent names in four separate places that each keep their own list, and Hindi entries in all six customer emails.
 - **A Hindi-preferring browser lands on English and is asked, once** – `localeDetection` is one switch for every locale at once, so listing `hi` would have redirected a Hindi browser to a Hindi site whose legal pages and support are English and whose copy no native speaker has read. Turning detection off instead would have taken Hebrew and Arabic with it. So the middleware filters `hi` out of `accept-language` — only before the visitor has chosen, only on a plain navigation, only when the path carries no locale — and `LanguageSuggestBanner` offers Hindi client-side, remembering either answer. Confirmed by request: `hi` → `/en`, `he-IL` → `/he`, `ar` → `/ar`, `hi;q=0.9,he;q=0.8` → `/he`, and a `NEXT_LOCALE=hi` cookie → `/hi`, because an explicit choice outranks all of it.

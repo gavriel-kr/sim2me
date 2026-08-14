@@ -36,7 +36,9 @@ export async function POST(request: Request) {
     data: { emailVerifyToken: token, emailVerifyExpires: expires },
   });
 
-  sendVerificationEmail(emailLower, token, toEmailLocale(body?.locale)).catch(() => {});
+  // Ticket 039. Awaited so the send completes before the instance freezes on the response.
+  const sent = await sendVerificationEmail(emailLower, token, toEmailLocale(body?.locale));
+  if (!sent) console.error('[Resend verification] Email was not accepted', { email: emailLower });
 
   return NextResponse.json({ success: true });
 }

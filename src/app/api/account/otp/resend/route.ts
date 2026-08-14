@@ -49,7 +49,13 @@ export async function POST(request: Request) {
     },
   });
 
-  sendOtpEmail(customer.email, code, locale).catch(() => {});
+  /*
+    Ticket 039. Awaited: a login code that arrives after the instance thaws is a code the customer
+    could not use. The response still reports success either way, because telling an unauthenticated
+    caller whether mail to this address succeeded would confirm the account exists.
+  */
+  const sent = await sendOtpEmail(customer.email, code, locale);
+  if (!sent) console.error('[OTP resend] Code email was not accepted', { customerId: customer.id });
 
   return NextResponse.json({ ok: true });
 }

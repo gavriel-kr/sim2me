@@ -307,8 +307,10 @@ export async function POST(request: Request) {
       },
     });
 
+    // Ticket 039: awaited, and the outcome is returned so the agent knows if the buyer was told.
+    let customerEmailSent = true;
     if (profile) {
-      sendPostPurchaseEmail(
+      customerEmailSent = await sendPostPurchaseEmail(
         customer.email,
         {
           customerName: customer.name || customerFullName,
@@ -328,7 +330,13 @@ export async function POST(request: Request) {
           iccid: profile.iccid ?? null,
         },
         toEmailLocale(emailLocale),
-      ).catch((e) => console.error('[internal sale] Email send failed (non-fatal)', e));
+      ).catch((e) => {
+        console.error('[internal sale] Email send failed (non-fatal)', e);
+        return false;
+      });
+      if (!customerEmailSent) {
+        console.error('[internal sale] Post-purchase email was not accepted', { orderNo: completed.orderNo });
+      }
     }
 
     createAuditLog({
@@ -350,6 +358,7 @@ export async function POST(request: Request) {
       order: shape(completed),
       createdCustomer: tempPassword != null,
       tempPassword,
+      customerEmailSent,
     });
   } catch (e) {
     const errMsg = e instanceof Error ? e.message : String(e);

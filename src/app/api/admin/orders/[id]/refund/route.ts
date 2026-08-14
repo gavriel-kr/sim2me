@@ -103,7 +103,8 @@ export async function POST(
       },
     }).catch(() => {});
 
-    sendRefundIssuedEmail({
+    // Ticket 039: awaited, so the record of a refund cannot be lost to a frozen instance.
+    await sendRefundIssuedEmail({
       orderNo: order.orderNo,
       customerName: order.customerName || order.customerEmail,
       customerEmail: order.customerEmail,
@@ -111,7 +112,7 @@ export async function POST(
       destination: order.destination,
       totalAmount: Number(order.totalAmount),
       currency: order.currency,
-    });
+    }).catch(() => false);
 
     return NextResponse.json({ ok: true });
   } catch (e) {

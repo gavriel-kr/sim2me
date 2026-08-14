@@ -65,7 +65,14 @@ export async function POST(request: Request) {
       },
     });
 
-    sendVerificationEmail(emailLower, emailVerifyToken, toEmailLocale(body?.locale)).catch(() => {});
+    /*
+      Ticket 039. Awaited, not detached. A detached send is suspended when the instance freezes on
+      the response, so the one mail without which the account cannot be used could arrive minutes
+      late or never. Registration itself still succeeds if the mail is refused — the customer can
+      ask for it again from the login screen.
+    */
+    const mailSent = await sendVerificationEmail(emailLower, emailVerifyToken, toEmailLocale(body?.locale));
+    if (!mailSent) console.error('[Register] Verification email was not accepted', { email: emailLower });
 
     return NextResponse.json({
       success: true,

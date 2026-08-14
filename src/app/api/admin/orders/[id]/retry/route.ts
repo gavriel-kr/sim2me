@@ -106,11 +106,14 @@ export async function POST(
       console.warn('[Retry] Customer upsert failed (non-fatal)', e);
     }
 
+    /* Ticket 039: awaited rather than detached, and the outcome is reported back so the agent who
+       pressed Retry sees whether the customer was actually told. */
+    let customerEmailSent = true;
     if (firstProfile) {
       // The buyer's own language, stored on the order at checkout. Orders placed before that column
       // existed read null, which `toEmailLocale` maps to Hebrew — exactly what they got before.
       const emailLocale = toEmailLocale(order.locale);
-      sendPostPurchaseEmail(order.customerEmail, {
+      customerEmailSent = await sendPostPurchaseEmail(order.customerEmail, {
         customerName: order.customerName || 'Customer',
         planName: order.packageName,
         dataGb: order.dataAmount,
@@ -126,7 +129,13 @@ export async function POST(
         currency: order.currency,
         orderDate: order.paidAt ?? order.createdAt,
         iccid: firstProfile.iccid ?? null,
-      }, emailLocale).catch((e) => console.error('[Retry] Email failed (non-fatal)', e));
+      }, emailLocale).catch((e) => {
+        console.error('[Retry] Email failed (non-fatal)', e);
+        return false;
+      });
+      if (!customerEmailSent) {
+        console.error('[Retry] Post-purchase email was not accepted', { orderNo: order.orderNo });
+      }
     }
 
     if (!firstProfile) {
@@ -136,7 +145,7 @@ export async function POST(
       );
     }
 
-    sendRetrySucceededEmail({
+    await sendRetrySucceededEmail({
       orderNo: order.orderNo,
       customerName: order.customerName || order.customerEmail,
       customerEmail: order.customerEmail,
@@ -145,25 +154,33 @@ export async function POST(
       totalAmount: Number(order.totalAmount),
       currency: order.currency,
       iccid: firstProfile.iccid ?? null,
+    }).catch(() => false);
+    return NextResponse.json({
+      success: true,
+      message: customerEmailSent
+        ? 'Order fulfilled successfully'
+        : 'Order fulfilled, but the customer email was refused — resend it from this order.',
+      customerEmailSent,
     });
-    return NextResponse.json({ success: true, message: 'Order fulfilled successfully' });
   } catch (e) {
     const errMsg = e instanceof Error ? e.message : String(e);
     await prisma.order.update({
       where: { id: order.id },
       data: { status: 'FAILED', errorMessage: errMsg.slice(0, 1000) },
     });
-    sendRetryFailedEmail({
-      orderNo: order.orderNo,
-      customerName: order.customerName || order.customerEmail,
-      customerEmail: order.customerEmail,
-      packageName: order.packageName,
-      destination: order.destination,
-      totalAmount: Number(order.totalAmount),
-      currency: order.currency,
-      errorMessage: errMsg.slice(0, 300),
-    });
-    checkAndAutoBlockEmail(order.customerEmail).catch(() => {});
+    await Promise.allSettled([
+      sendRetryFailedEmail({
+        orderNo: order.orderNo,
+        customerName: order.customerName || order.customerEmail,
+        customerEmail: order.customerEmail,
+        packageName: order.packageName,
+        destination: order.destination,
+        totalAmount: Number(order.totalAmount),
+        currency: order.currency,
+        errorMessage: errMsg.slice(0, 300),
+      }),
+      checkAndAutoBlockEmail(order.customerEmail),
+    ]);
     return NextResponse.json({ error: errMsg }, { status: 500 });
   }
 }

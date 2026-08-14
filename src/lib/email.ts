@@ -836,7 +836,7 @@ export interface AdminOrderNotificationData {
 const BALANCE_ALERT_USD = Number(process.env.ESIM_BALANCE_ALERT_USD ?? 20);
 
 /** Sends an order notification to the admin email. Fire-and-forget — never blocks order flow. */
-export async function sendAdminOrderNotificationEmail(data: AdminOrderNotificationData): Promise<void> {
+export async function sendAdminOrderNotificationEmail(data: AdminOrderNotificationData): Promise<boolean> {
   const to = adminRecipient();
   const profit = (data.amountCharged - data.supplierCost).toFixed(2);
   const profitColor = data.amountCharged >= data.supplierCost ? '#059669' : '#dc2626';
@@ -864,7 +864,7 @@ export async function sendAdminOrderNotificationEmail(data: AdminOrderNotificati
   </p>
 </div>`.trim();
 
-  sendEmail(to, `New Order: ${data.packageName} — $${data.amountCharged.toFixed(2)}`, html).catch(() => {});
+  return sendEmail(to, `New Order: ${data.packageName} — $${data.amountCharged.toFixed(2)}`, html);
 }
 
 export interface FraudAlertEmailData {
@@ -882,7 +882,7 @@ export interface FraudAlertEmailData {
 }
 
 /** Sends an urgent fraud alert when payment is below supplier cost. Fire-and-forget. */
-export async function sendFraudAlertEmail(data: FraudAlertEmailData): Promise<void> {
+export async function sendFraudAlertEmail(data: FraudAlertEmailData): Promise<boolean> {
   const to = adminRecipient();
   const html = `
 <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; padding: 24px;">
@@ -908,7 +908,44 @@ export async function sendFraudAlertEmail(data: FraudAlertEmailData): Promise<vo
   </p>
 </div>`.trim();
 
-  sendEmail(to, `🚨 FRAUD ALERT: Payment $${data.amountPaid.toFixed(2)} below supplier cost $${data.supplierCost.toFixed(2)} — ${data.packageName}`, html).catch(() => {});
+  return sendEmail(to, `🚨 FRAUD ALERT: Payment $${data.amountPaid.toFixed(2)} below supplier cost $${data.supplierCost.toFixed(2)} — ${data.packageName}`, html);
+}
+
+/*
+  Ticket 039. The one alert that exists because of how this ticket's incident was found: a
+  customer's mail failed and the only person who could tell was the customer. Raised by the
+  purchase path when a customer-facing send returns false, so a resend can happen from the admin
+  panel before anyone writes in. Carries the locale because the resend has to speak the language
+  the buyer bought in.
+
+  If Resend itself is what is broken, this alert dies with it. The `console.error` inside the
+  funnel is then the record, which is why that log line exists too.
+*/
+export async function sendCustomerEmailFailedAlert(data: {
+  kind: string;
+  customerEmail: string;
+  orderNo: string;
+  locale: string;
+}): Promise<boolean> {
+  const to = adminRecipient();
+  const html = `
+<div style="font-family:sans-serif; max-width:560px; margin:0 auto; padding:24px;">
+  <div style="background:#fef2f2; border:2px solid #dc2626; border-radius:10px; padding:16px 20px; margin-bottom:16px;">
+    <h2 style="margin:0 0 6px 0; color:#dc2626; font-size:18px;">📭 Customer email FAILED to send</h2>
+    <p style="margin:0; color:#7f1d1d; font-size:13px;">The order itself is fine. The customer has not been told about it.</p>
+  </div>
+  <table style="width:100%; border-collapse:collapse; font-size:14px; margin-bottom:16px;">
+    <tr><td style="padding:6px 12px 6px 0; color:#64748b;">Email type</td><td style="padding:6px 0;"><strong>${escapeHtml(data.kind)}</strong></td></tr>
+    <tr><td style="padding:6px 12px 6px 0; color:#64748b;">Recipient</td><td style="padding:6px 0;">${escapeHtml(data.customerEmail)}</td></tr>
+    <tr><td style="padding:6px 12px 6px 0; color:#64748b;">Order</td><td style="padding:6px 0; font-family:monospace; font-size:12px;">#${escapeHtml(data.orderNo)}</td></tr>
+    <tr><td style="padding:6px 12px 6px 0; color:#64748b;">Language</td><td style="padding:6px 0;">${escapeHtml(data.locale)}</td></tr>
+  </table>
+  <p style="margin:0 0 12px 0; font-size:13px; color:#7c2d12; background:#fff7ed; border:1px solid #f97316; border-radius:8px; padding:12px;">
+    Open the order in admin and use <strong>Resend email</strong>. Check the function logs for the <code>[Email] Resend rejected</code> line to see why it was refused.
+  </p>
+  <p style="margin:0;"><a href="${escapeHtml(adminUrl())}" style="display:inline-block; background:#dc2626; color:white; padding:10px 20px; text-decoration:none; border-radius:6px; font-size:14px;">View Orders</a></p>
+</div>`.trim();
+  return sendEmail(to, `📭 Customer email FAILED: ${data.kind} — #${data.orderNo}`, html);
 }
 
 // ─── Admin event email helpers ────────────────────────────────────────────────
@@ -939,8 +976,8 @@ function orderTable(d: AdminOrderEventData): string {
 <p style="margin:0;"><a href="${escapeHtml(adminUrl())}" style="display:inline-block; background:#0f172a; color:white; padding:10px 20px; text-decoration:none; border-radius:6px; font-size:14px;">View Orders</a></p>`;
 }
 
-/** Admin alert: order reached FAILED status (eSIM or fraud). Fire-and-forget. */
-export function sendOrderFailedEmail(data: AdminOrderEventData & { errorMessage: string }): void {
+/** Admin alert: order reached FAILED status (eSIM or fraud). */
+export async function sendOrderFailedEmail(data: AdminOrderEventData & { errorMessage: string }): Promise<boolean> {
   const to = adminRecipient();
   const html = `
 <div style="font-family:sans-serif; max-width:560px; margin:0 auto; padding:24px;">
@@ -950,11 +987,11 @@ export function sendOrderFailedEmail(data: AdminOrderEventData & { errorMessage:
   </div>
   ${orderTable(data)}
 </div>`.trim();
-  sendEmail(to, `⚠️ Order FAILED: #${data.orderNo} — ${data.customerName}`, html).catch(() => {});
+  return sendEmail(to, `⚠️ Order FAILED: #${data.orderNo} — ${data.customerName}`, html);
 }
 
-/** Admin alert: admin retry succeeded. Fire-and-forget. */
-export function sendRetrySucceededEmail(data: AdminOrderEventData & { iccid?: string | null }): void {
+/** Admin alert: admin retry succeeded. */
+export async function sendRetrySucceededEmail(data: AdminOrderEventData & { iccid?: string | null }): Promise<boolean> {
   const to = adminRecipient();
   const iccidRow = data.iccid
     ? `<tr><td style="padding: 6px 12px 6px 0; color: #64748b;">ICCID</td><td style="padding: 6px 0; font-family:monospace; font-size:12px;">${escapeHtml(data.iccid)}</td></tr>`
@@ -972,11 +1009,11 @@ export function sendRetrySucceededEmail(data: AdminOrderEventData & { iccid?: st
   </table>
   <p style="margin:0;"><a href="${escapeHtml(adminUrl())}" style="display:inline-block; background:#16a34a; color:white; padding:10px 20px; text-decoration:none; border-radius:6px; font-size:14px;">View Orders</a></p>
 </div>`.trim();
-  sendEmail(to, `✅ Retry Succeeded: #${data.orderNo} — ${data.customerName}`, html).catch(() => {});
+  return sendEmail(to, `✅ Retry Succeeded: #${data.orderNo} — ${data.customerName}`, html);
 }
 
-/** Admin alert: admin retry failed again. Fire-and-forget. */
-export function sendRetryFailedEmail(data: AdminOrderEventData & { errorMessage: string }): void {
+/** Admin alert: admin retry failed again. */
+export async function sendRetryFailedEmail(data: AdminOrderEventData & { errorMessage: string }): Promise<boolean> {
   const to = adminRecipient();
   const html = `
 <div style="font-family:sans-serif; max-width:560px; margin:0 auto; padding:24px;">
@@ -986,11 +1023,11 @@ export function sendRetryFailedEmail(data: AdminOrderEventData & { errorMessage:
   </div>
   ${orderTable(data)}
 </div>`.trim();
-  sendEmail(to, `❌ Retry Failed: #${data.orderNo} — ${data.customerName}`, html).catch(() => {});
+  return sendEmail(to, `❌ Retry Failed: #${data.orderNo} — ${data.customerName}`, html);
 }
 
-/** Admin alert: eSIM was cancelled via admin. Fire-and-forget. */
-export function sendEsimCancelledEmail(data: AdminOrderEventData): void {
+/** Admin alert: eSIM was cancelled via admin. */
+export async function sendEsimCancelledEmail(data: AdminOrderEventData): Promise<boolean> {
   const to = adminRecipient();
   const html = `
 <div style="font-family:sans-serif; max-width:560px; margin:0 auto; padding:24px;">
@@ -999,11 +1036,11 @@ export function sendEsimCancelledEmail(data: AdminOrderEventData): void {
   </div>
   ${orderTable(data)}
 </div>`.trim();
-  sendEmail(to, `🚫 eSIM Cancelled: #${data.orderNo} — ${data.customerName}`, html).catch(() => {});
+  return sendEmail(to, `🚫 eSIM Cancelled: #${data.orderNo} — ${data.customerName}`, html);
 }
 
-/** Admin alert: refund issued via Paddle. Fire-and-forget. */
-export function sendRefundIssuedEmail(data: AdminOrderEventData): void {
+/** Admin alert: refund issued via Paddle. */
+export async function sendRefundIssuedEmail(data: AdminOrderEventData): Promise<boolean> {
   const to = adminRecipient();
   const html = `
 <div style="font-family:sans-serif; max-width:560px; margin:0 auto; padding:24px;">
@@ -1012,7 +1049,7 @@ export function sendRefundIssuedEmail(data: AdminOrderEventData): void {
   </div>
   ${orderTable(data)}
 </div>`.trim();
-  sendEmail(to, `💸 Refund Issued: #${data.orderNo} — ${data.currency} ${data.totalAmount.toFixed(2)}`, html).catch(() => {});
+  return sendEmail(to, `💸 Refund Issued: #${data.orderNo} — ${data.currency} ${data.totalAmount.toFixed(2)}`, html);
 }
 
 export interface AbandonedCheckoutItem {
@@ -1023,8 +1060,8 @@ export interface AbandonedCheckoutItem {
   minutesAgo: number;
 }
 
-/** Admin digest: new abandoned checkouts detected by cron. Fire-and-forget. */
-export function sendAbandonedCheckoutEmail(items: AbandonedCheckoutItem[]): void {
+/** Admin digest: new abandoned checkouts detected by cron. */
+export async function sendAbandonedCheckoutEmail(items: AbandonedCheckoutItem[]): Promise<boolean> {
   const to = adminRecipient();
   const rows = items.map((it) => `
   <tr>
@@ -1049,7 +1086,7 @@ export function sendAbandonedCheckoutEmail(items: AbandonedCheckoutItem[]): void
   </table>
   <p style="margin: 20px 0 0 0;"><a href="${escapeHtml(adminUrl())}" style="display:inline-block; background:#0f172a; color:white; padding:10px 20px; text-decoration:none; border-radius:6px; font-size:14px;">View Orders</a></p>
 </div>`.trim();
-  sendEmail(to, `👻 ${items.length} Abandoned Checkout${items.length === 1 ? '' : 's'} Detected`, html).catch(() => {});
+  return sendEmail(to, `👻 ${items.length} Abandoned Checkout${items.length === 1 ? '' : 's'} Detected`, html);
 }
 
 // ─── Contact form ─────────────────────────────────────────────────────────────
@@ -1240,7 +1277,7 @@ export interface ContactAdminNotificationData {
  * reference and the deep link are here because the previous version left Gabriel with a name, an email
  * and no way to act without first going to look the person up.
  */
-export function sendContactAdminNotificationEmail(data: ContactAdminNotificationData): void {
+export async function sendContactAdminNotificationEmail(data: ContactAdminNotificationData): Promise<boolean> {
   const to = adminRecipient();
   const subject = `${data.urgent ? '[URGENT] ' : ''}[Sim2Me] ${data.subject} — ${data.ref}`;
   const phoneRow = data.phone
@@ -1264,7 +1301,7 @@ export function sendContactAdminNotificationEmail(data: ContactAdminNotification
   <p style="margin-top: 20px;"><a href="${baseUrl()}/admin/contact" style="display:inline-block; background:#0f172a; color:white; padding:10px 20px; text-decoration:none; border-radius:6px; font-size:14px;">Open in admin</a></p>
 </div>`.trim();
 
-  sendEmail(to, subject, html, { text: htmlToText(html), replyTo: data.email }).catch(() => {});
+  return sendEmail(to, subject, html, { text: htmlToText(html), replyTo: data.email });
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -1363,7 +1400,14 @@ async function sendEmail(to: string, subject: string, html: string, opts?: SendO
   try {
     const { Resend } = await import('resend');
     const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({
+    /*
+      Ticket 039. `emails.send` resolves with `{ data, error }` and only throws on a transport
+      failure, so the previous `await` without a look at the result reported a refused message
+      — quota, suppression list, bad recipient — to every caller as a success. Every "the
+      customer never got it" report was unfalsifiable, because the only record of what happened
+      lived in Resend's dashboard and not in our logs.
+    */
+    const { data, error } = await resend.emails.send({
       from: FROM,
       to: [to],
       subject,
@@ -1372,6 +1416,12 @@ async function sendEmail(to: string, subject: string, html: string, opts?: SendO
       ...(opts?.replyTo ? { replyTo: opts.replyTo } : {}),
       ...(opts?.attachments?.length ? { attachments: opts.attachments } : {}),
     });
+    if (error) {
+      console.error('[Email] Resend rejected', { to, subject, name: error.name, message: error.message });
+      return false;
+    }
+    // The message id is what makes a delivery question answerable from our own logs.
+    console.log('[Email] sent', { to, subject, id: data?.id });
     return true;
   } catch (e) {
     console.error('[Email] Send failed:', e);

@@ -12,7 +12,7 @@ import { NextResponse } from 'next/server';
 import { verifyPaddleWebhook, safeJsonParse } from '@/lib/paddle';
 import { prisma } from '@/lib/prisma';
 import { purchasePackage, getEsimProfileWithRetry, getPackages, formatDataVolume, getBalance } from '@/lib/esimaccess';
-import { sendPostPurchaseEmail, sendOrderDelayedEmail, sendAdminOrderNotificationEmail, sendFraudAlertEmail, sendOrderFailedEmail, toEmailLocale } from '@/lib/email';
+import { sendPostPurchaseEmail, sendOrderDelayedEmail, sendAdminOrderNotificationEmail, sendFraudAlertEmail, sendOrderFailedEmail, sendCustomerEmailFailedAlert, toEmailLocale } from '@/lib/email';
 import { autoBlock, checkAndAutoBlockEmail } from '@/lib/fraud';
 import { hash } from 'bcryptjs';
 
@@ -252,9 +252,25 @@ export async function POST(request: Request) {
     },
   });
 
-  // Notify admin of every new order — fire-and-forget. The balance lookup rides inside the detached
-  // chain so it cannot add its latency to fulfillment.
-  void safeEsimBalanceUsd()
+  /*
+    Ticket 039. Every mail this handler sends is collected here and joined immediately before the
+    response, rather than left running loose.
+
+    On Vercel the instance freezes the moment the response is flushed, which suspended any send
+    still in flight until that same instance happened to be thawed by a later request — an
+    arbitrary delay of minutes, and an outright loss if the instance was recycled instead. The
+    admin notification escaped it by being started early enough to finish during provisioning;
+    the customer's mail, started on the last line, was always the one that got frozen. Hence the
+    exact shape of the bug report: admin notified, customer silent.
+
+    Sends still start where they started before, so nothing waits on anything it did not already
+    wait on. Only the join at the end is new.
+  */
+  const pending: Promise<unknown>[] = [];
+
+  // The balance lookup rides inside the chain so it cannot add its latency to fulfillment.
+  pending.push(
+    safeEsimBalanceUsd()
     .then((esimBalanceUsd) =>
       sendAdminOrderNotificationEmail({
         customerName: customerName || customerEmail,
@@ -271,7 +287,8 @@ export async function POST(request: Request) {
         esimBalanceUsd,
       }),
     )
-    .catch(() => {});
+      .catch(() => {}),
+  );
 
   // Safety guard: if payment is below supplier cost, block fulfillment immediately.
   // supplierCostUsd is undefined only when the package could not be resolved from the API —
@@ -288,33 +305,38 @@ export async function POST(request: Request) {
         errorMessage: `Blocked: payment $${totalAmount.toFixed(2)} is below supplier cost $${supplierCostUsd.toFixed(2)}. Deficit: $${deficit.toFixed(2)}.`,
       },
     });
-    sendFraudAlertEmail({
-      customerName: customerName || customerEmail,
-      customerEmail,
-      packageName,
-      destination,
-      amountPaid: totalAmount,
-      supplierCost: supplierCostUsd,
-      deficit,
-      paddleTransactionId: transactionId,
-      orderId: order.id,
-      orderNo: order.orderNo,
-      adminOrdersUrl: `${baseUrl()}/admin/orders`,
-    }).catch(() => {});
-    sendOrderFailedEmail({
-      orderNo: order.orderNo,
-      customerName: customerName || customerEmail,
-      customerEmail,
-      packageName,
-      destination,
-      totalAmount,
-      currency,
-      errorMessage: `Blocked: underpayment $${totalAmount.toFixed(2)} vs supplier cost $${supplierCostUsd.toFixed(2)}`,
-    });
+    pending.push(
+      sendFraudAlertEmail({
+        customerName: customerName || customerEmail,
+        customerEmail,
+        packageName,
+        destination,
+        amountPaid: totalAmount,
+        supplierCost: supplierCostUsd,
+        deficit,
+        paddleTransactionId: transactionId,
+        orderId: order.id,
+        orderNo: order.orderNo,
+        adminOrdersUrl: `${baseUrl()}/admin/orders`,
+      }).catch(() => {}),
+    );
+    pending.push(
+      sendOrderFailedEmail({
+        orderNo: order.orderNo,
+        customerName: customerName || customerEmail,
+        customerEmail,
+        packageName,
+        destination,
+        totalAmount,
+        currency,
+        errorMessage: `Blocked: underpayment $${totalAmount.toFixed(2)} vs supplier cost $${supplierCostUsd.toFixed(2)}`,
+      }).catch(() => {}),
+    );
     // Auto-block email immediately — email is validated and not spoofable
     // Note: checkoutIp travels via customData (browser-controlled) so we don't auto-block
     // by IP here; IP blocking is enforced at checkout time using the real server IP
-    autoBlock('EMAIL', customerEmail, 'Underpayment fraud').catch(() => {});
+    pending.push(autoBlock('EMAIL', customerEmail, 'Underpayment fraud').catch(() => {}));
+    await Promise.allSettled(pending);
     return NextResponse.json({ received: true });
   }
 
@@ -381,34 +403,62 @@ export async function POST(request: Request) {
     // Send email independently — never fail the order if email fails
     const accountLink = `${baseUrl()}/${emailLocale}/account`;
     if (firstProfile) {
-      sendPostPurchaseEmail(customerEmail, {
-        customerName: customerName || 'Customer',
-        planName: packageName,
-        dataGb: dataAmountStr,
-        validityDays: validityStr,
-        qrCodeUrl: firstProfile.qrCodeUrl || null,
-        smdpAddress: firstProfile.smdpAddress,
-        activationCode: firstProfile.activationCode,
-        loginLink: accountLink,
-        email: customerEmail,
-        tempPassword,
-        orderNo: order.orderNo,
-        amountPaid: totalAmount,
-        currency,
-        orderDate: order.paidAt ?? order.createdAt,
-        iccid: firstProfile.iccid ?? null,
-      }, emailLocale).catch((e) => console.error('[Paddle webhook] Email send failed (non-fatal)', e));
+      pending.push(
+        sendPostPurchaseEmail(customerEmail, {
+          customerName: customerName || 'Customer',
+          planName: packageName,
+          dataGb: dataAmountStr,
+          validityDays: validityStr,
+          qrCodeUrl: firstProfile.qrCodeUrl || null,
+          smdpAddress: firstProfile.smdpAddress,
+          activationCode: firstProfile.activationCode,
+          loginLink: accountLink,
+          email: customerEmail,
+          tempPassword,
+          orderNo: order.orderNo,
+          amountPaid: totalAmount,
+          currency,
+          orderDate: order.paidAt ?? order.createdAt,
+          iccid: firstProfile.iccid ?? null,
+        }, emailLocale)
+          // A paid, provisioned order whose mail did not go out is the one failure the customer
+          // finds before we do, so it is escalated rather than logged.
+          .then((ok) => {
+            if (ok) return null;
+            console.error('[Paddle webhook] Post-purchase email rejected', { orderNo: order.orderNo, customerEmail });
+            return sendCustomerEmailFailedAlert({
+              kind: 'eSIM delivery (post-purchase)',
+              customerEmail,
+              orderNo: order.orderNo,
+              locale: emailLocale,
+            });
+          })
+          .catch((e) => console.error('[Paddle webhook] Email send failed (non-fatal)', e)),
+      );
     } else {
       // Paid, provisioned at the supplier, but no profile came back within the retry window. This
       // branch used to send nothing at all, so a customer who had just been charged heard silence.
-      sendOrderDelayedEmail(customerEmail, {
-        customerName: customerName || 'Customer',
-        orderNo: order.orderNo,
-        planName: packageName,
-        amountPaid: totalAmount,
-        currency,
-        accountLink,
-      }, emailLocale).catch((e) => console.error('[Paddle webhook] Delayed email failed (non-fatal)', e));
+      pending.push(
+        sendOrderDelayedEmail(customerEmail, {
+          customerName: customerName || 'Customer',
+          orderNo: order.orderNo,
+          planName: packageName,
+          amountPaid: totalAmount,
+          currency,
+          accountLink,
+        }, emailLocale)
+          .then((ok) => {
+            if (ok) return null;
+            console.error('[Paddle webhook] Delayed email rejected', { orderNo: order.orderNo, customerEmail });
+            return sendCustomerEmailFailedAlert({
+              kind: 'order delayed',
+              customerEmail,
+              orderNo: order.orderNo,
+              locale: emailLocale,
+            });
+          })
+          .catch((e) => console.error('[Paddle webhook] Delayed email failed (non-fatal)', e)),
+      );
     }
   } catch (e) {
     const errMsg = e instanceof Error ? e.message : String(e);
@@ -417,28 +467,51 @@ export async function POST(request: Request) {
       where: { id: order.id },
       data: { status: 'FAILED', errorMessage: errMsg.slice(0, 1000) },
     });
-    sendOrderFailedEmail({
-      orderNo: order.orderNo,
-      customerName: customerName || customerEmail,
-      customerEmail,
-      packageName,
-      destination,
-      totalAmount,
-      currency,
-      errorMessage: errMsg.slice(0, 300),
-    });
+    pending.push(
+      sendOrderFailedEmail({
+        orderNo: order.orderNo,
+        customerName: customerName || customerEmail,
+        customerEmail,
+        packageName,
+        destination,
+        totalAmount,
+        currency,
+        errorMessage: errMsg.slice(0, 300),
+      }).catch(() => {}),
+    );
     // The customer paid. Whatever broke on our side, they get told something — never the error
     // itself, which is for the admin alert above.
-    sendOrderDelayedEmail(customerEmail, {
-      customerName: customerName || 'Customer',
-      orderNo: order.orderNo,
-      planName: packageName,
-      amountPaid: totalAmount,
-      currency,
-      accountLink: `${baseUrl()}/${emailLocale}/account`,
-    }, emailLocale).catch(() => {});
-    checkAndAutoBlockEmail(customerEmail).catch(() => {});
+    pending.push(
+      sendOrderDelayedEmail(customerEmail, {
+        customerName: customerName || 'Customer',
+        orderNo: order.orderNo,
+        planName: packageName,
+        amountPaid: totalAmount,
+        currency,
+        accountLink: `${baseUrl()}/${emailLocale}/account`,
+      }, emailLocale)
+        .then((ok) => {
+          if (ok) return null;
+          console.error('[Paddle webhook] Delayed email rejected after failure', { orderNo: order.orderNo, customerEmail });
+          return sendCustomerEmailFailedAlert({
+            kind: 'order delayed (after fulfilment failure)',
+            customerEmail,
+            orderNo: order.orderNo,
+            locale: emailLocale,
+          });
+        })
+        .catch(() => {}),
+    );
+    pending.push(checkAndAutoBlockEmail(customerEmail).catch(() => {}));
   }
+
+  /*
+    Ticket 039. The join. Nothing above is awaited at its call site, so the sends still overlap
+    each other and overlap provisioning; this is the single point where the handler waits for all
+    of them. `allSettled`, never `all`: a refused mail must not turn a captured payment into a
+    non-2xx, which would make Paddle retry a transaction that has already been fulfilled.
+  */
+  await Promise.allSettled(pending);
 
   return NextResponse.json({ received: true });
 }
