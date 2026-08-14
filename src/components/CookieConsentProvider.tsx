@@ -21,6 +21,7 @@ import { CookiePreferencesModal } from '@/components/CookiePreferencesModal';
 
 const GTM_ID = 'GTM-NSQKP7XQ';
 const GA_ID = 'G-Y5BJ7VNNYM';
+const ADS_ID = 'AW-18384646889';
 
 type CookieContextValue = {
   consent: CookieConsentState | null;
@@ -71,10 +72,12 @@ function loadGA(): void {
   gtagScript.src = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`;
   document.head.appendChild(gtagScript);
   const configScript = document.createElement('script');
+  // One gtag.js instance serves both destinations — Google forbids a second Google tag on the page.
   configScript.innerHTML = `window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());
-gtag('config', '${GA_ID}');`;
+gtag('config', '${GA_ID}');
+gtag('config', '${ADS_ID}');`;
   document.head.appendChild(configScript);
 }
 
