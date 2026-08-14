@@ -15,6 +15,7 @@ export interface GaItem {
 }
 
 const CURRENCY = 'USD';
+const ADS_ID = 'AW-18384646889';
 
 function gtagSafe(eventName: string, params: Record<string, unknown>): void {
   if (typeof window === 'undefined') return;
@@ -68,4 +69,12 @@ export function trackPurchase(transactionId: string, items: GaItem[], value: num
     // sessionStorage unavailable (private mode) — fire anyway
   }
   gtagSafe('purchase', { transaction_id: transactionId, currency: CURRENCY, value, items });
+  // Same moment, same dedup: the Ads action created by the setup wizard is
+  // conversion_event_purchase, not purchase. GA4 keeps the ecommerce event.
+  gtagSafe('conversion_event_purchase', {
+    send_to: ADS_ID,
+    transaction_id: transactionId,
+    currency: CURRENCY,
+    value,
+  });
 }

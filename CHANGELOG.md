@@ -14,9 +14,9 @@ invisible to the ad platform paying for the visit.
   ahead of consent.
 - Verified on production: `AW-18384646889` and `G-Y5BJ7VNNYM` both ship in the same chunk served to
   `/en`, and `/en`, `/he`, `/ar`, `/hi` and `/en/success` all return 200.
-- Purchases are **not** counted as conversions yet. That needs the conversion event itself, which is
-  still open pending the event name the Ads account expects — `conversion_event_purchase` (created
-  by the setup wizard, currently receiving no data) or the `purchase` the site already fires.
+- `trackPurchase` now also fires `conversion_event_purchase` to `AW-18384646889` with value,
+  currency and `transaction_id`. Same once-per-order guard, same success page, all four locales.
+  GA4 still gets `purchase`.
 
 ### Fixed (the security policy was blocking the ads tag it had never heard of)
 
