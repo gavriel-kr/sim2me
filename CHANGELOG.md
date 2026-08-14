@@ -2,6 +2,22 @@
 
 ## [Unreleased]
 
+### Added (Google Ads can now see the purchases GA4 was already measuring)
+
+The account had a conversion action waiting and no tag to feed it, so every sale the site made was
+invisible to the ad platform paying for the visit.
+
+- Added `AW-18384646889` as a second `gtag('config')` on the existing gtag.js instance in
+  `CookieConsentProvider.tsx`. Google's own instructions ask for a full tag block in `<head>`, which
+  would have put a second Google tag on a page that already has one — something Google explicitly
+  forbids. One loader, two destinations, and the ads tag inherits the cookie gate instead of running
+  ahead of consent.
+- Verified on production: `AW-18384646889` and `G-Y5BJ7VNNYM` both ship in the same chunk served to
+  `/en`, and `/en`, `/he`, `/ar`, `/hi` and `/en/success` all return 200.
+- Purchases are **not** counted as conversions yet. That needs the conversion event itself, which is
+  still open pending the event name the Ads account expects — `conversion_event_purchase` (created
+  by the setup wizard, currently receiving no data) or the `purchase` the site already fires.
+
 ### Changed (Ticket 038 amendment — Hindi is now detected, not offered)
 
 Gabriel reversed the original decision: a Hindi-preferring browser should open in Hindi on
