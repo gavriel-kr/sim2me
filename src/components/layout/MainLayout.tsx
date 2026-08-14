@@ -4,7 +4,6 @@ import { Header } from './Header';
 import { Footer } from './Footer';
 import { StickyHelpButton } from './StickyHelpButton';
 import { AccessibilityToolbar } from './AccessibilityToolbar';
-import { LanguageSuggestBanner } from '@/components/LanguageSuggestBanner';
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -13,7 +12,6 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
       <a href="#main-content" className="skip-to-content">
         Skip to main content
       </a>
-      <LanguageSuggestBanner />
       <Header />
       <main id="main-content" className="min-h-[calc(100vh-4rem)] flex flex-col" tabIndex={-1}>
         {children}

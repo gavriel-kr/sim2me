@@ -2,6 +2,22 @@
 
 ## [Unreleased]
 
+### Changed (Ticket 038 amendment — Hindi is now detected, not offered)
+
+Gabriel reversed the original decision: a Hindi-preferring browser should open in Hindi on
+arrival, the same way a Hebrew-preferring one opens in Hebrew, rather than landing on English
+behind a banner.
+
+- Removed the `accept-language` filter that stripped `hi` before `next-intl` ran its detection.
+  All four locales are now treated alike by one mechanism instead of three by one and Hindi by
+  another.
+- Removed the Hindi suggestion banner and deleted `LanguageSuggestBanner.tsx`. It had no reason to
+  exist once detection did the same job, and dead UI is worse than no UI.
+- Verified per `accept-language`: `hi` → `/hi`, `hi-IN,hi;q=0.9,en;q=0.8` → `/hi`, `he-IL` → `/he`,
+  `ar` → `/ar`, `en-US` → `/en`, and an unsupported `fr-FR` still falls to `/en`.
+- An explicit choice still wins over the browser: `NEXT_LOCALE=en` with a Hindi browser lands on
+  `/en`, `NEXT_LOCALE=hi` with an English browser lands on `/hi`.
+
 ### Fixed (Ticket 039 — every transactional email was one frozen instance away from never arriving)
 
 A live purchase exposed it: the order was captured at 04:41:14, the admin was notified at
