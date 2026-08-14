@@ -18,6 +18,18 @@ invisible to the ad platform paying for the visit.
   still open pending the event name the Ads account expects — `conversion_event_purchase` (created
   by the setup wizard, currently receiving no data) or the `purchase` the site already fires.
 
+### Fixed (the security policy was blocking the ads tag it had never heard of)
+
+Tag Assistant loaded all three tags and then logged a blocked request to `stats.g.doubleclick.net`.
+The `Content-Security-Policy` in `next.config.mjs` was written when the site had GA4 and Paddle and
+nothing else, so the browser fetched the Ads tag and refused everything it tried to send.
+
+- Added the Google Ads hosts to `script-src`, `img-src`, `connect-src` and `frame-src`. Purely
+  additive — Paddle, Cloudflare, Turnstile and the analytics hosts are untouched, which matters
+  because a mangled policy here takes checkout down with it.
+- Verified against the live header after deploy, and `/en/checkout` plus
+  `/api/checkout/health` (`ok: true`, Paddle ping included) confirm the payment path still works.
+
 ### Changed (Ticket 038 amendment — Hindi is now detected, not offered)
 
 Gabriel reversed the original decision: a Hindi-preferring browser should open in Hindi on
