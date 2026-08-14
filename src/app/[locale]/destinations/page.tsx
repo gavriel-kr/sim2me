@@ -7,6 +7,7 @@ const seoByLocale: Record<string, { title: string; desc: string }> = {
   en: { title: 'eSIM Destinations – Browse Plans for 200+ Countries & Regions', desc: 'Find eSIM data plans for any country or region. Compare prices, data allowances, and coverage. Europe, Asia, Americas, Africa, Middle East and more.' },
   he: { title: 'יעדי eSIM – חבילות ל-200+ מדינות ואזורים', desc: 'מצא חבילות eSIM לכל מדינה או אזור. השווה מחירים, נפחי נתונים וכיסוי. אירופה, אסיה, אמריקה, אפריקה, המזרח התיכון ועוד.' },
   ar: { title: 'وجهات eSIM – خطط لأكثر من 200 دولة ومنطقة', desc: 'اعثر على خطط بيانات eSIM لأي دولة أو منطقة. قارن الأسعار وحجم البيانات والتغطية. أوروبا، آسيا، أمريكا، أفريقيا والمزيد.' },
+  hi: { title: 'eSIM गंतव्य – 200+ देशों और क्षेत्रों के लिए प्लान', desc: 'किसी भी देश या क्षेत्र के लिए eSIM डेटा प्लान खोजें। कीमत, डेटा और कवरेज की तुलना करें। यूरोप, एशिया, अमेरिका, अफ़्रीका और अन्य।' },
 };
 
 type Props = {

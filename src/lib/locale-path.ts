@@ -3,7 +3,7 @@
  * Must only strip locale when it's a complete path segment (not e.g. /ar in /articles).
  * Must add slash between locale and path to avoid /hearticles.
  */
-const LOCALE_REGEX = /^\/(en|he|ar)(?:\/|$)/;
+const LOCALE_REGEX = /^\/(en|he|ar|hi)(?:\/|$)/;
 
 export function buildLocalePath(pathname: string, localeCode: string): string {
   const strippedPath = pathname.replace(LOCALE_REGEX, '') || '/';

@@ -21,6 +21,15 @@ assert.strictEqual(buildLocalePath('/en/contact', 'ar'), '/ar/contact');
 assert.strictEqual(buildLocalePath('/en/account', 'he'), '/he/account');
 assert.strictEqual(buildLocalePath('/en/account/orders', 'ar'), '/ar/account/orders');
 
+// Hindi (ticket 038) — "hi" is also a substring of "how-it-works" and "history"
+assert.strictEqual(buildLocalePath('/en/help', 'hi'), '/hi/help');
+assert.strictEqual(buildLocalePath('/hi/help', 'en'), '/en/help');
+assert.strictEqual(buildLocalePath('/hi/articles/esim-spain', 'he'), '/he/articles/esim-spain');
+assert.strictEqual(buildLocalePath('/hi', 'en'), '/en');
+assert.strictEqual(buildLocalePath('/hi', 'ar'), '/ar');
+assert.strictEqual(buildLocalePath('/how-it-works', 'hi'), '/hi/how-it-works');
+assert.strictEqual(buildLocalePath('/en/how-it-works', 'hi'), '/hi/how-it-works');
+
 // Root
 assert.strictEqual(buildLocalePath('/en', 'he'), '/he');
 assert.strictEqual(buildLocalePath('/he', 'en'), '/en');

@@ -11,6 +11,7 @@ const seoByLocale: Record<string, { title: string; desc: string }> = {
   en: { title: 'eSIM Compatible Devices – Full List of Supported Phones & Tablets', desc: 'Check if your phone supports eSIM. Full list: iPhone 16–XS, Samsung Galaxy S25–S20, Google Pixel, iPad, Huawei, Xiaomi and more. How to check compatibility.' },
   he: { title: 'מכשירים תואמי eSIM – רשימה מלאה של טלפונים וטאבלטים', desc: 'בדוק אם הטלפון שלך תומך ב-eSIM. רשימה מלאה: אייפון, סמסונג, גוגל פיקסל, אייפד ועוד. איך לבדוק תאימות.' },
   ar: { title: 'الأجهزة المتوافقة مع eSIM – القائمة الكاملة للهواتف والأجهزة اللوحية', desc: 'تحقق من دعم هاتفك لـ eSIM. القائمة الكاملة: iPhone وSamsung Galaxy وGoogle Pixel وiPad والمزيد.' },
+  hi: { title: 'eSIM समर्थित डिवाइस – फ़ोन और टैबलेट की पूरी सूची', desc: 'जाँचें कि आपका फ़ोन eSIM समर्थित है या नहीं। पूरी सूची: iPhone, Samsung Galaxy, Google Pixel, iPad और अन्य।' },
 };
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {

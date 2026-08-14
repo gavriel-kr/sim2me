@@ -32,10 +32,12 @@ const defaultNavLinks = [
   { href: '/help', key: 'help' },
 ];
 
+/* Display order, chosen by Gabriel: English, Hindi, Arabic, Hebrew. Not the routing order. */
 const locales = [
   { code: 'en', label: 'English', flag: '🇬🇧' },
-  { code: 'he', label: 'עברית', flag: '🇮🇱' },
+  { code: 'hi', label: 'हिन्दी', flag: '🇮🇳' },
   { code: 'ar', label: 'العربية', flag: '🇸🇦' },
+  { code: 'he', label: 'עברית', flag: '🇮🇱' },
 ] as const;
 
 const defaultLogo = (

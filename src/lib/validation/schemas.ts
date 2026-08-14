@@ -97,7 +97,7 @@ export const internalSaleSchema = z.object({
   phone: z.string().regex(e164Regex, 'Invalid phone number').optional(),
   priceToCustomer: z.number().nonnegative('Price cannot be negative').max(100000),
   paymentNote: z.string().max(500).optional(),
-  emailLocale: z.enum(['he', 'en', 'ar']),
+  emailLocale: z.enum(['he', 'en', 'ar', 'hi']),
 }).refine((d) => Boolean(d.customerId || d.email), {
   message: 'A customer id or an email is required',
   path: ['email'],

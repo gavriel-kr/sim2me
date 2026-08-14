@@ -1,7 +1,7 @@
 import { notFound, redirect } from 'next/navigation';
 import { setRequestLocale } from 'next-intl/server';
 import { routing } from '@/i18n/routing';
-import { getArticleBySlug, getArticleHreflangs, getRelatedArticlesForCarousel, type ArticleLocale } from '@/lib/articles';
+import { getArticleBySlug, getArticleHreflangs, getRelatedArticlesForCarousel, toArticleLocale } from '@/lib/articles';
 import { getArticlesDefaultImage } from '@/lib/articles-default-image';
 import { ArticleDetail } from './ArticleDetail';
 import { MainLayout } from '@/components/layout/MainLayout';
@@ -19,7 +19,7 @@ type Props = { params: Promise<{ locale: string; slug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, slug } = await params;
-  const article = await getArticleBySlug(slug, locale as ArticleLocale);
+  const article = await getArticleBySlug(slug, toArticleLocale(locale));
   if (!article) return { title: 'Not found' };
 
   const prefix = localePrefix(locale);
@@ -34,7 +34,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: article.metaTitle || article.title,
     description: article.metaDesc || article.excerpt || '',
-    robots: 'index, follow',
+    // A Hindi URL serving the English article would compete with the English one for the same text.
+    robots: locale === 'hi' ? { index: false, follow: true } : 'index, follow',
     alternates: {
       canonical,
       languages,
@@ -52,12 +53,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ArticleDetailPage({ params }: Props) {
   const { locale, slug } = await params;
-  if (!routing.locales.includes(locale as 'en' | 'he' | 'ar')) notFound();
+  if (!routing.locales.includes(locale as (typeof routing.locales)[number])) notFound();
   setRequestLocale(locale);
 
   let article: Awaited<ReturnType<typeof getArticleBySlug>>;
   try {
-    article = await getArticleBySlug(slug, locale as ArticleLocale);
+    article = await getArticleBySlug(slug, toArticleLocale(locale));
   } catch {
     redirect(locale === 'en' ? '/articles' : `/${locale}/articles`);
   }
@@ -74,7 +75,7 @@ export default async function ArticleDetailPage({ params }: Props) {
   let defaultImage: Awaited<ReturnType<typeof getArticlesDefaultImage>> = null;
   try {
     [relatedArticles, defaultImage] = await Promise.all([
-      article.showRelatedArticles !== false ? getRelatedArticlesForCarousel(article.id, locale as ArticleLocale) : Promise.resolve([]),
+      article.showRelatedArticles !== false ? getRelatedArticlesForCarousel(article.id, toArticleLocale(locale)) : Promise.resolve([]),
       getArticlesDefaultImage(),
     ]);
   } catch {

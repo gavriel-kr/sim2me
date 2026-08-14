@@ -12,7 +12,7 @@ type Props = {
 };
 
 export function CookiePreferencesModal({ consent, onSave, onClose }: Props) {
-  const locale = useLocale() as 'en' | 'he' | 'ar';
+  const locale = useLocale() as keyof typeof cookieTranslations;
   const t = cookieTranslations[locale] ?? cookieTranslations.en;
 
   const [analytics, setAnalytics] = useState(consent?.analytics ?? false);

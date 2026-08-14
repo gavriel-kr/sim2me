@@ -72,6 +72,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const prefix = `/${locale}`;
 
     for (const page of staticPages) {
+      // The Hindi articles index lists English articles, and is marked noindex for that reason.
+      if (locale === 'hi' && page.path === '/articles') continue;
       entries.push({
         url: `${baseUrl}${prefix}${page.path || ''}`,
         lastModified: now,
@@ -90,9 +92,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   }
 
+  /*
+    Articles are listed for the locales they are actually written in, which is not every routing locale.
+    Hindi has no article columns and its article URLs serve the English text, so submitting them would
+    offer the crawler a second address for a page it already has.
+  */
   const statusByLocale = { en: 'statusEn' as const, he: 'statusHe' as const, ar: 'statusAr' as const };
   for (const article of articles) {
-    for (const locale of routing.locales) {
+    for (const locale of ['en', 'he', 'ar'] as const) {
       if (article[statusByLocale[locale]] === 'PUBLISHED') {
         const prefix = `/${locale}`;
         entries.push({

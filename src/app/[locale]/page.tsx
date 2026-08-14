@@ -24,6 +24,10 @@ const seoByLocale: Record<string, { title: string; description: string }> = {
     title: 'اشترِ eSIM أونلاين – بيانات سفر فورية لأكثر من 200 دولة',
     description: 'احصل على eSIM فوري للسفر. بدون شريحة فيزيائية، بدون رسوم تجوال. قارن الخطط لأكثر من 200 دولة واتصل في دقائق.',
   },
+  hi: {
+    title: 'ऑनलाइन eSIM खरीदें – 200+ देशों के लिए तुरंत ट्रैवल डेटा',
+    description: 'यात्रा के लिए तुरंत eSIM पाएँ। कोई फ़िज़िकल SIM नहीं, कोई रोमिंग शुल्क नहीं। 200+ देशों के प्लान की तुलना करें, QR कोड स्कैन करें और मिनटों में जुड़ जाएँ।',
+  },
 };
 
 export async function generateMetadata({ params }: Props) {
@@ -39,6 +43,7 @@ export async function generateMetadata({ params }: Props) {
         en:        `${siteUrl}/en`,
         he:        `${siteUrl}/he`,
         ar:        `${siteUrl}/ar`,
+        hi:        `${siteUrl}/hi`,
         'x-default': `${siteUrl}/en`,
       },
     },

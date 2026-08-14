@@ -1,6 +1,10 @@
 /**
- * Translates package/plan names to Hebrew/Arabic.
+ * Translates package/plan names to Hebrew/Arabic/Hindi.
  * Same approach as translateCountryName: Intl.DisplayNames + REGION_TRANSLATIONS.
+ *
+ * Country names come from `Intl.DisplayNames`, which ships Hindi. Regions and the handful of plan
+ * words the suppliers use do not exist there and are listed below; anything unlisted is left in
+ * English, which reads as a proper noun rather than as a missing translation.
  */
 
 const REGION_TRANSLATIONS: Record<string, Record<string, string>> = {
@@ -18,6 +22,13 @@ const REGION_TRANSLATIONS: Record<string, Record<string, string>> = {
     'Oceania': 'أوقيانوسيا', 'Middle East': 'الشرق الأوسط', 'Caribbean': 'الكاريبي',
     'Global': 'عالمي', 'N. America': 'أمريكا الشمالية', 'S. America': 'أمريكا الجنوبية',
   },
+  hi: {
+    'Africa': 'अफ़्रीका', 'Europe': 'यूरोप', 'Asia': 'एशिया',
+    'North America': 'उत्तर अमेरिका', 'South America': 'दक्षिण अमेरिका',
+    'North Africa': 'उत्तरी अफ़्रीका',
+    'Oceania': 'ओशिनिया', 'Middle East': 'मध्य पूर्व', 'Caribbean': 'कैरिबियन',
+    'Global': 'वैश्विक', 'N. America': 'उत्तर अमेरिका', 'S. America': 'दक्षिण अमेरिका',
+  },
 };
 
 /** Country names that appear in multi-country package names (e.g. "Europe & Morocco") */
@@ -31,6 +42,7 @@ const COUNTRY_ISO: Record<string, string> = {
 const PLAN_TERMS: Record<string, Record<string, string>> = {
   he: { 'Days': ' ימים', 'Day': 'ליום', 'areas': 'אזורים', 'countries': 'מדינות' },
   ar: { 'Days': ' أيام', 'Day': 'لليوم', 'areas': 'مناطق', 'countries': 'دول' },
+  hi: { 'Days': ' दिन', 'Day': 'प्रति दिन', 'areas': 'क्षेत्र', 'countries': 'देश' },
 };
 
 function translateCountryPart(name: string, isoCode: string, isRegional: boolean, locale: string): string {

@@ -67,10 +67,20 @@ function characterImg(key: CharacterKey): string {
 }
 
 /** Supported email locales. Falls back to 'he' for legacy flows without a locale. */
-export type EmailLocale = 'he' | 'en' | 'ar';
+export type EmailLocale = 'he' | 'en' | 'ar' | 'hi';
 
 export function toEmailLocale(value: unknown): EmailLocale {
-  return value === 'en' || value === 'ar' || value === 'he' ? value : 'he';
+  return value === 'en' || value === 'ar' || value === 'he' || value === 'hi' ? value : 'he';
+}
+
+/**
+ * Text direction for the message body.
+ *
+ * Named by the RTL locales rather than by "anything that is not English", which is how it read until
+ * Hindi arrived — a Devanagari email would have been laid out right to left.
+ */
+function emailDir(locale: EmailLocale): 'ltr' | 'rtl' {
+  return locale === 'he' || locale === 'ar' ? 'rtl' : 'ltr';
 }
 
 // ─── Formatting helpers ───────────────────────────────────────────────────────
@@ -178,12 +188,20 @@ const VERIFY_COPY: Record<EmailLocale, {
     copyLink: 'أو انسخ هذا الرابط:',
     expiry: 'تنتهي صلاحية هذا الرابط خلال 24 ساعة. إذا لم تسجّل، يمكنك تجاهل هذه الرسالة.',
   },
+  hi: {
+    subject: `अपना ${SITE_NAME} खाता सत्यापित करें`,
+    title: 'अपना ईमेल सत्यापित करें',
+    body: `नमस्ते! ${SITE_NAME} पर अपना रजिस्ट्रेशन पूरा करने के लिए, नीचे दिए बटन पर क्लिक करके अपना ईमेल पता सत्यापित करें।`,
+    button: 'ईमेल सत्यापित करें',
+    copyLink: 'या यह लिंक कॉपी करें:',
+    expiry: 'यह लिंक 24 घंटे तक मान्य है। यदि आपने रजिस्ट्रेशन नहीं किया है, तो इस संदेश को अनदेखा कर सकते हैं।',
+  },
 };
 
 /** Verification, on sign-up. */
 export async function sendVerificationEmail(to: string, token: string, locale: EmailLocale = 'he'): Promise<boolean> {
   const c = VERIFY_COPY[locale];
-  const dir = locale === 'en' ? 'ltr' : 'rtl';
+  const dir = emailDir(locale);
   const align = dir === 'rtl' ? 'right' : 'left';
   const verifyUrl = `${baseUrl()}/api/account/verify-email?token=${encodeURIComponent(token)}`;
   const logo = await logoImgTag();
@@ -233,11 +251,19 @@ const RESET_COPY: Record<EmailLocale, {
     copyLink: 'أو انسخ هذا الرابط:',
     expiry: 'تنتهي صلاحية هذا الرابط خلال ساعة واحدة. إذا لم تطلب إعادة التعيين، يمكنك تجاهل هذه الرسالة.',
   },
+  hi: {
+    subject: 'अपना पासवर्ड रीसेट करें – Sim2Me',
+    title: 'अपना पासवर्ड रीसेट करें',
+    body: `हमें आपके ${SITE_NAME} खाते का पासवर्ड रीसेट करने का अनुरोध मिला है। नया पासवर्ड सेट करने के लिए नीचे दिए बटन पर क्लिक करें:`,
+    button: 'पासवर्ड रीसेट करें',
+    copyLink: 'या यह लिंक कॉपी करें:',
+    expiry: 'यह लिंक एक घंटे तक मान्य है। यदि आपने रीसेट का अनुरोध नहीं किया है, तो इस संदेश को अनदेखा कर सकते हैं।',
+  },
 };
 
 export async function sendPasswordResetEmail(to: string, token: string, locale: EmailLocale = 'en'): Promise<boolean> {
   const c = RESET_COPY[locale];
-  const dir = locale === 'en' ? 'ltr' : 'rtl';
+  const dir = emailDir(locale);
   const align = dir === 'rtl' ? 'right' : 'left';
   const resetUrl = `${baseUrl()}/${locale}/account/reset-password?token=${encodeURIComponent(token)}`;
   const logo = await logoImgTag();
@@ -436,6 +462,49 @@ const POST_PURCHASE_COPY: Record<EmailLocale, {
     guideLabel: 'دليل التثبيت الكامل',
     contactLabel: 'تواصل معنا',
   },
+  hi: {
+    subject: 'आपका SIM2ME eSIM सक्रिय करने के लिए तैयार है! ✈️',
+    nameFallback: 'यात्री',
+    planFallback: 'डेटा प्लान',
+    greeting: 'नमस्ते',
+    intro: 'SIM2ME के साथ यात्रा करने के लिए धन्यवाद! आपका प्लान सफलतापूर्वक सक्रिय हो गया है और उपयोग के लिए तैयार है।',
+    detailsTitle: 'आपके प्लान का विवरण:',
+    labelPlan: 'प्लान:',
+    labelData: 'डेटा:',
+    labelValidity: 'वैधता:',
+    howToInstall: 'अपना eSIM कैसे इंस्टॉल करें',
+    quickInstall: 'एक टैप में तेज़ इंस्टॉल:',
+    quickInstallHint: 'सीधे इंस्टॉल के लिए अपने डिवाइस के अनुरूप बटन पर टैप करें। यदि यह काम न करे, तो नीचे दिए मैनुअल विवरण का उपयोग करें।',
+    qrTitle: 'QR स्कैन:',
+    qrAttached: 'आपका QR कोड इस ईमेल में है और फ़ाइल के रूप में भी संलग्न है। इसे अपने डिवाइस की सेल्युलर सेटिंग्स से स्कैन करें।',
+    qrInAccount: 'आपका QR कोड ऑर्डर पेज पर और आपके खाते में उपलब्ध है।',
+    manualTitle: 'मैनुअल इंस्टॉलेशन:',
+    manualIntro: 'यदि आप स्कैन नहीं कर सकते, तो निम्न विवरण का उपयोग करें:',
+    accountTitle: 'खाते में प्रवेश और प्लान प्रबंधन:',
+    accountText: 'अपना डेटा उपयोग देखें और नए प्लान जोड़ें, इस लिंक पर:',
+    usernameLabel: 'उपयोगकर्ता नाम:',
+    tempPasswordLabel: 'अस्थायी पासवर्ड:',
+    tempPasswordHint: '(साइन इन के बाद इसे बदलने की सलाह देते हैं)',
+    goldenTitle: 'सबसे ज़रूरी सुझाव: उतरते ही क्या करना है',
+    goldenSteps: [
+      'यात्रा से पहले, Wi-Fi पर रहते हुए eSIM इंस्टॉल कर लें। सिर्फ़ इंस्टॉल करने से प्लान शुरू नहीं होता और वैधता की अवधि भी शुरू नहीं होती।',
+      'उतरने के बाद — और केवल उतरने के बाद — फ़ोन को दस सेकंड के लिए बंद करें और फिर चालू करें।',
+      'eSIM लाइन पर डेटा रोमिंग चालू करें, और अपनी घरेलू लाइन पर बंद रखें।',
+      'मोबाइल डेटा के लिए eSIM लाइन को चुनें।',
+      'दो-तीन मिनट दें। अगर फिर भी कुछ न हो, नेटवर्क खुद चुनें: सेटिंग्स → सेल्युलर → नेटवर्क चयन → ऑटोमैटिक बंद करें और सूची से कोई ऑपरेटर चुनें।',
+    ],
+    goldenWarning: 'घर पर रहते हुए eSIM लाइन चालू न करें। अगर यह यात्रा से पहले किसी नेटवर्क से जुड़ गई, तो वैधता की अवधि आपकी योजना से पहले शुरू हो सकती है।',
+    signOff: 'यात्रा शुभ हो!<br/>SIM2ME टीम',
+    receiptTitle: 'ऑर्डर की पुष्टि:',
+    labelOrderNo: 'ऑर्डर नंबर:',
+    labelPaid: 'भुगतान की गई राशि:',
+    labelDate: 'तारीख:',
+    labelIccid: 'ICCID:',
+    supportTitle: 'मदद चाहिए?',
+    supportText: 'इस ईमेल का सीधे उत्तर दें — या यहाँ संपर्क करें (सहायता अंग्रेज़ी में):',
+    guideLabel: 'पूरा इंस्टॉलेशन गाइड',
+    contactLabel: 'संपर्क करें',
+  },
 };
 
 interface EmailAttachment {
@@ -471,7 +540,7 @@ async function fetchQrAttachment(url: string | null | undefined): Promise<EmailA
 /** Localized post-purchase email (he/en/ar). Defaults to Hebrew for legacy flows. */
 export async function sendPostPurchaseEmail(to: string, data: PostPurchaseEmailData, locale: EmailLocale = 'he'): Promise<boolean> {
   const c = POST_PURCHASE_COPY[locale];
-  const dir = locale === 'en' ? 'ltr' : 'rtl';
+  const dir = emailDir(locale);
   const listPad = dir === 'rtl' ? 'padding-right: 20px;' : 'padding-left: 20px;';
   const btnGap = dir === 'rtl' ? 'margin-left:8px;' : 'margin-right:8px;';
   const subject = c.subject;
@@ -662,6 +731,23 @@ const DELAYED_COPY: Record<EmailLocale, {
     accountLabel: 'عرض طلباتي',
     signOff: 'شكرًا لصبرك،<br/>فريق SIM2ME',
   },
+  hi: {
+    subject: 'आपका ऑर्डर हमें मिल गया — आपका eSIM रास्ते में है',
+    nameFallback: 'यात्री',
+    greeting: 'नमस्ते',
+    intro: 'आपका भुगतान हो गया है और ऑर्डर हमारे सिस्टम में दर्ज है। इस बार eSIM सक्रिय होने में सामान्य से कुछ अधिक समय लग रहा है, और हम इस पर काम कर रहे हैं।',
+    whatNowTitle: 'अब आगे क्या?',
+    whatNowText: 'आपका eSIM तैयार होते ही आपको QR कोड और इंस्टॉलेशन निर्देशों के साथ दूसरा ईमेल मिलेगा। आपको कुछ करने की ज़रूरत नहीं है, और दोबारा ऑर्डर करने की भी नहीं।',
+    detailsTitle: 'आपका ऑर्डर:',
+    labelOrderNo: 'ऑर्डर नंबर:',
+    labelPlan: 'प्लान:',
+    labelPaid: 'भुगतान की गई राशि:',
+    supportTitle: 'हमसे बात करनी है?',
+    supportText: 'अपने ऑर्डर नंबर के साथ इस ईमेल का सीधे उत्तर दें, या यहाँ संपर्क करें (सहायता अंग्रेज़ी में):',
+    contactLabel: 'संपर्क करें',
+    accountLabel: 'मेरे ऑर्डर देखें',
+    signOff: 'आपके धैर्य के लिए धन्यवाद,<br/>SIM2ME टीम',
+  },
 };
 
 /**
@@ -676,7 +762,7 @@ const DELAYED_COPY: Record<EmailLocale, {
  */
 export async function sendOrderDelayedEmail(to: string, data: OrderDelayedEmailData, locale: EmailLocale = 'he'): Promise<boolean> {
   const c = DELAYED_COPY[locale];
-  const dir = locale === 'en' ? 'ltr' : 'rtl';
+  const dir = emailDir(locale);
   const listPad = dir === 'rtl' ? 'padding-right: 20px;' : 'padding-left: 20px;';
   const name = data.customerName || c.nameFallback;
 
@@ -1027,6 +1113,18 @@ const CONTACT_AUTOREPLY_COPY: Record<EmailLocale, {
     replyNote: 'يمكنك الرد مباشرة على هذه الرسالة، وسيبقى رقم المرجع مرتبطًا بمحادثتك.',
     signOff: 'شكرًا،<br/>فريق SIM2ME',
   },
+  hi: {
+    subject: (ref) => `आपका संदेश हमें मिल गया — ${ref}`,
+    nameFallback: 'यात्री',
+    greeting: 'नमस्ते',
+    title: 'आपका संदेश हम तक पहुँच गया',
+    intro: 'हमें लिखने के लिए धन्यवाद। आपका संदेश हमारे इनबॉक्स में है और हम हर संदेश पढ़ते हैं। हम ईमेल से उत्तर देंगे, अंग्रेज़ी में।',
+    refLabel: 'आपका रेफ़रेंस:',
+    meanwhileTitle: 'तब तक, यह मदद कर सकता है',
+    meanwhileText: 'बहुत से सवालों का उत्तर इन पेजों पर तुरंत मिल जाता है:',
+    replyNote: 'आप इस ईमेल का सीधे उत्तर दे सकते हैं, और आपका रेफ़रेंस उसी बातचीत से जुड़ा रहेगा।',
+    signOff: 'धन्यवाद,<br/>SIM2ME टीम',
+  },
 };
 
 /** Paths, not URLs — the locale prefix is added when the mail is built. */
@@ -1064,12 +1162,21 @@ const LINK_LABELS: Record<EmailLocale, Record<string, string>> = {
     '/terms': 'شروط الاستخدام',
     '/account': 'حسابي',
   },
+  hi: {
+    '/installation-guide': 'इंस्टॉलेशन गाइड',
+    '/compatible-devices': 'समर्थित डिवाइस',
+    '/help': 'सहायता केंद्र',
+    // Legal pages are published in English only, so the label says so before the reader clicks.
+    '/refund': 'Refund policy (अंग्रेज़ी में)',
+    '/terms': 'Terms of service (अंग्रेज़ी में)',
+    '/account': 'मेरा खाता',
+  },
 };
 
 /** Confirms to the customer that their message arrived, and hands them a reference. */
 export async function sendContactAutoReplyEmail(to: string, data: ContactAutoReplyData, locale: EmailLocale = 'he'): Promise<boolean> {
   const c = CONTACT_AUTOREPLY_COPY[locale];
-  const dir = locale === 'en' ? 'ltr' : 'rtl';
+  const dir = emailDir(locale);
   const listPad = dir === 'rtl' ? 'padding-right: 20px;' : 'padding-left: 20px;';
   const name = data.customerName || c.nameFallback;
   const subject = c.subject(data.ref);
@@ -1183,6 +1290,12 @@ const OTP_COPY: Record<EmailLocale, {
     body: `استخدم هذا الرمز لإكمال تسجيل الدخول إلى ${SITE_NAME}. تنتهي صلاحيته خلال <strong>10 دقائق</strong>.`,
     ignore: 'إذا لم تحاول تسجيل الدخول، يمكنك تجاهل هذه الرسالة.',
   },
+  hi: {
+    subject: (code) => `${code} — आपका ${SITE_NAME} लॉगिन कोड`,
+    title: 'आपका लॉगिन कोड',
+    body: `${SITE_NAME} में लॉगिन पूरा करने के लिए इस कोड का उपयोग करें। यह <strong>10 मिनट</strong> तक मान्य है।`,
+    ignore: 'यदि आपने लॉगिन की कोशिश नहीं की है, तो इस संदेश को अनदेखा कर सकते हैं।',
+  },
 };
 
 /**
@@ -1193,7 +1306,7 @@ const OTP_COPY: Record<EmailLocale, {
  */
 export async function sendOtpEmail(to: string, code: string, locale: EmailLocale = 'he'): Promise<boolean> {
   const c = OTP_COPY[locale];
-  const dir = locale === 'en' ? 'ltr' : 'rtl';
+  const dir = emailDir(locale);
   const align = dir === 'rtl' ? 'right' : 'left';
   const logo = await logoImgTag();
   const html = `

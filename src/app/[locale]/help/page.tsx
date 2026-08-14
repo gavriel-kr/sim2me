@@ -13,6 +13,7 @@ const seoByLocale: Record<string, { title: string; desc: string }> = {
   en: { title: 'eSIM Help Center & FAQ – Installation, Activation & Troubleshooting', desc: 'Find answers to common eSIM questions. How to install, activate, troubleshoot connectivity issues, refund policy, dual SIM usage, hotspot and more.' },
   he: { title: 'מרכז עזרה eSIM ושאלות נפוצות – התקנה, הפעלה ופתרון בעיות', desc: 'מצא תשובות לשאלות נפוצות על eSIM. התקנה, הפעלה, פתרון בעיות, מדיניות החזרים, Dual SIM ועוד.' },
   ar: { title: 'مركز مساعدة eSIM والأسئلة الشائعة – التثبيت والتفعيل واستكشاف الأخطاء', desc: 'اعثر على إجابات للأسئلة الشائعة حول eSIM. التثبيت، التفعيل، استكشاف الأخطاء، سياسة الاسترداد والمزيد.' },
+  hi: { title: 'eSIM सहायता केंद्र और सामान्य प्रश्न – इंस्टॉलेशन, सक्रियण, समस्या समाधान', desc: 'eSIM के बारे में सामान्य प्रश्नों के उत्तर पाएँ। इंस्टॉलेशन, सक्रियण, समस्या समाधान, रिफ़ंड नीति और अधिक।' },
 };
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {

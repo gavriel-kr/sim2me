@@ -86,7 +86,7 @@ export function resetConsentForDevelopment(): void {
 }
 
 export const cookieTranslations: Record<
-  'en' | 'he' | 'ar',
+  'en' | 'he' | 'ar' | 'hi',
   {
     title: string;
     description: string;
@@ -150,5 +150,21 @@ export const cookieTranslations: Record<
     analyticsDesc: 'تساعدنا على فهم كيفية استخدام الموقع.',
     marketingDesc: 'تستخدم للإعلانات وإعادة الاستهداف.',
     settings: 'إعدادات ملفات تعريف الارتباط',
+  },
+  hi: {
+    title: 'हम कुकीज़ का उपयोग करते हैं',
+    description:
+      'हम आपके अनुभव को बेहतर बनाने, ट्रैफ़िक का विश्लेषण करने और सामग्री को अनुकूलित करने के लिए कुकीज़ का उपयोग करते हैं।',
+    acceptAll: 'सभी स्वीकार करें',
+    rejectAll: 'सभी अस्वीकार करें',
+    customize: 'अनुकूलित करें',
+    save: 'पसंद सहेजें',
+    necessary: 'आवश्यक कुकीज़',
+    analytics: 'एनालिटिक्स कुकीज़',
+    marketing: 'मार्केटिंग कुकीज़',
+    necessaryDesc: 'वेबसाइट के ठीक से काम करने के लिए आवश्यक।',
+    analyticsDesc: 'यह समझने में मदद करती हैं कि लोग वेबसाइट का उपयोग कैसे करते हैं।',
+    marketingDesc: 'विज्ञापन और रीटार्गेटिंग के लिए उपयोग होती हैं।',
+    settings: 'कुकी सेटिंग्स',
   },
 };

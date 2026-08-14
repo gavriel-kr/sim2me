@@ -15,6 +15,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Search, X, Loader2, CheckCircle2, AlertCircle, UserPlus } from 'lucide-react';
 import { PhoneInput } from '@/components/PhoneInput';
 import type { EsimPackage } from '@/lib/esimaccess';
+import type { EmailLocale } from '@/lib/email';
 
 export interface PickedPackage {
   packageCode: string;
@@ -110,7 +111,7 @@ export function InternalSaleModal({ presetPackage, presetCustomer, onClose, onSo
 
   const [price, setPrice] = useState('');
   const [paymentNote, setPaymentNote] = useState('');
-  const [emailLocale, setEmailLocale] = useState<'he' | 'en' | 'ar'>('he');
+  const [emailLocale, setEmailLocale] = useState<EmailLocale>('he');
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -461,12 +462,13 @@ export function InternalSaleModal({ presetPackage, presetCustomer, onClose, onSo
             <label className={LABEL}>Email language</label>
             <select
               value={emailLocale}
-              onChange={(e) => setEmailLocale(e.target.value as 'he' | 'en' | 'ar')}
+              onChange={(e) => setEmailLocale(e.target.value as EmailLocale)}
               className={FIELD}
             >
               <option value="he">Hebrew</option>
               <option value="en">English</option>
               <option value="ar">Arabic</option>
+              <option value="hi">Hindi</option>
             </select>
           </div>
         </section>

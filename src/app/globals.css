@@ -67,6 +67,10 @@
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
+  /* Hindi pages: Devanagari first, DM Sans still handling the Latin runs (brand, eSIM, GB, 5G). */
+  html[lang="hi"] body {
+    font-family: var(--font-noto-devanagari), var(--font-dm-sans), system-ui, sans-serif;
+  }
 }
 
 /* Respect prefers-reduced-motion (WCAG 2.1 / 2.2) */

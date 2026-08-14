@@ -26,7 +26,7 @@ const bodySchema = z.object({
   customerEmail: z.string().email(),
   customerName: z.string().max(200).optional(),
   deviceType: z.string().max(64).optional(),
-  locale: z.enum(['en', 'he', 'ar']).optional(),
+  locale: z.enum(['en', 'he', 'ar', 'hi']).optional(),
   turnstileToken: z.string().optional(),
   /* Ticket 037. Optional in the schema so a request without it fails the explicit check below with a
      message a human can act on, rather than a generic shape error. */

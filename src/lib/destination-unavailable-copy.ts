@@ -1,8 +1,9 @@
-export type UiLang = 'he' | 'en' | 'ar';
+export type UiLang = 'he' | 'en' | 'ar' | 'hi';
 
 export function toUiLang(locale: string): UiLang {
   if (locale === 'he') return 'he';
   if (locale === 'ar') return 'ar';
+  if (locale === 'hi') return 'hi';
   return 'en';
 }
 
@@ -28,6 +29,12 @@ export const EMPTY_STATE_COPY: Record<
     button: (n) => `الانتقال إلى كل الوجهات خلال ${n} ثانية`,
     live: (n) => `سيتم الانتقال إلى قائمة الوجهات خلال ${n} ثانية`,
   },
+  hi: {
+    title: 'इस गंतव्य के लिए अभी कोई प्लान नहीं है',
+    body: 'हम लगातार नए गंतव्य और प्लान जोड़ते रहते हैं, यह भी जल्द उपलब्ध हो सकता है। तब तक नीचे सभी उपलब्ध गंतव्य देखें।',
+    button: (n) => `${n} सेकंड में सभी गंतव्य, अभी जाने के लिए टैप करें`,
+    live: (n) => `${n} सेकंड में सभी गंतव्य पर भेजा जा रहा है`,
+  },
 };
 
 export const ERROR_STATE_COPY: Record<
@@ -52,6 +59,12 @@ export const ERROR_STATE_COPY: Record<
     button: (n) => `الانتقال إلى كل الوجهات خلال ${n} ثانية`,
     live: (n) => `سيتم الانتقال إلى قائمة الوجهات خلال ${n} ثانية`,
   },
+  hi: {
+    title: 'हम यह पेज नहीं दिखा सके',
+    body: 'लोड करते समय कुछ गड़बड़ हो गई। कुछ ही पल में सभी गंतव्य खुल जाएँगे, या अभी जाने के लिए नीचे टैप करें।',
+    button: (n) => `${n} सेकंड में सभी गंतव्य, अभी जाने के लिए टैप करें`,
+    live: (n) => `${n} सेकंड में सभी गंतव्य पर भेजा जा रहा है`,
+  },
 };
 
 /** 404 page: body + countdown to home (no title field; h1 is "404" in page). */
@@ -74,16 +87,23 @@ export const NOT_FOUND_COPY: Record<
     button: (n) => `الصفحة الرئيسية خلال ${n} ثانية`,
     live: (n) => `سيتم الانتقال إلى الصفحة الرئيسية خلال ${n} ثانية`,
   },
+  hi: {
+    body: 'यह पेज हमें नहीं मिला, लिंक पुराना या गलत हो सकता है। कुछ ही पल में हम आपको होम पेज पर ले जाएँगे।',
+    button: (n) => `${n} सेकंड में होम, अभी जाने के लिए टैप करें`,
+    live: (n) => `${n} सेकंड में होम पेज पर भेजा जा रहा है`,
+  },
 };
 
 export const METADATA_TITLE_EMPTY: Record<UiLang, string> = {
   he: 'אין חבילות ליעד זה',
   en: 'No packages for this destination',
   ar: 'لا توجد باقات لهذا الوجه',
+  hi: 'इस गंतव्य के लिए कोई प्लान नहीं',
 };
 
 export const METADATA_TITLE_ERROR: Record<UiLang, string> = {
   he: 'לא נטען',
   en: 'Page unavailable',
   ar: 'تعذر تحميل الصفحة',
+  hi: 'पेज उपलब्ध नहीं',
 };

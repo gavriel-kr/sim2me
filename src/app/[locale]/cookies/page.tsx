@@ -9,6 +9,7 @@ const descByLocale: Record<string, string> = {
   en: 'Learn how Sim2Me uses cookies and how to manage your preferences. Necessary, analytics, and marketing cookies explained.',
   he: 'איך Sim2Me משתמש בעוגיות ואיך לנהל את ההעדפות שלכם. הסבר על עוגיות הכרחיות, עוגיות אנליטיקה ועוגיות שיווק.',
   ar: 'كيف يستخدم Sim2Me ملفات تعريف الارتباط وكيفية إدارة تفضيلاتك. شرح للملفات الضرورية والتحليلية والتسويقية.',
+  hi: 'Sim2Me कुकीज़ का उपयोग कैसे करता है और आप अपनी पसंद कैसे बदल सकते हैं। यह नीति अंग्रेज़ी में उपलब्ध है।',
 };
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
@@ -32,13 +33,17 @@ export default async function CookiesPage({ params }: { params: Promise<{ locale
     <MainLayout>
       <div className="container mx-auto max-w-2xl px-4 py-12">
         <h1 className="text-2xl font-bold sm:text-3xl">
-          {cms?.title || (locale === 'en' ? 'Cookie Policy' : locale === 'he' ? 'מדיניות עוגיות' : 'سياسة ملفات تعريف الارتباط')}
+          {cms?.title || (locale === 'he' ? 'מדיניות עוגיות' : locale === 'ar' ? 'سياسة ملفات تعريف الارتباط' : 'Cookie Policy')}
         </h1>
         <div className="prose prose-sm mt-6 text-muted-foreground whitespace-pre-line">
           {cms?.content || (
             <>
+              {/* Cookie policy is a legal text, so it stays in English (ticket 038). */}
+              {locale === 'hi' && (
+                <p>सूचना: यह नीति अंग्रेज़ी में है। कानूनी रूप से बाध्यकारी संस्करण अंग्रेज़ी ही है।</p>
+              )}
               <p>
-                {locale === 'en' &&
+                {locale !== 'he' && locale !== 'ar' &&
                   'We use cookies to improve your experience, analyze traffic, and personalize content. You can accept all, reject all, or customize your preferences at any time using the "Cookie settings" link in the footer.'}
                 {locale === 'he' &&
                   'אנו משתמשים בעוגיות כדי לשפר את חוויית המשתמש, לנתח תנועה ולהתאים תוכן. ניתן לאשר הכל, לדחות הכל או להתאים העדפות בכל עת באמצעות הקישור "הגדרות עוגיות" בתחתית האתר.'}
@@ -46,7 +51,7 @@ export default async function CookiesPage({ params }: { params: Promise<{ locale
                   'نستخدم ملفات تعريف الارتباط لتحسين تجربتك وتحليل حركة المرور وتخصيص المحتوى. يمكنك قبول الكل أو رفض الكل أو تخصيص تفضيلاتك في أي وقت باستخدام رابط "إعدادات ملفات تعريف الارتباط" في التذييل.'}
               </p>
               <p>
-                {locale === 'en' && 'Necessary cookies are required for the site to function. Analytics and marketing cookies are optional and only loaded with your consent.'}
+                {locale !== 'he' && locale !== 'ar' && 'Necessary cookies are required for the site to function. Analytics and marketing cookies are optional and only loaded with your consent.'}
                 {locale === 'he' && 'עוגיות הכרחיות נדרשות לפעילות האתר. עוגיות אנליטיקה ושיווק הן אופציונליות ונטענות רקכמתך.'}
                 {locale === 'ar' && 'ملفات تعريف الارتباط الضرورية مطلوبة لعمل الموقع. ملفات التحليلات والتسويق اختيارية وتُحمّل فقط بموافقتك.'}
               </p>

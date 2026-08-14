@@ -11,6 +11,7 @@ const seoByLocale: Record<string, { title: string; desc: string }> = {
   en: { title: 'About Sim2Me – Affordable Travel eSIM for 200+ Countries', desc: 'Sim2Me makes staying connected abroad simple and affordable. Instant digital delivery, 200+ destinations, best prices, GSMA-certified technology. Built by travelers, for travelers.' },
   he: { title: 'אודות Sim2Me – eSIM לנסיעות במחירים משתלמים ל-200+ מדינות', desc: 'Sim2Me הופך חיבור בחו"ל לפשוט ומשתלם. משלוח דיגיטלי מיידי, 200+ יעדים, מחירים אטרקטיביים. נבנה ע"י מטיילים, למען מטיילים.' },
   ar: { title: 'عن Sim2Me – eSIM سفر بأسعار معقولة لأكثر من 200 دولة', desc: 'Sim2Me يجعل البقاء متصلاً في الخارج بسيطاً وبأسعار معقولة. توصيل رقمي فوري، أكثر من 200 وجهة، أفضل الأسعار.' },
+  hi: { title: 'Sim2Me के बारे में – 200+ देशों के लिए किफ़ायती ट्रैवल eSIM', desc: 'Sim2Me विदेश में जुड़े रहना आसान और किफ़ायती बनाता है। तुरंत डिजिटल डिलीवरी, 200+ गंतव्य, बेहतरीन कीमतें।' },
 };
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {

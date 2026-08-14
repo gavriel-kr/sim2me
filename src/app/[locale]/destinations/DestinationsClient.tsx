@@ -162,6 +162,12 @@ const REGION_TRANSLATIONS: Record<string, Record<string, string>> = {
     'Oceania': 'أوقيانوسيا', 'Middle East': 'الشرق الأوسط', 'Caribbean': 'الكاريبي',
     'Global': 'عالمي', 'N. America': 'أمريكا الشمالية', 'S. America': 'أمريكا الجنوبية',
   },
+  hi: {
+    'Africa': 'अफ़्रीका', 'Europe': 'यूरोप', 'Asia': 'एशिया',
+    'North America': 'उत्तर अमेरिका', 'South America': 'दक्षिण अमेरिका',
+    'Oceania': 'ओशिनिया', 'Middle East': 'मध्य पूर्व', 'Caribbean': 'कैरिबियन',
+    'Global': 'वैश्विक', 'N. America': 'उत्तर अमेरिका', 'S. America': 'दक्षिण अमेरिका',
+  },
 };
 
 /**

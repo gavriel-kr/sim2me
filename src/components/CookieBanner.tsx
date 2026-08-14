@@ -6,7 +6,7 @@ import { useCookieConsent } from '@/components/CookieConsentProvider';
 import { useCallback } from 'react';
 
 export function CookieBanner() {
-  const locale = useLocale() as 'en' | 'he' | 'ar';
+  const locale = useLocale() as keyof typeof cookieTranslations;
   const { setConsent, setShowBanner, openCookieSettings, showBanner } = useCookieConsent();
   const t = cookieTranslations[locale] ?? cookieTranslations.en;
 

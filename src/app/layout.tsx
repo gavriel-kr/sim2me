@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { DM_Sans } from 'next/font/google';
+import { DM_Sans, Noto_Sans_Devanagari } from 'next/font/google';
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages } from 'next-intl/server';
 import { headers } from 'next/headers';
@@ -16,6 +16,24 @@ const dmSans = DM_Sans({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-dm-sans',
+});
+
+/**
+ * Devanagari, for the Hindi pages only (ticket 038).
+ *
+ * DM Sans has no Devanagari glyphs, so without this the browser falls back to whatever the device
+ * happens to have — legible on most, but unrelated to the rest of the site's type.
+ *
+ * `preload: false` is the whole point of the arrangement: the class is attached only when the page is
+ * Hindi, and preloading is off so English, Hebrew and Arabic visitors never pay for a font they cannot
+ * read. The Hindi page then fetches it when the CSS rule in `globals.css` matches, showing the fallback
+ * face for the moment in between.
+ */
+const notoDevanagari = Noto_Sans_Devanagari({
+  subsets: ['devanagari'],
+  display: 'swap',
+  preload: false,
+  variable: '--font-noto-devanagari',
 });
 
 function withCacheBust(url: string, version: number | null): string {
@@ -102,7 +120,7 @@ export async function generateMetadata(): Promise<Metadata> {
       title: resolvedOgTitle,
       description: resolvedOgDesc,
       locale: 'en_US',
-      alternateLocale: ['he_IL', 'ar_SA'],
+      alternateLocale: ['he_IL', 'ar_SA', 'hi_IN'],
       ...(resolvedOgImage && {
         images: [{ url: resolvedOgImage, width: 1200, height: 630, alt: globalSeo.siteName || brandConfig.logoAlt }],
       }),
@@ -120,6 +138,7 @@ export async function generateMetadata(): Promise<Metadata> {
         en: siteUrl,
         he: `${siteUrl}/he`,
         ar: `${siteUrl}/ar`,
+        hi: `${siteUrl}/hi`,
       },
     },
     robots: {
@@ -179,7 +198,12 @@ export default async function RootLayout({
   };
 
   return (
-    <html lang={locale} dir={dir} suppressHydrationWarning className={dmSans.variable}>
+    <html
+      lang={locale}
+      dir={dir}
+      suppressHydrationWarning
+      className={locale === 'hi' ? `${dmSans.variable} ${notoDevanagari.variable}` : dmSans.variable}
+    >
       <head>
         {/* Analytics/marketing scripts loaded only after cookie consent (see CookieConsentProvider) */}
       </head>

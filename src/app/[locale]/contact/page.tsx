@@ -11,6 +11,7 @@ const seoByLocale: Record<string, { title: string; desc: string }> = {
   en: { title: 'Contact Sim2Me – eSIM Support & Help', desc: 'Need help with your eSIM? Contact Sim2Me support for installation help, activation issues, connectivity problems or refund requests.' },
   he: { title: 'יצירת קשר ותמיכה – eSIM למעל 200 מדינות', desc: 'צריכים עזרה עם ה-eSIM? צרו קשר עם התמיכה של Sim2Me בנוגע להתקנה, הפעלה, בעיות חיבור או בקשות החזר.' },
   ar: { title: 'اتصل بـ Sim2Me – دعم ومساعدة eSIM', desc: 'هل تحتاج مساعدة في eSIM؟ تواصل مع دعم Sim2Me بخصوص التثبيت أو التفعيل أو مشاكل الاتصال أو طلبات الاسترداد.' },
+  hi: { title: 'Sim2Me से संपर्क करें – eSIM सहायता', desc: 'eSIM में मदद चाहिए? इंस्टॉलेशन, सक्रियण, कनेक्टिविटी की समस्या या रिफ़ंड के लिए Sim2Me सहायता से संपर्क करें। सहायता ईमेल पर, अंग्रेज़ी में।' },
 };
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {

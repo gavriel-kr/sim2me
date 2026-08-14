@@ -16,6 +16,7 @@ const seoByLocale: Record<string, { title: string; desc: string }> = {
   en: { title: 'How to Install & Use eSIM – Step-by-Step Guide', desc: 'Learn how to buy, install and activate your eSIM in 3 easy steps. iPhone & Android installation guide, troubleshooting tips, and activation methods.' },
   he: { title: 'איך להתקין ולהשתמש ב-eSIM – מדריך שלב אחר שלב', desc: 'למד איך לקנות, להתקין ולהפעיל eSIM ב-3 צעדים פשוטים. מדריך התקנה לאייפון ואנדרואיד, טיפים ופתרון בעיות.' },
   ar: { title: 'كيفية تثبيت واستخدام eSIM – دليل خطوة بخطوة', desc: 'تعلم كيفية شراء وتثبيت وتفعيل eSIM في 3 خطوات سهلة. دليل التثبيت لـ iPhone و Android ونصائح استكشاف الأخطاء.' },
+  hi: { title: 'eSIM कैसे इंस्टॉल और उपयोग करें – चरण-दर-चरण गाइड', desc: '3 आसान चरणों में eSIM खरीदना, इंस्टॉल करना और सक्रिय करना सीखें। iPhone और Android के लिए इंस्टॉलेशन गाइड और समस्या समाधान के सुझाव।' },
 };
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {

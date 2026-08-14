@@ -35,6 +35,7 @@ export async function generateMetadata({ params }: PageProps) {
           'en':        `${SITE_URL}/en/destinations/${slug}`,
           'he':        `${SITE_URL}/he/destinations/${slug}`,
           'ar':        `${SITE_URL}/ar/destinations/${slug}`,
+          'hi':        `${SITE_URL}/hi/destinations/${slug}`,
           'x-default': `${SITE_URL}/en/destinations/${slug}`,
         },
       },

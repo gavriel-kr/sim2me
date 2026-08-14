@@ -3,6 +3,17 @@ import type { Article } from '@prisma/client';
 
 export type ArticleLocale = 'en' | 'he' | 'ar';
 
+/**
+ * Maps a UI locale to the locale the article content is actually written in.
+ *
+ * Articles are authored per locale in the database, and Hindi has no columns there. Ticket 038 keeps it
+ * that way: a Hindi visitor reads the English article inside the Hindi shell. Without this, a `hi` UI
+ * locale reaches `status${undefined}` and Prisma rejects the query, so the articles pages return 500.
+ */
+export function toArticleLocale(locale: string): ArticleLocale {
+  return locale === 'he' || locale === 'ar' ? locale : 'en';
+}
+
 export interface ArticleSummary {
   id: string;
   slug: string;

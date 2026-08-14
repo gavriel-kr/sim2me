@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import { setRequestLocale } from 'next-intl/server';
 import { routing } from '@/i18n/routing';
-import { getPublishedArticles, type ArticleLocale } from '@/lib/articles';
+import { getPublishedArticles, toArticleLocale } from '@/lib/articles';
 import { getArticlesDefaultImage } from '@/lib/articles-default-image';
 import { ArticlesIndexClient } from './ArticlesIndexClient';
 import { MainLayout } from '@/components/layout/MainLayout';
@@ -22,6 +22,10 @@ const INDEX_META: Record<string, { title: string; desc: string }> = {
     title: 'أدلة eSIM للسفر | Sim2Me',
     desc: 'أدلة عملية لشرائح eSIM للمسافرين دوليًا. قارن الخطط وتعلم الإعداد وابق متصلًا في أكثر من 200 دولة.',
   },
+  hi: {
+    title: 'eSIM यात्रा गाइड (अंग्रेज़ी में) | Sim2Me',
+    desc: 'अंतरराष्ट्रीय यात्रियों के लिए व्यावहारिक eSIM गाइड, अंग्रेज़ी में। प्लान की तुलना करें, सेटअप सीखें और 200+ देशों में जुड़े रहें।',
+  },
 };
 
 type Props = { params: Promise<{ locale: string }> };
@@ -34,6 +38,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: meta.title,
     description: meta.desc,
+    // Hindi has no translated articles, so its index is the English list in a Hindi shell —
+    // useful to a reader, not something to add to the index (ticket 038).
+    robots: locale === 'hi' ? { index: false, follow: true } : undefined,
     alternates: {
       canonical: `${siteUrl}${prefix}/articles`,
       languages: {
@@ -49,11 +56,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ArticlesIndexPage({ params }: Props) {
   const { locale } = await params;
-  if (!routing.locales.includes(locale as 'en' | 'he' | 'ar')) notFound();
+  if (!routing.locales.includes(locale as (typeof routing.locales)[number])) notFound();
   setRequestLocale(locale);
 
   const [articles, defaultImage] = await Promise.all([
-    getPublishedArticles(locale as ArticleLocale),
+    getPublishedArticles(toArticleLocale(locale)),
     getArticlesDefaultImage(),
   ]);
 
@@ -61,6 +68,7 @@ export default async function ArticlesIndexPage({ params }: Props) {
     en: 'eSIM Travel Guides',
     he: 'מדריכי eSIM לטיול',
     ar: 'أدلة eSIM للسفر',
+    hi: 'eSIM यात्रा गाइड (अंग्रेज़ी में)',
   };
 
   return (
