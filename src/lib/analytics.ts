@@ -69,9 +69,9 @@ export function trackPurchase(transactionId: string, items: GaItem[], value: num
     // sessionStorage unavailable (private mode) — fire anyway
   }
   gtagSafe('purchase', { transaction_id: transactionId, currency: CURRENCY, value, items });
-  // Same moment, same dedup: the Ads action created by the setup wizard is
-  // conversion_event_purchase, not purchase. GA4 keeps the ecommerce event.
-  gtagSafe('conversion_event_purchase', {
+  // Same moment, same dedup: Ads action PURCHASE (1) listens for this name.
+  // GA4 still gets the ecommerce `purchase` event above.
+  gtagSafe('conversion_event_purchase_1', {
     send_to: ADS_ID,
     transaction_id: transactionId,
     currency: CURRENCY,

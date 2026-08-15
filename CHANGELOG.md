@@ -14,9 +14,10 @@ invisible to the ad platform paying for the visit.
   ahead of consent.
 - Verified on production: `AW-18384646889` and `G-Y5BJ7VNNYM` both ship in the same chunk served to
   `/en`, and `/en`, `/he`, `/ar`, `/hi` and `/en/success` all return 200.
-- `trackPurchase` now also fires `conversion_event_purchase` to `AW-18384646889` with value,
+- `trackPurchase` now also fires `conversion_event_purchase_1` to `AW-18384646889` with value,
   currency and `transaction_id`. Same once-per-order guard, same success page, all four locales.
-  GA4 still gets `purchase`.
+  GA4 still gets `purchase`. The previous name (`conversion_event_purchase`) was dropped so Ads
+  does not count the same order twice.
 
 ### Fixed (the security policy was blocking the ads tag it had never heard of)
 
