@@ -7,6 +7,13 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { sendAbandonedCheckoutEmail, AbandonedCheckoutItem } from '@/lib/email';
 import { createAuditLog } from '@/lib/audit';
+import {
+  asCheckoutLocale,
+  buildPlanPageUrl,
+  destinationLine,
+  loadCachedPackageList,
+  resolvePackageDisplayFromList,
+} from '@/lib/package-display';
 
 interface PaddleTransaction {
   id?: string;
@@ -16,6 +23,7 @@ interface PaddleTransaction {
   details?: { totals?: { total?: string } } | null;
   currency_code?: string;
   custom_data?: Record<string, unknown> | null;
+  items?: Array<{ price?: { name?: string } | null }>;
 }
 
 interface PaddleTransactionsResponse {
@@ -92,21 +100,36 @@ export async function GET(request: Request) {
   }
 
   const now = Date.now();
+  const packageList = await loadCachedPackageList();
   const items: AbandonedCheckoutItem[] = newAbandoned.map((tx) => {
     const createdMs = tx.created_at ? new Date(tx.created_at).getTime() : now;
     const minutesAgo = Math.round((now - createdMs) / 60000);
     const totalStr = tx.details?.totals?.total ?? '0';
     const amount = (parseFloat(totalStr) || 0) / 100;
-    const email =
-      (tx.custom_data?.customerEmail as string | undefined) ||
-      tx.customer?.email ||
-      undefined;
+    const custom = tx.custom_data ?? undefined;
+    const customStr = (key: string, max: number) => {
+      const value = custom?.[key];
+      return value == null ? '' : String(value).trim().slice(0, max);
+    };
+    const email = customStr('customerEmail', 320) || tx.customer?.email || undefined;
+    const locale = asCheckoutLocale(customStr('locale', 8) || null);
+    const display = resolvePackageDisplayFromList(packageList, {
+      planId: customStr('planId', 128),
+      planName: customStr('planName', 250) || (tx.items?.[0]?.price?.name ?? '').trim(),
+      destinationName: customStr('destinationName', 200),
+      destinationSlug: customStr('destinationSlug', 64),
+    });
     return {
       paddleTransactionId: tx.id!,
       customerEmail: email,
+      customerName: customStr('customerName', 200) || undefined,
       amount: amount || undefined,
       currency: tx.currency_code || undefined,
       minutesAgo,
+      packageName: display.packageName || undefined,
+      destination: destinationLine(display) || undefined,
+      locale,
+      planUrl: buildPlanPageUrl(locale, display.destinationSlug, display.planId),
     };
   });
 

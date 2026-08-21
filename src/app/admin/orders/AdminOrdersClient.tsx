@@ -59,6 +59,8 @@ interface DisplayOrder {
   source: 'db' | 'paddle';   // where the row came from, not how it was sold
   orderSource: string;       // Order.source — PADDLE or ADMIN_INTERNAL
   checkoutIp: string | null;
+  locale?: string | null;
+  planUrl?: string | null;
 }
 
 interface EsimStatusData {
@@ -475,7 +477,10 @@ export function AdminOrdersClient({
           customerEmail: string | null;
           customerName: string | null;
           packageName: string | null;
+          destination: string | null;
           checkoutIp: string | null;
+          locale?: string | null;
+          planUrl?: string | null;
           totalAmount: number;
           currency: string;
           createdAt: string;
@@ -485,7 +490,7 @@ export function AdminOrdersClient({
           customerName: a.customerName ?? '',
           customerEmail: a.customerEmail ?? '',
           packageName: a.packageName ?? '',
-          destination: '',
+          destination: a.destination ?? '',
           totalAmount: a.totalAmount,
           currency: a.currency,
           status: 'ABANDONED',
@@ -502,6 +507,8 @@ export function AdminOrdersClient({
           source: 'paddle' as const,
           orderSource: 'PADDLE',
           checkoutIp: a.checkoutIp ?? null,
+          locale: a.locale ?? null,
+          planUrl: a.planUrl ?? null,
         }));
         setAbandonedOrders(items);
       })
@@ -522,7 +529,10 @@ export function AdminOrdersClient({
           if (!q) return true;
           return (
             o.paddleTransactionId?.toLowerCase().includes(q) ||
-            o.customerEmail?.toLowerCase().includes(q)
+            o.customerEmail?.toLowerCase().includes(q) ||
+            o.customerName?.toLowerCase().includes(q) ||
+            o.packageName?.toLowerCase().includes(q) ||
+            o.destination?.toLowerCase().includes(q)
           );
         })
       : [];
@@ -950,6 +960,22 @@ export function AdminOrdersClient({
                             >
                               ↗ View in Paddle
                             </a>
+                            {order.locale && (
+                              <div>
+                                <p className="text-xs text-gray-400">Locale</p>
+                                <p className="text-xs text-gray-700">{order.locale}</p>
+                              </div>
+                            )}
+                            {order.planUrl && (
+                              <a
+                                href={order.planUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline"
+                              >
+                                ↗ View plan page
+                              </a>
+                            )}
                           </>
                         ) : (
                           <p className="text-xs text-gray-400">No Paddle transaction</p>

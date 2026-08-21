@@ -2,6 +2,22 @@
 
 ## [Unreleased]
 
+### Changed (abandoned checkouts and checkout clarity)
+
+Abandoned rows and the admin digest only showed a transaction id, an email and a price, so a
+spike in drop-offs was visible without the plan or the page. Checkout itself hid the network /
+tethering / top-up facts that View details already had, and Paddle asked for the email a second
+time because the production `transactionId` path never passed `customer.email`.
+
+- Checkout now writes `planName`, `destinationName` and `destinationSlug` onto the Paddle
+  transaction (display only — price is still resolved server-side from `planId`).
+- The abandoned admin list and digest resolve those fields, fall back to the packages cache, and
+  link to `/{locale}/destinations/{slug}/plan/{planId}`.
+- Paddle overlay is opened with the email the buyer just typed. ZIP is unchanged.
+- The cart and order summary show network, tethering and top-ups from the cart plan.
+- Traveler details, Turnstile and Pay now sit on one checkout step. The server still requires a
+  fresh Turnstile token and consent before a Paddle transaction is created.
+
 ### Added (Google Ads can now see the purchases GA4 was already measuring)
 
 The account had a conversion action waiting and no tag to feed it, so every sale the site made was

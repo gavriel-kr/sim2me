@@ -1055,29 +1055,40 @@ export async function sendRefundIssuedEmail(data: AdminOrderEventData): Promise<
 export interface AbandonedCheckoutItem {
   paddleTransactionId: string;
   customerEmail?: string;
+  customerName?: string;
   amount?: number;
   currency?: string;
   minutesAgo: number;
+  packageName?: string;
+  destination?: string;
+  locale?: string;
+  planUrl?: string;
 }
 
 /** Admin digest: new abandoned checkouts detected by cron. */
 export async function sendAbandonedCheckoutEmail(items: AbandonedCheckoutItem[]): Promise<boolean> {
   const to = adminRecipient();
-  const rows = items.map((it) => `
+  const rows = items.map((it) => {
+    const customer = [it.customerName, it.customerEmail].filter(Boolean).join(' · ') || '—';
+    const product = it.planUrl
+      ? `<a href="${escapeHtml(it.planUrl)}" style="color:#0f172a;">${escapeHtml(it.packageName ?? 'Plan')}</a>`
+      : escapeHtml(it.packageName ?? '—');
+    return `
   <tr>
-    <td style="padding:6px 8px; font-family:monospace; font-size:12px;">${escapeHtml(it.paddleTransactionId)}</td>
-    <td style="padding:6px 8px;">${escapeHtml(it.customerEmail ?? '—')}</td>
+    <td style="padding:6px 8px;">${product}<div style="color:#64748b; font-size:12px; margin-top:2px;">${escapeHtml(it.destination ?? '—')}${it.locale ? ` · ${escapeHtml(it.locale)}` : ''}</div></td>
+    <td style="padding:6px 8px;">${escapeHtml(customer)}<div style="color:#94a3b8; font-family:monospace; font-size:11px; margin-top:2px;">${escapeHtml(it.paddleTransactionId)}</div></td>
     <td style="padding:6px 8px;">${it.currency ?? ''} ${it.amount != null ? it.amount.toFixed(2) : '—'}</td>
     <td style="padding:6px 8px;">${it.minutesAgo}m ago</td>
-  </tr>`).join('');
+  </tr>`;
+  }).join('');
   const html = `
-<div style="font-family:sans-serif; max-width:640px; margin:0 auto; padding:24px;">
+<div style="font-family:sans-serif; max-width:720px; margin:0 auto; padding:24px;">
   <h2 style="margin:0 0 16px 0; color:#0f172a;">👻 ${items.length} Abandoned Checkout${items.length === 1 ? '' : 's'} — Sim2Me</h2>
   <table style="width:100%; border-collapse:collapse; font-size:14px; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden;">
     <thead style="background:#f8fafc;">
       <tr>
-        <th style="padding:8px; text-align:left; color:#64748b; font-weight:600;">Transaction ID</th>
-        <th style="padding:8px; text-align:left; color:#64748b; font-weight:600;">Email</th>
+        <th style="padding:8px; text-align:left; color:#64748b; font-weight:600;">Product</th>
+        <th style="padding:8px; text-align:left; color:#64748b; font-weight:600;">Customer</th>
         <th style="padding:8px; text-align:left; color:#64748b; font-weight:600;">Amount</th>
         <th style="padding:8px; text-align:left; color:#64748b; font-weight:600;">When</th>
       </tr>

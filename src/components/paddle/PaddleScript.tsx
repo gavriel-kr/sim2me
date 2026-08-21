@@ -71,7 +71,11 @@ export function usePaddle() {
         ...(rest.successUrl && { successUrl: rest.successUrl }),
       };
       if (rest.transactionId) {
-        window.Paddle.Checkout!.open({ transactionId: rest.transactionId, settings });
+        window.Paddle.Checkout!.open({
+          transactionId: rest.transactionId,
+          ...(rest.customerEmail && { customer: { email: rest.customerEmail } }),
+          settings,
+        });
       } else {
         window.Paddle.Checkout!.open({
           items: rest.items,

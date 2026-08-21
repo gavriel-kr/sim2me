@@ -3,14 +3,28 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { requireAdmin } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
+import {
+  asCheckoutLocale,
+  buildPlanPageUrl,
+  destinationLine,
+  loadCachedPackageList,
+  resolvePackageDisplayFromList,
+} from '@/lib/package-display';
 
 interface PaddleTransaction {
   id: string;
   status: string;
   customer?: { email?: string };
-  custom_data?: { customerEmail?: string; customerName?: string; planId?: string; checkoutIp?: string } | null;
+  custom_data?: Record<string, unknown> | null;
+  items?: Array<{ price?: { name?: string } | null; quantity?: number }>;
   details?: { totals?: { total?: string; currency_code?: string } };
   created_at: string;
+}
+
+function customStr(data: Record<string, unknown> | null | undefined, key: string, max: number): string {
+  const value = data?.[key];
+  if (value == null) return '';
+  return String(value).trim().slice(0, max);
 }
 
 export async function GET() {
@@ -43,30 +57,40 @@ export async function GET() {
     const paddleData = await paddleRes.json() as { data?: PaddleTransaction[] };
     const transactions: PaddleTransaction[] = paddleData?.data ?? [];
 
-    // Fetch existing paddleTransactionIds from DB to de-duplicate
     const existing = await prisma.order.findMany({
       where: { paddleTransactionId: { not: null } },
       select: { paddleTransactionId: true },
       take: 2000,
     });
     const existingIds = new Set(existing.map((o: { paddleTransactionId: string | null }) => o.paddleTransactionId!));
+    const packageList = await loadCachedPackageList();
 
-    // Show all draft/ready transactions not already in DB (Paddle handles expiry via status change)
     const abandoned = transactions
       .filter((t) => !existingIds.has(t.id))
-      .map((t) => ({
-        paddleTransactionId: t.id,
-        // custom_data holds what the customer typed in our checkout form
-        customerEmail: t.custom_data?.customerEmail ?? t.customer?.email ?? null,
-        customerName: t.custom_data?.customerName ?? null,
-        packageName: t.custom_data?.planId ?? null,
-        checkoutIp: t.custom_data?.checkoutIp ?? null,
-        // Paddle returns totals in lowest denomination (cents) — divide by 100 for dollars
-        totalAmount: (parseFloat(t.details?.totals?.total ?? '0') || 0) / 100,
-        currency: t.details?.totals?.currency_code ?? 'USD',
-        createdAt: t.created_at,
-        paddleStatus: t.status,
-      }));
+      .map((t) => {
+        const custom = t.custom_data ?? undefined;
+        const display = resolvePackageDisplayFromList(packageList, {
+          planId: customStr(custom, 'planId', 128),
+          planName: customStr(custom, 'planName', 250) || (t.items?.[0]?.price?.name ?? '').trim(),
+          destinationName: customStr(custom, 'destinationName', 200),
+          destinationSlug: customStr(custom, 'destinationSlug', 64),
+        });
+        const locale = asCheckoutLocale(customStr(custom, 'locale', 8) || null);
+        return {
+          paddleTransactionId: t.id,
+          customerEmail: customStr(custom, 'customerEmail', 320) || t.customer?.email || null,
+          customerName: customStr(custom, 'customerName', 200) || null,
+          packageName: display.packageName || null,
+          destination: destinationLine(display) || null,
+          checkoutIp: customStr(custom, 'checkoutIp', 45) || null,
+          locale,
+          planUrl: buildPlanPageUrl(locale, display.destinationSlug, display.planId) ?? null,
+          totalAmount: (parseFloat(t.details?.totals?.total ?? '0') || 0) / 100,
+          currency: t.details?.totals?.currency_code ?? 'USD',
+          createdAt: t.created_at,
+          paddleStatus: t.status,
+        };
+      });
 
     return NextResponse.json({ abandoned });
   } catch (e) {

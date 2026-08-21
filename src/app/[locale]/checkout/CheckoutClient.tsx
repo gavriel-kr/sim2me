@@ -21,7 +21,7 @@ import { CharacterFigure } from '@/components/brand/CharacterFigure';
 
 const { Link: IntlLink } = createSharedPathnamesNavigation(routing);
 
-type Step = 'cart' | 'traveler' | 'payment';
+type Step = 'cart' | 'details';
 
 export function CheckoutClient() {
   const t = useTranslations('checkout');
@@ -47,9 +47,6 @@ export function CheckoutClient() {
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
-  /* Kept in component state rather than in the cart store: consent belongs to this purchase attempt, and
-     the store is persisted to localStorage — an acceptance should not outlive the session that gave it. */
-  const [consentGiven, setConsentGiven] = useState(false);
   const turnstileRef = useRef<TurnstileWidgetRef>(null);
 
   const { register, handleSubmit, formState: { errors } } = useForm<TravelerInfoForm>({
@@ -68,21 +65,22 @@ export function CheckoutClient() {
 
   const gaItems = () => items.map((i) => planToGaItem(i.plan, i.destinationName));
 
-  const goToTravelerStep = () => {
+  const goToDetailsStep = () => {
     trackBeginCheckout(gaItems(), total);
-    setStep('traveler');
+    setStep('details');
   };
 
-  const onTravelerSubmit = (data: TravelerInfoForm) => {
+  const onPaySubmit = async (data: TravelerInfoForm) => {
+    if (!turnstileToken) {
+      setPaymentError(t('turnstilePending'));
+      return;
+    }
     setTravelerInfo({ email: data.email, firstName: data.firstName, lastName: data.lastName });
-    setConsentGiven(data.consent);
-    setStep('payment');
+    await onPayWithPaddle(data);
   };
 
-  const onPayWithPaddle = async () => {
-    const travelerData = useCartStore.getState().travelerInfo;
-
-    if (!travelerData?.email || !items.length) {
+  const onPayWithPaddle = async (data: TravelerInfoForm) => {
+    if (!data.email || !items.length) {
       setPaymentError(t('emailRequired') || 'Please enter your details first.');
       return;
     }
@@ -94,9 +92,8 @@ export function CheckoutClient() {
       setPaymentError(t('minError', { min: minDisplay }));
       return;
     }
-    if (!consentGiven) {
+    if (data.consent !== true) {
       setPaymentError(t('errConsent'));
-      setStep('traveler');
       return;
     }
     setPaymentError(null);
@@ -112,12 +109,14 @@ export function CheckoutClient() {
             quantity: i.quantity,
             unitPrice: i.plan.price,
             planName: i.plan.name || `${i.destinationName} eSIM`,
+            destinationName: i.destinationName,
+            destinationSlug: i.destinationSlug,
           })),
-          customerEmail: travelerData.email,
-          customerName: [travelerData.firstName, travelerData.lastName].filter(Boolean).join(' ').trim() || undefined,
+          customerEmail: data.email,
+          customerName: [data.firstName, data.lastName].filter(Boolean).join(' ').trim() || undefined,
           locale,
           turnstileToken: turnstileToken ?? '',
-          consent: consentGiven,
+          consent: data.consent,
         }),
       });
 
@@ -130,16 +129,16 @@ export function CheckoutClient() {
         customData?: Record<string, string>;
         successUrl?: string;
       };
-      let data: CheckoutResponse = {};
+      let checkout: CheckoutResponse = {};
       try {
-        data = await res.json();
+        checkout = await res.json();
       } catch {
         // non-JSON body (e.g. Vercel infrastructure error)
       }
 
       if (!res.ok) {
-        const detail = data.details ? ` (${data.details})` : '';
-        const msg = data.error || t('genericError');
+        const detail = checkout.details ? ` (${checkout.details})` : '';
+        const msg = checkout.error || t('genericError');
         setPaymentError(msg + detail);
         return;
       }
@@ -147,9 +146,10 @@ export function CheckoutClient() {
         setPaymentError(t('paddleLoading'));
         return;
       }
-      if (data.mode === 'transaction' && data.transactionId) {
+      if (checkout.mode === 'transaction' && checkout.transactionId) {
         openCheckout({
-          transactionId: data.transactionId,
+          transactionId: checkout.transactionId,
+          customerEmail: data.email,
           onCompleted: (transactionId: string) => {
             clearCart();
             const localePrefix = locale === routing.defaultLocale ? '' : `/${locale}`;
@@ -158,9 +158,9 @@ export function CheckoutClient() {
         });
       } else {
         openCheckout({
-          items: data.items,
-          customData: data.customData,
-          customerEmail: travelerData.email,
+          items: checkout.items,
+          customData: checkout.customData,
+          customerEmail: data.email,
           onCompleted: (transactionId: string) => {
             clearCart();
             const localePrefix = locale === routing.defaultLocale ? '' : `/${locale}`;
@@ -222,6 +222,13 @@ export function CheckoutClient() {
                       <p className="text-sm text-muted-foreground">
                         {item.plan.dataDisplay} / {item.plan.days} {tPlan('days')}
                       </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {tPlan('network')}: {item.plan.networkType}
+                        {' · '}
+                        {tPlan('tethering')}: {item.plan.tethering ? tPlan('yes') : tPlan('no')}
+                        {' · '}
+                        {tPlan('topUps')}: {item.plan.topUps ? tPlan('available') : tPlan('no')}
+                      </p>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="font-medium">
@@ -246,7 +253,7 @@ export function CheckoutClient() {
                 <Button
                   className="w-full"
                   disabled={belowMinimum}
-                  onClick={goToTravelerStep}
+                  onClick={goToDetailsStep}
                 >
                   {t('continueToDetails')}
                 </Button>
@@ -254,13 +261,13 @@ export function CheckoutClient() {
             </Card>
           )}
 
-          {step === 'traveler' && (
+          {step === 'details' && (
             <Card>
               <CardHeader>
                 <h2 className="font-semibold">{t('travelerInfo')}</h2>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSubmit(onTravelerSubmit)} className="space-y-4">
+                <form onSubmit={handleSubmit(onPaySubmit)} className="space-y-4">
                   <div>
                     <Label htmlFor="email">{t('email')}</Label>
                     <Input
@@ -338,45 +345,32 @@ export function CheckoutClient() {
                     )}
                   </div>
 
-                  <Button type="submit">{t('continueToPayment')}</Button>
+                  {belowMinimum && (
+                    <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                      {t('minPayment', { total: totalDisplay, min: minDisplay })}
+                    </div>
+                  )}
+                  <TurnstileWidget
+                    ref={turnstileRef}
+                    onVerify={setTurnstileToken}
+                    onError={() => setTurnstileToken(null)}
+                    onExpire={() => setTurnstileToken(null)}
+                  />
+                  {paymentError && (
+                    <p className="text-sm text-destructive" role="alert">{paymentError}</p>
+                  )}
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={paymentLoading || !paddleReady || belowMinimum || !turnstileToken}
+                  >
+                    {paymentLoading ? (t('processing') || 'Processing…') : (t('payNow') || 'Pay now')}
+                  </Button>
+                  {!turnstileToken && !belowMinimum && (
+                    <p className="text-xs text-muted-foreground">{t('turnstilePending')}</p>
+                  )}
+                  <p className="text-xs leading-relaxed text-muted-foreground">{t('secureNote')}</p>
                 </form>
-              </CardContent>
-            </Card>
-          )}
-
-          {step === 'payment' && (
-            <Card>
-              <CardHeader>
-                <h2 className="font-semibold">{t('payment')}</h2>
-              </CardHeader>
-              <CardContent>
-                {belowMinimum && (
-                  <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                    {t('minPayment', { total: totalDisplay, min: minDisplay })}
-                  </div>
-                )}
-                <TurnstileWidget
-                  ref={turnstileRef}
-                  onVerify={setTurnstileToken}
-                  onError={() => setTurnstileToken(null)}
-                  onExpire={() => setTurnstileToken(null)}
-                />
-                {paymentError && (
-                  <p className="mb-4 text-sm text-destructive" role="alert">{paymentError}</p>
-                )}
-                <Button
-                  className="mt-4 w-full"
-                  onClick={onPayWithPaddle}
-                  disabled={paymentLoading || !paddleReady || belowMinimum || !turnstileToken}
-                >
-                  {paymentLoading ? (t('processing') || 'Processing…') : (t('payNow') || 'Pay now')}
-                </Button>
-                {/* A disabled pay button with no explanation reads as a broken page rather than a
-                    pending check. The gate itself is unchanged — this only says why. */}
-                {!turnstileToken && !belowMinimum && (
-                  <p className="mt-2 text-xs text-muted-foreground">{t('turnstilePending')}</p>
-                )}
-                <p className="mt-4 text-xs leading-relaxed text-muted-foreground">{t('secureNote')}</p>
               </CardContent>
             </Card>
           )}
@@ -391,12 +385,21 @@ export function CheckoutClient() {
               {items.map((item) => (
                 <div
                   key={item.planId}
-                  className="flex justify-between text-sm py-2"
+                  className="flex justify-between gap-4 text-sm py-2"
                 >
-                  <span>
-                    {item.destinationName} – {item.plan.dataDisplay} / {item.plan.days} {tPlan('days')}
-                  </span>
-                  <span>
+                  <div className="min-w-0">
+                    <p>
+                      {item.destinationName} – {item.plan.dataDisplay} / {item.plan.days} {tPlan('days')}
+                    </p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {tPlan('network')}: {item.plan.networkType}
+                      {' · '}
+                      {tPlan('tethering')}: {item.plan.tethering ? tPlan('yes') : tPlan('no')}
+                      {' · '}
+                      {tPlan('topUps')}: {item.plan.topUps ? tPlan('available') : tPlan('no')}
+                    </p>
+                  </div>
+                  <span className="shrink-0">
                     {formatPrice(item.plan.price * item.quantity, item.plan.currency)}
                   </span>
                 </div>
@@ -412,7 +415,7 @@ export function CheckoutClient() {
               {step === 'cart' && (
                 <Button
                   className="mt-6 w-full"
-                  onClick={goToTravelerStep}
+                  onClick={goToDetailsStep}
                 >
                   {t('continue')}
                 </Button>

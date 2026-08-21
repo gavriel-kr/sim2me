@@ -14,6 +14,7 @@ import { getDbCachedPackages } from '@/lib/packagesCache';
 import { getActiveDealPrice } from '@/lib/hot-deals';
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
 import { verifyTurnstile } from '@/lib/turnstile';
+import { sanitizeDestinationSlug } from '@/lib/package-display';
 import { z } from 'zod';
 
 const bodySchema = z.object({
@@ -22,6 +23,8 @@ const bodySchema = z.object({
     quantity: z.number().int().min(1).max(10),
     unitPrice: z.number().min(0),
     planName: z.string().max(300),
+    destinationName: z.string().max(200).optional(),
+    destinationSlug: z.string().max(64).optional(),
   })).min(1).max(1),
   customerEmail: z.string().email(),
   customerName: z.string().max(200).optional(),
@@ -99,6 +102,12 @@ export async function POST(request: Request) {
       termsAccepted: 'true',
       termsAcceptedAt: new Date().toISOString(),
     };
+    const planName = item.planName.trim().slice(0, 250);
+    if (planName) customData.planName = planName;
+    const destinationName = (item.destinationName ?? '').trim().slice(0, 200);
+    if (destinationName) customData.destinationName = destinationName;
+    const destinationSlug = sanitizeDestinationSlug(item.destinationSlug);
+    if (destinationSlug) customData.destinationSlug = destinationSlug;
     if (deviceType) customData.deviceType = deviceType.trim().slice(0, 64);
     if (locale) customData.locale = locale;
     if (userId) customData.userId = userId;
