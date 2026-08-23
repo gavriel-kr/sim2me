@@ -13,6 +13,14 @@ import { PhoneInput } from '@/components/PhoneInput';
 
 const { Link: IntlLink } = createSharedPathnamesNavigation(routing);
 
+function registerErrorMessage(t: (key: string) => string, code?: string): string {
+  if (code === 'EMAIL_EXISTS') return t('registerEmailExists');
+  if (code === 'PHONE_EXISTS') return t('registerPhoneExists');
+  if (code === 'INVALID') return t('registerInvalid');
+  if (code === 'RATE_LIMIT') return t('registerRateLimit');
+  return t('registerFailed');
+}
+
 export function AccountRegisterClient() {
   const t = useTranslations('account');
   const locale = useLocale();
@@ -49,12 +57,12 @@ export function AccountRegisterClient() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || 'Registration failed');
+        setError(registerErrorMessage(t, data.code));
         return;
       }
       setSuccess(true);
     } catch {
-      setError('Something went wrong. Please try again.');
+      setError(t('registerFailed'));
     } finally {
       setLoading(false);
     }
@@ -64,12 +72,12 @@ export function AccountRegisterClient() {
     return (
       <Card className="border-0 shadow-lg">
         <CardHeader>
-          <CardTitle className="text-xl text-primary">Account created</CardTitle>
-          <CardDescription>You can sign in now with your email or phone and password.</CardDescription>
+          <CardTitle className="text-xl text-primary">{t('registerSuccessTitle')}</CardTitle>
+          <CardDescription>{t('registerSuccessDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <Button className="w-full" onClick={() => router.push('/account/login')}>
-            Go to sign in
+            {t('goToSignIn')}
           </Button>
         </CardContent>
       </Card>
@@ -80,7 +88,7 @@ export function AccountRegisterClient() {
     <Card className="border-0 shadow-lg">
       <CardHeader className="space-y-1 text-center">
         <CardTitle className="text-2xl font-bold">{t('register')}</CardTitle>
-        <CardDescription>Create an account — phone required for all countries</CardDescription>
+        <CardDescription>{t('registerSubtitle')}</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -110,7 +118,7 @@ export function AccountRegisterClient() {
               id="password"
               type="password"
               autoComplete="new-password"
-              placeholder="At least 8 characters"
+              placeholder={t('passwordHint')}
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
               required
@@ -137,7 +145,7 @@ export function AccountRegisterClient() {
                 id="lastName"
                 type="text"
                 autoComplete="family-name"
-                placeholder="Optional"
+                placeholder={t('optional')}
                 value={form.lastName}
                 onChange={(e) => setForm({ ...form, lastName: e.target.value })}
                 className="h-11"
@@ -152,7 +160,7 @@ export function AccountRegisterClient() {
               onChange={(v) => setForm({ ...form, phone: v || '' })}
               placeholder={t('phonePlaceholder')}
             />
-            <p className="text-xs text-muted-foreground">Select country and enter number. Required.</p>
+            <p className="text-xs text-muted-foreground">{t('phoneHint')}</p>
           </div>
           <div className="flex items-center gap-2">
             <input
@@ -167,7 +175,7 @@ export function AccountRegisterClient() {
             </Label>
           </div>
           <Button type="submit" className="w-full h-11" size="lg" disabled={loading || !form.phone}>
-            {loading ? 'Creating account…' : t('createAccount')}
+            {loading ? t('creatingAccount') : t('createAccount')}
           </Button>
         </form>
         <p className="mt-6 text-center text-sm text-muted-foreground">

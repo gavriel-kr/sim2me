@@ -13,13 +13,13 @@ export async function POST(request: Request) {
   try {
     const ip = getClientIp(request);
     const allowed = await checkRateLimit(ip, 'register', 5, 60);
-    if (!allowed) return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 });
+    if (!allowed) return NextResponse.json({ code: 'RATE_LIMIT', error: 'Too many requests. Please try again later.' }, { status: 429 });
 
     const body = await request.json();
     const parsed = registerSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Invalid input', details: parsed.error.flatten() },
+        { code: 'INVALID', error: 'Invalid input', details: parsed.error.flatten() },
         { status: 400 }
       );
     }
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     });
     if (existingByEmail) {
       return NextResponse.json(
-        { error: 'An account with this email already exists. Sign in or use forgot password.' },
+        { code: 'EMAIL_EXISTS', error: 'An account with this email already exists. Sign in or use forgot password.' },
         { status: 409 }
       );
     }
@@ -42,7 +42,7 @@ export async function POST(request: Request) {
     });
     if (existingByPhone) {
       return NextResponse.json(
-        { error: 'This phone number is already registered.' },
+        { code: 'PHONE_EXISTS', error: 'This phone number is already registered.' },
         { status: 409 }
       );
     }
@@ -81,6 +81,6 @@ export async function POST(request: Request) {
     });
   } catch (e) {
     console.error('[Register]', e);
-    return NextResponse.json({ error: 'Registration failed' }, { status: 500 });
+    return NextResponse.json({ code: 'FAILED', error: 'Registration failed' }, { status: 500 });
   }
 }

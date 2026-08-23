@@ -20,6 +20,7 @@ declare global {
             locale?: string;
           };
         }) => void;
+        close?: () => void;
       };
     };
   }
@@ -89,7 +90,16 @@ export function usePaddle() {
     []
   );
 
-  return { ready, openCheckout };
+  const closeCheckout = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      window.Paddle?.Checkout?.close?.();
+    } catch {
+      // overlay already gone
+    }
+  }, []);
+
+  return { ready, openCheckout, closeCheckout };
 }
 
 export function PaddleScript() {

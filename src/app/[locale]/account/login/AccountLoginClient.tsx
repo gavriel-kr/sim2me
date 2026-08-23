@@ -67,7 +67,7 @@ export function AccountLoginClient() {
           body: JSON.stringify({ token: turnstileToken }),
         });
         if (!check.ok) {
-          setError('Security check failed. Please try again.');
+          setError(t('securityCheckFailed'));
           setTurnstileToken(null);
           return;
         }
@@ -93,16 +93,16 @@ export function AccountLoginClient() {
         return;
       }
       if (res?.error) {
-        setError('Invalid email or password. Please try again.');
+        setError(t('invalidCredentials'));
         return;
       }
       if (res?.ok) {
         window.location.href = '/account';
         return;
       }
-      setError('Something went wrong. Please try again.');
+      setError(t('genericError'));
     } catch {
-      setError('Something went wrong. Please try again.');
+      setError(t('genericError'));
     } finally {
       setLoading(false);
       setTurnstileToken(null);
@@ -112,7 +112,7 @@ export function AccountLoginClient() {
   async function handleOtpSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (otpCode.length !== 6) {
-      setError('Please enter the 6-digit code.');
+      setError(t('otpEnterCode'));
       return;
     }
     setError('');
@@ -126,31 +126,31 @@ export function AccountLoginClient() {
       });
 
       if (res?.error === 'OTP_INVALID') {
-        setError('Incorrect code. Please check your email and try again.');
+        setError(t('otpInvalid'));
         setOtpCode('');
         return;
       }
       if (res?.error === 'OTP_EXPIRED') {
-        setError('This code has expired. Please request a new one.');
+        setError(t('otpExpired'));
         setOtpCode('');
         return;
       }
       if (res?.error === 'OTP_TOO_MANY_ATTEMPTS') {
-        setError('Too many failed attempts. Please request a new code.');
+        setError(t('otpTooMany'));
         setOtpCode('');
         return;
       }
       if (res?.error) {
-        setError('Something went wrong. Please try again.');
+        setError(t('genericError'));
         return;
       }
       if (res?.ok) {
         window.location.href = '/account';
         return;
       }
-      setError('Something went wrong. Please try again.');
+      setError(t('genericError'));
     } catch {
-      setError('Something went wrong. Please try again.');
+      setError(t('genericError'));
     } finally {
       setLoading(false);
     }
@@ -170,7 +170,7 @@ export function AccountLoginClient() {
       setOtpCode('');
       startCooldown();
     } catch {
-      setError('Failed to resend. Please try again.');
+      setError(t('otpResendFailed'));
     }
   }
 
@@ -192,9 +192,9 @@ export function AccountLoginClient() {
           <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50">
             <ShieldCheck className="h-6 w-6 text-emerald-600" />
           </div>
-          <CardTitle className="text-2xl font-bold">Check your email</CardTitle>
+          <CardTitle className="text-2xl font-bold">{t('otpTitle')}</CardTitle>
           <CardDescription>
-            We sent a 6-digit code to <span className="font-medium text-foreground">{email}</span>
+            {t('otpSent', { email })}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -206,11 +206,11 @@ export function AccountLoginClient() {
             )}
             {resendSent && (
               <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-                ✓ New code sent — check your inbox.
+                ✓ {t('otpCodeSent')}
               </p>
             )}
             <div className="space-y-2">
-              <Label htmlFor="otp-code">6-digit code</Label>
+              <Label htmlFor="otp-code">{t('otpLabel')}</Label>
               <Input
                 id="otp-code"
                 ref={otpInputRef}
@@ -231,7 +231,7 @@ export function AccountLoginClient() {
               size="lg"
               disabled={loading || otpCode.length !== 6}
             >
-              {loading ? 'Verifying…' : 'Verify Code'}
+              {loading ? t('otpVerifying') : t('otpVerify')}
             </Button>
           </form>
 
@@ -242,7 +242,7 @@ export function AccountLoginClient() {
               className="flex items-center gap-1 text-muted-foreground hover:text-foreground"
             >
               <ArrowLeft className="h-4 w-4" />
-              Back
+              {t('otpBack')}
             </button>
             <button
               type="button"
@@ -251,12 +251,12 @@ export function AccountLoginClient() {
               className="flex items-center gap-1 text-primary hover:underline disabled:text-muted-foreground disabled:no-underline disabled:cursor-not-allowed"
             >
               <Mail className="h-4 w-4" />
-              {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend code'}
+              {resendCooldown > 0 ? t('otpResendIn', { seconds: resendCooldown }) : t('otpResend')}
             </button>
           </div>
 
           <p className="mt-4 text-center text-xs text-muted-foreground">
-            Code expires in 10 minutes. Check your spam folder if you don&apos;t see it.
+            {t('otpExpiry')}
           </p>
         </CardContent>
       </Card>
@@ -268,18 +268,27 @@ export function AccountLoginClient() {
     <Card className="border-0 shadow-lg">
       <CardHeader className="space-y-1 text-center">
         <CardTitle className="text-2xl font-bold">{t('login')}</CardTitle>
-        <CardDescription>Sign in with your email and password</CardDescription>
+        <CardDescription>{t('loginSubtitle')}</CardDescription>
       </CardHeader>
       <CardContent>
+        <div className="mb-4 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 text-sm">
+          <p className="font-medium text-foreground">{t('newBuyerBanner')}</p>
+          <p className="mt-1 text-muted-foreground">
+            {t('newBuyerBannerHint')}{' '}
+            <IntlLink href="/account/forgot-password" className="font-medium text-primary hover:underline">
+              {t('forgotPassword')}
+            </IntlLink>
+          </p>
+        </div>
         {unverified && (
           <div className="mb-4 rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800">
-            <p className="font-medium">Please verify your email before signing in.</p>
-            <p className="mt-1">Check your inbox for the verification link.</p>
+            <p className="font-medium">{t('unverifiedTitle')}</p>
+            <p className="mt-1">{t('unverifiedBody')}</p>
             {resendSent ? (
-              <p className="mt-2 text-emerald-700 font-medium">✓ Verification email sent!</p>
+              <p className="mt-2 text-emerald-700 font-medium">{t('unverifiedSent')}</p>
             ) : (
               <button onClick={handleResendVerification} className="mt-2 underline text-amber-700 hover:text-amber-900 cursor-pointer">
-                Resend verification email
+                {t('resendVerification')}
               </button>
             )}
           </div>
@@ -334,7 +343,7 @@ export function AccountLoginClient() {
             className="my-2"
           />
           <Button type="submit" className="w-full h-11" size="lg" disabled={loading || !turnstileToken}>
-            {loading ? 'Signing in…' : t('signIn')}
+            {loading ? t('signingIn') : t('signIn')}
           </Button>
         </form>
         <p className="mt-6 text-center text-sm text-muted-foreground">

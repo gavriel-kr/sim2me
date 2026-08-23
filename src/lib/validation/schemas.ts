@@ -9,9 +9,13 @@ import { z } from 'zod';
  */
 export const travelerInfoSchema = z.object({
   email: z.string().email('invalidEmail'),
+  emailConfirm: z.string().email('invalidEmail'),
   firstName: z.string().min(1, 'required'),
   lastName: z.string().min(1, 'required'),
   consent: z.boolean().refine((v) => v === true, { message: 'consentRequired' }),
+}).refine((d) => d.email.trim().toLowerCase() === d.emailConfirm.trim().toLowerCase(), {
+  message: 'emailMismatch',
+  path: ['emailConfirm'],
 });
 
 export const CONTACT_SUBJECTS = [

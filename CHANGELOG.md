@@ -2,6 +2,21 @@
 
 ## [Unreleased]
 
+### Changed (ticket 040 — last steps of checkout)
+
+Public success URLs no longer expose QR / SM-DP+ / activation forever. After a successful
+Paddle pay the overlay closes on a short timer; the success page shows install details for
+five minutes (server-enforced), then points to email and My account. New buyers get a
+choose-password link instead of a plaintext temp password. Checkout asks for the email twice.
+
+- Confirm-email field on checkout (match required; no autocomplete on the second field).
+- `Paddle.Checkout.close()` 2.5s after `checkout.completed`, then navigate to success.
+- `Order.esimCredsRevealedAt` + `GET /api/orders/by-transaction` strips secrets after 5 minutes.
+- Success page: spinner + Simi/Sima, countdown, one-tap install, no app CTA.
+- Purchase/delayed mail: 72h set-password link for new accounts.
+- Installation guide reads `howItWorks` (golden tip) in all four locales.
+- Success pages send `noindex, nofollow` (metadata only — `/success` is not added to robots.txt).
+
 ### Changed (abandoned checkouts and checkout clarity)
 
 Abandoned rows and the admin digest only showed a transaction id, an email and a price, so a

@@ -33,7 +33,7 @@ export function CheckoutClient() {
   const clearCart = useCartStore((s) => s.clearCart);
   const removeItem = useCartStore((s) => s.removeItem);
   const setTravelerInfo = useCartStore((s) => s.setTravelerInfo);
-  const { ready: paddleReady, openCheckout } = usePaddle();
+  const { ready: paddleReady, openCheckout, closeCheckout } = usePaddle();
 
   const MIN_PURCHASE = 1.20;
   const belowMinimum = total < MIN_PURCHASE;
@@ -51,7 +51,7 @@ export function CheckoutClient() {
 
   const { register, handleSubmit, formState: { errors } } = useForm<TravelerInfoForm>({
     resolver: zodResolver(travelerInfoSchema),
-    defaultValues: { consent: false },
+    defaultValues: { consent: false, emailConfirm: '' },
   });
 
   /* The schema carries codes rather than sentences, because a zod message renders as-is and this form
@@ -59,6 +59,7 @@ export function CheckoutClient() {
   const errorText = (code?: string): string | null => {
     if (!code) return null;
     if (code === 'invalidEmail') return t('errEmail');
+    if (code === 'emailMismatch') return t('errEmailMismatch');
     if (code === 'consentRequired') return t('errConsent');
     return t('errRequired');
   };
@@ -146,29 +147,29 @@ export function CheckoutClient() {
         setPaymentError(t('paddleLoading'));
         return;
       }
+      const onPaid = (transactionId: string) => {
+        window.setTimeout(() => {
+          closeCheckout();
+          clearCart();
+          const localePrefix = locale === routing.defaultLocale ? '' : `/${locale}`;
+          router.push(`${localePrefix}/success?transaction_id=${encodeURIComponent(transactionId)}`);
+        }, 2500);
+      };
       if (checkout.mode === 'transaction' && checkout.transactionId) {
         openCheckout({
           transactionId: checkout.transactionId,
           customerEmail: data.email,
-          onCompleted: (transactionId: string) => {
-            clearCart();
-            const localePrefix = locale === routing.defaultLocale ? '' : `/${locale}`;
-            router.push(`${localePrefix}/success?transaction_id=${encodeURIComponent(transactionId)}`);
-          },
+          onCompleted: onPaid,
         });
       } else {
         openCheckout({
           items: checkout.items,
           customData: checkout.customData,
           customerEmail: data.email,
-          onCompleted: (transactionId: string) => {
-            clearCart();
-            const localePrefix = locale === routing.defaultLocale ? '' : `/${locale}`;
-            router.push(`${localePrefix}/success?transaction_id=${encodeURIComponent(transactionId)}`);
-          },
+          onCompleted: onPaid,
         });
       }
-    } catch (e) {
+    } catch {
       setPaymentError(t('paymentError') || 'Something went wrong. Please try again.');
     } finally {
       setPaymentLoading(false);
@@ -274,13 +275,30 @@ export function CheckoutClient() {
                       id="email"
                       type="email"
                       className="mt-1"
+                      autoComplete="email"
                       aria-invalid={!!errors.email}
-                      aria-describedby={errors.email ? 'checkout-email-error' : undefined}
+                      aria-describedby={errors.email ? 'checkout-email-error' : 'checkout-email-hint'}
                       {...register('email')}
                     />
                     {errors.email && (
                       <p id="checkout-email-error" className="mt-1 text-sm text-destructive" role="alert">{errorText(errors.email.message)}</p>
                     )}
+                  </div>
+                  <div>
+                    <Label htmlFor="emailConfirm">{t('emailConfirm')}</Label>
+                    <Input
+                      id="emailConfirm"
+                      type="email"
+                      className="mt-1"
+                      autoComplete="off"
+                      aria-invalid={!!errors.emailConfirm}
+                      aria-describedby={errors.emailConfirm ? 'checkout-emailConfirm-error' : 'checkout-email-hint'}
+                      {...register('emailConfirm')}
+                    />
+                    {errors.emailConfirm && (
+                      <p id="checkout-emailConfirm-error" className="mt-1 text-sm text-destructive" role="alert">{errorText(errors.emailConfirm.message)}</p>
+                    )}
+                    <p id="checkout-email-hint" className="mt-2 text-xs leading-relaxed text-muted-foreground">{t('emailHint')}</p>
                   </div>
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>

@@ -6,7 +6,6 @@ import { createSharedPathnamesNavigation } from 'next-intl/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { routing } from '@/i18n/routing';
-import { brandConfig } from '@/config/brand';
 import { trackPurchase } from '@/lib/analytics';
 import { CharacterFigure } from '@/components/brand/CharacterFigure';
 
@@ -29,15 +28,35 @@ interface OrderData {
   smdpAddress: string | null;
   activationCode: string | null;
   createdAt: string;
+  credsExpiresAt: string | null;
 }
 
 type Status = 'loading' | 'completed' | 'failed' | 'not_found';
+
+function hasSecrets(order: OrderData | null): boolean {
+  if (!order) return false;
+  return Boolean(order.qrCodeUrl || (order.smdpAddress && order.activationCode));
+}
+
+function lpaHref(smdp: string, code: string, platform: 'apple' | 'android'): string {
+  const carddata = encodeURIComponent(`LPA:1$${smdp}$${code}`);
+  const host = platform === 'apple' ? 'esimsetup.apple.com' : 'esimsetup.android.com';
+  return `https://${host}/esim_qrcode_provisioning?carddata=${carddata}`;
+}
+
+function formatRemaining(ms: number): string {
+  const total = Math.max(0, Math.ceil(ms / 1000));
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
 
 export function SuccessClient({ transactionId }: { transactionId: string | null }) {
   const t = useTranslations('success');
   const [status, setStatus] = useState<Status>(transactionId ? 'loading' : 'not_found');
   const [order, setOrder] = useState<OrderData | null>(null);
-  const [attempts, setAttempts] = useState(0);
+  const [, setAttempts] = useState(0);
+  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
     if (!transactionId) return;
@@ -84,6 +103,17 @@ export function SuccessClient({ transactionId }: { transactionId: string | null 
     return () => clearInterval(interval);
   }, [transactionId]);
 
+  const remainingMs = order?.credsExpiresAt
+    ? new Date(order.credsExpiresAt).getTime() - now
+    : 0;
+  const showSecrets = status === 'completed' && hasSecrets(order) && remainingMs > 0;
+
+  useEffect(() => {
+    if (!showSecrets) return;
+    const tick = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(tick);
+  }, [showSecrets]);
+
   if (!transactionId) {
     return (
       <div className="container mx-auto max-w-lg px-4 py-16 text-center">
@@ -105,6 +135,10 @@ export function SuccessClient({ transactionId }: { transactionId: string | null 
             <div className="absolute inset-2 flex items-center justify-center rounded-full bg-primary/10">
               <span className="text-3xl">✈️</span>
             </div>
+          </div>
+          <div className="mt-2 flex items-end justify-center gap-2">
+            <CharacterFigure slot="genericSimi" height={160} heightLg={200} />
+            <CharacterFigure slot="genericSima" height={160} heightLg={200} />
           </div>
           <div className="text-center">
             <h1 className="text-xl font-semibold text-primary">{t('activating')}</h1>
@@ -150,12 +184,6 @@ export function SuccessClient({ transactionId }: { transactionId: string | null 
           </div>
           <h1 className="text-2xl font-bold text-primary">{t('thankYou')}</h1>
           <p className="mt-2 text-muted-foreground">{t('readyToUse')}</p>
-          {/*
-            Ticket 031. Full length here, unlike checkout and the account bar: this is the one page
-            in the three that is a moment rather than a task, and it is a narrow centred column with
-            room below the line to spend. Only the completed branch — a pair standing beside
-            "something went wrong" would be the site smiling at bad news.
-          */}
           <div className="mt-6 flex items-end justify-center gap-2">
             <CharacterFigure slot="genericSimi" height={200} heightLg={260} />
             <CharacterFigure slot="genericSima" height={200} heightLg={260} />
@@ -170,41 +198,68 @@ export function SuccessClient({ transactionId }: { transactionId: string | null 
             </p>
           </CardHeader>
           <CardContent className="pt-6">
-            {order.qrCodeUrl ? (
+            {showSecrets ? (
               <div className="flex flex-col items-center space-y-4">
-                <p className="text-sm font-medium">{t('scanQR')}</p>
-                <div className="rounded-xl border-2 border-primary/20 bg-white p-4 shadow-sm">
-                  <img
-                    src={order.qrCodeUrl}
-                    alt="eSIM QR Code"
-                    width={220}
-                    height={220}
-                    className="rounded-lg"
-                  />
+                <div
+                  className="w-full rounded-lg border-2 border-amber-400 bg-amber-50 px-4 py-3 text-center"
+                  role="timer"
+                  aria-live="polite"
+                >
+                  <p className="text-sm font-semibold text-amber-950">{t('countdownLabel')}</p>
+                  <p className="mt-1 font-mono text-3xl font-bold tabular-nums text-amber-900">
+                    {formatRemaining(remainingMs)}
+                  </p>
+                  <p className="mt-1 text-xs text-amber-800">{t('countdownHint')}</p>
                 </div>
+                {order.qrCodeUrl ? (
+                  <>
+                    <p className="text-sm font-medium">{t('scanQR')}</p>
+                    <div className="rounded-xl border-2 border-primary/20 bg-white p-4 shadow-sm">
+                      <img
+                        src={order.qrCodeUrl}
+                        alt="eSIM QR Code"
+                        width={220}
+                        height={220}
+                        className="rounded-lg"
+                      />
+                    </div>
+                  </>
+                ) : null}
+                {order.smdpAddress && order.activationCode ? (
+                  <div className="flex w-full flex-wrap justify-center gap-2">
+                    <a
+                      href={lpaHref(order.smdpAddress, order.activationCode, 'apple')}
+                      className="inline-flex items-center justify-center rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
+                    >
+                      {t('installIphone')}
+                    </a>
+                    <a
+                      href={lpaHref(order.smdpAddress, order.activationCode, 'android')}
+                      className="inline-flex items-center justify-center rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
+                    >
+                      {t('installAndroid')}
+                    </a>
+                  </div>
+                ) : null}
+                {(order.smdpAddress || order.activationCode) && (
+                  <div className="w-full space-y-2 rounded-lg bg-muted/50 p-4 text-left">
+                    <p className="text-sm font-medium">{t('manualInstall')}</p>
+                    {order.smdpAddress && (
+                      <p className="text-xs break-all"><strong>SM-DP+:</strong> {order.smdpAddress}</p>
+                    )}
+                    {order.activationCode && (
+                      <p className="text-xs break-all"><strong>Activation:</strong> {order.activationCode}</p>
+                    )}
+                  </div>
+                )}
               </div>
             ) : (
-              <div className="space-y-2 rounded-lg bg-muted/50 p-4 text-left">
-                <p className="text-sm font-medium">{t('manualInstall')}</p>
-                {order.smdpAddress && (
-                  <p className="text-xs break-all"><strong>SM-DP+:</strong> {order.smdpAddress}</p>
-                )}
-                {order.activationCode && (
-                  <p className="text-xs break-all"><strong>Activation:</strong> {order.activationCode}</p>
-                )}
-              </div>
+              <p className="text-center text-sm leading-relaxed text-muted-foreground">
+                {t('detailsInEmail')}
+              </p>
             )}
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center flex-wrap">
-              <a
-                href="sim2me://success"
-                className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors"
-              >
-                <span>Open in Sim2Me App</span>
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
-              </a>
               <IntlLink
                 href="/installation-guide"
                 target="_blank"
@@ -223,12 +278,17 @@ export function SuccessClient({ transactionId }: { transactionId: string | null 
           </CardContent>
         </Card>
 
-        <p className="mt-6 text-center text-sm text-muted-foreground rounded-lg bg-muted/50 px-4 py-3 max-w-md mx-auto">
-          Ensure you use the same email as your app account to sync your eSIM in the Sim2Me app.
-        </p>
-
         <p className="mt-4 text-center text-xs text-muted-foreground">
-          {t('emailSent')} {brandConfig.supportEmail}
+          {t('emailSent')}
+        </p>
+        <p className="mt-1 text-center text-xs text-muted-foreground">
+          {t.rich('questionsHelp', {
+            help: (chunks) => (
+              <IntlLink href="/help" className="font-medium text-primary hover:underline">
+                {chunks}
+              </IntlLink>
+            ),
+          })}
         </p>
       </div>
     );

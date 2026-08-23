@@ -15,6 +15,7 @@ import { purchasePackage, getEsimProfileWithRetry, getPackages, formatDataVolume
 import { sendPostPurchaseEmail, sendOrderDelayedEmail, sendAdminOrderNotificationEmail, sendFraudAlertEmail, sendOrderFailedEmail, sendCustomerEmailFailedAlert, toEmailLocale } from '@/lib/email';
 import { autoBlock, checkAndAutoBlockEmail } from '@/lib/fraud';
 import { hash } from 'bcryptjs';
+import crypto from 'crypto';
 
 const EVENT_TRANSACTION_COMPLETED = 'transaction.completed';
 /* Ticket 037. Paddle reports money going back out as an *adjustment* against the transaction, not as a
@@ -376,12 +377,16 @@ export async function POST(request: Request) {
     });
 
     // Auto-create or find customer account, link order
-    let tempPassword: string | null = null;
+    let setPasswordLink: string | null = null;
     try {
       let customer = await prisma.customer.findUnique({ where: { email: customerEmail } });
       if (!customer) {
-        tempPassword = Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 10);
-        const hashed = await hash(tempPassword, 10);
+        const hashed = await hash(
+          Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 10),
+          10,
+        );
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        const resetExpires = new Date(Date.now() + 72 * 60 * 60 * 1000);
         const nameParts = (customerName || '').trim().split(' ');
         customer = await prisma.customer.create({
           data: {
@@ -390,10 +395,13 @@ export async function POST(request: Request) {
             lastName: nameParts.slice(1).join(' ') || null,
             password: hashed,
             // Purchase email delivery proves inbox ownership — without this flag the
-            // temp password we email below is unusable (login blocks unverified customers)
+            // set-password link we email below is unusable (login blocks unverified customers)
             emailVerified: true,
+            resetToken,
+            resetExpires,
           },
         });
+        setPasswordLink = `${baseUrl()}/${emailLocale}/account/reset-password?token=${encodeURIComponent(resetToken)}`;
       }
       await prisma.order.update({ where: { id: order.id }, data: { customerId: customer.id } });
     } catch (e) {
@@ -414,7 +422,7 @@ export async function POST(request: Request) {
           activationCode: firstProfile.activationCode,
           loginLink: accountLink,
           email: customerEmail,
-          tempPassword,
+          setPasswordLink,
           orderNo: order.orderNo,
           amountPaid: totalAmount,
           currency,
@@ -446,6 +454,7 @@ export async function POST(request: Request) {
           amountPaid: totalAmount,
           currency,
           accountLink,
+          setPasswordLink,
         }, emailLocale)
           .then((ok) => {
             if (ok) return null;

@@ -1,9 +1,15 @@
 import { MainLayout } from '@/components/layout/MainLayout';
 import { SuccessClient } from './SuccessClient';
+import type { Metadata } from 'next';
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'Order complete',
-  description: 'Your eSIM is ready. Scan the QR code to install.',
+  description: 'Your eSIM is ready.',
+  robots: {
+    index: false,
+    follow: false,
+    googleBot: { index: false, follow: false },
+  },
 };
 
 interface PageProps {

@@ -113,6 +113,7 @@ model Order {
   createdAt            DateTime    @default(now())
   updatedAt            DateTime    @updatedAt
   paidAt               DateTime?
+  esimCredsRevealedAt  DateTime?            // public success-page window; null until first reveal
 
   @@map("orders")
 }

@@ -296,6 +296,7 @@ export interface PostPurchaseEmailData {
   loginLink: string;
   email: string;
   tempPassword?: string | null;
+  setPasswordLink?: string | null;
   /*
     Ticket 033 — the receipt half of the email. All optional: the five call sites were migrated one
     at a time, and a caller that genuinely does not hold a field should omit it rather than invent
@@ -322,6 +323,7 @@ const POST_PURCHASE_COPY: Record<EmailLocale, {
   manualTitle: string; manualIntro: string;
   accountTitle: string; accountText: string; usernameLabel: string;
   tempPasswordLabel: string; tempPasswordHint: string;
+  setPasswordLabel: string; setPasswordText: string; setPasswordHint: string;
   /*
     Ticket 036 — the golden tip, in the one message every buyer opens. Deliberately the same wording
     as `howItWorks.golden*` in the message files: a customer who reads the email and then the site
@@ -356,6 +358,9 @@ const POST_PURCHASE_COPY: Record<EmailLocale, {
     usernameLabel: 'שם משתמש:',
     tempPasswordLabel: 'סיסמה זמנית:',
     tempPasswordHint: '(מומלץ לשנות לאחר הכניסה)',
+    setPasswordLabel: 'בחירת סיסמה:',
+    setPasswordText: 'פתחנו לך חשבון. בחרו סיסמה בקישור הבא (בתוקף 72 שעות):',
+    setPasswordHint: 'אם הקישור פג, השתמשו ב«שכחתי סיסמה» בעמוד הכניסה.',
     goldenTitle: 'הטיפ הזהב: מה לעשות ברגע שנחתתם',
     goldenSteps: [
       'התקינו את ה-eSIM לפני הנסיעה, בזמן שאתם על Wi-Fi. ההתקנה לבדה לא מפעילה את החבילה ולא מתחילה את התוקף.',
@@ -399,6 +404,9 @@ const POST_PURCHASE_COPY: Record<EmailLocale, {
     usernameLabel: 'Username:',
     tempPasswordLabel: 'Temporary password:',
     tempPasswordHint: '(we recommend changing it after signing in)',
+    setPasswordLabel: 'Choose a password:',
+    setPasswordText: 'We opened an account for you. Choose a password at this link (valid 72 hours):',
+    setPasswordHint: 'If the link has expired, use “Forgot password?” on the sign-in page.',
     goldenTitle: 'The golden tip: what to do the moment you land',
     goldenSteps: [
       'Install the eSIM before you travel, while you are on Wi-Fi. Installing on its own does not start the plan and does not start the validity period.',
@@ -442,6 +450,9 @@ const POST_PURCHASE_COPY: Record<EmailLocale, {
     usernameLabel: 'اسم المستخدم:',
     tempPasswordLabel: 'كلمة مرور مؤقتة:',
     tempPasswordHint: '(ننصح بتغييرها بعد تسجيل الدخول)',
+    setPasswordLabel: 'اختيار كلمة المرور:',
+    setPasswordText: 'فتحنا لك حسابًا. اختر كلمة مرور عبر هذا الرابط (صالح 72 ساعة):',
+    setPasswordHint: 'إذا انتهت صلاحية الرابط، استخدم «نسيت كلمة المرور؟» في صفحة تسجيل الدخول.',
     goldenTitle: 'النصيحة الذهبية: ما تفعله لحظة الوصول',
     goldenSteps: [
       'ثبّت شريحة eSIM قبل السفر وأنت متصل بشبكة Wi-Fi. التثبيت وحده لا يبدأ الخطة ولا يبدأ فترة الصلاحية.',
@@ -485,6 +496,9 @@ const POST_PURCHASE_COPY: Record<EmailLocale, {
     usernameLabel: 'उपयोगकर्ता नाम:',
     tempPasswordLabel: 'अस्थायी पासवर्ड:',
     tempPasswordHint: '(साइन इन के बाद इसे बदलने की सलाह देते हैं)',
+    setPasswordLabel: 'पासवर्ड चुनें:',
+    setPasswordText: 'हमने आपके लिए खाता खोला है। इस लिंक पर पासवर्ड चुनें (72 घंटे तक मान्य):',
+    setPasswordHint: 'यदि लिंक समाप्त हो गया है, साइन-इन पेज पर «पासवर्ड भूल गए?» का उपयोग करें।',
     goldenTitle: 'सबसे ज़रूरी सुझाव: उतरते ही क्या करना है',
     goldenSteps: [
       'यात्रा से पहले, Wi-Fi पर रहते हुए eSIM इंस्टॉल कर लें। सिर्फ़ इंस्टॉल करने से प्लान शुरू नहीं होता और वैधता की अवधि भी शुरू नहीं होती।',
@@ -643,6 +657,7 @@ export async function sendPostPurchaseEmail(to: string, data: PostPurchaseEmailD
     <p style="margin: 0 0 8px 0; font-weight: 600;">${c.accountTitle}</p>
     <p style="margin: 0 0 20px 0; line-height: 1.6;">${c.accountText} <a href="${escapeHtml(loginLink)}" style="color: #0d9f6e;">${escapeHtml(loginLink)}</a></p>
     <p style="margin: 0 0 4px 0;">${c.usernameLabel} <strong>${escapeHtml(email)}</strong></p>
+    ${data.setPasswordLink ? `<p style="margin: 8px 0 4px 0; font-weight: 600;">${c.setPasswordLabel}</p><p style="margin: 0 0 8px 0; line-height: 1.6;">${c.setPasswordText} <a href="${escapeHtml(data.setPasswordLink)}" style="color: #0d9f6e;">${escapeHtml(data.setPasswordLink)}</a></p><p style="margin: 0 0 8px 0; font-size: 0.85rem; color: #64748b;">${c.setPasswordHint}</p>` : ''}
     ${data.tempPassword ? `<p style="margin: 4px 0 0 0;">${c.tempPasswordLabel} <strong style="font-family:monospace; background:#f1f5f9; padding:2px 8px; border-radius:4px;">${escapeHtml(data.tempPassword)}</strong> ${c.tempPasswordHint}</p>` : ''}
     ${goldenBlock}
     ${supportBlock}
@@ -670,6 +685,7 @@ export interface OrderDelayedEmailData {
   amountPaid?: number | null;
   currency?: string | null;
   accountLink: string;
+  setPasswordLink?: string | null;
 }
 
 const DELAYED_COPY: Record<EmailLocale, {
@@ -679,6 +695,7 @@ const DELAYED_COPY: Record<EmailLocale, {
   labelPaid: string;
   supportTitle: string; supportText: string; contactLabel: string;
   accountLabel: string; signOff: string;
+  setPasswordLabel: string; setPasswordText: string; setPasswordHint: string;
 }> = {
   he: {
     subject: 'קיבלנו את ההזמנה שלך — ה-eSIM בדרך',
@@ -695,6 +712,9 @@ const DELAYED_COPY: Record<EmailLocale, {
     supportText: 'אפשר להשיב ישירות להודעה הזו עם מספר ההזמנה, או לכתוב לנו:',
     contactLabel: 'יצירת קשר',
     accountLabel: 'צפייה בהזמנות שלי',
+    setPasswordLabel: 'בחירת סיסמה',
+    setPasswordText: 'פתחנו לך חשבון. בחרו סיסמה בקישור הבא (בתוקף 72 שעות):',
+    setPasswordHint: 'אם הקישור פג, השתמשו ב«שכחתי סיסמה» בעמוד הכניסה.',
     signOff: 'תודה על הסבלנות,<br/>צוות SIM2ME',
   },
   en: {
@@ -712,6 +732,9 @@ const DELAYED_COPY: Record<EmailLocale, {
     supportText: 'Reply straight to this email with your order number, or reach us here:',
     contactLabel: 'Contact us',
     accountLabel: 'View my orders',
+    setPasswordLabel: 'Choose a password',
+    setPasswordText: 'We opened an account for you. Choose a password at this link (valid 72 hours):',
+    setPasswordHint: 'If the link has expired, use “Forgot password?” on the sign-in page.',
     signOff: 'Thanks for your patience,<br/>The SIM2ME Team',
   },
   ar: {
@@ -729,6 +752,9 @@ const DELAYED_COPY: Record<EmailLocale, {
     supportText: 'يمكنك الرد مباشرة على هذه الرسالة مع ذكر رقم الطلب، أو التواصل معنا هنا:',
     contactLabel: 'تواصل معنا',
     accountLabel: 'عرض طلباتي',
+    setPasswordLabel: 'اختيار كلمة المرور',
+    setPasswordText: 'فتحنا لك حسابًا. اختر كلمة مرور عبر هذا الرابط (صالح 72 ساعة):',
+    setPasswordHint: 'إذا انتهت صلاحية الرابط، استخدم «نسيت كلمة المرور؟» في صفحة تسجيل الدخول.',
     signOff: 'شكرًا لصبرك،<br/>فريق SIM2ME',
   },
   hi: {
@@ -746,6 +772,9 @@ const DELAYED_COPY: Record<EmailLocale, {
     supportText: 'अपने ऑर्डर नंबर के साथ इस ईमेल का सीधे उत्तर दें, या यहाँ संपर्क करें (सहायता अंग्रेज़ी में):',
     contactLabel: 'संपर्क करें',
     accountLabel: 'मेरे ऑर्डर देखें',
+    setPasswordLabel: 'पासवर्ड चुनें',
+    setPasswordText: 'हमने आपके लिए खाता खोला है। इस लिंक पर पासवर्ड चुनें (72 घंटे तक मान्य):',
+    setPasswordHint: 'यदि लिंक समाप्त हो गया है, साइन-इन पेज पर «पासवर्ड भूल गए?» का उपयोग करें।',
     signOff: 'आपके धैर्य के लिए धन्यवाद,<br/>SIM2ME टीम',
   },
 };
@@ -800,6 +829,7 @@ export async function sendOrderDelayedEmail(to: string, data: OrderDelayedEmailD
       <a href="mailto:${SUPPORT_EMAIL}" style="color:#0d9f6e;">${SUPPORT_EMAIL}</a>
     </p>
     <p style="margin: 0 0 20px 0;"><a href="${escapeHtml(data.accountLink)}" style="color:#0d9f6e;">${c.accountLabel}</a></p>
+    ${data.setPasswordLink ? `<p style="margin: 0 0 6px 0; font-weight: 600;">${c.setPasswordLabel}</p><p style="margin: 0 0 8px 0; line-height: 1.6;">${c.setPasswordText} <a href="${escapeHtml(data.setPasswordLink)}" style="color:#0d9f6e;">${escapeHtml(data.setPasswordLink)}</a></p><p style="margin: 0 0 20px 0; font-size: 0.85rem; color: #64748b;">${c.setPasswordHint}</p>` : ''}
     <p style="margin: 20px 0 0 0;">${c.signOff}</p>
   </div>
 </body>
