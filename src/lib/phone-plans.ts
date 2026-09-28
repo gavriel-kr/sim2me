@@ -27,8 +27,10 @@ export interface PhonePlanFull {
   /** Country the phone number belongs to, ISO-2. */
   numberCountry: string;
   dialCode: string;
-  /** ISO-2 codes the plan works in. */
+  /** ISO-2 codes the plan works in (a few places are sub-region codes such as "CY-NC"). */
   coverage: string[];
+  /** PikaSim's names for the codes a browser cannot name (not plain ISO-2): "CY-NC" → "Northern Cyprus". */
+  coverageNames: Record<string, string>;
   dataGb: number;
   days: number;
   /** -1 = unlimited. */
@@ -70,6 +72,7 @@ export interface PhonePlan {
   coverageCount: number;
   /** ISO-2 codes the plan works in, for the "Which countries?" pop-up (2026-09-28). */
   coverage: string[];
+  coverageNames?: Record<string, string>;
   dataGb: number;
   days: number;
   voiceMinutes: number;
@@ -165,6 +168,11 @@ export function buildPhonePlan(pkg: PikaPackage, override?: PhoneOverride | null
       : region === 'local'
         ? [pkg.location.toUpperCase()]
         : (pkg.locationNetworkList ?? []).map((n) => (n.locationCode ?? '').toUpperCase()).filter(Boolean);
+  const coverageNames: Record<string, string> = {};
+  for (const n of pkg.locationNetworkList ?? []) {
+    const code = (n.locationCode ?? '').toUpperCase();
+    if (code && !/^[A-Z]{2}$/.test(code) && n.locationName) coverageNames[code] = n.locationName;
+  }
   const dataGb = pkg.volumeGB ?? Math.round((pkg.volume / 1024 ** 3) * 10) / 10;
   const costUsd = pkg.price / 100;
   const rulePriceUsd = phonePriceUsd(costUsd);
@@ -186,6 +194,7 @@ export function buildPhonePlan(pkg: PikaPackage, override?: PhoneOverride | null
     numberCountry,
     dialCode: DIAL_CODES[numberCountry] ?? '',
     coverage,
+    coverageNames,
     dataGb,
     days: pkg.duration,
     voiceMinutes: pkg.hasVoice ? pkg.voiceMinutes : 0,
@@ -210,7 +219,8 @@ export function buildPhonePlan(pkg: PikaPackage, override?: PhoneOverride | null
   };
 }
 
-const REGION_ORDER: Record<PhoneRegion, number> = { us: 0, europe: 1, local: 2, global: 3 };
+/** Site order for phone plans, everywhere (Gabriel, 2026-09-28): global, then the USA, Europe, local numbers. */
+const REGION_ORDER: Record<PhoneRegion, number> = { global: 0, us: 1, europe: 2, local: 3 };
 
 export function sortPhonePlans<T extends Pick<PhonePlanFull, 'region' | 'featured' | 'sortOrder' | 'priceUsd'>>(list: T[]): T[] {
   return [...list].sort(
@@ -231,6 +241,7 @@ export function toPublicPhonePlan(p: PhonePlanFull): PhonePlan {
     dialCode: p.dialCode,
     coverageCount: p.coverage.length,
     coverage: p.coverage,
+    coverageNames: p.coverageNames,
     dataGb: p.dataGb,
     days: p.days,
     voiceMinutes: p.voiceMinutes,

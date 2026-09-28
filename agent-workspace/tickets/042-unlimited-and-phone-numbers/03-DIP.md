@@ -170,3 +170,13 @@ status, usage, dates or number for phone plans (checked: `/esims/:iccid` all nul
 - ✅ Account: `PhonePlanStatus` with "set installation date" (`/api/account/esims/installed`); checked in Chrome
 - ✅ Reminder 48 h before the end, hourly cron, DB only, claim released on a failed send
 - ✅ Admin: dates in the order panel; phone-plan cancel explains the support-ticket route without calling the API
+
+## Phase 14 — A page per kind of number (2026-09-29)
+
+Checkpoint: `checkpoint-phone-pages/`.
+
+- ✅ `phone-groups.ts`: groups, slugs (`global`, `usa`, `europe`, English country name for local numbers), legacy-hash map; tests
+- ✅ `/phone-plans` = tiles only (`PhoneGroupTile`, stretched link + pop-up above it); `/phone-plans/[group]` pages
+- ✅ Order global → USA → Europe → local: `REGION_ORDER`, homepage section, hero card
+- ✅ Country count + pop-up on every tile; sub-region codes named from PikaSim (168 = 168)
+- ✅ Checked in Chrome: pop-up opens without leaving the page, tile click opens its page, old hashes forward

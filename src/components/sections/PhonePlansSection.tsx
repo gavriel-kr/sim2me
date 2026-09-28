@@ -15,6 +15,7 @@ import { Phone, Globe2, ArrowLeft, ArrowRight, Sparkles } from 'lucide-react';
 import { routing } from '@/i18n/routing';
 import { formatPrice } from '@/lib/utils';
 import { CharacterFigure } from '@/components/brand/CharacterFigure';
+import { PhoneCountriesLine } from '@/components/sections/PhoneGroupTile';
 
 const { Link: IntlLink } = createSharedPathnamesNavigation(routing);
 
@@ -23,6 +24,10 @@ export interface PhoneSectionData {
   fromEurope: number | null;
   fromGlobal: number | null;
   globalCount: number;
+  /** Where each kind of number works (ISO-2), for the country count and its pop-up list. */
+  coverage: { us: string[]; europe: string[]; global: string[] };
+  /** Names for the few codes a browser cannot name. */
+  coverageNames: Record<string, string>;
   /** An admin-featured plan to spotlight, already localised into a short line by the server. */
   spotlight: { region: 'us' | 'europe' | 'global' | 'local'; dataGb: number; days: number; priceUsd: number; badge: string | null } | null;
 }
@@ -31,10 +36,11 @@ export function PhonePlansSection({ data }: { data: PhoneSectionData }) {
   const t = useTranslations('home');
   const tP = useTranslations('phonePlans');
 
+  // Global first, then the USA, then Europe — the site's order everywhere (Gabriel, 2026-09-28).
   const cards = [
-    { key: 'us', flag: 'us', title: t('phoneUsTitle'), desc: t('phoneUsDesc'), from: data.fromUs, href: '/phone-plans#us' },
-    { key: 'europe', flag: 'eu', title: t('phoneEuropeTitle'), desc: t('phoneEuropeDesc'), from: data.fromEurope, href: '/phone-plans#europe' },
-    { key: 'global', flag: null, title: t('phoneGlobalTitle'), desc: t('phoneGlobalDesc'), from: data.fromGlobal, href: '/phone-plans#global' },
+    { key: 'global', flag: null, title: t('phoneGlobalTitle'), desc: t('phoneGlobalDesc'), from: data.fromGlobal, href: '/phone-plans/global', coverage: data.coverage.global },
+    { key: 'us', flag: 'us', title: t('phoneUsTitle'), desc: t('phoneUsDesc'), from: data.fromUs, href: '/phone-plans/usa', coverage: data.coverage.us },
+    { key: 'europe', flag: 'eu', title: t('phoneEuropeTitle'), desc: t('phoneEuropeDesc'), from: data.fromEurope, href: '/phone-plans/europe', coverage: data.coverage.europe },
   ].filter((c) => c.from != null);
 
   if (cards.length === 0) return null;
@@ -61,10 +67,9 @@ export function PhonePlansSection({ data }: { data: PhoneSectionData }) {
 
         <div className="mx-auto mt-8 grid max-w-5xl gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {cards.map((card) => (
-            <IntlLink
+            <div
               key={card.key}
-              href={card.href}
-              className="group flex flex-col rounded-2xl border border-sky-100 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-xl hover:shadow-sky-900/5"
+              className="group relative flex flex-col rounded-2xl border border-sky-100 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-xl hover:shadow-sky-900/5"
             >
               <div className="flex items-center gap-2.5">
                 {card.flag ? (
@@ -77,17 +82,22 @@ export function PhonePlansSection({ data }: { data: PhoneSectionData }) {
                 <p className="text-lg font-bold text-gray-800">{card.title}</p>
               </div>
               <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">{card.desc}</p>
+              <PhoneCountriesLine codes={card.coverage} names={data.coverageNames} className="mt-2 flex" />
               <div className="mt-4 flex items-end justify-between gap-2">
                 <span className="text-xl font-bold tabular-nums text-gray-800">
                   {t('phoneFrom', { price: formatPrice(card.from!) })}
                 </span>
-                <span className="inline-flex items-center gap-1 text-sm font-semibold text-sky-700 group-hover:underline">
+                {/* Stretched over the whole card; the country pop-up above sits on top of it. */}
+                <IntlLink
+                  href={card.href}
+                  className="inline-flex items-center gap-1 text-sm font-semibold text-sky-700 after:absolute after:inset-0 after:rounded-2xl after:content-[''] group-hover:underline focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-sky-400"
+                >
                   {t('phoneSeePlans')}
                   <ArrowLeft className="h-4 w-4 ltr:hidden" aria-hidden />
                   <ArrowRight className="h-4 w-4 rtl:hidden" aria-hidden />
-                </span>
+                </IntlLink>
               </div>
-            </IntlLink>
+            </div>
           ))}
         </div>
 

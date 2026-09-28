@@ -11,6 +11,7 @@
 
 import type { Plan } from '@/types';
 import { translatePlanName } from '@/lib/translate-plan-name';
+import { groupSlugOf } from '@/lib/phone-groups';
 
 export interface HotDeal {
   id: string;
@@ -43,11 +44,11 @@ export interface HotDeal {
   };
 }
 
-/** Where a deal's "all plans" link goes: the destination page, or for a phone deal its tile on /phone-plans. */
+/** Where a deal's "all plans" link goes: the destination page, or for a phone deal its number's page (/phone-plans/global…). */
 export function dealHref(deal: HotDeal): string {
   if (!deal.phone) return `/destinations/${deal.locationCode.toLowerCase()}`;
   const r = deal.phone.region;
-  return `/phone-plans#${r === 'local' ? `local-${deal.phone.numberCountry.toLowerCase()}` : r}`;
+  return `/phone-plans/${groupSlugOf({ region: r, numberCountry: deal.phone.numberCountry })}`;
 }
 
 export function volumeToDisplay(volumeBytes: number): { dataDisplay: string; dataAmountMb: number } {

@@ -77,11 +77,14 @@ export default async function HomePage({ params }: Props) {
     return prices.length ? Math.min(...prices) : null;
   };
   const featured = phonePlans.find((p) => p.featured) ?? null;
+  const coverageOf = (region: string) => [...new Set(phonePlans.filter((p) => p.region === region).flatMap((p) => p.coverage))].sort();
   const phoneSection: PhoneSectionData = {
     fromUs: cheapest('us'),
     fromEurope: cheapest('europe'),
     fromGlobal: cheapest('global', 30),
     globalCount: phonePlans.find((p) => p.region === 'global')?.coverage.length ?? 0,
+    coverage: { us: coverageOf('us'), europe: coverageOf('europe'), global: coverageOf('global') },
+    coverageNames: Object.assign({}, ...phonePlans.map((p) => p.coverageNames)),
     spotlight: featured
       ? { region: featured.region, dataGb: featured.dataGb, days: featured.days, priceUsd: featured.priceUsd, badge: featured.saleBadge }
       : null,

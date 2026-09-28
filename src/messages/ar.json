@@ -22,7 +22,7 @@
     "phoneSubtitle": "رقم للمكالمات والرسائل في الخارج، مع البيانات على الشريحة نفسها. ويستقبل أيضًا رموز التحقق من البنوك والتطبيقات.",
     "phoneUsTitle": "الولايات المتحدة",
     "phoneUsDesc": "رقم أمريكي ‎+1 مع بيانات ودقائق ورسائل SMS.",
-    "phoneEuropeTitle": "أوروبا، 36 دولة",
+    "phoneEuropeTitle": "أوروبا",
     "phoneEuropeDesc": "رقم فرنسي ‎+33 مع مكالمات بلا حدود داخل أوروبا.",
     "phoneGlobalTitle": "عالمي",
     "phoneGlobalDesc": "رقم أمريكي واحد يعمل أيضًا في اليابان وتايلاند ودول أخرى كثيرة.",
@@ -716,6 +716,8 @@
     "toastAdded": "أُضيفت إلى السلة"
   },
   "phonePlans": {
+    "countriesCount": "{count} دولة",
+    "allNumbers": "كل أرقام الهاتف",
     "statusPurchased": "تاريخ الشراء: {date}",
     "statusValidity": "الصلاحية: {days} يومًا من التثبيت",
     "statusRenewed": "بما فيها {days} يوم تجديد",
@@ -778,8 +780,8 @@
     "numberGlobal": "رقم أمريكي ‎+1",
     "numberLocal": "{country} · رقم محلي {dial}",
     "regionUs": "الولايات المتحدة",
-    "regionEurope": "أوروبا · 36 دولة",
-    "regionGlobal": "عالمي · {count} دولة",
+    "regionEurope": "أوروبا",
+    "regionGlobal": "عالمي",
     "minutes": "{count} دقيقة مكالمات",
     "minutesUnlimited": "مكالمات بلا حدود",
     "minutesUnlimitedEurope": "مكالمات بلا حدود في أوروبا",

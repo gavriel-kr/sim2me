@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+### Changed (a page per kind of phone number — Gabriel, 2026-09-29)
+
+- /phone-plans shows only the tiles; each kind of number has its own page with its plans, terms and
+  FAQ: `/phone-plans/global`, `/usa`, `/europe`, and one per local number (`/mongolia`, `/maldives`…).
+  Old links (`#us`, `#europe`, `#global`, `#local-mn`) forward to the new pages; hot-deal and hero
+  links point at them; the three permanent pages are in the sitemap.
+- One order everywhere: global, the USA, Europe, then local numbers — tiles, the homepage section, the
+  hero card, hot-deal links and the phone tab on destination pages.
+- Every tile (homepage and /phone-plans) says how many countries the number works in, with the list in
+  a pop-up. The list now includes the three places PikaSim codes as sub-regions (Northern Cyprus,
+  Saba, Sint Eustatius), so it matches the count (168 for the global number).
+
 ### Changed (phone plans: no number email; status from our own orders — Gabriel, 2026-09-28)
 
 PikaSim, now that the account is active again, returns nothing live for phone-plan eSIMs: status,

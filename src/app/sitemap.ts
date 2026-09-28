@@ -22,8 +22,12 @@ type StaticPage = {
 const staticPages: StaticPage[] = [
   { path: '', changeFrequency: 'daily', priority: 1 },
   { path: '/destinations', changeFrequency: 'daily', priority: 0.95 },
-  // Ticket 042
+  // Ticket 042: the phone-plans page and one page per kind of number (local numbers' pages come and
+  // go with the catalogue, so only the three permanent ones are listed).
   { path: '/phone-plans', changeFrequency: 'weekly', priority: 0.9 },
+  { path: '/phone-plans/global', changeFrequency: 'weekly', priority: 0.85 },
+  { path: '/phone-plans/usa', changeFrequency: 'weekly', priority: 0.85 },
+  { path: '/phone-plans/europe', changeFrequency: 'weekly', priority: 0.85 },
   { path: '/articles', changeFrequency: 'weekly', priority: 0.9 },
   { path: '/how-it-works', changeFrequency: 'monthly', priority: 0.85 },
   { path: '/compatible-devices', changeFrequency: 'monthly', priority: 0.8 },

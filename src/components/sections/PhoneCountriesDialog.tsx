@@ -12,35 +12,41 @@ import { useLocale, useTranslations } from 'next-intl';
 import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 interface Props {
-  /** ISO-2 codes. Fewer than two means there is nothing to list, and nothing is rendered. */
+  /** ISO-2 codes (or sub-region codes like "CY-NC"). Fewer than two: nothing to list, nothing rendered. */
   codes: string[];
+  /** Names for codes a browser cannot name (PikaSim's, in English). */
+  names?: Record<string, string>;
   className?: string;
 }
 
-export function PhoneCountriesDialog({ codes, className }: Props) {
+export function PhoneCountriesDialog({ codes, names, className }: Props) {
   const t = useTranslations('phonePlans');
   const locale = useLocale();
 
   const countries = useMemo(() => {
-    let names: Intl.DisplayNames | null = null;
+    const extra = names;
+    let display: Intl.DisplayNames | null = null;
     try {
-      names = new Intl.DisplayNames([locale], { type: 'region' });
+      display = new Intl.DisplayNames([locale], { type: 'region' });
     } catch {
-      names = null;
+      display = null;
     }
     const collator = new Intl.Collator(locale);
-    return [...new Set(codes.map((c) => c.toUpperCase()).filter((c) => /^[A-Z]{2}$/.test(c)))]
+    return [...new Set(codes.map((c) => c.toUpperCase()).filter((c) => /^[A-Z]{2}(-[A-Z0-9]{1,3})?$/.test(c)))]
       .map((code) => {
-        let name = code;
-        try {
-          name = names?.of(code) ?? code;
-        } catch {
-          /* an unknown code keeps its letters */
+        let name = extra?.[code] ?? code;
+        if (/^[A-Z]{2}$/.test(code)) {
+          try {
+            name = display?.of(code) ?? code;
+          } catch {
+            /* an unknown code keeps its letters */
+          }
         }
-        return { code, name };
+        // A sub-region ("BQ-SA") shows its country's flag.
+        return { code, name, flag: code.slice(0, 2).toLowerCase() };
       })
       .sort((a, b) => collator.compare(a.name, b.name));
-  }, [codes, locale]);
+  }, [codes, names, locale]);
 
   if (countries.length < 2) return null;
   const title = t('countriesTitle', { count: countries.length });
@@ -62,7 +68,7 @@ export function PhoneCountriesDialog({ codes, className }: Props) {
           {countries.map((c) => (
             <li key={c.code} className="flex min-w-0 items-center gap-2 text-sm text-gray-800">
               <img
-                src={`https://flagcdn.com/w40/${c.code.toLowerCase()}.png`}
+                src={`https://flagcdn.com/w40/${c.flag}.png`}
                 alt=""
                 loading="lazy"
                 className="h-3.5 w-5 shrink-0 rounded-sm object-cover ring-1 ring-black/5"

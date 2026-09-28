@@ -25,13 +25,13 @@ export interface HeroPhoneTile {
   from: number;
 }
 
-/** The tiles that have a price, in the homepage section's order. */
+/** The tiles that have a price, in the site's order: global, the USA, Europe (2026-09-28). */
 export function heroPhoneTiles(data: PhoneSectionData | null | undefined): HeroPhoneTile[] {
   if (!data) return [];
   const tiles: HeroPhoneTile[] = [];
+  if (data.fromGlobal != null) tiles.push({ key: 'global', flag: null, from: data.fromGlobal });
   if (data.fromUs != null) tiles.push({ key: 'us', flag: 'us', from: data.fromUs });
   if (data.fromEurope != null) tiles.push({ key: 'europe', flag: 'eu', from: data.fromEurope });
-  if (data.fromGlobal != null) tiles.push({ key: 'global', flag: null, from: data.fromGlobal });
   return tiles;
 }
 
@@ -109,7 +109,7 @@ export function HeroPhoneCard({ tiles, active, onSelect, pauseHandlers }: Props)
       </div>
 
       <IntlLink
-        href={`/phone-plans#${current.key}`}
+        href={`/phone-plans/${current.key === 'us' ? 'usa' : current.key}`}
         className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-sky-600 to-teal-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:from-sky-700 hover:to-teal-600 hover:shadow-md"
       >
         <Phone className="h-4 w-4" aria-hidden />

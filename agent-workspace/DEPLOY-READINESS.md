@@ -1,3 +1,26 @@
+# A page per kind of phone number, prepared 2026-09-29
+
+Gabriel reviewed it locally and approved the deploy ("אפשר להעלות לדיפלוי"). `DEPLOY-PROTOCOL.md` governs.
+
+| | |
+|---|---|
+| HEAD before | `388f60b` (live) |
+| Backup tag | `pre-deploy-20260929-0019` |
+| Risk | **R1**: public pages, navigation and sitemap. No checkout, payment, email or supplier change; no schema change; no new environment variable |
+
+What and why: the top entry of `CHANGELOG.md`.
+
+Gates:
+- ✅ `npx tsc --noEmit` → 0; `npm run lint` → 0 (no new warnings in changed files); six test suites pass
+  (new: grouping, site order, slugs, legacy hashes)
+- ✅ Translation keys identical in he / en / ar / hi
+- ✅ Chrome: "Which countries?" opens the pop-up (168 items for global, matching the tile) without leaving the
+  page; clicking a tile opens its page; `#us`, `#europe`, `#global`, `#local-mn` forward to the new pages
+- ✅ `npx next build` → 0; `next start` smoke: every phone page 200 in four languages, unknown group 404,
+  destinations, checkout, help, admin login, health `ok: true`, sitemap lists the three permanent pages
+
+Rollback: `git push origin pre-deploy-20260929-0019:main` (with Gabriel's approval).
+
 # Phone plans without the number email, prepared 2026-09-28
 
 Gabriel asked for this and for the deploy ("תתקן תהיה יסודי ותעלה לדיפלוי לפי כל הכללים"). `DEPLOY-PROTOCOL.md` governs.

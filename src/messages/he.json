@@ -22,7 +22,7 @@
     "phoneSubtitle": "מספר לשיחות ול-SMS בחו״ל, עם גלישה באותו eSIM. מקבל גם קודי אימות מהבנק ומאפליקציות.",
     "phoneUsTitle": "ארה״ב",
     "phoneUsDesc": "מספר אמריקאי ‎+1 עם גלישה, דקות ו-SMS.",
-    "phoneEuropeTitle": "אירופה, 36 מדינות",
+    "phoneEuropeTitle": "אירופה",
     "phoneEuropeDesc": "מספר צרפתי ‎+33 עם שיחות ללא הגבלה בתוך אירופה.",
     "phoneGlobalTitle": "גלובלי",
     "phoneGlobalDesc": "מספר אמריקאי אחד שעובד גם ביפן, בתאילנד ובעוד מדינות רבות.",
@@ -716,6 +716,8 @@
     "toastAdded": "נוסף לסל"
   },
   "phonePlans": {
+    "countriesCount": "{count} מדינות",
+    "allNumbers": "כל מספרי הטלפון",
     "statusPurchased": "נרכש: {date}",
     "statusValidity": "תוקף: {days} ימים מההתקנה",
     "statusRenewed": "כולל {days} ימי הארכה",
@@ -778,8 +780,8 @@
     "numberGlobal": "מספר אמריקאי ‎+1",
     "numberLocal": "{country} · מספר מקומי {dial}",
     "regionUs": "ארה״ב",
-    "regionEurope": "אירופה · 36 מדינות",
-    "regionGlobal": "גלובלי · {count} מדינות",
+    "regionEurope": "אירופה",
+    "regionGlobal": "גלובלי",
     "minutes": "{count} דקות שיחה",
     "minutesUnlimited": "שיחות ללא הגבלה",
     "minutesUnlimitedEurope": "שיחות ללא הגבלה באירופה",

@@ -140,7 +140,7 @@ export function PhonePlanCard({ plan, destinationName, destinationSlug }: Props)
               <span>
                 {t('worksIn', { count: plan.coverageCount })}
                 {' · '}
-                <PhoneCountriesDialog codes={plan.coverage} />
+                <PhoneCountriesDialog codes={plan.coverage} names={plan.coverageNames} />
               </span>
             </li>
           )}

@@ -12,6 +12,7 @@ import { lpaString } from '../components/esim/EsimQrCode';
 import { getPhoneCatalog, getPikaAccount, LOCAL_THROTTLE, waitForPikaEsim, type PikaPackage } from './pikasim';
 import { parseResetMs, parseRetryAfterMs, resetLimiterForTests } from './pikasim-limiter';
 import { computePlanWindow, daysFromValidity, isReminderDue, isValidInstallDate } from './phone-validity';
+import { countrySlug, groupPhonePlans, groupSlugOf, slugFromLegacyHash } from './phone-groups';
 
 // ─── product ids ────────────────────────────────────────────
 assert.deepStrictEqual(parseProductId('CKH491'), { kind: 'esim', code: 'CKH491' });
@@ -115,9 +116,9 @@ assert.strictEqual(buildPhonePlan(pika({}), { visible: false, customPrice: null,
 
 const all = [us1, us50, eu20, gl1, vn, au];
 assert.deepStrictEqual(phonePlansForDestination(all, 'US').map((p) => p.code), ['change-plus-7days-1gb']);
-assert.deepStrictEqual(phonePlansForDestination(all, 'fr').map((p) => p.code), ['eu20', 'gl1']);
+assert.deepStrictEqual(phonePlansForDestination(all, 'fr').map((p) => p.code), ['gl1', 'eu20']); // global first, everywhere (2026-09-28)
 assert.deepStrictEqual(phonePlansForDestination(all, 'JP').map((p) => p.code), ['gl1']);
-assert.deepStrictEqual(phonePlansForDestination(all, 'EU-42').map((p) => p.code), ['eu20', 'gl1']);
+assert.deepStrictEqual(phonePlansForDestination(all, 'EU-42').map((p) => p.code), ['gl1', 'eu20']);
 assert.deepStrictEqual(phonePlansForDestination(all, 'VN').map((p) => p.code), []);
 
 // ─── homepage activation badge text ─────────────────────────
@@ -137,6 +138,25 @@ assert.strictEqual(isRetryableProfileError('eSIMaccess API error: insufficient b
 {
   const pub = toPublicPhonePlan(eu20);
   assert.ok(pub.coverage.length > 1 && pub.coverage.length === pub.coverageCount); // the pop-up lists what the card counts
+}
+
+// ─── One page per kind of number, in site order (2026-09-28) ─
+{
+  const pub = (p: Parameters<typeof toPublicPhonePlan>[0]) => toPublicPhonePlan(p);
+  const groups = groupPhonePlans([pub(eu20), pub(us1), pub(gl1), pub(us50)]);
+  assert.deepStrictEqual(groups.map((g) => g.slug), ['global', 'usa', 'europe']); // global, the USA, Europe
+  assert.strictEqual(groups[1].plans.length, 2); // both US plans on the USA page
+  assert.deepStrictEqual(groups[1].coverage, ['US']);
+  assert.ok(groups[2].coverage.length > 1); // Europe lists its countries
+  assert.strictEqual(countrySlug('MN'), 'mongolia');
+  assert.strictEqual(countrySlug('MV'), 'maldives');
+  assert.strictEqual(groupSlugOf({ region: 'local', numberCountry: 'MN' }), 'mongolia');
+  // Links from before the pages existed still land on the right page.
+  assert.strictEqual(slugFromLegacyHash('#us'), 'usa');
+  assert.strictEqual(slugFromLegacyHash('#europe'), 'europe');
+  assert.strictEqual(slugFromLegacyHash('#global'), 'global');
+  assert.strictEqual(slugFromLegacyHash('#local-mv'), 'maldives');
+  assert.strictEqual(slugFromLegacyHash('#nothing'), null);
 }
 
 // ─── Phone plan dates, from our own orders (PikaSim reports none) ─

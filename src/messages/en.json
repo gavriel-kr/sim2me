@@ -22,7 +22,7 @@
     "phoneSubtitle": "A number for calls and SMS abroad, with data on the same eSIM. It also receives verification codes from banks and apps.",
     "phoneUsTitle": "USA",
     "phoneUsDesc": "A US +1 number with data, minutes and SMS.",
-    "phoneEuropeTitle": "Europe, 36 countries",
+    "phoneEuropeTitle": "Europe",
     "phoneEuropeDesc": "A French +33 number with unlimited calls within Europe.",
     "phoneGlobalTitle": "Global",
     "phoneGlobalDesc": "One US number that also works in Japan, Thailand and many more countries.",
@@ -716,6 +716,8 @@
     "toastAdded": "Added to cart"
   },
   "phonePlans": {
+    "countriesCount": "{count} countries",
+    "allNumbers": "All phone numbers",
     "statusPurchased": "Bought: {date}",
     "statusValidity": "Valid for {days} days from installation",
     "statusRenewed": "including {days} renewed days",
@@ -778,8 +780,8 @@
     "numberGlobal": "US number +1",
     "numberLocal": "{country} · local number {dial}",
     "regionUs": "USA",
-    "regionEurope": "Europe · 36 countries",
-    "regionGlobal": "Global · {count} countries",
+    "regionEurope": "Europe",
+    "regionGlobal": "Global",
     "minutes": "{count} call minutes",
     "minutesUnlimited": "Unlimited calls",
     "minutesUnlimitedEurope": "Unlimited calls in Europe",
