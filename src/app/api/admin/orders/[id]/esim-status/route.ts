@@ -4,7 +4,8 @@ import { authOptions } from '@/lib/auth';
 import { requireAdmin } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { getEsimUsage, getEsimProfile } from '@/lib/esimaccess';
-import { announcePhoneNumberOnce, isPhoneOrder, readPhoneOrder } from '@/lib/phone-number';
+import { isPhoneOrder } from '@/lib/phone-number';
+import { getRenewalContext } from '@/lib/renewal';
 
 export async function GET(
   _request: Request,
@@ -31,28 +32,20 @@ export async function GET(
     return NextResponse.json({ noEsim: true });
   }
 
-  // Ticket 042: a PikaSim phone plan is read from PikaSim, and shows the phone number once it exists.
+  /* Ticket 042: a PikaSim phone plan. PikaSim reports no status, usage or number for these (their API
+     returns nulls), so it is not asked: the admin sees what we know from our own orders — the plan's
+     dates (phone-validity.ts), and the eSIM's install details stored at purchase. */
   if (isPhoneOrder(order.packageCode)) {
-    const { esim, phoneNumber } = await readPhoneOrder(order.iccid);
-    if (!esim) return NextResponse.json({ noEsim: !order.iccid, error: order.iccid ? 'PikaSim did not return this eSIM' : undefined });
-    if (phoneNumber) await announcePhoneNumberOnce(order, phoneNumber);
+    const ctx = await getRenewalContext(order.id).catch(() => null);
     return NextResponse.json({
       supplier: 'PikaSim',
-      phoneNumber,
-      status: esim.status ?? null,
-      smdpStatus: esim.smdpStatus ?? null,
-      esimStatus: esim.status ?? null,
-      usedVolume: esim.usedData ?? null,
-      remainingVolume: esim.remainingData ?? null,
-      orderVolume: esim.totalData ?? null,
-      expiredTime: esim.expireTime ?? null,
-      activateTime: null,
-      totalDuration: null,
-      durationUnit: null,
-      iccid: esim.iccid ?? null,
-      qrCodeUrl: esim.qrCodeUrl ?? null,
-      smdpAddress: null,
-      activationCode: esim.activationCode ?? null,
+      phoneNumber: null,
+      plan: ctx?.window ?? null,
+      renewable: ctx?.renewable ?? false,
+      iccid: order.iccid,
+      qrCodeUrl: ctx?.qrCodeUrl ?? null,
+      smdpAddress: ctx?.smdpAddress ?? null,
+      activationCode: ctx?.activationCode ?? null,
     });
   }
 

@@ -10,11 +10,7 @@
     },
     {
       "path": "/api/cron/phone-renewal-reminders",
-      "schedule": "0 7 * * *"
-    },
-    {
-      "path": "/api/cron/phone-number-ready",
-      "schedule": "* * * * *"
+      "schedule": "0 * * * *"
     }
   ],
   "routes": [

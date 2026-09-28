@@ -26,6 +26,8 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     region: ctx.region,
     phoneNumber: ctx.phoneNumber,
     expireTime: ctx.expireTime,
+    expireExact: ctx.expireExact,
+    installedOn: ctx.window?.installedOn ?? null,
     daysLeft: daysLeft(ctx.expireTime),
     customer: { id: ctx.customerId, email: ctx.customerEmail, name: ctx.customerName },
     options,

@@ -32,6 +32,7 @@ export async function GET(request: Request) {
     region: ctx.region,
     phoneNumber: ctx.phoneNumber,
     expireTime: ctx.expireTime,
+    expireExact: ctx.expireExact,
     daysLeft: daysLeft(ctx.expireTime),
     baseOrderId: ctx.baseOrderId,
     options: options.map(toPublicRenewalOption),

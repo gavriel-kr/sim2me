@@ -120,7 +120,7 @@ export async function describeProduct(planId: string): Promise<ProductDescriptio
   if (ref.kind === 'renewal') {
     // Renewal of an existing US/global phone eSIM: same number, more time. Priced like the same
     // package sold new; only offered while the base order is completed and renewable.
-    const ctx = await getRenewalContext(ref.orderId, { live: false });
+    const ctx = await getRenewalContext(ref.orderId);
     if (!ctx) return null;
     const option = (await getRenewalOptions(ctx)).find((o) => o.code === ref.code);
     if (!option) return null;
@@ -176,7 +176,7 @@ export async function placeSupplierOrder(planId: string, orderRef: string): Prom
   }
 
   if (ref.kind === 'renewal') {
-    const ctx = await getRenewalContext(ref.orderId, { live: false });
+    const ctx = await getRenewalContext(ref.orderId);
     if (!ctx?.iccid) throw new Error('The eSIM to renew has no ICCID');
     if (!ctx.renewable) throw new Error('This eSIM cannot be renewed');
     const topup = await createPikaTopup(ctx.iccid, ref.code, orderRef);
@@ -195,7 +195,7 @@ export async function awaitProfile(planId: string, supplierOrderNo: string, pati
   const ref = parseProductId(planId);
   if (ref.kind === 'renewal') {
     // A renewal adds time to the eSIM the customer already has: its install details do not change.
-    const ctx = await getRenewalContext(ref.orderId, { live: false });
+    const ctx = await getRenewalContext(ref.orderId);
     return ctx?.iccid
       ? { iccid: ctx.iccid, qrCodeUrl: ctx.qrCodeUrl, smdpAddress: ctx.smdpAddress ?? '', activationCode: ctx.activationCode ?? '' }
       : null;

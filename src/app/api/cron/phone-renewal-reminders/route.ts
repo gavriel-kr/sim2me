@@ -1,9 +1,11 @@
 /**
- * Ticket 042 — remind customers to renew a US / global number before it is gone.
+ * Ticket 042 — remind customers to renew a US / global number about 48 hours before it ends.
  *
- * Once a day: every completed PikaSim phone order whose eSIM ends within the next 7 days, whose number
- * is known (installed), and which can be renewed, gets one reminder per end date. A renewal moves the
- * end date, so the next period earns its own reminder; the same period never gets two.
+ * Runs every hour and never calls PikaSim: the end of each plan is computed from our own orders
+ * (`phone-validity.ts`) — the customer's installation date if they gave one, otherwise the purchase
+ * date, which is the earliest the plan can end, so the reminder is never late. One reminder per end
+ * date: a renewal or a newly given installation date moves the end, and the new end earns its own.
+ * Europe and local numbers cannot be renewed and get no reminder. (Gabriel, 2026-09-28.)
  *
  * Auth: Bearer CRON_SECRET, like the other crons. Fail-closed.
  */
@@ -11,13 +13,23 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { sendRenewalReminderEmail, toEmailLocale } from '@/lib/email';
-import { daysLeft, getRenewalContext } from '@/lib/renewal';
+import { isRenewableRegion } from '@/lib/phone-plans';
+import { formatDay } from '@/lib/renewal';
+import { isReminderDue, loadPlanWindow } from '@/lib/phone-validity';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
-const REMIND_WITHIN_DAYS = 7;
-const MAX_PER_RUN = 150;
+const MAX_PER_RUN = 200;
+const REMINDED_PREFIX = 'renewal_reminded:';
+
+/** US numbers are Airalo "Change+", global ones "Discover+" — the two families that can be renewed. */
+function isRenewableCode(packageCode: string): boolean {
+  const code = packageCode.slice(3);
+  if (code.startsWith('change-plus')) return isRenewableRegion('us');
+  if (code.startsWith('discover+')) return isRenewableRegion('global');
+  return false;
+}
 
 export async function GET(request: Request) {
   const cronSecret = process.env.CRON_SECRET;
@@ -29,39 +41,47 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  // US and global plans run up to a year; nothing older can still be live.
-  const since = new Date(Date.now() - 400 * 86400000);
+  // US and global plans, with renewals, run up to about a year; nothing older can still be live.
+  const since = new Date(Date.now() - 400 * 86_400_000);
   const orders = await prisma.order.findMany({
     where: { packageCode: { startsWith: 'pk:' }, status: 'COMPLETED', iccid: { not: null }, createdAt: { gte: since } },
-    select: { id: true },
+    select: { id: true, packageCode: true, validity: true, paidAt: true, createdAt: true, customerEmail: true, customerName: true, locale: true },
     orderBy: { createdAt: 'desc' },
     take: MAX_PER_RUN,
   });
 
-  let reminded = 0;
-  let checked = 0;
-  for (const { id } of orders) {
-    checked++;
-    const ctx = await getRenewalContext(id).catch(() => null);
-    if (!ctx?.renewable || !ctx.phoneNumber || !ctx.expireTime || !ctx.iccid) continue;
-    const left = daysLeft(ctx.expireTime);
-    if (left == null || left < 0 || left > REMIND_WITHIN_DAYS) continue;
+  const now = new Date();
+  const base = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') || 'https://www.sim2me.net';
+  let due = 0;
+  let sent = 0;
+  for (const order of orders) {
+    if (!isRenewableCode(order.packageCode)) continue;
+    const window = await loadPlanWindow(order).catch(() => null);
+    if (!window || !isReminderDue(window.endsAt, now)) continue;
+    due++;
 
-    const key = `renewal_reminded:${ctx.iccid}:${ctx.expireTime.slice(0, 10)}`;
+    // Claim first, then send: two overlapping runs must not both email the customer.
+    const key = `${REMINDED_PREFIX}${order.id}:${window.endsOn}`;
     try {
-      await prisma.siteSetting.create({ data: { key, value: new Date().toISOString() } });
+      await prisma.siteSetting.create({ data: { key, value: now.toISOString() } });
     } catch {
       continue; // already reminded for this end date
     }
-    const locale = toEmailLocale(ctx.locale);
-    const base = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') || 'https://www.sim2me.net';
-    const sent = await sendRenewalReminderEmail(
-      ctx.customerEmail,
-      { customerName: ctx.customerName, phoneNumber: ctx.phoneNumber, daysLeft: left, accountLink: `${base}/${locale}/account` },
+    const locale = toEmailLocale(order.locale);
+    const ok = await sendRenewalReminderEmail(
+      order.customerEmail,
+      {
+        customerName: order.customerName,
+        endsOn: formatDay(window.endsOn, locale),
+        exact: window.exact,
+        accountLink: `${base}/${locale}/account`,
+      },
       locale,
     ).catch(() => false);
-    if (sent) reminded++;
+    if (ok) sent++;
+    // A failed send releases the claim, so the next hourly run tries again.
+    else await prisma.siteSetting.delete({ where: { key } }).catch(() => {});
   }
 
-  return NextResponse.json({ checked, reminded });
+  return NextResponse.json({ checked: orders.length, due, sent });
 }

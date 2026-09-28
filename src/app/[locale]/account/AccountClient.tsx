@@ -16,6 +16,7 @@ import { RenewNumberPanel } from '@/components/account/RenewNumberPanel';
 import { useEsimUsage } from '@/components/account/useEsimUsage';
 import { EsimQrCode } from '@/components/esim/EsimQrCode';
 import { PhoneNumberHowTo } from '@/components/account/PhoneNumberHowTo';
+import { PhonePlanStatus } from '@/components/account/PhonePlanStatus';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   User, ShoppingBag, Wifi, Settings, LogOut, Phone, Mail,
@@ -160,21 +161,20 @@ function UsageBar({ orderId, iccid, onStatusChange, canRenew }: { orderId: strin
   const usage: UsageData | 'loading' | 'unavailable' =
     loaded.status === 'loading' ? 'loading' : data?.usage ? data.usage : 'unavailable';
   const phone = data?.phonePlan
-    ? { plan: true, number: data.phoneNumber ?? null, renewable: Boolean(data.renewable) }
-    : { plan: false, number: null, renewable: false };
+    ? { plan: true, renewable: Boolean(data.renewable), window: data.plan ?? null }
+    : { plan: false, renewable: false, window: null };
 
   const phoneBox = phone.plan ? (
     <div className="rounded-lg border border-sky-200 bg-sky-50/70 px-3 py-2">
-      {phone.number ? (
-        <p className="text-sm">
-          <span className="text-sky-800">{tPhone('yourNumber')}:</span>{' '}
-          <span dir="ltr" className="font-bold tracking-wide text-gray-900">{phone.number}</span>
-        </p>
+      {/* PikaSim reports no number or status for phone plans: where to find the number, and the plan's
+          dates from our own orders (Gabriel, 2026-09-28). */}
+      {phone.window ? (
+        <PhonePlanStatus initial={phone.window} renewable={phone.renewable} />
       ) : (
         <>
           <p className="text-sm font-semibold text-sky-800">{tPhone('numberPending')}</p>
           <p className="text-xs text-muted-foreground">{tPhone('numberPendingHint')}</p>
-          <PhoneNumberHowTo className="mt-1.5" />
+          <PhoneNumberHowTo className="mt-1" />
         </>
       )}
       {/* Ticket 042: renewing keeps the number — offered on the original sale, not on renewal records. */}

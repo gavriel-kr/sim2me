@@ -317,125 +317,115 @@ export interface PostPurchaseEmailData {
 }
 
 /*
-  Ticket 042 — plans with a phone number. The number only exists once the traveller installs the
-  eSIM, so the purchase email says so, and a second, short email carries the number itself.
+  Ticket 042 — plans with a phone number. PikaSim does not report the number (or the plan's dates),
+  so there is no "your number is ready" email (removed 2026-09-28): the purchase email says plainly
+  where the number shows on the phone, and the plan's end is computed from our own orders
+  (`lib/phone-validity.ts`) for the renewal confirmation and the 48-hour reminder.
 */
 const PHONE_COPY: Record<EmailLocale, {
-  pendingTitle: string; pendingText: string;
-  readySubject: string; greeting: string; nameFallback: string; readyIntro: string;
-  numberLabel: string; planLabel: string; readyTip: string; renewTip: string; noRenewTip: string;
-  seeTitle: string; seeIphone: string; seeAndroid: string;
-  accountLabel: string; signOff: string;
-  renewSubject: string; renewIntro: string; renewAddedLabel: string; renewUntilLabel: string; renewKeep: string;
-  reminderSubject: string; reminderIntro: string; reminderCta: string; reminderNote: string;
+  pendingTitle: string;
+  pendingText: string;
+  seeIphone: string;
+  seeAndroid: string;
+  greeting: string;
+  nameFallback: string;
+  accountLabel: string;
+  signOff: string;
+  renewSubject: string;
+  renewIntro: string;
+  renewAddedLabel: string;
+  renewUntilLabel: string;
+  earliestNote: string;
+  renewKeep: string;
+  reminderSubject: string;
+  reminderIntro: string;
+  reminderCta: string;
+  reminderNote: string;
+  reminderEstimate: string;
 }> = {
   he: {
-    pendingTitle: 'מספר הטלפון שלך',
-    pendingText: 'המספר נקבע אחרי שמתקינים את ה-eSIM. ברגע שהוא מוכן נשלח לך מייל נוסף, והוא יופיע גם באזור האישי.',
-    readySubject: 'מספר הטלפון שלך מוכן',
+    pendingTitle: 'איפה רואים את מספר הטלפון?',
+    pendingText: 'את מספר הטלפון שלך רואים בהגדרות הטלפון, אחרי התקנת ה-eSIM:',
+    seeIphone: 'אייפון: הגדרות ← סלולרי ← קו ה-eSIM ← "המספר שלי".',
+    seeAndroid: 'אנדרואיד: הגדרות ← אודות הטלפון ← מצב SIM ← מספר טלפון (המסלול משתנה מעט בין יצרנים).',
     greeting: 'שלום',
     nameFallback: 'לקוח/ה',
-    readyIntro: 'ה-eSIM שלך הותקן, וזה מספר הטלפון שלך:',
-    numberLabel: 'המספר שלך',
-    planLabel: 'חבילה:',
-    readyTip: 'שמרו את המספר באנשי הקשר. אפשר לקבל בו שיחות ו-SMS, כולל קודי אימות.',
-    renewTip: 'רוצים לשמור על המספר גם אחרי סוף התוקף? מאריכים באזור האישי לפני שהחבילה נגמרת, והמספר נשאר שלכם.',
-    noRenewTip: 'את החבילה הזו אי אפשר להאריך. כשהיא נגמרת, חבילה חדשה מגיעה עם מספר חדש.',
-    seeTitle: "איך רואים את המספר בטלפון",
-    seeIphone: "אייפון: הגדרות ← סלולרי ← קו ה-eSIM ← \"המספר שלי\".",
-    seeAndroid: "אנדרואיד: הגדרות ← אודות הטלפון ← מצב SIM ← מספר טלפון (המסלול משתנה מעט בין יצרנים).",
     accountLabel: 'לאזור האישי',
     signOff: 'נסיעה טובה!<br/>צוות SIM2ME',
     renewSubject: 'ההארכה בוצעה, המספר שלך נשמר',
     renewIntro: 'הוספנו זמן לחבילה שלך. המספר נשאר אותו מספר, ואין צורך להתקין שום דבר מחדש.',
     renewAddedLabel: 'נוסף:',
     renewUntilLabel: 'בתוקף עד:',
+    earliestNote: '(לפי תאריך הרכישה. אם התקנתם מאוחר יותר, אפשר לעדכן את תאריך ההתקנה באזור האישי.)',
     renewKeep: 'כדי להמשיך לשמור על המספר, הארכה נוספת צריכה להיעשות לפני סוף התוקף.',
     reminderSubject: 'החבילה עם המספר שלך מסתיימת בקרוב',
-    reminderIntro: 'החבילה של המספר {number} מסתיימת בעוד {days} ימים. אם לא תאריכו לפני כן, המספר יבוטל ולא יהיה אפשר לקבל אותו שוב.',
+    reminderIntro: 'החבילה עם מספר הטלפון שלך מסתיימת ב-{date}. כדי לשמור על המספר צריך להאריך לפני כן. בלי הארכה המספר מבוטל, ואי אפשר לשחזר אותו.',
     reminderCta: 'להארכה ושמירה על המספר',
     reminderNote: 'ההארכה מתווספת ל-eSIM הקיים, בלי התקנה חדשה.',
+    reminderEstimate: 'התאריך מחושב מיום הרכישה. אם התקנתם את ה-eSIM מאוחר יותר, החבילה מסתיימת מאוחר יותר, ואפשר לעדכן את תאריך ההתקנה באזור האישי.',
   },
   en: {
-    pendingTitle: 'Your phone number',
-    pendingText: 'The number is assigned once you install the eSIM. We will email you again as soon as it is ready, and it will also show in your account.',
-    readySubject: 'Your phone number is ready',
+    pendingTitle: 'Where to find your phone number',
+    pendingText: 'Your phone number shows in your phone\'s settings once the eSIM is installed:',
+    seeIphone: 'iPhone: Settings → Cellular (or Mobile Service) → the eSIM line → My Number.',
+    seeAndroid: 'Android: Settings → About phone → SIM status → Phone number (the path varies a little by manufacturer).',
     greeting: 'Hi',
     nameFallback: 'there',
-    readyIntro: 'Your eSIM is installed. This is your phone number:',
-    numberLabel: 'Your number',
-    planLabel: 'Plan:',
-    readyTip: 'Save it in your contacts. It receives calls and SMS, including verification codes.',
-    renewTip: 'Want to keep this number after the plan ends? Renew it in your account before it runs out and the number stays yours.',
-    noRenewTip: 'This plan cannot be renewed. When it ends, a new plan comes with a new number.',
-    seeTitle: "How to see the number on your phone",
-    seeIphone: "iPhone: Settings → Cellular (or Mobile Service) → the eSIM line → My Number.",
-    seeAndroid: "Android: Settings → About phone → SIM status → Phone number (the path varies a little by manufacturer).",
     accountLabel: 'Go to your account',
     signOff: 'Have a great trip!<br/>The SIM2ME Team',
     renewSubject: 'Renewed. Your number is kept',
     renewIntro: 'We added time to your plan. Your number stays the same, and there is nothing to reinstall.',
     renewAddedLabel: 'Added:',
     renewUntilLabel: 'Valid until:',
+    earliestNote: '(counted from the purchase date; if you installed later, you can set the installation date in your account)',
     renewKeep: 'To keep the number after that, renew again before the plan ends.',
     reminderSubject: 'The plan with your number ends soon',
-    reminderIntro: 'The plan for {number} ends in {days} days. If you do not renew before then, the number is cancelled and cannot be recovered.',
+    reminderIntro: 'The plan with your phone number ends on {date}. To keep the number, renew before then. Without a renewal the number is cancelled and cannot be recovered.',
     reminderCta: 'Renew and keep my number',
     reminderNote: 'The renewal is added to the eSIM you already have. No new installation.',
+    reminderEstimate: 'This date is counted from the purchase. If you installed the eSIM later, the plan ends later, and you can set the installation date in your account.',
   },
   ar: {
-    pendingTitle: 'رقم هاتفك',
-    pendingText: 'يُخصَّص الرقم بعد تثبيت شريحة eSIM. سنرسل لك بريدًا آخر فور جاهزيته، وسيظهر أيضًا في حسابك.',
-    readySubject: 'رقم هاتفك جاهز',
+    pendingTitle: 'أين ترى رقم هاتفك؟',
+    pendingText: 'يظهر رقم هاتفك في إعدادات الهاتف بعد تثبيت شريحة eSIM:',
+    seeIphone: 'iPhone: الإعدادات ← الخلوي (أو خدمة الجوال) ← خط eSIM ← رقمي.',
+    seeAndroid: 'Android: الإعدادات ← حول الهاتف ← حالة SIM ← رقم الهاتف (قد يختلف المسار قليلًا حسب الشركة المصنّعة).',
     greeting: 'مرحبًا',
     nameFallback: 'عميلنا',
-    readyIntro: 'تم تثبيت شريحة eSIM، وهذا رقم هاتفك:',
-    numberLabel: 'رقمك',
-    planLabel: 'الباقة:',
-    readyTip: 'احفظه في جهات الاتصال. يستقبل المكالمات ورسائل SMS، بما فيها رموز التحقق.',
-    renewTip: 'تريد الاحتفاظ بالرقم بعد انتهاء الباقة؟ جدّدها من حسابك قبل انتهائها ويبقى الرقم لك.',
-    noRenewTip: 'لا يمكن تجديد هذه الباقة. عند انتهائها تأتي الباقة الجديدة برقم جديد.',
-    seeTitle: "كيف ترى الرقم على هاتفك",
-    seeIphone: "iPhone: الإعدادات ← الخلوي (أو خدمة الجوال) ← خط eSIM ← رقمي.",
-    seeAndroid: "Android: الإعدادات ← حول الهاتف ← حالة SIM ← رقم الهاتف (قد يختلف المسار قليلًا حسب الشركة المصنّعة).",
     accountLabel: 'إلى حسابك',
     signOff: 'رحلة سعيدة!<br/>فريق SIM2ME',
     renewSubject: 'تم التجديد، واحتفظت برقمك',
     renewIntro: 'أضفنا وقتًا إلى باقتك. رقمك يبقى كما هو، ولا حاجة لإعادة التثبيت.',
     renewAddedLabel: 'أُضيف:',
     renewUntilLabel: 'صالح حتى:',
+    earliestNote: '(محسوب من تاريخ الشراء؛ إذا ثبّتّ الشريحة لاحقًا يمكنك تحديد تاريخ التثبيت في حسابك)',
     renewKeep: 'للاحتفاظ بالرقم بعد ذلك، جدّد مرة أخرى قبل انتهاء الباقة.',
     reminderSubject: 'الباقة التي تحمل رقمك تنتهي قريبًا',
-    reminderIntro: 'تنتهي باقة الرقم {number} خلال {days} أيام. إذا لم تجدّدها قبل ذلك، يُلغى الرقم ولا يمكن استعادته.',
+    reminderIntro: 'تنتهي الباقة التي تحمل رقم هاتفك في {date}. للاحتفاظ بالرقم جدّدها قبل ذلك. بدون تجديد يُلغى الرقم ولا يمكن استعادته.',
     reminderCta: 'جدّد واحتفظ برقمي',
     reminderNote: 'يُضاف التجديد إلى شريحة eSIM الحالية، دون تثبيت جديد.',
+    reminderEstimate: 'هذا التاريخ محسوب من يوم الشراء. إذا ثبّتّ الشريحة لاحقًا فالباقة تنتهي لاحقًا، ويمكنك تحديد تاريخ التثبيت في حسابك.',
   },
   hi: {
-    pendingTitle: 'आपका फ़ोन नंबर',
-    pendingText: 'eSIM इंस्टॉल करने के बाद नंबर दिया जाता है। तैयार होते ही हम आपको एक और ईमेल भेजेंगे, और यह आपके अकाउंट में भी दिखेगा।',
-    readySubject: 'आपका फ़ोन नंबर तैयार है',
+    pendingTitle: 'अपना फ़ोन नंबर कहाँ देखें',
+    pendingText: 'eSIM इंस्टॉल होने के बाद आपका फ़ोन नंबर फ़ोन की सेटिंग्स में दिखता है:',
+    seeIphone: 'iPhone: Settings → Cellular (या Mobile Service) → eSIM लाइन → My Number.',
+    seeAndroid: 'Android: Settings → About phone → SIM status → Phone number (रास्ता निर्माता के अनुसार थोड़ा अलग हो सकता है)।',
     greeting: 'नमस्ते',
     nameFallback: 'ग्राहक',
-    readyIntro: 'आपका eSIM इंस्टॉल हो गया है। यह आपका फ़ोन नंबर है:',
-    numberLabel: 'आपका नंबर',
-    planLabel: 'प्लान:',
-    readyTip: 'इसे अपने कॉन्टैक्ट्स में सेव करें। इस पर कॉल और SMS आते हैं, वेरिफ़िकेशन कोड भी।',
-    renewTip: 'प्लान खत्म होने के बाद भी यह नंबर रखना चाहते हैं? खत्म होने से पहले अपने अकाउंट में रिन्यू करें, नंबर आपका ही रहेगा।',
-    noRenewTip: 'यह प्लान रिन्यू नहीं हो सकता। इसके खत्म होने पर नया प्लान नए नंबर के साथ आता है।',
-    seeTitle: "फ़ोन पर नंबर कैसे देखें",
-    seeIphone: "iPhone: Settings → Cellular (या Mobile Service) → eSIM लाइन → My Number.",
-    seeAndroid: "Android: Settings → About phone → SIM status → Phone number (रास्ता निर्माता के अनुसार थोड़ा अलग हो सकता है)।",
     accountLabel: 'अपने अकाउंट पर जाएँ',
     signOff: 'आपकी यात्रा शुभ हो!<br/>SIM2ME टीम',
     renewSubject: 'रिन्यू हो गया, आपका नंबर बना रहेगा',
     renewIntro: 'हमने आपके प्लान में समय जोड़ दिया है। आपका नंबर वही रहेगा, और कुछ भी दोबारा इंस्टॉल नहीं करना है।',
     renewAddedLabel: 'जोड़ा गया:',
     renewUntilLabel: 'वैधता:',
+    earliestNote: '(खरीद की तारीख से गिना गया; अगर आपने बाद में इंस्टॉल किया, तो अकाउंट में इंस्टॉल की तारीख सेट करें)',
     renewKeep: 'उसके बाद भी नंबर रखने के लिए, प्लान खत्म होने से पहले फिर से रिन्यू करें।',
     reminderSubject: 'आपके नंबर वाला प्लान जल्द खत्म हो रहा है',
-    reminderIntro: '{number} का प्लान {days} दिनों में खत्म होगा। अगर उससे पहले रिन्यू नहीं किया, तो नंबर रद्द हो जाएगा और वापस नहीं मिलेगा।',
+    reminderIntro: 'आपके फ़ोन नंबर वाला प्लान {date} को खत्म होगा। नंबर रखने के लिए उससे पहले रिन्यू करें। रिन्यू न करने पर नंबर रद्द हो जाता है और वापस नहीं मिलता।',
     reminderCta: 'रिन्यू करें और नंबर रखें',
     reminderNote: 'रिन्यूअल आपके मौजूदा eSIM में जुड़ता है। नया इंस्टॉलेशन नहीं।',
+    reminderEstimate: 'यह तारीख खरीद से गिनी गई है। अगर आपने eSIM बाद में इंस्टॉल किया, तो प्लान बाद में खत्म होगा, और आप अकाउंट में इंस्टॉल की तारीख सेट कर सकते हैं।',
   },
 };
 
@@ -770,7 +760,7 @@ export async function sendPostPurchaseEmail(to: string, data: PostPurchaseEmailD
       <li><strong>${c.labelData}</strong> ${escapeHtml(dataGb)}</li>
       <li><strong>${c.labelValidity}</strong> ${escapeHtml(validityDays)}</li>
     </ul>
-    ${data.phoneNumberPending ? `<div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:10px; padding:14px 18px; margin:0 0 20px 0;"><p style="margin:0 0 4px 0; font-weight:600; color:#0369a1;">${PHONE_COPY[locale].pendingTitle}</p><p style="margin:0; line-height:1.6;">${PHONE_COPY[locale].pendingText}</p>${howToSeeNumber(PHONE_COPY[locale])}</div>` : ''}
+    ${data.phoneNumberPending ? `<div style="background:#f0f9ff; border:2px solid #38bdf8; border-radius:10px; padding:16px 18px; margin:0 0 20px 0;"><p style="margin:0 0 6px 0; font-size:1.05rem; font-weight:700; color:#0369a1;">📱 ${PHONE_COPY[locale].pendingTitle}</p><p style="margin:0 0 8px 0; font-weight:600; line-height:1.6;">${PHONE_COPY[locale].pendingText}</p><p style="margin:0; line-height:1.7; font-size:0.95rem;">${PHONE_COPY[locale].seeIphone}<br/>${PHONE_COPY[locale].seeAndroid}</p></div>` : ''}
     <p style="margin:20px 0 4px 0;">${characterImg('explaining')}</p>
     <p style="margin: 0 0 8px 0; font-weight: 600;">${c.howToInstall}</p>
     ${installBlock}
@@ -965,57 +955,6 @@ export async function sendOrderDelayedEmail(to: string, data: OrderDelayedEmailD
   return sendEmail(to, c.subject, html, { text: htmlToText(html), replyTo: SUPPORT_EMAIL });
 }
 
-/**
- * Ticket 042 — the second email for a phone plan: the number, once the traveller has installed the
- * eSIM and the network has assigned it. Sent once per order (see `lib/phone-number.ts`).
- */
-export async function sendPhoneNumberReadyEmail(
-  to: string,
-  data: { customerName: string; phoneNumber: string; planName: string; orderNo: string; accountLink: string; renewable?: boolean },
-  locale: EmailLocale = 'he',
-): Promise<boolean> {
-  const c = PHONE_COPY[locale];
-  const dir = emailDir(locale);
-  const name = data.customerName || c.nameFallback;
-  const logo = await logoImgTag();
-  const html = `
-<!DOCTYPE html>
-<html dir="${dir}" lang="${locale}">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${c.readySubject}</title>
-</head>
-<body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background: #f8fafc; color: #1e293b;">
-  <div style="background: white; border-radius: 12px; padding: 28px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
-    ${logo}
-    <p style="margin:0 0 12px 0;">${characterImg('checkingPhone')}</p>
-    <h1 style="color: #0d9f6e; font-size: 1.4rem; margin: 0 0 16px 0;">${c.readySubject}</h1>
-    <p style="margin: 0 0 16px 0; line-height: 1.6;">${c.greeting} ${escapeHtml(name)},</p>
-    <p style="margin: 0 0 12px 0; line-height: 1.6;">${c.readyIntro}</p>
-    <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:10px; padding:16px 20px; margin:0 0 16px 0; text-align:center;">
-      <p style="margin:0 0 4px 0; font-size:0.85rem; color:#0369a1;">${c.numberLabel}</p>
-      <p dir="ltr" style="margin:0; font-size:1.6rem; font-weight:700; letter-spacing:0.02em;">${escapeHtml(data.phoneNumber)}</p>
-    </div>
-    <p style="margin: 0 0 16px 0; line-height: 1.6;"><strong>${c.planLabel}</strong> ${escapeHtml(data.planName)} · <code style="background:#f1f5f9; padding:2px 6px; border-radius:4px;">${escapeHtml(data.orderNo)}</code></p>
-    <p style="margin: 0 0 8px 0; line-height: 1.6;">${c.readyTip}</p>
-    <div style="margin: 0 0 12px 0;">${howToSeeNumber(c)}</div>
-    <p style="margin: 0 0 20px 0; line-height: 1.6;">${data.renewable ? c.renewTip : c.noRenewTip}</p>
-    <p style="margin: 0 0 20px 0;"><a href="${escapeHtml(data.accountLink)}" style="color:#0d9f6e;">${c.accountLabel}</a></p>
-    <p style="margin: 20px 0 0 0;">${c.signOff}</p>
-  </div>
-</body>
-</html>
-  `.trim();
-
-  return sendEmail(to, c.readySubject, html, { text: htmlToText(html), replyTo: SUPPORT_EMAIL });
-}
-
-/** Ticket 042: where the number shows on the phone itself — in the purchase email and the number email. */
-function howToSeeNumber(c: (typeof PHONE_COPY)[EmailLocale]): string {
-  return `<p style="margin:10px 0 2px 0; font-weight:600; color:#0369a1;">${c.seeTitle}</p><p style="margin:0; line-height:1.6; font-size:0.9rem;">${c.seeIphone}<br/>${c.seeAndroid}</p>`;
-}
-
 function phoneEmailShell(locale: EmailLocale, title: string, body: string, logo: string): string {
   return `
 <!DOCTYPE html>
@@ -1037,28 +976,22 @@ function phoneEmailShell(locale: EmailLocale, title: string, body: string, logo:
   `.trim();
 }
 
-function numberBox(label: string, phoneNumber: string | null): string {
-  if (!phoneNumber) return '';
-  return `<div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:10px; padding:14px 20px; margin:0 0 16px 0; text-align:center;">
-      <p style="margin:0 0 4px 0; font-size:0.85rem; color:#0369a1;">${label}</p>
-      <p dir="ltr" style="margin:0; font-size:1.5rem; font-weight:700; letter-spacing:0.02em;">${escapeHtml(phoneNumber)}</p>
-    </div>`;
-}
-
 /** Ticket 042 — a renewal went through: same number, more time. */
 export async function sendRenewalConfirmedEmail(
   to: string,
-  data: { customerName: string; phoneNumber: string | null; added: string; validUntil: string | null; orderNo: string; accountLink: string },
+  data: { customerName: string; added: string; validUntil: string | null; validUntilExact: boolean; orderNo: string; accountLink: string },
   locale: EmailLocale = 'he',
 ): Promise<boolean> {
   const c = PHONE_COPY[locale];
   const name = data.customerName || c.nameFallback;
+  const until = data.validUntil
+    ? `<p style="margin: 0 0 16px 0;"><strong>${c.renewUntilLabel}</strong> ${escapeHtml(data.validUntil)}${data.validUntilExact ? '' : ` <span style="color:#64748b; font-size:0.9rem;">${c.earliestNote}</span>`}</p>`
+    : '';
   const body = `
     <p style="margin: 0 0 16px 0; line-height: 1.6;">${c.greeting} ${escapeHtml(name)},</p>
     <p style="margin: 0 0 16px 0; line-height: 1.6;">${c.renewIntro}</p>
-    ${numberBox(c.numberLabel, data.phoneNumber)}
     <p style="margin: 0 0 6px 0;"><strong>${c.renewAddedLabel}</strong> ${escapeHtml(data.added)} · <code style="background:#f1f5f9; padding:2px 6px; border-radius:4px;">${escapeHtml(data.orderNo)}</code></p>
-    ${data.validUntil ? `<p style="margin: 0 0 16px 0;"><strong>${c.renewUntilLabel}</strong> ${escapeHtml(data.validUntil)}</p>` : ''}
+    ${until}
     <p style="margin: 0 0 20px 0; line-height: 1.6;">${c.renewKeep}</p>
     <p style="margin: 0 0 20px 0;"><a href="${escapeHtml(data.accountLink)}" style="color:#0d9f6e;">${c.accountLabel}</a></p>
     <p style="margin: 20px 0 0 0;">${c.signOff}</p>`;
@@ -1066,22 +999,24 @@ export async function sendRenewalConfirmedEmail(
   return sendEmail(to, c.renewSubject, html, { text: htmlToText(html), replyTo: SUPPORT_EMAIL });
 }
 
-/** Ticket 042 — a renewable number's plan ends soon; renewing before then keeps the number. */
+/**
+ * Ticket 042 — a renewable number's plan ends in about 48 hours; renewing before then keeps the
+ * number. `endsOn` is already formatted; `exact` is false when it was counted from the purchase.
+ */
 export async function sendRenewalReminderEmail(
   to: string,
-  data: { customerName: string; phoneNumber: string; daysLeft: number; accountLink: string },
+  data: { customerName: string; endsOn: string; exact: boolean; accountLink: string },
   locale: EmailLocale = 'he',
 ): Promise<boolean> {
   const c = PHONE_COPY[locale];
   const name = data.customerName || c.nameFallback;
-  const intro = c.reminderIntro
-    .replace('{number}', `<span dir="ltr" style="font-weight:700;">${escapeHtml(data.phoneNumber)}</span>`)
-    .replace('{days}', String(Math.max(0, data.daysLeft)));
+  const intro = c.reminderIntro.replace('{date}', `<strong>${escapeHtml(data.endsOn)}</strong>`);
   const body = `
     <p style="margin: 0 0 16px 0; line-height: 1.6;">${c.greeting} ${escapeHtml(name)},</p>
     <p style="margin: 0 0 20px 0; line-height: 1.6;">${intro}</p>
     <p style="margin: 0 0 12px 0;"><a href="${escapeHtml(data.accountLink)}" style="display:inline-block; background:#10b981; color:#ffffff; text-decoration:none; font-weight:600; padding:12px 20px; border-radius:10px;">${c.reminderCta}</a></p>
-    <p style="margin: 0 0 20px 0; font-size: 0.9rem; color:#64748b;">${c.reminderNote}</p>
+    <p style="margin: 0 0 12px 0; font-size: 0.9rem; color:#64748b;">${c.reminderNote}</p>
+    ${data.exact ? '' : `<p style="margin: 0 0 20px 0; font-size: 0.85rem; color:#64748b;">${c.reminderEstimate}</p>`}
     <p style="margin: 20px 0 0 0;">${c.signOff}</p>`;
   const html = phoneEmailShell(locale, c.reminderSubject, body, await logoImgTag());
   return sendEmail(to, c.reminderSubject, html, { text: htmlToText(html), replyTo: SUPPORT_EMAIL });

@@ -2,6 +2,26 @@
 
 ## [Unreleased]
 
+### Changed (phone plans: no number email; status from our own orders — Gabriel, 2026-09-28)
+
+PikaSim, now that the account is active again, returns nothing live for phone-plan eSIMs: status,
+usage, end date and number are all null, `/usage` answers 404, and their docs say the real number is
+only visible on the device. So:
+
+- **No "your number is ready" email** and no polling for it: the every-minute cron is removed, and
+  nothing asks PikaSim for a phone plan's status any more (account page, admin status, renewal panel,
+  reminders). Every promise of that email is gone from the site, the emails and the FAQ.
+- **Where the number is** — the phone's settings, with the iPhone and Android paths — prominently in
+  the purchase email, on the account page, the success page, the FAQ and the plan conditions.
+- **Plan status on the account page** from our own orders (`lib/phone-validity.ts`): bought on, valid
+  N days from installation, renewals, and the end date. Counted from the purchase (shown as "no
+  earlier than") until the customer gives their installation date on the account page, after which it
+  is exact (`POST /api/account/esims/installed`, kept in `SiteSetting`; no schema change).
+- **One renewal reminder, 48 hours before the end**, with a link to renew (US and global numbers). The
+  cron runs hourly and reads only our database; a failed send is retried the next hour.
+- Admin: the order panel shows the same dates instead of asking PikaSim; "Cancel eSIM" on a phone plan
+  no longer calls the API (PikaSim cancels phone plans only through a support ticket) and says so.
+
 ### Changed (phone plans after the first live test — Gabriel, 2026-09-28)
 
 - **QR codes are drawn by the site** from the activation details (`EsimQrCode`), on the account page,

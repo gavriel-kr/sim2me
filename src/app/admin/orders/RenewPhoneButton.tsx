@@ -16,6 +16,8 @@ interface RenewalData {
   renewable: boolean;
   phoneNumber: string | null;
   expireTime: string | null;
+  expireExact?: boolean;
+  installedOn?: string | null;
   daysLeft: number | null;
   customer: { id: string | null; email: string; name: string };
   options: { id: string; name: string; dataGb: number; days: number; priceUsd: number; costUsd: number }[];
@@ -66,7 +68,9 @@ export function RenewPhoneButton({ orderId }: { orderId: string }) {
           {data && (
             <>
               <p className="text-gray-600">
-                {data.expireTime ? `Ends ${new Date(data.expireTime).toLocaleDateString('en-GB')}` : 'End date unknown'}
+                {data.expireTime
+                  ? `Ends ${new Date(data.expireTime).toLocaleDateString('en-GB', { timeZone: 'UTC' })}${data.expireExact ? ` (installed ${data.installedOn})` : ' at the earliest (from the purchase date; the customer has not given an installation date)'}`
+                  : 'End date unknown'}
                 {data.daysLeft != null && ` · ${data.daysLeft} days left`}
               </p>
               {!data.renewable ? (

@@ -20,6 +20,8 @@ interface RenewalResponse {
   region: 'us' | 'europe' | 'global' | 'local' | null;
   phoneNumber: string | null;
   expireTime: string | null;
+  /** False when the end is counted from the purchase (no installation date given): "at the earliest". */
+  expireExact?: boolean;
   daysLeft: number | null;
   baseOrderId: string;
   options: { id: string; code: string; name: string; dataGb: number; days: number; voiceMinutes: number | null; sms: number | null; priceUsd: number }[];
@@ -51,7 +53,10 @@ export function RenewNumberPanel({ orderId }: { orderId: string }) {
     if (next && state === 'idle') load();
   };
 
-  const dateText = data?.expireTime ? new Date(data.expireTime).toLocaleDateString(locale === 'he' ? 'he-IL' : locale) : null;
+  // Read as a calendar day, like the status above and the reminder email.
+  const dateText = data?.expireTime
+    ? new Date(data.expireTime).toLocaleDateString(locale === 'he' ? 'he-IL' : locale, { timeZone: 'UTC' })
+    : null;
 
   return (
     <div className="mt-2 border-t border-sky-200/70 pt-2">
@@ -78,7 +83,7 @@ export function RenewNumberPanel({ orderId }: { orderId: string }) {
             <>
               {(dateText || data.daysLeft != null) && (
                 <p className="text-xs text-gray-700">
-                  {dateText && t('renewValidUntil', { date: dateText })}
+                  {dateText && (data.expireExact ? t('renewValidUntil', { date: dateText }) : t('renewValidUntilEarliest', { date: dateText }))}
                   {data.daysLeft != null && (
                     <span className={`ms-1.5 font-semibold ${data.daysLeft <= 7 ? 'text-amber-700' : 'text-gray-600'}`}>
                       · {data.daysLeft < 0 ? t('renewExpired') : t('renewDaysLeft', { days: data.daysLeft })}

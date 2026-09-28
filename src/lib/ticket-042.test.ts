@@ -11,7 +11,7 @@ import { isRetryableProfileError, type EsimPackage } from './esimaccess';
 import { lpaString } from '../components/esim/EsimQrCode';
 import { getPhoneCatalog, getPikaAccount, LOCAL_THROTTLE, waitForPikaEsim, type PikaPackage } from './pikasim';
 import { parseResetMs, parseRetryAfterMs, resetLimiterForTests } from './pikasim-limiter';
-import { isDueForNumberCheck, numberNotifiedKey } from './phone-number';
+import { computePlanWindow, daysFromValidity, isReminderDue, isValidInstallDate } from './phone-validity';
 
 // ─── product ids ────────────────────────────────────────────
 assert.deepStrictEqual(parseProductId('CKH491'), { kind: 'esim', code: 'CKH491' });
@@ -139,24 +139,43 @@ assert.strictEqual(isRetryableProfileError('eSIMaccess API error: insufficient b
   assert.ok(pub.coverage.length > 1 && pub.coverage.length === pub.coverageCount); // the pop-up lists what the card counts
 }
 
-// ─── "number ready" scheduled check: who is asked about, and when ─
+// ─── Phone plan dates, from our own orders (PikaSim reports none) ─
 {
-  const at = (iso: string) => new Date(iso);
-  // The cron runs every minute (2026-09-28): minute 07 is an ordinary run, :15 a quarter-hour one, :00 the hourly one.
-  const minute07 = at('2026-10-01T10:07:00Z');
-  const minute15 = at('2026-10-01T10:15:00Z');
-  const minute00 = at('2026-10-01T11:00:00Z');
-  assert.strictEqual(isDueForNumberCheck(at('2026-10-01T10:05:00Z'), minute07), true); // 2 minutes old: every run
-  assert.strictEqual(isDueForNumberCheck(at('2026-09-29T10:07:00Z'), minute07), true); // exactly 48 hours: every run
-  assert.strictEqual(isDueForNumberCheck(at('2026-09-29T10:00:00Z'), minute07), false); // just over 48 h: not at :07…
-  assert.strictEqual(isDueForNumberCheck(at('2026-09-29T10:00:00Z'), minute15), true); // …but at :15
-  assert.strictEqual(isDueForNumberCheck(at('2026-09-17T11:00:00Z'), minute15), true); // 14 days: still quarter-hourly
-  assert.strictEqual(isDueForNumberCheck(at('2026-09-01T10:00:00Z'), minute15), false); // a month old: not at :15…
-  assert.strictEqual(isDueForNumberCheck(at('2026-09-01T10:00:00Z'), minute00), true); // …only on the hour
-  assert.strictEqual(isDueForNumberCheck(at('2026-03-01T10:00:00Z'), minute00), false); // over 180 days: never
-  assert.strictEqual(isDueForNumberCheck(at('2026-10-02T10:00:00Z'), minute07), false); // clock skew: not in the future
-  assert.strictEqual(numberNotifiedKey({ id: 'o1', iccid: '8901' }), 'phone_number_notified:8901');
-  assert.strictEqual(numberNotifiedKey({ id: 'o1', iccid: null }), 'phone_number_notified:o1');
+  // Our orders always write validity as "<n> days".
+  assert.strictEqual(daysFromValidity('7 days'), 7);
+  assert.strictEqual(daysFromValidity('1 day'), 1);
+  assert.strictEqual(daysFromValidity('30 days'), 30);
+  assert.strictEqual(daysFromValidity('Unlimited'), null);
+  assert.strictEqual(daysFromValidity(''), null);
+
+  const bought = new Date('2026-09-28T17:35:38Z');
+  // No installation date: counted from the purchase, the earliest the plan can end.
+  const fromPurchase = computePlanWindow({ purchasedAt: bought, planDays: 7, renewalDays: 0, installedOn: null });
+  assert.strictEqual(fromPurchase.endsOn, '2026-10-05');
+  assert.strictEqual(fromPurchase.endsAt, '2026-10-05T17:35:38.000Z');
+  assert.strictEqual(fromPurchase.exact, false);
+  // The customer's installation date moves it, and makes it exact.
+  const fromInstall = computePlanWindow({ purchasedAt: bought, planDays: 7, renewalDays: 0, installedOn: '2026-10-01' });
+  assert.strictEqual(fromInstall.endsOn, '2026-10-08');
+  assert.strictEqual(fromInstall.exact, true);
+  // Renewals add their days to the same plan.
+  assert.strictEqual(computePlanWindow({ purchasedAt: bought, planDays: 7, renewalDays: 30, installedOn: '2026-10-01' }).endsOn, '2026-11-07');
+
+  // The one reminder: from 48 hours before the end until the end.
+  assert.strictEqual(isReminderDue('2026-10-05T17:35:38.000Z', new Date('2026-10-03T17:35:37Z')), false); // 48 h + 1 s before
+  assert.strictEqual(isReminderDue('2026-10-05T17:35:38.000Z', new Date('2026-10-03T17:35:38Z')), true); // exactly 48 h before
+  assert.strictEqual(isReminderDue('2026-10-05T17:35:38.000Z', new Date('2026-10-05T17:35:37Z')), true); // a second before the end
+  assert.strictEqual(isReminderDue('2026-10-05T17:35:38.000Z', new Date('2026-10-05T17:35:38Z')), false); // ended: too late to help
+
+  // Installation dates the customer may give: a real day, from the purchase (one day slack) to today (+1).
+  const now = new Date('2026-09-30T12:00:00Z');
+  assert.strictEqual(isValidInstallDate('2026-09-29', bought, now), true);
+  assert.strictEqual(isValidInstallDate('2026-09-27', bought, now), true); // the purchase day in another time zone
+  assert.strictEqual(isValidInstallDate('2026-09-26', bought, now), false); // before the purchase
+  assert.strictEqual(isValidInstallDate('2026-10-01', bought, now), true); // "today" east of UTC
+  assert.strictEqual(isValidInstallDate('2026-10-02', bought, now), false); // the future
+  assert.strictEqual(isValidInstallDate('2026-02-30', bought, now), false); // not a real day
+  assert.strictEqual(isValidInstallDate('29/09/2026', bought, now), false);
 }
 
 // ─── PikaSim outage: pages stop waiting, checkout still tries ─

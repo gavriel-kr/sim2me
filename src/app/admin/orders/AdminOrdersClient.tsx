@@ -10,6 +10,7 @@ import { OrdersFilters } from './OrdersFilters';
 import { exportOrdersToExcel, parseOrdersExcelFile } from './ordersExcel';
 import { ConfirmDialog } from './ConfirmDialog';
 import { RenewPhoneButton } from './RenewPhoneButton';
+import { EsimQrCode } from '@/components/esim/EsimQrCode';
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -71,6 +72,9 @@ interface EsimStatusData {
   /** Ticket 042: set for PikaSim orders. `phoneNumber` stays null until the eSIM is installed. */
   supplier?: string;
   phoneNumber?: string | null;
+  /** Phone plans: dates from our own orders (phone-validity.ts); PikaSim reports no status for them. */
+  plan?: { purchasedAt: string; planDays: number; renewalDays: number; installedOn: string | null; endsOn: string; exact: boolean } | null;
+  renewable?: boolean;
   status?: string | null;
   esimStatus?: string | null;
   smdpStatus?: string | null;
@@ -194,6 +198,11 @@ function CopyButton({ text }: { text: string }) {
 
 // ─── eSIM Status Panel ────────────────────────────────────────
 
+/** "2026-10-05" as a calendar day (no time-zone shift). */
+function formatCalendarDay(isoDay: string): string {
+  return new Date(`${isoDay}T00:00:00Z`).toLocaleDateString('en-GB', { timeZone: 'UTC' });
+}
+
 function EsimStatusPanel({ data, order }: { data: EsimStatusData; order: DisplayOrder }) {
   const [showQr, setShowQr] = useState(false);
 
@@ -214,11 +223,21 @@ function EsimStatusPanel({ data, order }: { data: EsimStatusData; order: Display
     <div className="space-y-2">
       {data.supplier === 'PikaSim' && (
         <div className="rounded-md border border-sky-200 bg-sky-50 px-2.5 py-1.5 text-xs">
-          <span className="font-semibold text-sky-800">Phone number: </span>
-          {data.phoneNumber ? (
-            <span dir="ltr" className="font-mono font-semibold text-gray-900">{data.phoneNumber}</span>
-          ) : (
-            <span className="text-gray-600">not assigned yet (appears after the customer installs the eSIM)</span>
+          <p>
+            <span className="font-semibold text-sky-800">Phone number: </span>
+            <span className="text-gray-600">shown on the customer&apos;s phone (Settings) after installation. PikaSim does not report it.</span>
+          </p>
+          {data.plan && (
+            <p className="mt-0.5 text-gray-700">
+              Bought {new Date(data.plan.purchasedAt).toLocaleDateString('en-GB')} · {data.plan.planDays} days
+              {data.plan.renewalDays > 0 && ` + ${data.plan.renewalDays} renewed`}
+              {data.plan.installedOn && ` · installed ${formatCalendarDay(data.plan.installedOn)} (customer)`}
+              {' · '}
+              <span className="font-semibold">
+                ends {data.plan.exact ? '' : 'no earlier than '}
+                {formatCalendarDay(data.plan.endsOn)}
+              </span>
+            </p>
           )}
           {order.packageCode?.startsWith('pk:') && order.status === 'COMPLETED' && <RenewPhoneButton orderId={order.id} />}
         </div>
@@ -298,7 +317,15 @@ function EsimStatusPanel({ data, order }: { data: EsimStatusData; order: Display
           <button type="button" onClick={() => setShowQr(!showQr)} className="text-xs text-blue-600 hover:underline">
             {showQr ? 'Hide QR' : 'Show QR Code'}
           </button>
-          {showQr && <img src={qrCodeUrl} alt="eSIM QR" className="mt-1 h-32 w-32 rounded-lg border" />}
+          {showQr && (
+            <EsimQrCode
+              qrCodeUrl={qrCodeUrl}
+              smdpAddress={smdpAddress ?? null}
+              activationCode={activationCode ?? null}
+              alt="eSIM QR"
+              className="mt-1 h-32 w-32 rounded-lg border"
+            />
+          )}
         </div>
       )}
     </div>

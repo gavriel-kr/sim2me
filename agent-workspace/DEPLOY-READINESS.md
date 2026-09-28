@@ -1,3 +1,30 @@
+# Phone plans without the number email, prepared 2026-09-28
+
+Gabriel asked for this and for the deploy ("תתקן תהיה יסודי ותעלה לדיפלוי לפי כל הכללים"). `DEPLOY-PROTOCOL.md` governs.
+
+| | |
+|---|---|
+| HEAD before | `60d3abe` (live) |
+| Backup tag | `pre-deploy-20260928-2311` |
+| Risk | **R2**: customer emails, the renewal flow used by fulfilment (`renewal.ts`, `fulfillment.ts`), account and admin order APIs, crons in `vercel.json`. No schema change, no new environment variable |
+
+What and why: the top entry of `CHANGELOG.md`.
+
+Gates:
+- ✅ `npx tsc --noEmit` → 0; `npm run lint` → 0 (no new warnings in changed files); six test suites pass
+  (new: validity parsing, window from purchase / installation / renewals, 48-hour reminder boundaries,
+  installation-date validation)
+- ✅ Translation keys identical in he / en / ar / hi; no remaining "we'll email you the number" in any language
+- ✅ The real test order's window computed from the database: global, renewable, ends no earlier than
+  2026-10-05 — with **0** PikaSim requests
+- ✅ Emails rendered to files (not sent): purchase (he/en), reminder, renewal confirmation — checked by eye
+- ✅ Account status component in Chrome (Hebrew): purchase-based window, then an installation date saved
+  and the exact end shown
+- ✅ `npx next build` → 0; `next start` smoke: pages 200; usage and installed APIs 401 without a session;
+  number cron 404 (removed); reminder cron 401 without the secret, and with it `checked 1, due 0, sent 0`
+
+Rollback: `git push origin pre-deploy-20260928-2311:main` (with Gabriel's approval).
+
 # Round 2 — phone plans after the first live test, prepared 2026-09-28
 
 Gabriel chose these four fixes and approved deploying them once done ("אחרי כל התיקונים תבצע דיפלוי").

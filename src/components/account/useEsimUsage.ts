@@ -16,6 +16,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
+import type { PhonePlanWindow } from '@/components/account/PhonePlanStatus';
 
 export interface UsageResponse {
   usage?: {
@@ -32,6 +33,8 @@ export interface UsageResponse {
   phonePlan?: boolean;
   phoneNumber?: string | null;
   renewable?: boolean;
+  /** Phone plans: dates from our own orders (PikaSim reports none). */
+  plan?: PhonePlanWindow | null;
 }
 
 export type UsageState = { status: 'loading' } | { status: 'done'; data: UsageResponse | null };

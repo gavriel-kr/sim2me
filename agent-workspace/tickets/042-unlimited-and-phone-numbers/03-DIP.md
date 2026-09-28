@@ -156,3 +156,17 @@ Checkpoint: `checkpoint-round2/`.
 - ✅ `PhoneCountriesDialog` on phone cards and the selected /phone-plans region; checked in Chrome (Hebrew, RTL,
   36 countries, scrolls inside the box at small heights)
 - ✅ eSIMaccess: "busy" retried in `getEsimProfileWithRetry`; ICCID lookup page size 1 → 5 (verified live)
+
+## Phase 13 — No number email; plan status from our own orders (2026-09-28)
+
+Checkpoint: `checkpoint-no-number-email/`. Decided with Gabriel after PikaSim's API proved to return no
+status, usage, dates or number for phone plans (checked: `/esims/:iccid` all null, `/usage` 404).
+
+- ✅ Removed: `/api/cron/phone-number-ready` (and its `vercel.json` entry), `announcePhoneNumberOnce`,
+  `readPhoneOrder`, `sendPhoneNumberReadyEmail`; no PikaSim status call left (account, admin, renewal)
+- ✅ "The number is in your phone's settings" + iPhone/Android paths: purchase email (prominent box),
+  account, success page, FAQ, conditions — four languages; every "we'll email you the number" removed
+- ✅ `phone-validity.ts`: window from purchase / customer's installation date / renewals; tests
+- ✅ Account: `PhonePlanStatus` with "set installation date" (`/api/account/esims/installed`); checked in Chrome
+- ✅ Reminder 48 h before the end, hourly cron, DB only, claim released on a failed send
+- ✅ Admin: dates in the order panel; phone-plan cancel explains the support-ticket route without calling the API

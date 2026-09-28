@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getSessionForRequest, isCustomerSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { getEsimProfile, getEsimUsage } from '@/lib/esimaccess';
-import { announcePhoneNumberOnce, isPhoneOrder, readPhoneOrder } from '@/lib/phone-number';
+import { isPhoneOrder } from '@/lib/phone-number';
 import { getRenewalContext } from '@/lib/renewal';
 import { checkRateLimit } from '@/lib/rateLimit';
 
@@ -73,34 +73,30 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  if (!(await checkRateLimit(`esim:${iccid}`, 'account-usage', SUPPLIER_LOOKUPS_PER_ESIM_PER_MINUTE, 60))) {
-    return NextResponse.json(cached?.body ?? { usage: null, throttled: true });
-  }
-
-  /* Ticket 042. A PikaSim phone plan: usage and the phone number come from PikaSim. The first time a
-     real number shows up, the customer also gets it by email. */
+  /* Ticket 042. A PikaSim phone plan: PikaSim reports no status, usage or number for these, so they
+     are not asked. The plan's dates come from our own orders (phone-validity.ts). Not cached: it is a
+     database read, and the customer may have just given their installation date. */
   if (isPhoneOrder(order.packageCode)) {
-    const { esim, phoneNumber } = await readPhoneOrder(iccid);
-    if (phoneNumber) await announcePhoneNumberOnce(order, phoneNumber);
-    return answer(cacheKey, {
-      usage: esim
+    const ctx = await getRenewalContext(order.id).catch(() => null);
+    return NextResponse.json({
+      usage: null,
+      phonePlan: true,
+      phoneNumber: null,
+      // Only US and global numbers can be renewed and kept (ticket 042).
+      renewable: ctx?.renewable ?? false,
+      plan: ctx?.window
         ? {
-            esimStatus: esim.status ?? null,
-            smdpStatus: esim.smdpStatus ?? null,
-            orderVolume: esim.totalData ?? null,
-            usedVolume: esim.usedData ?? null,
-            remainingVolume: esim.remainingData ?? null,
-            expiredTime: esim.expireTime ?? null,
-            activateTime: null,
-            totalDuration: null,
-            durationUnit: null,
+            baseOrderId: ctx.baseOrderId,
+            // The installation date belongs to the original sale; a renewal's card shows it, read-only.
+            canSetInstallDate: order.packageCode.startsWith('pk:'),
+            ...ctx.window,
           }
         : null,
-      phonePlan: true,
-      phoneNumber,
-      // Only US and global numbers can be renewed and kept (ticket 042).
-      renewable: (await getRenewalContext(order.id, { live: false }).catch(() => null))?.renewable ?? false,
     });
+  }
+
+  if (!(await checkRateLimit(`esim:${iccid}`, 'account-usage', SUPPLIER_LOOKUPS_PER_ESIM_PER_MINUTE, 60))) {
+    return NextResponse.json(cached?.body ?? { usage: null, throttled: true });
   }
 
   // Prefer esimOrderId query (proven reliable); fall back to iccid query

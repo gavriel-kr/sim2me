@@ -15,7 +15,7 @@ import { getPikaTopupOptions, isPikaSimConfigured } from '@/lib/pikasim';
 import { getPhonePlans } from '@/lib/phone-catalog';
 import { isRenewableRegion, phonePriceUsd, type PhoneRegion } from '@/lib/phone-plans';
 import { parseProductId, renewalId } from '@/lib/product-id';
-import { readPhoneOrder } from '@/lib/phone-number';
+import { loadPlanWindow, type PlanWindow } from '@/lib/phone-validity';
 import { sendRenewalConfirmedEmail, toEmailLocale } from '@/lib/email';
 
 /** A renewal the customer can buy. `costUsd` is server-side only — strip it before sending to a browser. */
@@ -44,9 +44,13 @@ export interface RenewalContext {
   iccid: string | null;
   region: PhoneRegion | null;
   renewable: boolean;
+  /** Always null: PikaSim does not report the number; the customer sees it in the phone's settings. */
   phoneNumber: string | null;
-  /** ISO time the current plan ends, as PikaSim reports it. */
+  /** ISO time the current plan ends, computed from our own orders (see phone-validity.ts). */
   expireTime: string | null;
+  /** True when counted from the customer's installation date, false when from the purchase date. */
+  expireExact: boolean;
+  window: PlanWindow | null;
   esimStatus: string | null;
   /** Kept from the base order so a renewal record can show the same install details. */
   qrCodeUrl: string | null;
@@ -54,8 +58,18 @@ export interface RenewalContext {
   activationCode: string | null;
 }
 
-/** Resolve any order of a phone eSIM — the original sale or one of its renewals — to its base order. */
-export async function getRenewalContext(orderId: string, opts: { live?: boolean } = {}): Promise<RenewalContext | null> {
+/** US numbers are Airalo "Change+", global ones "Discover+" (checked against the catalogue, 2026-09-28). */
+function regionFromCode(code: string): PhoneRegion | null {
+  if (code.startsWith('change-plus')) return 'us';
+  if (code.startsWith('discover+')) return 'global';
+  return null;
+}
+
+/**
+ * Resolve any order of a phone eSIM — the original sale or one of its renewals — to its base order.
+ * Database only: PikaSim reports nothing live for phone plans, so it is never asked here.
+ */
+export async function getRenewalContext(orderId: string): Promise<RenewalContext | null> {
   let order = await prisma.order.findUnique({ where: { id: orderId } });
   if (!order) return null;
   if (order.packageCode.startsWith('rn:')) {
@@ -67,11 +81,10 @@ export async function getRenewalContext(orderId: string, opts: { live?: boolean 
   if (!order.packageCode.startsWith('pk:')) return null;
 
   const code = order.packageCode.slice(3);
-  const plans = await getPhonePlans();
-  const plan = plans.find((p) => p.code === code);
-  // A plan no longer in the catalogue still has a region we can read from its code's family.
-  const region: PhoneRegion | null = plan?.region ?? (code.startsWith('change-plus') ? 'us' : code.startsWith('discover+') ? 'global' : null);
-  const live = opts.live === false ? { esim: null, phoneNumber: null } : await readPhoneOrder(order.iccid);
+  // The renewable families are known from the code; only other plans need the (cached) catalogue.
+  const region: PhoneRegion | null =
+    regionFromCode(code) ?? (await getPhonePlans().catch(() => [])).find((p) => p.code === code)?.region ?? null;
+  const window = await loadPlanWindow(order);
 
   return {
     baseOrderId: order.id,
@@ -83,9 +96,11 @@ export async function getRenewalContext(orderId: string, opts: { live?: boolean 
     iccid: order.iccid,
     region,
     renewable: Boolean(region && isRenewableRegion(region) && order.iccid && order.status === 'COMPLETED'),
-    phoneNumber: live.phoneNumber,
-    expireTime: live.esim?.expireTime ?? null,
-    esimStatus: live.esim?.status ?? null,
+    phoneNumber: null,
+    expireTime: window?.endsAt ?? null,
+    expireExact: window?.exact ?? false,
+    window,
+    esimStatus: null,
     qrCodeUrl: order.qrCodeUrl,
     smdpAddress: order.smdpAddress,
     activationCode: order.activationCode,
@@ -142,8 +157,8 @@ export function daysLeft(expireTime: string | null, now = Date.now()): number | 
 
 
 /**
- * The customer's confirmation for a renewal order: the number they kept, what was added, and the new
- * end date as PikaSim reports it right after the top-up.
+ * The customer's confirmation for a renewal order: what was added and the new end date, computed from
+ * our own orders — this renewal included even if it is not marked COMPLETED yet.
  */
 export async function sendRenewalConfirmation(order: {
   packageCode: string;
@@ -156,20 +171,30 @@ export async function sendRenewalConfirmation(order: {
 }): Promise<boolean> {
   const ref = parseProductId(order.packageCode);
   if (ref.kind !== 'renewal') return false;
-  const ctx = await getRenewalContext(ref.orderId).catch(() => null);
+  const baseOrder = await prisma.order.findUnique({
+    where: { id: ref.orderId },
+    select: { id: true, validity: true, paidAt: true, createdAt: true },
+  });
+  const window = baseOrder
+    ? await loadPlanWindow(baseOrder, { orderNo: order.orderNo, validity: order.validity }).catch(() => null)
+    : null;
   const locale = toEmailLocale(order.locale);
-  const validUntil = ctx?.expireTime ? new Date(ctx.expireTime).toLocaleDateString(locale === 'he' ? 'he-IL' : locale) : null;
-  const base = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') || 'https://www.sim2me.net';
+  const site = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') || 'https://www.sim2me.net';
   return sendRenewalConfirmedEmail(
     order.customerEmail,
     {
       customerName: order.customerName,
-      phoneNumber: ctx?.phoneNumber ?? null,
       added: [order.dataAmount, order.validity].filter(Boolean).join(' · '),
-      validUntil,
+      validUntil: window ? formatDay(window.endsOn, locale) : null,
+      validUntilExact: window?.exact ?? false,
       orderNo: order.orderNo,
-      accountLink: `${base}/${locale}/account`,
+      accountLink: `${site}/${locale}/account`,
     },
     locale,
   ).catch(() => false);
+}
+
+/** "2026-10-05" in the reader's calendar format, read as a calendar day (no time-zone shift). */
+export function formatDay(isoDay: string, locale: string): string {
+  return new Date(`${isoDay}T00:00:00Z`).toLocaleDateString(locale === 'he' ? 'he-IL' : locale, { timeZone: 'UTC' });
 }
