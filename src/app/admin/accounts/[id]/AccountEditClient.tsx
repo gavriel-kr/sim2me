@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Link from 'next/link';
+import { EsimQrCode } from '@/components/esim/EsimQrCode';
 
 type Account = {
   id: string;
@@ -300,10 +301,16 @@ export function AccountEditClient({ account: initial, orders, contactSubmissions
                 {order.activationCode && (
                   <p className="text-xs text-gray-600"><span className="font-medium">Activation Code:</span> {order.activationCode}</p>
                 )}
-                {order.qrCodeUrl && (
+                {(order.qrCodeUrl || (order.smdpAddress && order.activationCode)) && (
                   <details className="text-xs">
                     <summary className="cursor-pointer font-medium text-emerald-600">Show QR Code</summary>
-                    <img src={order.qrCodeUrl} alt="QR" className="mt-2 h-32 w-32 rounded border" />
+                    <EsimQrCode
+                      qrCodeUrl={order.qrCodeUrl}
+                      smdpAddress={order.smdpAddress}
+                      activationCode={order.activationCode}
+                      alt="QR"
+                      className="mt-2 h-32 w-32 rounded border"
+                    />
                   </details>
                 )}
                 {order.errorMessage && (

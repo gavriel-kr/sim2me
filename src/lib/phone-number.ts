@@ -45,19 +45,25 @@ export async function readPhoneOrder(iccid: string | null | undefined): Promise<
 
 /** How far back the scheduled check looks: a plan bought for a trip months away is still waiting. */
 export const NUMBER_CHECK_MAX_AGE_DAYS = 180;
-/** Orders younger than this are checked on every run (every 15 minutes); older ones once an hour. */
-export const NUMBER_CHECK_EVERY_RUN_DAYS = 14;
+/** Orders younger than this are checked on every run — the cron runs every minute (Gabriel, 2026-09-28). */
+export const NUMBER_CHECK_EVERY_RUN_HOURS = 48;
+/** From 48 hours up to this age, every 15 minutes; older ones, once an hour. */
+export const NUMBER_CHECK_QUARTER_HOURLY_DAYS = 14;
 
 /**
- * Whether the scheduled check should ask PikaSim about this order on this run. Most customers install
- * within days of buying, so those are checked every run; an order that has waited two weeks is checked
- * on the first run of each hour, so customers who never install do not cost 96 calls a day each.
+ * Whether the scheduled check should ask PikaSim about this order on this run (runs are one minute
+ * apart). Most travellers install within a day or two of buying, and should get their number within
+ * about a minute of it existing, so those orders are checked every run. Orders that have waited longer
+ * are checked every 15 minutes, then hourly, so customers who never install do not cost 1,440 calls a
+ * day each — PikaSim allows 60 a minute for the whole site.
  */
 export function isDueForNumberCheck(createdAt: Date, now: Date): boolean {
-  const ageDays = (now.getTime() - createdAt.getTime()) / 86400000;
-  if (ageDays < 0 || ageDays > NUMBER_CHECK_MAX_AGE_DAYS) return false;
-  if (ageDays <= NUMBER_CHECK_EVERY_RUN_DAYS) return true;
-  return now.getUTCMinutes() < 15;
+  const ageMs = now.getTime() - createdAt.getTime();
+  if (ageMs < 0 || ageMs > NUMBER_CHECK_MAX_AGE_DAYS * 86_400_000) return false;
+  if (ageMs <= NUMBER_CHECK_EVERY_RUN_HOURS * 3_600_000) return true;
+  const minute = now.getUTCMinutes();
+  if (ageMs <= NUMBER_CHECK_QUARTER_HOURLY_DAYS * 86_400_000) return minute % 15 === 0;
+  return minute === 0;
 }
 
 /** The `SiteSetting` key that records the number email went out, so callers can skip announced eSIMs. */

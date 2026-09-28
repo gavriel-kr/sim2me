@@ -324,6 +324,7 @@ const PHONE_COPY: Record<EmailLocale, {
   pendingTitle: string; pendingText: string;
   readySubject: string; greeting: string; nameFallback: string; readyIntro: string;
   numberLabel: string; planLabel: string; readyTip: string; renewTip: string; noRenewTip: string;
+  seeTitle: string; seeIphone: string; seeAndroid: string;
   accountLabel: string; signOff: string;
   renewSubject: string; renewIntro: string; renewAddedLabel: string; renewUntilLabel: string; renewKeep: string;
   reminderSubject: string; reminderIntro: string; reminderCta: string; reminderNote: string;
@@ -340,6 +341,9 @@ const PHONE_COPY: Record<EmailLocale, {
     readyTip: 'שמרו את המספר באנשי הקשר. אפשר לקבל בו שיחות ו-SMS, כולל קודי אימות.',
     renewTip: 'רוצים לשמור על המספר גם אחרי סוף התוקף? מאריכים באזור האישי לפני שהחבילה נגמרת, והמספר נשאר שלכם.',
     noRenewTip: 'את החבילה הזו אי אפשר להאריך. כשהיא נגמרת, חבילה חדשה מגיעה עם מספר חדש.',
+    seeTitle: "איך רואים את המספר בטלפון",
+    seeIphone: "אייפון: הגדרות ← סלולרי ← קו ה-eSIM ← \"המספר שלי\".",
+    seeAndroid: "אנדרואיד: הגדרות ← אודות הטלפון ← מצב SIM ← מספר טלפון (המסלול משתנה מעט בין יצרנים).",
     accountLabel: 'לאזור האישי',
     signOff: 'נסיעה טובה!<br/>צוות SIM2ME',
     renewSubject: 'ההארכה בוצעה, המספר שלך נשמר',
@@ -364,6 +368,9 @@ const PHONE_COPY: Record<EmailLocale, {
     readyTip: 'Save it in your contacts. It receives calls and SMS, including verification codes.',
     renewTip: 'Want to keep this number after the plan ends? Renew it in your account before it runs out and the number stays yours.',
     noRenewTip: 'This plan cannot be renewed. When it ends, a new plan comes with a new number.',
+    seeTitle: "How to see the number on your phone",
+    seeIphone: "iPhone: Settings → Cellular (or Mobile Service) → the eSIM line → My Number.",
+    seeAndroid: "Android: Settings → About phone → SIM status → Phone number (the path varies a little by manufacturer).",
     accountLabel: 'Go to your account',
     signOff: 'Have a great trip!<br/>The SIM2ME Team',
     renewSubject: 'Renewed. Your number is kept',
@@ -388,6 +395,9 @@ const PHONE_COPY: Record<EmailLocale, {
     readyTip: 'احفظه في جهات الاتصال. يستقبل المكالمات ورسائل SMS، بما فيها رموز التحقق.',
     renewTip: 'تريد الاحتفاظ بالرقم بعد انتهاء الباقة؟ جدّدها من حسابك قبل انتهائها ويبقى الرقم لك.',
     noRenewTip: 'لا يمكن تجديد هذه الباقة. عند انتهائها تأتي الباقة الجديدة برقم جديد.',
+    seeTitle: "كيف ترى الرقم على هاتفك",
+    seeIphone: "iPhone: الإعدادات ← الخلوي (أو خدمة الجوال) ← خط eSIM ← رقمي.",
+    seeAndroid: "Android: الإعدادات ← حول الهاتف ← حالة SIM ← رقم الهاتف (قد يختلف المسار قليلًا حسب الشركة المصنّعة).",
     accountLabel: 'إلى حسابك',
     signOff: 'رحلة سعيدة!<br/>فريق SIM2ME',
     renewSubject: 'تم التجديد، واحتفظت برقمك',
@@ -412,6 +422,9 @@ const PHONE_COPY: Record<EmailLocale, {
     readyTip: 'इसे अपने कॉन्टैक्ट्स में सेव करें। इस पर कॉल और SMS आते हैं, वेरिफ़िकेशन कोड भी।',
     renewTip: 'प्लान खत्म होने के बाद भी यह नंबर रखना चाहते हैं? खत्म होने से पहले अपने अकाउंट में रिन्यू करें, नंबर आपका ही रहेगा।',
     noRenewTip: 'यह प्लान रिन्यू नहीं हो सकता। इसके खत्म होने पर नया प्लान नए नंबर के साथ आता है।',
+    seeTitle: "फ़ोन पर नंबर कैसे देखें",
+    seeIphone: "iPhone: Settings → Cellular (या Mobile Service) → eSIM लाइन → My Number.",
+    seeAndroid: "Android: Settings → About phone → SIM status → Phone number (रास्ता निर्माता के अनुसार थोड़ा अलग हो सकता है)।",
     accountLabel: 'अपने अकाउंट पर जाएँ',
     signOff: 'आपकी यात्रा शुभ हो!<br/>SIM2ME टीम',
     renewSubject: 'रिन्यू हो गया, आपका नंबर बना रहेगा',
@@ -757,7 +770,7 @@ export async function sendPostPurchaseEmail(to: string, data: PostPurchaseEmailD
       <li><strong>${c.labelData}</strong> ${escapeHtml(dataGb)}</li>
       <li><strong>${c.labelValidity}</strong> ${escapeHtml(validityDays)}</li>
     </ul>
-    ${data.phoneNumberPending ? `<div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:10px; padding:14px 18px; margin:0 0 20px 0;"><p style="margin:0 0 4px 0; font-weight:600; color:#0369a1;">${PHONE_COPY[locale].pendingTitle}</p><p style="margin:0; line-height:1.6;">${PHONE_COPY[locale].pendingText}</p></div>` : ''}
+    ${data.phoneNumberPending ? `<div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:10px; padding:14px 18px; margin:0 0 20px 0;"><p style="margin:0 0 4px 0; font-weight:600; color:#0369a1;">${PHONE_COPY[locale].pendingTitle}</p><p style="margin:0; line-height:1.6;">${PHONE_COPY[locale].pendingText}</p>${howToSeeNumber(PHONE_COPY[locale])}</div>` : ''}
     <p style="margin:20px 0 4px 0;">${characterImg('explaining')}</p>
     <p style="margin: 0 0 8px 0; font-weight: 600;">${c.howToInstall}</p>
     ${installBlock}
@@ -986,6 +999,7 @@ export async function sendPhoneNumberReadyEmail(
     </div>
     <p style="margin: 0 0 16px 0; line-height: 1.6;"><strong>${c.planLabel}</strong> ${escapeHtml(data.planName)} · <code style="background:#f1f5f9; padding:2px 6px; border-radius:4px;">${escapeHtml(data.orderNo)}</code></p>
     <p style="margin: 0 0 8px 0; line-height: 1.6;">${c.readyTip}</p>
+    <div style="margin: 0 0 12px 0;">${howToSeeNumber(c)}</div>
     <p style="margin: 0 0 20px 0; line-height: 1.6;">${data.renewable ? c.renewTip : c.noRenewTip}</p>
     <p style="margin: 0 0 20px 0;"><a href="${escapeHtml(data.accountLink)}" style="color:#0d9f6e;">${c.accountLabel}</a></p>
     <p style="margin: 20px 0 0 0;">${c.signOff}</p>
@@ -995,6 +1009,11 @@ export async function sendPhoneNumberReadyEmail(
   `.trim();
 
   return sendEmail(to, c.readySubject, html, { text: htmlToText(html), replyTo: SUPPORT_EMAIL });
+}
+
+/** Ticket 042: where the number shows on the phone itself — in the purchase email and the number email. */
+function howToSeeNumber(c: (typeof PHONE_COPY)[EmailLocale]): string {
+  return `<p style="margin:10px 0 2px 0; font-weight:600; color:#0369a1;">${c.seeTitle}</p><p style="margin:0; line-height:1.6; font-size:0.9rem;">${c.seeIphone}<br/>${c.seeAndroid}</p>`;
 }
 
 function phoneEmailShell(locale: EmailLocale, title: string, body: string, logo: string): string {

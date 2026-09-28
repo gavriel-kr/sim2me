@@ -1,3 +1,31 @@
+# Round 2 — phone plans after the first live test, prepared 2026-09-28
+
+Gabriel chose these four fixes and approved deploying them once done ("אחרי כל התיקונים תבצע דיפלוי").
+`DEPLOY-PROTOCOL.md` governs.
+
+| | |
+|---|---|
+| HEAD before | `f7f9126` (live: the loop hotfix) |
+| Backup tag | `pre-deploy-20260928-2219` |
+| Risk | **R2**: `esimaccess.ts` (profile retry used by fulfilment), emails, account and success pages. No schema change, no new environment variable; `vercel.json` cron schedule changes (`phone-number-ready` every minute) |
+
+What and why: the top entry of `CHANGELOG.md`.
+
+Gates:
+- ✅ `npx tsc --noEmit` → 0; `npm run lint` → 0, no new warnings in changed files; six test suites pass
+  (new: LPA string, "busy" retry, public coverage, minute-by-minute timing)
+- ✅ Translation keys identical in he / en / ar / hi
+- ✅ QR string rebuilt from our database equals eSIMaccess's original for 5 real orders
+- ✅ Emails rendered to files (not sent) in Hebrew and English and checked by eye
+- ✅ Country pop-up and QR component checked in Chrome (Hebrew, RTL, 500 px and short windows)
+- ✅ ICCID status lookup verified live against eSIMaccess after the page-size fix
+- ✅ `npx next build` → 0; `next start` smoke: all pages 200, account → login, usage API 401 without a session,
+  health `ok: true`, cron 401 without the secret and runs with it, FAQ shows the new text
+- ⚠️ Phone cards cannot be shown live while PikaSim keeps the account suspended; they appear by themselves
+  once it is reactivated
+
+Rollback: `git push origin pre-deploy-20260928-2219:main` (with Gabriel's approval).
+
 # Hotfix — the account-page loop (PikaSim suspension), prepared 2026-09-28
 
 Gabriel asked for this fix to go up at once ("קודם תתקן את הלולאה ... אחכ תמשיך"), and approved deploying

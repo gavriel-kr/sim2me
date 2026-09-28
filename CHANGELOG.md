@@ -2,6 +2,23 @@
 
 ## [Unreleased]
 
+### Changed (phone plans after the first live test — Gabriel, 2026-09-28)
+
+- **QR codes are drawn by the site** from the activation details (`EsimQrCode`), on the account page,
+  "My eSIMs", the success page and the admin account view. PikaSim's QR images live on airalo.com,
+  which the site's security policy blocks, so phone plans showed a broken image there (the email was
+  fine). The drawn string was checked against eSIMaccess's own `ac` for five real orders: identical.
+- **"Your number is ready" within about a minute**: the check runs every minute for orders from the
+  last 48 hours (then every 15 minutes up to 14 days, then hourly up to 180 days), at most 10 PikaSim
+  lookups per run, all through the PikaSim limiter.
+- **How to see the number on the phone** (iPhone and Android settings paths) in the purchase email,
+  the number email, the account page, the success page and the FAQ, in all four languages.
+- **"Which countries?"** on every phone card and on the selected region of /phone-plans opens the full
+  country list in the reader's language, with flags.
+- **eSIMaccess "system busy"** is now retried when fetching a new order's profile, like "getting
+  resource"; and the ICCID status lookup asked for a page size of 1, which eSIMaccess rejects (minimum
+  5), so that fallback never worked — fixed.
+
 ### Fixed (the account page asked the suppliers for eSIM status in an endless loop)
 
 Since 17 May 2026 (`e2ec1c5`) every eSIM on a customer's account page re-requested its status about

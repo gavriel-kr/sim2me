@@ -311,7 +311,7 @@
     "phoneWhatIs": "फ़ोन नंबर वाला eSIM क्या है?",
     "answerPhoneWhatIs": "एक eSIM जो आपको डेटा, फ़ोन नंबर, कॉल मिनट और SMS देता है। आप इस पर कॉल और वेरिफ़िकेशन कोड प्राप्त कर सकते हैं, जैसे बैंक या ऐप्स से। आपका अपना नंबर दूसरी लाइन के रूप में फ़ोन में बना रहता है।",
     "phoneWhenNumber": "मुझे फ़ोन नंबर कब मिलेगा?",
-    "answerPhoneWhenNumber": "फ़ोन में eSIM इंस्टॉल करने के बाद नंबर दिया जाता है। तैयार होते ही हम आपको ईमेल भेजेंगे, और यह आपके अकाउंट में भी दिखेगा। प्लान की वैधता इंस्टॉल करते ही शुरू होती है, इसलिए यात्रा के पास इंस्टॉल करें।",
+    "answerPhoneWhenNumber": "फ़ोन में eSIM इंस्टॉल करने के बाद नंबर दिया जाता है। तैयार होते ही हम आपको ईमेल भेजेंगे, और यह आपके अकाउंट में भी दिखेगा। आप इसे फ़ोन पर भी देख सकते हैं: iPhone में Settings → Cellular → eSIM लाइन → My Number; Android में Settings → About phone → SIM status → Phone number। प्लान की वैधता इंस्टॉल करते ही शुरू होती है, इसलिए यात्रा के पास इंस्टॉल करें।",
     "unlimitedHowWorks": "अनलिमिटेड प्लान कैसे काम करता है?",
     "answerUnlimitedHowWorks": "अपनी यात्रा के दिन चुनें, 1 से 30 तक। हर दिन आपको 2GB पूरी स्पीड पर मिलता है, फिर दिन के अंत तक कम स्पीड पर अनलिमिटेड डेटा। अगले दिन पूरी स्पीड वापस आ जाती है।",
     "doYouHaveApp": "क्या आपका ऐप है?",
@@ -714,6 +714,12 @@
     "toastAdded": "कार्ट में जोड़ा गया"
   },
   "phonePlans": {
+    "howToSeeTitle": "फ़ोन पर नंबर कैसे देखें?",
+    "howToSeeIphone": "iPhone: Settings → Cellular (या Mobile Service) → eSIM लाइन चुनें → My Number.",
+    "howToSeeAndroid": "Android: Settings → About phone → SIM status (या Status) → Phone number. रास्ता निर्माता के अनुसार थोड़ा अलग हो सकता है।",
+    "howToSeeNote": "अगर वहाँ न दिखे, तो यह हमेशा आपके अकाउंट में और हमारे भेजे ईमेल में होता है।",
+    "whichCountries": "किन देशों में?",
+    "countriesTitle": "{count} देशों में काम करता है",
     "numberLocalShort": "स्थानीय नंबर {dial}",
     "tilesTitle": "आपको कौन-सा नंबर चाहिए?",
     "tilesHint": "एक चुनें और उसके प्लान देखें।",

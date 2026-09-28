@@ -68,6 +68,8 @@ export interface PhonePlan {
   numberCountry: string;
   dialCode: string;
   coverageCount: number;
+  /** ISO-2 codes the plan works in, for the "Which countries?" pop-up (2026-09-28). */
+  coverage: string[];
   dataGb: number;
   days: number;
   voiceMinutes: number;
@@ -228,6 +230,7 @@ export function toPublicPhonePlan(p: PhonePlanFull): PhonePlan {
     numberCountry: p.numberCountry,
     dialCode: p.dialCode,
     coverageCount: p.coverage.length,
+    coverage: p.coverage,
     dataGb: p.dataGb,
     days: p.days,
     voiceMinutes: p.voiceMinutes,

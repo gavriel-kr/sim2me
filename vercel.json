@@ -14,7 +14,7 @@
     },
     {
       "path": "/api/cron/phone-number-ready",
-      "schedule": "*/15 * * * *"
+      "schedule": "* * * * *"
     }
   ],
   "routes": [

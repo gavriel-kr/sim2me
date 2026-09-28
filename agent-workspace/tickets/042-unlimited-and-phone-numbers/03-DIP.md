@@ -142,5 +142,17 @@ Checkpoint: `checkpoint-loop-fix/`. Found while investigating PikaSim's suspensi
 - ✅ `waitForPikaEsim`: exponential backoff 2→8 s, 5 attempts in the webhook, stops on 429/401/403
 - ✅ Number cron: at most 10 PikaSim lookups per run
 - ✅ Success page: polling stops once the order is settled
-- ⬜ Round 2 (next): QR generated from the activation code, number check every minute for 48 h + how to
-  see the number, country list pop-up on phone cards, retry when eSIMaccess answers "busy"
+- ✅ Round 2 shipped the same evening, see Phase 12
+
+## Phase 12 — Round 2 after the first live test (2026-09-28)
+
+Checkpoint: `checkpoint-round2/`.
+
+- ✅ `EsimQrCode` draws the QR from `LPA:1$smdp$code` on account, My eSIMs, success and admin account pages;
+  rebuilt string equals eSIMaccess's `ac` for 5 real orders
+- ✅ Number check every minute for 48 h, quarter-hourly to 14 days, hourly to 180 days (`isDueForNumberCheck`,
+  tests), `vercel.json` `* * * * *`
+- ✅ How to see the number: purchase email, number email, account, success page, FAQ — four languages
+- ✅ `PhoneCountriesDialog` on phone cards and the selected /phone-plans region; checked in Chrome (Hebrew, RTL,
+  36 countries, scrolls inside the box at small heights)
+- ✅ eSIMaccess: "busy" retried in `getEsimProfileWithRetry`; ICCID lookup page size 1 → 5 (verified live)

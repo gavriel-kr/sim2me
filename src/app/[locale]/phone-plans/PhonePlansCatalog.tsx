@@ -18,6 +18,7 @@ import { formatPrice } from '@/lib/utils';
 import { PhonePlanCard, countryName, usePhonePlanLabels } from '@/components/sections/PhonePlanCard';
 import { PhoneConditions } from '@/components/sections/PhoneConditions';
 import { PhoneFaq } from '@/components/sections/PhoneFaq';
+import { PhoneCountriesDialog } from '@/components/sections/PhoneCountriesDialog';
 
 interface Group {
   key: string;
@@ -142,9 +143,17 @@ export function PhonePlansCatalog({ plans }: { plans: PhonePlan[] }) {
       <div ref={listRef} className="scroll-mt-24">
         {active && (
           <section aria-label={active.title} className="space-y-4">
-            <h2 className="text-lg font-bold text-gray-800">
-              {active.title} · <span className="text-sky-700">{numberUnderTitle(active)}</span>
-            </h2>
+            <div>
+              <h2 className="text-lg font-bold text-gray-800">
+                {active.title} · <span className="text-sky-700">{numberUnderTitle(active)}</span>
+              </h2>
+              {/* Every country any plan of this kind works in; each card also has its own list. */}
+              {new Set(active.plans.flatMap((p) => p.coverage)).size > 1 && (
+                <p className="mt-1 text-sm">
+                  <PhoneCountriesDialog codes={[...new Set(active.plans.flatMap((p) => p.coverage))]} />
+                </p>
+              )}
+            </div>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {active.plans.map((plan) => (
                 <PhonePlanCard key={plan.id} plan={plan} destinationName={active.title} destinationSlug="phone-plans" />

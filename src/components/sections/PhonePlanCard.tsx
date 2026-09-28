@@ -16,6 +16,7 @@ import { formatPrice } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { useAddPlanToCart } from '@/hooks/useAddPlanToCart';
+import { PhoneCountriesDialog } from '@/components/sections/PhoneCountriesDialog';
 
 interface Props {
   plan: PhonePlan;
@@ -136,7 +137,11 @@ export function PhonePlanCard({ plan, destinationName, destinationSlug }: Props)
               <span className="inline-flex shrink-0 items-center justify-center rounded-lg bg-emerald-100 p-1.5 text-emerald-600" aria-hidden>
                 <Globe2 className="h-3.5 w-3.5" />
               </span>
-              {t('worksIn', { count: plan.coverageCount })}
+              <span>
+                {t('worksIn', { count: plan.coverageCount })}
+                {' · '}
+                <PhoneCountriesDialog codes={plan.coverage} />
+              </span>
             </li>
           )}
         </ul>

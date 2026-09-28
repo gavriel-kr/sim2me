@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { createSharedPathnamesNavigation } from 'next-intl/navigation';
 import { routing } from '@/i18n/routing';
+import { EsimQrCode } from '@/components/esim/EsimQrCode';
 
 const { Link: IntlLink } = createSharedPathnamesNavigation(routing);
 
@@ -71,9 +72,11 @@ export function MyEsimsClient({ orders }: Props) {
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
                   <div className="flex flex-col">
                     <p className="text-sm font-medium">{t('qrCode')}</p>
-                    {order.qrCodeUrl ? (
-                      <img
-                        src={order.qrCodeUrl}
+                    {order.qrCodeUrl || (order.smdpAddress && order.activationCode) ? (
+                      <EsimQrCode
+                        qrCodeUrl={order.qrCodeUrl}
+                        smdpAddress={order.smdpAddress}
+                        activationCode={order.activationCode}
                         alt="eSIM QR Code"
                         className="mt-2 h-40 w-40 rounded-lg border"
                       />

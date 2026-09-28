@@ -3,11 +3,12 @@
  *
  * The purchase email of a phone plan promises a second email once the number exists, which is only
  * after the traveller installs the eSIM. Until this ran, that email went out only when the customer
- * opened their account page or the admin pressed the status button. Every 15 minutes this asks
+ * opened their account page or the admin pressed the status button. Every minute this asks
  * PikaSim about each phone order whose number has not been announced yet, and announces the ones
  * that now have a real number — through the same `announcePhoneNumberOnce`, so it is still sent once.
  *
- * Recent orders are checked on every run, older ones once an hour (`isDueForNumberCheck`).
+ * Orders from the last 48 hours are checked on every run, older ones every 15 minutes and then hourly
+ * (`isDueForNumberCheck`), and every call goes through the PikaSim limiter.
  *
  * Auth: Bearer CRON_SECRET, like the other crons. Fail-closed.
  */

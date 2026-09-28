@@ -14,6 +14,8 @@ import { CharacterFigure } from '@/components/brand/CharacterFigure';
 import { brandConfig } from '@/config/brand';
 import { RenewNumberPanel } from '@/components/account/RenewNumberPanel';
 import { useEsimUsage } from '@/components/account/useEsimUsage';
+import { EsimQrCode } from '@/components/esim/EsimQrCode';
+import { PhoneNumberHowTo } from '@/components/account/PhoneNumberHowTo';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   User, ShoppingBag, Wifi, Settings, LogOut, Phone, Mail,
@@ -172,6 +174,7 @@ function UsageBar({ orderId, iccid, onStatusChange, canRenew }: { orderId: strin
         <>
           <p className="text-sm font-semibold text-sky-800">{tPhone('numberPending')}</p>
           <p className="text-xs text-muted-foreground">{tPhone('numberPendingHint')}</p>
+          <PhoneNumberHowTo className="mt-1.5" />
         </>
       )}
       {/* Ticket 042: renewing keeps the number — offered on the original sale, not on renewal records. */}
@@ -768,11 +771,13 @@ export function AccountClient() {
                               {/* Ticket 042: a renewal adds time to an eSIM already installed — nothing to install again. */}
                               {isCompleted && !order.packageCode?.startsWith('rn:') && (
                                 <div className="flex flex-col sm:flex-row gap-4">
-                                  {order.qrCodeUrl ? (
+                                  {order.qrCodeUrl || (order.smdpAddress && order.activationCode) ? (
                                     <div className="flex-shrink-0">
                                       <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">QR Code</p>
-                                      <img
-                                        src={order.qrCodeUrl}
+                                      <EsimQrCode
+                                        qrCodeUrl={order.qrCodeUrl}
+                                        smdpAddress={order.smdpAddress}
+                                        activationCode={order.activationCode}
                                         alt="eSIM QR"
                                         className="h-40 w-40 rounded-xl border object-contain bg-white"
                                       />
@@ -943,24 +948,21 @@ export function AccountClient() {
 
                           {/* QR + credentials */}
                           <div className="flex flex-col sm:flex-row gap-4">
-                            {order.qrCodeUrl ? (
+                            {order.qrCodeUrl || (order.smdpAddress && order.activationCode) ? (
                               <div className="flex-shrink-0">
                                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5">QR Code</p>
-                                <img
-                                  src={order.qrCodeUrl}
+                                <EsimQrCode
+                                  qrCodeUrl={order.qrCodeUrl}
+                                  smdpAddress={order.smdpAddress}
+                                  activationCode={order.activationCode}
                                   alt="eSIM QR Code"
                                   className="h-40 w-40 rounded-xl border object-contain bg-white"
+                                  download={{
+                                    label: 'Download QR',
+                                    icon: <Download className="w-3.5 h-3.5" />,
+                                    className: 'mt-2 flex items-center gap-1 text-xs text-primary hover:underline',
+                                  }}
                                 />
-                                <a
-                                  href={order.qrCodeUrl}
-                                  download="esim-qr.png"
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="mt-2 flex items-center gap-1 text-xs text-primary hover:underline"
-                                >
-                                  <Download className="w-3.5 h-3.5" />
-                                  Download QR
-                                </a>
                               </div>
                             ) : (
                               <div className="h-40 w-40 rounded-xl border border-dashed flex items-center justify-center bg-muted flex-shrink-0">

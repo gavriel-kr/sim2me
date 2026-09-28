@@ -313,7 +313,7 @@
     "phoneWhatIs": "What is an eSIM with a phone number?",
     "answerPhoneWhatIs": "One eSIM that gives you data, a phone number, call minutes and SMS. You can receive calls and verification codes on it, from your bank or from apps, for example. Your own number stays on your phone as a second line.",
     "phoneWhenNumber": "When do I get my phone number?",
-    "answerPhoneWhenNumber": "The number is assigned once you install the eSIM on your phone. We email you as soon as it is ready, and it also shows in your account. The plan's validity starts when you install it, so install close to your trip.",
+    "answerPhoneWhenNumber": "The number is assigned once you install the eSIM on your phone. We email you as soon as it is ready, and it also shows in your account. You can also see it on the phone: on iPhone, Settings → Cellular → the eSIM line → My Number; on Android, Settings → About phone → SIM status → Phone number. The plan's validity starts when you install it, so install close to your trip.",
     "unlimitedHowWorks": "How does an unlimited plan work?",
     "answerUnlimitedHowWorks": "Pick how many days your trip lasts, from 1 to 30. Each day you get 2GB at full speed, then unlimited data at a reduced speed until the end of the day. Full speed comes back the next day.",
     "doYouHaveApp": "Do you have an app?",
@@ -716,6 +716,12 @@
     "toastAdded": "Added to cart"
   },
   "phonePlans": {
+    "howToSeeTitle": "How do I see the number on my phone?",
+    "howToSeeIphone": "iPhone: Settings → Cellular (or Mobile Service) → tap the eSIM line → My Number.",
+    "howToSeeAndroid": "Android: Settings → About phone → SIM status (or Status) → Phone number. The exact path varies by manufacturer.",
+    "howToSeeNote": "If it does not show there, it is always in your account and in the email we sent you.",
+    "whichCountries": "Which countries?",
+    "countriesTitle": "Works in {count} countries",
     "numberLocalShort": "Local number {dial}",
     "tilesTitle": "Which number do you need?",
     "tilesHint": "Choose one to see its plans.",

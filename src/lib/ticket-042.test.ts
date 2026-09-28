@@ -5,9 +5,10 @@
 import assert from 'node:assert';
 import { dayPassId, parseProductId, pikaId, renewalId, isValidProductRef, supplierOf } from './product-id';
 import { fupKbps, pickDayPass, unlimitedPriceUsd, unlimitedPriceTable, unlimitedCostUsd } from './unlimited';
-import { buildPhonePlan, phonePlansForDestination, phonePriceUsd, regionOf } from './phone-plans';
+import { buildPhonePlan, phonePlansForDestination, phonePriceUsd, regionOf, toPublicPhonePlan } from './phone-plans';
 import { BADGE_TEXT_MAX, cleanBadgeText } from './homepage-sections-shared';
-import type { EsimPackage } from './esimaccess';
+import { isRetryableProfileError, type EsimPackage } from './esimaccess';
+import { lpaString } from '../components/esim/EsimQrCode';
 import { getPhoneCatalog, getPikaAccount, LOCAL_THROTTLE, waitForPikaEsim, type PikaPackage } from './pikasim';
 import { parseResetMs, parseRetryAfterMs, resetLimiterForTests } from './pikasim-limiter';
 import { isDueForNumberCheck, numberNotifiedKey } from './phone-number';
@@ -125,17 +126,35 @@ assert.deepStrictEqual(cleanBadgeText({ he: '  חדש!  ', en: '', ar: '   ', fr
 assert.deepStrictEqual(cleanBadgeText(null), {});
 assert.strictEqual(cleanBadgeText({ en: 'a'.repeat(200) }).en?.length, BADGE_TEXT_MAX);
 
+// ─── Round 2 (2026-09-28): QR string, country list, eSIMaccess "busy" ─
+assert.strictEqual(lpaString('rsp.example.com', 'ABC-123'), 'LPA:1$rsp.example.com$ABC-123');
+assert.strictEqual(lpaString('rsp.example.com', 'LPA:1$rsp.example.com$ABC-123'), 'LPA:1$rsp.example.com$ABC-123');
+assert.strictEqual(lpaString(null, 'ABC-123'), null);
+assert.strictEqual(lpaString('rsp.example.com', ''), null);
+assert.strictEqual(isRetryableProfileError('eSIMaccess API error: The system is busy, please try again later, [1]'), true);
+assert.strictEqual(isRetryableProfileError('eSIMaccess API error: getting resource'), true);
+assert.strictEqual(isRetryableProfileError('eSIMaccess API error: insufficient balance'), false);
+{
+  const pub = toPublicPhonePlan(eu20);
+  assert.ok(pub.coverage.length > 1 && pub.coverage.length === pub.coverageCount); // the pop-up lists what the card counts
+}
+
 // ─── "number ready" scheduled check: who is asked about, and when ─
 {
   const at = (iso: string) => new Date(iso);
-  const run = at('2026-10-01T10:30:00Z'); // minute 30: not the hourly run
-  const hourly = at('2026-10-01T11:05:00Z'); // minute 5: the hourly run
-  assert.strictEqual(isDueForNumberCheck(at('2026-09-29T10:00:00Z'), run), true); // 2 days old: every run
-  assert.strictEqual(isDueForNumberCheck(at('2026-09-17T11:00:00Z'), run), true); // exactly 14 days: every run
-  assert.strictEqual(isDueForNumberCheck(at('2026-09-01T10:00:00Z'), run), false); // a month old: not this run…
-  assert.strictEqual(isDueForNumberCheck(at('2026-09-01T10:00:00Z'), hourly), true); // …but on the hourly one
-  assert.strictEqual(isDueForNumberCheck(at('2026-03-01T10:00:00Z'), hourly), false); // over 180 days: never
-  assert.strictEqual(isDueForNumberCheck(at('2026-10-02T10:00:00Z'), run), false); // clock skew: not in the future
+  // The cron runs every minute (2026-09-28): minute 07 is an ordinary run, :15 a quarter-hour one, :00 the hourly one.
+  const minute07 = at('2026-10-01T10:07:00Z');
+  const minute15 = at('2026-10-01T10:15:00Z');
+  const minute00 = at('2026-10-01T11:00:00Z');
+  assert.strictEqual(isDueForNumberCheck(at('2026-10-01T10:05:00Z'), minute07), true); // 2 minutes old: every run
+  assert.strictEqual(isDueForNumberCheck(at('2026-09-29T10:07:00Z'), minute07), true); // exactly 48 hours: every run
+  assert.strictEqual(isDueForNumberCheck(at('2026-09-29T10:00:00Z'), minute07), false); // just over 48 h: not at :07…
+  assert.strictEqual(isDueForNumberCheck(at('2026-09-29T10:00:00Z'), minute15), true); // …but at :15
+  assert.strictEqual(isDueForNumberCheck(at('2026-09-17T11:00:00Z'), minute15), true); // 14 days: still quarter-hourly
+  assert.strictEqual(isDueForNumberCheck(at('2026-09-01T10:00:00Z'), minute15), false); // a month old: not at :15…
+  assert.strictEqual(isDueForNumberCheck(at('2026-09-01T10:00:00Z'), minute00), true); // …only on the hour
+  assert.strictEqual(isDueForNumberCheck(at('2026-03-01T10:00:00Z'), minute00), false); // over 180 days: never
+  assert.strictEqual(isDueForNumberCheck(at('2026-10-02T10:00:00Z'), minute07), false); // clock skew: not in the future
   assert.strictEqual(numberNotifiedKey({ id: 'o1', iccid: '8901' }), 'phone_number_notified:8901');
   assert.strictEqual(numberNotifiedKey({ id: 'o1', iccid: null }), 'phone_number_notified:o1');
 }

@@ -193,6 +193,22 @@ export async function getEsimProfile(orderNo: string): Promise<{ esimList: EsimP
 }
 
 /**
+ * Errors worth another try: the profile is still being provisioned, or eSIMaccess is momentarily
+ * overloaded ("The system is busy, please try again later", code 101013 — seen on 2026-09-28, when a
+ * page loop was flooding their API; a new order must not be left without its QR because of it).
+ */
+export function isRetryableProfileError(message: string): boolean {
+  const msg = message.toLowerCase();
+  return (
+    msg.includes('getting resource') ||
+    msg.includes('not yet') ||
+    msg.includes('pending') ||
+    msg.includes('busy') ||
+    msg.includes('try again later')
+  );
+}
+
+/**
  * Get eSIM profile with automatic retries.
  * eSIMaccess sometimes returns "getting resource" immediately after purchase
  * while the profile is still being provisioned — retrying solves it.
@@ -211,9 +227,8 @@ export async function getEsimProfileWithRetry(
       lastError = new Error('eSIM profile not yet available');
     } catch (e) {
       lastError = e instanceof Error ? e : new Error(String(e));
-      const msg = lastError.message.toLowerCase();
-      // Only retry on "getting resource" / provisioning errors
-      if (!msg.includes('getting resource') && !msg.includes('not yet') && !msg.includes('pending')) {
+      // Only retry on provisioning or "system busy" errors
+      if (!isRetryableProfileError(lastError.message)) {
         throw lastError;
       }
     }
@@ -229,7 +244,9 @@ export async function getEsimUsage(iccid: string): Promise<EsimProfile | null> {
   try {
     const result = await apiCall<{ esimList: EsimProfile[] }>('/open/esim/query', {
       iccid,
-      pager: { pageNum: 1, pageSize: 1 },
+      // eSIMaccess rejects a page size under 5 ("pager.pageSize: must be between 5 and 500"), which
+      // silently broke this ICCID fallback; one ICCID still returns a single row.
+      pager: { pageNum: 1, pageSize: 5 },
     });
     const profile = result?.esimList?.[0] ?? null;
     return profile ? parseAc(profile) : null;

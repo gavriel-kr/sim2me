@@ -8,6 +8,8 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { routing } from '@/i18n/routing';
 import { trackPurchase } from '@/lib/analytics';
 import { CharacterFigure } from '@/components/brand/CharacterFigure';
+import { EsimQrCode } from '@/components/esim/EsimQrCode';
+import { PhoneNumberHowTo } from '@/components/account/PhoneNumberHowTo';
 
 const { Link: IntlLink } = createSharedPathnamesNavigation(routing);
 
@@ -222,6 +224,7 @@ export function SuccessClient({ transactionId }: { transactionId: string | null 
               <div className="mb-4 rounded-lg border border-sky-200 bg-sky-50/70 px-4 py-3 text-center">
                 <p className="text-sm font-semibold text-sky-800">{tPhone('numberPending')}</p>
                 <p className="mt-0.5 text-xs text-muted-foreground">{tPhone('numberPendingHint')}</p>
+                <PhoneNumberHowTo className="mt-1.5 text-start" />
               </div>
             )}
             {showSecrets ? (
@@ -237,16 +240,16 @@ export function SuccessClient({ transactionId }: { transactionId: string | null 
                   </p>
                   <p className="mt-1 text-xs text-amber-800">{t('countdownHint')}</p>
                 </div>
-                {order.qrCodeUrl ? (
+                {order.qrCodeUrl || (order.smdpAddress && order.activationCode) ? (
                   <>
                     <p className="text-sm font-medium">{t('scanQR')}</p>
                     <div className="rounded-xl border-2 border-primary/20 bg-white p-4 shadow-sm">
-                      <img
-                        src={order.qrCodeUrl}
+                      <EsimQrCode
+                        qrCodeUrl={order.qrCodeUrl}
+                        smdpAddress={order.smdpAddress}
+                        activationCode={order.activationCode}
                         alt="eSIM QR Code"
-                        width={220}
-                        height={220}
-                        className="rounded-lg"
+                        className="h-[220px] w-[220px] rounded-lg"
                       />
                     </div>
                   </>
