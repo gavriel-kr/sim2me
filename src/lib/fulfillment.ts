@@ -201,7 +201,8 @@ export async function awaitProfile(planId: string, supplierOrderNo: string, pati
       : null;
   }
   if (ref.kind === 'pika') {
-    const esim = await waitForPikaEsim(supplierOrderNo, patient ? 6 : 3, patient ? 4000 : 3000);
+    // Backoff 2 s, 4 s, 8 s, 8 s (about 22 s) in the webhook; 2 s, 4 s on a retry. Stops at once on a rate limit.
+    const esim = await waitForPikaEsim(supplierOrderNo, patient ? 5 : 3, 2000);
     return esim ? pikaProfile(esim) : null;
   }
   const profileResult = await getEsimProfileWithRetry(supplierOrderNo, 5, 5000);

@@ -1,3 +1,34 @@
+# Hotfix — the account-page loop (PikaSim suspension), prepared 2026-09-28
+
+Gabriel asked for this fix to go up at once ("קודם תתקן את הלולאה ... אחכ תמשיך"), and approved deploying
+after the fixes. `DEPLOY-PROTOCOL.md` governs.
+
+| | |
+|---|---|
+| HEAD before | `ef01a19` (live) |
+| Backup tag | `pre-deploy-20260928-2157` on `ef01a19` |
+| Risk | **R2**: touches the supplier client used by fulfilment (`pikasim.ts`, `fulfillment.ts`) and the customer account API. No schema change, no new environment variable |
+| Going up | `useEsimUsage.ts` and `pikasim-limiter.ts` (new), `pikasim.ts`, `fulfillment.ts`, `account/esims/usage/route.ts`, `cron/phone-number-ready/route.ts`, `AccountClient.tsx`, `SuccessClient.tsx`, `ticket-042.test.ts`, docs |
+
+What and why: see the top entry of `CHANGELOG.md`.
+
+Gates:
+- ✅ `npx tsc --noEmit` → 0; `npm run lint` → 0 (warnings pre-existing); all six test suites pass,
+  including new limiter tests (429 + Retry-After, suspended key, X-RateLimit-Remaining 0, 20/instance,
+  no retry into a rate limit, capped backoff) — run with the database unset, nothing written
+- ✅ Chrome harness with the account page's exact pattern: old loader 900 requests in 3 s, new one 3
+- ✅ `npx next build` from a deleted `.next` → 0
+- ✅ `next start` smoke: `/en`, `/he`, `/ar`, `/hi`, phone page, destinations, checkout, refund, admin
+  login, health (`ok: true`), hot deals → 200; account → login redirect; usage API → 401 without a session
+- ✅ Limiter observed live against the suspended key: one request, 403, shared 10-minute pause, no
+  further PikaSim request from any page
+- ✅ Success page: the 5-minute install-details window is a client countdown on `credsExpiresAt`,
+  independent of the polling that now stops
+
+Post-deploy: pages 200, health ok, then reply to PikaSim with what changed.
+
+Rollback: `git push origin pre-deploy-20260928-2157:main` (with Gabriel's approval).
+
 # Pending release — Ticket 042 (unlimited by days, eSIMs with a phone number), prepared 2026-09-28
 
 Everything below is **local and unpushed** until Gabriel approves the push. `DEPLOY-PROTOCOL.md`

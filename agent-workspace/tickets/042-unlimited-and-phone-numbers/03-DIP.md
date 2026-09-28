@@ -126,3 +126,21 @@ Checkpoints of this phase: `checkpoint-deploy-prep/` (catalogue fix) and `checkp
 - ✅ "For you" stays hidden on the live homepage (Gabriel)
 - ✅ Refund texts written to the CMS (he/en/ar) and the Terms' section 9 summary aligned, both approved by Gabriel and live; `policies.ts`, the legal-pages script and the refund page's description say the same; checkpoint `checkpoint-refund-seo/`
 - ✅ Approved for push (Gabriel, 2026-09-28); backup tag `pre-deploy-20260928-1907`
+
+## Phase 11 — The account-page loop that got PikaSim to suspend us (2026-09-28)
+
+Checkpoint: `checkpoint-loop-fix/`. Found while investigating PikaSim's suspension (their support:
+~1,227 requests in ~4 minutes, limit 60/min, retries into 429s).
+
+- ✅ Cause: `UsageBar`'s effect depended on an inline `onStatusChange`; every answer re-rendered the
+  parent and restarted the effect — ~5 requests/s per eSIM, each forwarded to the supplier. In the code
+  since 17 May (`e2ec1c5`), so also every customer's account page against eSIMaccess
+- ✅ `useEsimUsage`: one load per eSIM; callback through a ref. Chrome harness: 900 → 3 requests in 3 s
+- ✅ Usage route: per-customer answer cache (60 s) + per-eSIM supplier cap (4/min, shared)
+- ✅ `pikasim-limiter.ts`: 40/min site-wide (atomic upsert), 20/min per instance, shared pause on 429 /
+  Retry-After, X-RateLimit-Remaining ≤ 1, and a suspended key; verified live — one 403, then a 10-minute pause
+- ✅ `waitForPikaEsim`: exponential backoff 2→8 s, 5 attempts in the webhook, stops on 429/401/403
+- ✅ Number cron: at most 10 PikaSim lookups per run
+- ✅ Success page: polling stops once the order is settled
+- ⬜ Round 2 (next): QR generated from the activation code, number check every minute for 48 h + how to
+  see the number, country list pop-up on phone cards, retry when eSIMaccess answers "busy"

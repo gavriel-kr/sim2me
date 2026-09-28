@@ -26,8 +26,9 @@ import {
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
-/** PikaSim calls per run at most, a few at a time, and stop well inside the 60 s limit. */
-const MAX_PER_RUN = 60;
+/** PikaSim calls per run at most, a few at a time, and stop well inside the 60 s limit. PikaSim allows
+    60 requests a minute for the whole site (see pikasim-limiter.ts), so one run takes a small share. */
+const MAX_PER_RUN = 10;
 const CONCURRENCY = 5;
 const TIME_BUDGET_MS = 45_000;
 

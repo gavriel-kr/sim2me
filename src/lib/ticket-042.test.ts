@@ -8,7 +8,8 @@ import { fupKbps, pickDayPass, unlimitedPriceUsd, unlimitedPriceTable, unlimited
 import { buildPhonePlan, phonePlansForDestination, phonePriceUsd, regionOf } from './phone-plans';
 import { BADGE_TEXT_MAX, cleanBadgeText } from './homepage-sections-shared';
 import type { EsimPackage } from './esimaccess';
-import { getPhoneCatalog, type PikaPackage } from './pikasim';
+import { getPhoneCatalog, getPikaAccount, LOCAL_THROTTLE, waitForPikaEsim, type PikaPackage } from './pikasim';
+import { parseResetMs, parseRetryAfterMs, resetLimiterForTests } from './pikasim-limiter';
 import { isDueForNumberCheck, numberNotifiedKey } from './phone-number';
 
 // ─── product ids ────────────────────────────────────────────
@@ -141,6 +142,9 @@ assert.strictEqual(cleanBadgeText({ en: 'a'.repeat(200) }).en?.length, BADGE_TEX
 
 // ─── PikaSim outage: pages stop waiting, checkout still tries ─
 (async () => {
+  // Prisma may have loaded DATABASE_URL from .env on import. Without it the PikaSim limiter keeps its
+  // counters in memory only, so nothing below can write to a real database.
+  delete process.env.DATABASE_URL;
   process.env.PIKASIM_API_KEY = 'test-key';
   let calls = 0;
   const realFetch = globalThis.fetch;
@@ -157,6 +161,75 @@ assert.strictEqual(cleanBadgeText({ en: 'a'.repeat(200) }).en?.length, BADGE_TEX
     assert.strictEqual(calls, 2);
   } finally {
     globalThis.fetch = realFetch;
+  }
+
+  // ─── PikaSim limiter: what PikaSim asked for after the suspension (2026-09-28) ─
+  const now = 1_800_000_000_000;
+  assert.strictEqual(parseResetMs('1800000060', now), 1_800_000_060_000); // Unix seconds
+  assert.strictEqual(parseResetMs('1800000060000', now), 1_800_000_060_000); // Unix milliseconds
+  assert.strictEqual(parseResetMs('30', now), now + 30_000); // seconds from now
+  assert.strictEqual(parseResetMs(null, now), null);
+  assert.strictEqual(parseResetMs('soon', now), null);
+  assert.strictEqual(parseRetryAfterMs('120', now), now + 120_000);
+  assert.strictEqual(parseRetryAfterMs('Wed, 21 Oct 2026 07:28:00 GMT', now), Date.parse('Wed, 21 Oct 2026 07:28:00 GMT'));
+
+  let hits = 0;
+  const answerWith = (status: number, body: unknown, headers: Record<string, string> = {}) => {
+    globalThis.fetch = (async () => {
+      hits++;
+      return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json', ...headers } });
+    }) as typeof fetch;
+  };
+  const heldBack = (e: unknown) => (e as { code?: string }).code === LOCAL_THROTTLE;
+  try {
+    // A 429 stops every request until Retry-After; the next one never leaves the server.
+    resetLimiterForTests();
+    hits = 0;
+    answerWith(429, { success: false, error: 'Too many requests' }, { 'Retry-After': '30' });
+    await assert.rejects(getPikaAccount(), (e: unknown) => (e as { status?: number }).status === 429);
+    await assert.rejects(getPikaAccount(), heldBack);
+    assert.strictEqual(hits, 1);
+
+    // A suspended key: stop asking.
+    resetLimiterForTests();
+    hits = 0;
+    answerWith(403, { success: false, error: 'Account suspended. Contact support for assistance.' });
+    await assert.rejects(getPikaAccount(), (e: unknown) => (e as { status?: number }).status === 403);
+    await assert.rejects(getPikaAccount(), heldBack);
+    assert.strictEqual(hits, 1);
+
+    // X-RateLimit-Remaining at zero: wait for X-RateLimit-Reset.
+    resetLimiterForTests();
+    hits = 0;
+    answerWith(200, { success: true, data: { balance: 100 } }, { 'X-RateLimit-Remaining': '0', 'X-RateLimit-Reset': '60' });
+    await getPikaAccount();
+    await assert.rejects(getPikaAccount(), heldBack);
+    assert.strictEqual(hits, 1);
+
+    // One instance on its own sends at most 20 a minute, whatever asks.
+    resetLimiterForTests();
+    hits = 0;
+    answerWith(200, { success: true, data: { balance: 100 } }, { 'X-RateLimit-Remaining': '50' });
+    for (let i = 0; i < 20; i++) await getPikaAccount();
+    await assert.rejects(getPikaAccount(), heldBack);
+    assert.strictEqual(hits, 20);
+
+    // Waiting for a new eSIM gives up at a rate limit instead of retrying into it.
+    resetLimiterForTests();
+    hits = 0;
+    answerWith(429, { success: false, error: 'Too many requests' });
+    assert.strictEqual(await waitForPikaEsim('order-1', 5, 1), null);
+    assert.strictEqual(hits, 1);
+
+    // …and backs off on ordinary failures, up to its cap.
+    resetLimiterForTests();
+    hits = 0;
+    answerWith(500, { success: false, error: 'upstream' });
+    assert.strictEqual(await waitForPikaEsim('order-1', 3, 1), null);
+    assert.strictEqual(hits, 3);
+  } finally {
+    globalThis.fetch = realFetch;
+    resetLimiterForTests();
   }
   console.log('ticket-042 tests passed');
 })().catch((e) => {

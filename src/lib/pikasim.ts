@@ -11,6 +11,8 @@
  * already takes with `getEsimProfileWithRetry`.
  */
 
+import { noteResponse, takeSlot } from '@/lib/pikasim-limiter';
+
 const BASE_URL = 'https://pikasim.com/api/v1/reseller';
 
 /** One catalogue fetch per hour per server instance. The list changes rarely and is small. */
@@ -31,9 +33,21 @@ export function isPikaSimConfigured(): boolean {
   return Boolean(process.env.PIKASIM_API_KEY?.trim());
 }
 
+/** A request our own limiter held back: it never reached PikaSim. Treated like PikaSim's 429. */
+export const LOCAL_THROTTLE = 'LOCAL_THROTTLE';
+
+/** Rate-limited, held back, or the key itself refused: retrying straight away only makes it worse. */
+export function isStopError(e: unknown): boolean {
+  return e instanceof PikaSimError && (e.status === 429 || e.status === 401 || e.status === 403);
+}
+
 async function call<T>(method: 'GET' | 'POST', endpoint: string, body?: unknown, timeoutMs = 15000): Promise<T> {
   const key = process.env.PIKASIM_API_KEY?.trim();
   if (!key) throw new PikaSimError('PIKASIM_API_KEY is not set', 500);
+
+  // Every PikaSim request goes through the shared limiter (see pikasim-limiter.ts).
+  const heldBack = await takeSlot();
+  if (heldBack) throw new PikaSimError(`PikaSim request held back: ${heldBack}`, 429, LOCAL_THROTTLE);
 
   const res = await fetch(`${BASE_URL}${endpoint}`, {
     method,
@@ -45,6 +59,7 @@ async function call<T>(method: 'GET' | 'POST', endpoint: string, body?: unknown,
   const json = (await res.json().catch(() => null)) as
     | { success: boolean; data?: T; error?: string; code?: string }
     | null;
+  await noteResponse(res.status, res.headers, json?.error ?? '');
   if (!res.ok || !json?.success) {
     throw new PikaSimError(`PikaSim API error: ${json?.error || res.statusText}`, res.status, json?.code);
   }
@@ -249,17 +264,27 @@ export function esimOfOrder(order: PikaOrder): PikaEsimSummary | null {
 }
 
 /** Poll an order until PikaSim has attached the eSIM, or give up and let the caller keep it PROCESSING. */
-export async function waitForPikaEsim(orderId: string, attempts = 6, delayMs = 4000): Promise<PikaEsimSummary | null> {
+/**
+ * Poll a new order until its eSIM is ready. Exponential backoff (first delay doubling, capped at 8 s)
+ * and a hard cap on attempts; a rate limit, a held-back request or a refused key ends it at once —
+ * the order is saved, and a later Retry picks the eSIM up without buying another.
+ */
+export async function waitForPikaEsim(orderId: string, attempts = 5, firstDelayMs = 2000): Promise<PikaEsimSummary | null> {
+  let delay = firstDelayMs;
   for (let i = 0; i < attempts; i++) {
     try {
       const order = await getPikaOrder(orderId);
       const esim = esimOfOrder(order);
       if (esim) return esim;
       if (order.status === 'failed') return null;
-    } catch {
-      /* transient — try again */
+    } catch (e) {
+      if (isStopError(e)) return null;
+      /* anything else is transient — try again after the delay */
     }
-    if (i < attempts - 1) await new Promise((r) => setTimeout(r, delayMs));
+    if (i < attempts - 1) {
+      await new Promise((r) => setTimeout(r, delay));
+      delay = Math.min(delay * 2, 8000);
+    }
   }
   return null;
 }

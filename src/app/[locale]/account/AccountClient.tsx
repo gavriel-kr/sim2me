@@ -13,6 +13,7 @@ import { PhoneInput } from '@/components/PhoneInput';
 import { CharacterFigure } from '@/components/brand/CharacterFigure';
 import { brandConfig } from '@/config/brand';
 import { RenewNumberPanel } from '@/components/account/RenewNumberPanel';
+import { useEsimUsage } from '@/components/account/useEsimUsage';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   User, ShoppingBag, Wifi, Settings, LogOut, Phone, Mail,
@@ -144,28 +145,21 @@ function resolveStatus(esimStatus: string | null | undefined, smdpStatus: string
 }
 
 function UsageBar({ orderId, iccid, onStatusChange, canRenew }: { orderId: string; iccid: string; onStatusChange?: (key: string | null) => void; canRenew?: boolean }) {
-  const [usage, setUsage] = useState<UsageData | null | 'loading' | 'unavailable'>('loading');
+  // Loaded once per eSIM. The parent passes `onStatusChange` inline and re-renders on every status,
+  // so it must not be what restarts the load — that loop is what got PikaSim to suspend us (see the hook).
+  const loaded = useEsimUsage(orderId, iccid, (data) =>
+    onStatusChange?.(data?.usage ? resolveStatus(data.usage.esimStatus, data.usage.smdpStatus) : null),
+  );
   const [now, setNow] = useState(0);
+  useEffect(() => setNow(Date.now()), [orderId, iccid]);
   // Ticket 042: a phone plan's number, read live from PikaSim by the usage endpoint.
   const tPhone = useTranslations('phonePlans');
-  const [phone, setPhone] = useState<{ plan: boolean; number: string | null; renewable: boolean }>({ plan: false, number: null, renewable: false });
-
-  useEffect(() => {
-    setNow(Date.now());
-    fetch(`/api/account/esims/usage?iccid=${encodeURIComponent(iccid)}&orderId=${encodeURIComponent(orderId)}`)
-      .then((r) => r.ok ? r.json() : null)
-      .then((data) => {
-        if (data?.phonePlan) setPhone({ plan: true, number: data.phoneNumber ?? null, renewable: Boolean(data.renewable) });
-        if (data?.usage) {
-          setUsage(data.usage);
-          onStatusChange?.(resolveStatus(data.usage.esimStatus, data.usage.smdpStatus));
-        } else {
-          setUsage('unavailable');
-          onStatusChange?.(null);
-        }
-      })
-      .catch(() => { setUsage('unavailable'); onStatusChange?.(null); });
-  }, [iccid, orderId, onStatusChange]);
+  const data = loaded.status === 'done' ? loaded.data : null;
+  const usage: UsageData | 'loading' | 'unavailable' =
+    loaded.status === 'loading' ? 'loading' : data?.usage ? data.usage : 'unavailable';
+  const phone = data?.phonePlan
+    ? { plan: true, number: data.phoneNumber ?? null, renewable: Boolean(data.renewable) }
+    : { plan: false, number: null, renewable: false };
 
   const phoneBox = phone.plan ? (
     <div className="rounded-lg border border-sky-200 bg-sky-50/70 px-3 py-2">
@@ -256,8 +250,9 @@ export function AccountClient() {
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [shownDetails, setShownDetails] = useState<Set<string>>(new Set());
   const [esimStatuses, setEsimStatuses] = useState<Record<string, string | null>>({});
+  // Same value, same object: no re-render for a status that did not change.
   const handleStatusChange = (orderId: string, key: string | null) =>
-    setEsimStatuses((prev) => ({ ...prev, [orderId]: key }));
+    setEsimStatuses((prev) => (prev[orderId] === key ? prev : { ...prev, [orderId]: key }));
   const toggleDetails = (id: string) => setShownDetails((prev) => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
   const [retrying, setRetrying] = useState<string | null>(null);
   const [retryMsg, setRetryMsg] = useState<{ id: string; ok: boolean; text: string } | null>(null);

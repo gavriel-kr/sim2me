@@ -2,6 +2,26 @@
 
 ## [Unreleased]
 
+### Fixed (the account page asked the suppliers for eSIM status in an endless loop)
+
+Since 17 May 2026 (`e2ec1c5`) every eSIM on a customer's account page re-requested its status about
+five times a second for as long as the page was open: the status callback was an effect dependency,
+and the parent passed it inline and re-rendered on every answer. Each request went to the supplier.
+On 28 Sep it sent PikaSim about 1,200 requests in four minutes and PikaSim suspended the reseller
+account; eSIMaccess was answering "system busy" the same evening.
+
+- The status is loaded once per eSIM (`src/components/account/useEsimUsage.ts`), whatever the page
+  re-renders. Checked in Chrome with the page's exact pattern: 900 requests in 3 s before, 3 after.
+- `/api/account/esims/usage` answers the same customer about the same eSIM from memory for a minute,
+  and looks one eSIM up at the supplier at most 4 times a minute across all instances, so a browser
+  still running the old page cannot reach the suppliers.
+- Every PikaSim request goes through `src/lib/pikasim-limiter.ts`: at most 40 a minute for the whole
+  site (PikaSim allows 60), 20 per instance, and a shared pause on `429` (`Retry-After`), on
+  `X-RateLimit-Remaining` at zero (until `X-RateLimit-Reset`) and on a suspended key (10 minutes).
+  Waiting for a new eSIM backs off exponentially, is capped, and stops at a rate limit.
+- The success page stops polling once the order is settled; it used to poll every 2 s for as long as
+  the page stayed open.
+
 ### Added (ticket 042 — unlimited by days, and eSIMs with a phone number)
 
 **eSIMs with a phone number (PikaSim).** A second supplier sells eSIMs that come with a number for

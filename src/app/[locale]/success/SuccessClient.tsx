@@ -56,19 +56,26 @@ export function SuccessClient({ transactionId }: { transactionId: string | null 
   const tPhone = useTranslations('phonePlans');
   const [status, setStatus] = useState<Status>(transactionId ? 'loading' : 'not_found');
   const [order, setOrder] = useState<OrderData | null>(null);
-  const [, setAttempts] = useState(0);
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
     if (!transactionId) return;
 
+    /* Stops for good once the order is settled. The interval used to keep firing every two seconds
+       for as long as the page stayed open, long after the order was complete (found 2026-09-28). */
+    let done = false;
+    let tries = 0;
     const poll = async () => {
+      if (done) return;
+      tries++;
       try {
         const res = await fetch(`/api/orders/by-transaction/${encodeURIComponent(transactionId)}`);
         const data = await res.json();
+        if (done) return; // a request still in flight when an earlier one settled the order
         if (data.order) {
           setOrder(data.order);
           if (data.order.status === 'COMPLETED') {
+            stop();
             setStatus('completed');
             trackPurchase(
               transactionId,
@@ -83,25 +90,28 @@ export function SuccessClient({ transactionId }: { transactionId: string | null 
             return;
           }
           if (data.order.status === 'FAILED') {
+            stop();
             setStatus('failed');
             return;
           }
         }
-        setAttempts((a) => {
-          if (a >= MAX_POLL_ATTEMPTS) {
-            setStatus('not_found');
-            return a;
-          }
-          return a + 1;
-        });
       } catch {
-        setAttempts((a) => a + 1);
+        /* network hiccup: counts as an attempt like any other */
+      }
+      if (tries > MAX_POLL_ATTEMPTS) {
+        stop();
+        setStatus('not_found');
       }
     };
 
-    poll();
     const interval = setInterval(poll, POLL_INTERVAL_MS);
-    return () => clearInterval(interval);
+    // poll() only calls stop() after an await, by which time both exist.
+    const stop = () => {
+      done = true;
+      clearInterval(interval);
+    };
+    poll();
+    return stop;
   }, [transactionId]);
 
   const remainingMs = order?.credsExpiresAt
