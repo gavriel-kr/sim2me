@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { getSessionForRequest, isCustomerSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { getEsimProfile, getEsimUsage } from '@/lib/esimaccess';
+import { announcePhoneNumberOnce, isPhoneOrder, readPhoneOrder } from '@/lib/phone-number';
+import { getRenewalContext } from '@/lib/renewal';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,11 +31,40 @@ export async function GET(request: Request) {
       id: orderId,
       OR: [{ customerId: customer.id }, { customerEmail: customer.email }],
     },
-    select: { id: true, iccid: true, esimOrderId: true },
+    select: {
+      id: true, iccid: true, esimOrderId: true, packageCode: true,
+      orderNo: true, customerEmail: true, customerName: true, packageName: true, locale: true,
+    },
   });
 
   if (!order || order.iccid !== iccid) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
+  /* Ticket 042. A PikaSim phone plan: usage and the phone number come from PikaSim. The first time a
+     real number shows up, the customer also gets it by email. */
+  if (isPhoneOrder(order.packageCode)) {
+    const { esim, phoneNumber } = await readPhoneOrder(iccid);
+    if (phoneNumber) await announcePhoneNumberOnce(order, phoneNumber);
+    return NextResponse.json({
+      usage: esim
+        ? {
+            esimStatus: esim.status ?? null,
+            smdpStatus: esim.smdpStatus ?? null,
+            orderVolume: esim.totalData ?? null,
+            usedVolume: esim.usedData ?? null,
+            remainingVolume: esim.remainingData ?? null,
+            expiredTime: esim.expireTime ?? null,
+            activateTime: null,
+            totalDuration: null,
+            durationUnit: null,
+          }
+        : null,
+      phonePlan: true,
+      phoneNumber,
+      // Only US and global numbers can be renewed and kept (ticket 042).
+      renewable: (await getRenewalContext(order.id, { live: false }).catch(() => null))?.renewable ?? false,
+    });
   }
 
   // Prefer esimOrderId query (proven reliable); fall back to iccid query

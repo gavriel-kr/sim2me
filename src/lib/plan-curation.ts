@@ -69,6 +69,17 @@ interface TierTarget {
   in the catalog, which anchored the whole shelf to a price no one should actually buy at, and set
   travelers up to run out of data mid-trip. The week tier covers short trips well enough.
 */
+/*
+  Ticket 042 (Gabriel, 2026-09-28): "About a Week, Worry-Free" is retired from every shelf — the
+  destination page, the homepage's "For you" and the plan-page recommendations. Short trips are now
+  served by the unlimited picker from one day. The target is kept below; delete it from this set to
+  bring the tier back everywhere at once.
+*/
+const RETIRED_TIERS: ReadonlySet<TierKey> = new Set<TierKey>(['tierWeek']);
+
+/** With the week tier retired a shelf has at most three slots, so two is enough to be worth showing. */
+const MIN_TIERS = 2;
+
 const TIER_TARGETS: TierTarget[] = [
   { key: 'tierWeek', gb: 3, days: 15 },
   { key: 'tierMonth', gb: 10, days: 30 },
@@ -139,12 +150,13 @@ export function nearestTier(tiers: CuratedTier[], plan: Plan): CuratedTier | nul
 export function buildTiers(plans: Plan[]): CuratedTier[] {
   const fixed = plans.filter((p) => classifyFamily(p) === 'fixed');
   const frontier = paretoFrontier(fixed);
-  if (frontier.length < 3) return [];
+  if (frontier.length < MIN_TIERS) return [];
 
   const used = new Set<string>();
   const tiers: CuratedTier[] = [];
 
   for (const target of TIER_TARGETS) {
+    if (RETIRED_TIERS.has(target.key)) continue;
     let best: Plan | null = null;
     let bestScore = Infinity;
     for (const p of frontier) {
@@ -162,7 +174,7 @@ export function buildTiers(plans: Plan[]): CuratedTier[] {
     }
   }
 
-  if (tiers.length < 3) return [];
+  if (tiers.length < MIN_TIERS) return [];
 
   // Exactly one star: admin-featured wins, else "The Full Trip", else middle tier
   const starIdx = (() => {

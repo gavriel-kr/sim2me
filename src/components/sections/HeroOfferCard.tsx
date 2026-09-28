@@ -4,8 +4,8 @@ import { useTranslations, useLocale } from 'next-intl';
 import { createSharedPathnamesNavigation } from 'next-intl/navigation';
 import { routing } from '@/i18n/routing';
 import { formatPrice, localizeDataDisplay } from '@/lib/utils';
-import { localizedCountryName, volumeToDisplay, type HotDeal } from '@/lib/deals';
-import { useAddDeal } from '@/hooks/useAddDeal';
+import { dealHref, volumeToDisplay, type HotDeal } from '@/lib/deals';
+import { useAddDeal, useDealTitle } from '@/hooks/useAddDeal';
 import type { PauseHandlers } from '@/hooks/useDealRotation';
 import { Flame, ShoppingCart } from 'lucide-react';
 
@@ -39,6 +39,9 @@ export function HeroOfferCard({ deals, active, onSelect, pauseHandlers }: Props)
   const tPlan = useTranslations('plan');
   const locale = useLocale();
   const addDeal = useAddDeal();
+  // Ticket 042: a phone deal is named by its number ("USA", "Europe · 36 countries"…) and links to its tile.
+  const dealTitle = useDealTitle();
+  const tP = useTranslations('phonePlans');
   const rtl = locale === 'he' || locale === 'ar';
 
   if (deals.length === 0) return null;
@@ -62,7 +65,7 @@ export function HeroOfferCard({ deals, active, onSelect, pauseHandlers }: Props)
                 key={deal.id}
                 type="button"
                 onClick={() => onSelect(i)}
-                aria-label={localizedCountryName(deal.locationCode, deal.name, locale)}
+                aria-label={dealTitle(deal)}
                 aria-current={i === active}
                 className={`h-1.5 rounded-full transition-all ${
                   i === active ? 'w-4 bg-primary' : 'w-1.5 bg-gray-300 hover:bg-gray-400'
@@ -79,7 +82,7 @@ export function HeroOfferCard({ deals, active, onSelect, pauseHandlers }: Props)
           style={{ transform: `translateX(${(rtl ? 1 : -1) * active * 100}%)` }}
         >
           {deals.map((deal, i) => {
-            const countryName = localizedCountryName(deal.locationCode, deal.name, locale);
+            const countryName = dealTitle(deal);
             const dataDisplay = localizeDataDisplay(volumeToDisplay(deal.volume).dataDisplay, locale);
             const isActive = i === active;
             return (
@@ -99,7 +102,7 @@ export function HeroOfferCard({ deals, active, onSelect, pauseHandlers }: Props)
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-base font-bold text-foreground">{countryName}</p>
                     <p className="text-xs text-muted-foreground">
-                      {dataDisplay} &middot; {deal.duration} {tPlan('days')}
+                      {deal.phone ? `${tP('includes')} · ` : ''}{dataDisplay} &middot; {deal.duration} {tPlan('days')}
                     </p>
                   </div>
                   <div className="text-end">
@@ -113,11 +116,11 @@ export function HeroOfferCard({ deals, active, onSelect, pauseHandlers }: Props)
                 </div>
 
                 <IntlLink
-                  href={`/destinations/${deal.locationCode.toLowerCase()}`}
+                  href={dealHref(deal)}
                   tabIndex={isActive ? undefined : -1}
                   className="mt-3 block text-center text-xs font-semibold text-emerald-700 underline-offset-2 hover:underline"
                 >
-                  {t('hotDealsViewAll', { destination: countryName })}
+                  {deal.phone ? tP('morePlans') : t('hotDealsViewAll', { destination: countryName })}
                 </IntlLink>
               </div>
             );

@@ -3,12 +3,13 @@ import { getPackages, type EsimPackage } from '@/lib/esimaccess';
 import { prisma } from '@/lib/prisma';
 import { getContinent } from '@/lib/continents';
 import { getDbCachedPackages, setDbCachedPackages } from '@/lib/packagesCache';
+import { pickDayPass, toUnlimitedOffer } from '@/lib/unlimited';
 
 export const dynamic = 'force-dynamic';
 
 // In-memory stale cache: short-lived, used when DB is unavailable
 const STALE_CACHE_MS = 15 * 60 * 1000;
-const packagesCache = new Map<string, { packages: unknown[]; destinations: unknown[]; total: number; ts: number }>();
+const packagesCache = new Map<string, { packages: unknown[]; destinations: unknown[]; total: number; unlimited?: unknown; ts: number }>();
 
 // eSIMaccess sometimes returns "system busy" for empty locationCode.
 // Strategy: check DB cache first, then try empty locationCode, then curated seeds.
@@ -160,7 +161,13 @@ export async function GET(req: NextRequest) {
     const overrideMap = new Map<string, typeof overrides[number]>(overrides.map((o: typeof overrides[number]) => [o.packageCode, o]));
 
     // Merge and filter
+    /*
+      Ticket 042. Day passes (`dataType: 2`) are priced per day and are sold only through the
+      "unlimited" tab, by the number of days. Listed here they looked like one-day plans at a
+      per-day price, and were bought for exactly one day.
+    */
     const packages = (apiData.packageList as EsimPackage[] || [])
+      .filter((pkg) => pkg.dataType !== 2)
       .map((pkg) => {
         const override = overrideMap.get(pkg.packageCode);
         const retailPriceUsd = pkg.retailPrice ? pkg.retailPrice / 10000 : pkg.price / 10000;
@@ -250,7 +257,12 @@ export async function GET(req: NextRequest) {
         return a.name.localeCompare(b.name);
       });
 
-    const payload = { packages, destinations, total: packages.length };
+    // The unlimited offer for a destination page: finished retail prices per day count, no wholesale.
+    const hidden = new Set<string>(overrides.filter((o: typeof overrides[number]) => !o.visible).map((o: typeof overrides[number]) => o.packageCode));
+    const dayPass = locationCode ? pickDayPass(apiData.packageList as EsimPackage[] || [], locationCode, hidden) : null;
+    const unlimited = dayPass ? toUnlimitedOffer(dayPass) : null;
+
+    const payload = { packages, destinations, total: packages.length, unlimited };
     packagesCache.set(locationCode, { ...payload, ts: Date.now() });
     return NextResponse.json(payload);
   } catch (error) {
@@ -259,7 +271,7 @@ export async function GET(req: NextRequest) {
     if (isBusy) {
       const cached = packagesCache.get(locationCode);
       if (cached && Date.now() - cached.ts < STALE_CACHE_MS && cached.destinations.length > 0) {
-        return NextResponse.json({ packages: cached.packages, destinations: cached.destinations, total: cached.total });
+        return NextResponse.json({ packages: cached.packages, destinations: cached.destinations, total: cached.total, unlimited: cached.unlimited ?? null });
       }
     }
     console.error('[Public packages error]', error);

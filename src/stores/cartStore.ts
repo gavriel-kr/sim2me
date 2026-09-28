@@ -26,13 +26,16 @@ export const useCartStore = create<CartState>()(
       items: [],
       travelerInfo: null,
       setTravelerInfo: (info) => set({ travelerInfo: info }),
+      /* Always one of a plan. The webhook delivers one eSIM per order, so a second click on
+         "Add to cart" or "Buy now" used to mean paying twice for one eSIM. Adding the same plan
+         again only refreshes it (its price may have changed). */
       addItem: (item) => {
         set((state) => {
           const existing = state.items.find((i) => i.planId === item.planId);
           if (existing) {
             return {
               items: state.items.map((i) =>
-                i.planId === item.planId ? { ...i, quantity: i.quantity + 1 } : i
+                i.planId === item.planId ? { ...item, quantity: 1 } : i
               ),
             };
           }
@@ -46,9 +49,10 @@ export const useCartStore = create<CartState>()(
           get().removeItem(planId);
           return;
         }
+        // Capped at one, for the same reason as addItem.
         set((state) => ({
           items: state.items.map((i) =>
-            i.planId === planId ? { ...i, quantity } : i
+            i.planId === planId ? { ...i, quantity: 1 } : i
           ),
         }));
       },
@@ -59,6 +63,12 @@ export const useCartStore = create<CartState>()(
     {
       name: 'sim2me-cart',
       partialize: (state) => ({ items: state.items }),
+      // Version 1: carts saved before the one-per-plan rule may hold a quantity above one.
+      version: 1,
+      migrate: (persisted) => {
+        const saved = persisted as { items?: CartItem[] } | undefined;
+        return { items: (saved?.items ?? []).map((i) => ({ ...i, quantity: 1 })) } as Partial<CartState> as CartState;
+      },
     }
   )
 );

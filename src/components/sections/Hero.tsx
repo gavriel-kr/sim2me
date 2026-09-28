@@ -11,8 +11,10 @@ import { formatPrice, localizeDataDisplay } from '@/lib/utils';
 import { localizedCountryName, volumeToDisplay, HOT_DEALS_QUERY } from '@/lib/deals';
 import { CharacterFigure } from '@/components/brand/CharacterFigure';
 import { HeroOfferCard } from '@/components/sections/HeroOfferCard';
+import { HeroPhoneCard, heroPhoneTiles } from '@/components/sections/HeroPhoneCard';
+import type { PhoneSectionData } from '@/components/sections/PhonePlansSection';
 import { useDealRotation } from '@/hooks/useDealRotation';
-import { Shield, Zap, Flame, Headphones, History } from 'lucide-react';
+import { Shield, Zap, Flame, Headphones, History, Phone } from 'lucide-react';
 
 const { Link: IntlLink } = createSharedPathnamesNavigation(routing);
 
@@ -35,13 +37,21 @@ function readRecent(): RecentDestination | null {
   }
 }
 
-export function Hero() {
+interface HeroProps {
+  /** Ticket 042: what the pair holds out when there are no hot deals to show. */
+  phoneSection?: PhoneSectionData | null;
+  /** Ticket 042: the activation badge, as set on Homepage sections — hidden, or the admin's own
+      wording for this language (null keeps the default text). */
+  activationBadge?: { show: boolean; text: string | null };
+}
+
+export function Hero({ phoneSection, activationBadge = { show: true, text: null } }: HeroProps = {}) {
   const t = useTranslations('home');
   const locale = useLocale();
   const [recent, setRecent] = useState<RecentDestination | null>(null);
 
   // Same query key as HotDealsSection / ForYouSection — shared react-query cache, zero extra requests.
-  const { data: deals = [] } = useQuery(HOT_DEALS_QUERY);
+  const { data: deals = [], isFetched: dealsFetched } = useQuery(HOT_DEALS_QUERY);
   const { data: destinations = [] } = useQuery({
     queryKey: ['destinations'],
     queryFn: getDestinations,
@@ -55,7 +65,11 @@ export function Hero() {
   // The whole list, not a slice of it: the server already returns exactly the configured number of
   // deals, so a cap here would be a second opinion on a number the admin thinks it owns.
   const strip = deals;
-  const { active, setIndex, pauseHandlers } = useDealRotation(strip.length);
+  /* Ticket 042 (Gabriel, 2026-09-28): with the hot deals switched off, the pair holds out the phone
+     numbers instead, cycling the same way. Only once the deals request has answered, so a page that
+     does have deals never flashes the phone card first. */
+  const phoneTiles = dealsFetched && strip.length === 0 ? heroPhoneTiles(phoneSection) : [];
+  const { active, setIndex, pauseHandlers } = useDealRotation(strip.length > 0 ? strip.length : phoneTiles.length);
 
   const chips = destinations
     .filter((d) => d.popular && d.isoCode.length === 2)
@@ -97,10 +111,20 @@ export function Hero() {
               the viewport and pushes the whole hero off the side.
             */}
             <div className="mb-6 flex flex-col items-start gap-2">
-              <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-sm font-medium text-primary">
-                <Zap className="h-3.5 w-3.5" aria-hidden="true" />
-                {t('instantActivation')}
-              </div>
+              {activationBadge.show && (
+                <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-sm font-medium text-primary">
+                  <Zap className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                  {activationBadge.text || t('instantActivation')}
+                </div>
+              )}
+              {/* Ticket 042: the new product, announced where every visitor starts. */}
+              <IntlLink
+                href="/phone-plans"
+                className="inline-flex items-center gap-1.5 rounded-full border border-sky-200 bg-sky-50 px-3.5 py-1.5 text-sm font-medium text-sky-700 transition-colors hover:bg-sky-100"
+              >
+                <Phone className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                {t('heroPhoneChip')}
+              </IntlLink>
               {strip[active] && (
                 <a
                   href="#hot-deals"
@@ -248,12 +272,16 @@ export function Hero() {
               className="lg:absolute lg:bottom-[52px] lg:left-1/2 lg:-translate-x-1/2"
             />
             <div className="w-full lg:absolute lg:bottom-0 lg:left-1/2 lg:w-auto lg:-translate-x-1/2">
-              <HeroOfferCard
-                deals={strip}
-                active={active}
-                onSelect={setIndex}
-                pauseHandlers={pauseHandlers}
-              />
+              {strip.length > 0 ? (
+                <HeroOfferCard
+                  deals={strip}
+                  active={active}
+                  onSelect={setIndex}
+                  pauseHandlers={pauseHandlers}
+                />
+              ) : (
+                <HeroPhoneCard tiles={phoneTiles} active={active} onSelect={setIndex} pauseHandlers={pauseHandlers} />
+              )}
             </div>
           </div>
         </div>

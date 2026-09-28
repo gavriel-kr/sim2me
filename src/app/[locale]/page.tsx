@@ -6,6 +6,9 @@ import { ForYouSection } from '@/components/sections/ForYouSection';
 import { FeaturedPlans } from '@/components/sections/FeaturedPlans';
 import { FAQSection } from '@/components/sections/FAQSection';
 import { CTASection } from '@/components/sections/CTASection';
+import { PhonePlansSection, type PhoneSectionData } from '@/components/sections/PhonePlansSection';
+import { getPhonePlans } from '@/lib/phone-catalog';
+import { getHomepageSections, type BadgeLocale } from '@/lib/homepage-sections';
 import { brandConfig } from '@/config/brand';
 type Props = { params: Promise<{ locale: string }> };
 
@@ -58,6 +61,31 @@ export async function generateMetadata({ params }: Props) {
 export default async function HomePage({ params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
+
+  // Ticket 042: sections the admin can hide on Homepage Destinations (all shown by default), and
+  // the activation badge's wording for this language if the admin wrote one.
+  const sections = await getHomepageSections();
+  const activationBadge = {
+    show: sections.activationBadge,
+    text: sections.activationBadgeText[locale as BadgeLocale] ?? null,
+  };
+
+  // Ticket 042: "from" prices per kind of number, from the plans the site actually shows.
+  const phonePlans = (await getPhonePlans().catch(() => [])).filter((p) => p.visible);
+  const cheapest = (region: string, maxDays = Infinity) => {
+    const prices = phonePlans.filter((p) => p.region === region && p.days <= maxDays).map((p) => p.priceUsd);
+    return prices.length ? Math.min(...prices) : null;
+  };
+  const featured = phonePlans.find((p) => p.featured) ?? null;
+  const phoneSection: PhoneSectionData = {
+    fromUs: cheapest('us'),
+    fromEurope: cheapest('europe'),
+    fromGlobal: cheapest('global', 30),
+    globalCount: phonePlans.find((p) => p.region === 'global')?.coverage.length ?? 0,
+    spotlight: featured
+      ? { region: featured.region, dataGb: featured.dataGb, days: featured.days, priceUsd: featured.priceUsd, badge: featured.saleBadge }
+      : null,
+  };
 
   /* JSON-LD structured data for SEO */
   const jsonLd = {
@@ -114,10 +142,12 @@ export default async function HomePage({ params }: Props) {
         including the "24/7 support" claim, so an unreferenced file kept a false promise alive in every
         future audit of the copy.
       */}
-      <Hero />
+      <Hero phoneSection={phoneSection} activationBadge={activationBadge} />
+      {/* Ticket 042: the phone-number section leads, above the day's deals (Gabriel, 2026-09-28). */}
+      <PhonePlansSection data={phoneSection} />
       <HotDealsSection />
-      <ForYouSection />
-      <FeaturedPlans />
+      {sections.forYou && <ForYouSection />}
+      {sections.popularDestinations && <FeaturedPlans />}
       <FAQSection />
       <CTASection />
     </MainLayout>

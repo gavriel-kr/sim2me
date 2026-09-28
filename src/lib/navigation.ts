@@ -37,6 +37,8 @@ export type NavigationConfig = {
 const DEFAULT_NAV_MENU: NavLink[] = [
   { href: '/', key: 'home' },
   { href: '/destinations', key: 'destinations' },
+  // Ticket 042: plans with a phone number get their own entry, right after destinations.
+  { href: '/phone-plans', key: 'phones' },
   { href: '/how-it-works', key: 'howItWorks' },
   { href: '/data-calculator', key: 'calculator' },
   { href: '/help', key: 'help' },

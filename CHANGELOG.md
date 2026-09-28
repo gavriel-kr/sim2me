@@ -2,6 +2,52 @@
 
 ## [Unreleased]
 
+### Added (ticket 042 — unlimited by days, and eSIMs with a phone number)
+
+**eSIMs with a phone number (PikaSim).** A second supplier sells eSIMs that come with a number for
+calls and SMS: USA (+1), Europe (French +33, 36 countries), Global (a US number that works in 168
+countries) and a few local numbers. New `/phone-plans` page with one tile per kind of number, "Phones"
+in the main menu, a homepage section above Hot Deals, a hero chip, and — when there are no hot deals —
+the hero card cycles the kinds of number instead. Destination pages open on **With a phone number**
+wherever one exists, then **eSIM only**. Our price is PikaSim's cost + about 10% net after Paddle,
+ending in .90; plans more than 15% above the market are hidden, the global plan always shows. US and
+global numbers can be renewed before they end and keep the same number (account button, admin
+"Renew", confirmation email, a reminder 7 days before the end from a new daily cron); Europe and local
+numbers are single-cycle and say so. The number is not known until the eSIM is installed: the purchase
+email says so, and a "your number is ready" email follows — found by a new cron every 15 minutes
+(`/api/cron/phone-number-ready`; orders older than two weeks once an hour, up to 180 days), or sooner if
+the customer opens their account or the admin checks the status.
+
+**Unlimited by days.** The eSIM-only tab starts with an unlimited picker: any 1–30 days on eSIMaccess's
+2GB/day pass, bought in one order with `periodNum`. The GB shelf follows; "Show all plans" and the
+week tier are switched off (code kept) and the plan count is gone.
+
+**Hot deals.** Phone plans join the day's deals (a third of the slots, same discount range and profit
+floor, US / global / Europe trip plans first); computed per day and never written to `hot_deals`. Deal
+cards say "eSIM only" or show the number.
+
+**Admin.** *Phone plans (PikaSim)* and *Unlimited (day passes)* pages, the PikaSim balance on the
+dashboard, the number and a Renew button on phone orders, and three checkboxes under Homepage
+Destinations → Homepage sections: "Popular destinations", "For you", and the activation badge above
+the hero headline, whose wording can be set per language.
+
+**Refunds.** No refunds after purchase, on every plan. The refund page (CMS) and the one-line summary in
+section 9 of the Terms were updated on 2026-09-28; the texts are in
+`agent-workspace/tickets/042-unlimited-and-phone-numbers/cms-texts.md`. Every other source that could
+write or show the old 14-day policy now says the same: `prisma/update-legal-pages-i18n.ts` (run on every
+deploy), `src/content/policies.ts` (the admin's "sync pages"), the refund page's search description and
+the Hindi text in the message files.
+
+**Checkout.** One of each plan per order: a second "Add to cart" or "Buy now" used to raise the
+quantity, Paddle charged for it and the webhook delivered one eSIM. The cart caps it (saved carts are
+migrated) and `create-transaction` rejects anything else. `DISABLE_NEW_PRODUCTS_CHECKOUT=1` is an
+emergency brake that stops new payments for phone and unlimited plans only.
+
+No schema change: the product kind is encoded in the plan id (`dp:` day pass, `pk:` PikaSim, `rn:`
+renewal). New environment variable: `PIKASIM_API_KEY`. The PikaSim catalogue is cached for an hour per
+instance; page renders wait at most 6 s for it and skip it for a minute after a failure, so a PikaSim
+outage cannot slow the homepage. Rollback: `agent-workspace/tickets/042-unlimited-and-phone-numbers/backup/`.
+
 ### Changed (ticket 040 — last steps of checkout)
 
 Public success URLs no longer expose QR / SM-DP+ / activation forever. After a successful

@@ -1,4 +1,220 @@
-# Pending release — Tickets 026 / 034 / 036 / 037 plus the menu and hero pass, prepared 2026-08-10
+# Pending release — Ticket 042 (unlimited by days, eSIMs with a phone number), prepared 2026-09-28
+
+Everything below is **local and unpushed** until Gabriel approves the push. `DEPLOY-PROTOCOL.md`
+governs; this file records how each of its gates was answered for this changeset.
+
+## Where the repo stands
+
+| | |
+|---|---|
+| HEAD | `b905193` — *feat(checkout): close Paddle after pay and stop exposing eSIM details on public success URLs* |
+| Branch | `main`, level with `origin/main` (fetched 2026-09-28) |
+| Going up | Ticket 042 only: 50 modified source files (incl. `prisma/update-legal-pages-i18n.ts` and `src/content/policies.ts`), 38 new ones, `vercel.json`, `CHANGELOG.md`, the ticket's docs (`01-PRD`, `02-ADD`, `03-DIP`, `cms-texts`, `i18n/`) and this file |
+| Not going up | Ticket 041 (closed by Gabriel, code shelved in its ticket folder), `agent-workspace/scripts/email-preview.ts` and ticket 026's DIP (older, unrelated edits), every `backup/` and `checkpoint-*/` folder, older untracked scripts |
+| Rollback target | `b905193` |
+| Backup tag | `pre-deploy-20260928-1907` on `b905193`, created immediately before the commit |
+
+## What the release contains
+
+Full prose in `CHANGELOG.md` under `[Unreleased]`. In short: phone-number eSIMs from PikaSim (a new
+supplier), unlimited-by-days eSIMs, the pages, admin screens, emails and hot deals that go with them,
+a daily renewal-reminder cron, the no-refund policy, and two fixes found while preparing the release —
+one of each plan per order, and a PikaSim catalogue that cannot slow the homepage down.
+
+Decisions Gabriel made while preparing (2026-09-28):
+
+- **Sales open on this deploy.** No lock. Gabriel runs the first real purchase himself on the live
+  site. The former `ENABLE_NEW_PRODUCTS_CHECKOUT` gate became an emergency brake,
+  `DISABLE_NEW_PRODUCTS_CHECKOUT=1`, off unless set; its message is now written for customers.
+- **Ticket 041 does not go up.** Closed; code in `agent-workspace/tickets/041-paddle-key-expiry/shelved/`.
+- **Refund policy:** the build script's Hebrew and Arabic now match the CMS texts. At Gabriel's request
+  ("paste it locally") the texts were written to the CMS refund page on 2026-09-28 (live at once, before
+  the push). The Terms' section 9 summary said the opposite (refund within 14 days) and was changed to
+  match, with his approval — one sentence per language. The same wording is now in
+  `src/content/policies.ts` (the admin's "sync pages" source) and the refund page's search description,
+  so nothing can put the 14-day promise back. Backups of both rows are in the ticket's `backup/`.
+- **Quantity bug fixed now** (one of each plan per order).
+
+## Risk level: R2, with the R3 precautions for the one DB-writing script
+
+Gate B1 is marked in almost every money row: checkout (`create-transaction`), the Paddle webhook and
+fulfilment, eSIMaccess (`purchasePackage` gained `periodNum`), emails, admin orders (retry, cancel,
+status, resend, renew), prices, and cron. R2 on its own.
+
+It is **not** a schema change: `prisma/schema.prisma` is byte-identical to `b905193`, so the
+`prisma db push` in Vercel's build is a no-op. But `prisma/update-legal-pages-i18n.ts`, which Vercel's
+build runs against production on every deploy, is in the changeset, so its effect is written down:
+
+- It rewrites a legal page's Hebrew and Arabic only when that page's Hebrew is 500 characters or
+  shorter. Today the refund page's Hebrew is 1151 characters (the old policy), so as things stand the
+  script writes nothing.
+- Once Gabriel pastes the new texts (Hebrew 280 characters), it will rewrite Hebrew and Arabic on this
+  and every later deploy — with the same texts he pasted. That is the point of the change: before it,
+  the next deploy would have put the old 14-day refund policy back.
+- **DB backup:** the refund page row as it stood before the deploy is saved in
+  `agent-workspace/tickets/042-unlimited-and-phone-numbers/backup/db-snapshot-refund-page-2026-09-28.json`.
+  Terms and privacy are untouched by the change.
+
+### Shared-database state that goes live the moment the code does
+
+The local site already reads and writes the production database; these rows exist today and the new
+code reads them:
+
+| Row | Value now | Effect on the live site after the deploy |
+|---|---|---|
+| `hot_deals_config` | `enabled: false` | Already off on the live site today. With the new code, the hero card then cycles the phone numbers |
+| `homepage_sections` | `forYou: false` | The "For you" shelf disappears from the live homepage — confirmed by Gabriel (2026-09-28) |
+| `package_overrides` with `pk:` | none | PikaSim plans show with the default rules |
+| Orders with `pk:` / `dp:` / `rn:` ids | none | — |
+
+## Gate A — the code builds locally
+
+- ✅ `npx tsc --noEmit` → 0
+- ✅ `npm run lint` → **exit 0, no errors.** Warnings only; every warning in a touched file was checked
+  against `b905193` and is pre-existing, except `<img>` flag images in the new components, which follow
+  the pattern the site already uses
+- ✅ `npm run test:profit`, `npm run test:locale-path`, `npm run test:package-display` → pass
+- ✅ `orderFilters.test.ts`, `ordersExcel.test.ts` → pass (admin orders are in the changeset)
+- ✅ `src/lib/ticket-042.test.ts` → pass: product ids, day-pass and phone pricing, destination rules,
+  renewability, badge text rules, and the PikaSim outage behaviour (pages stop asking, checkout still asks)
+- ✅ Cart rules checked in isolation: two adds keep quantity 1; a saved cart with quantity 3 comes back as 1
+- ✅ `npx next build` from a deleted `.next` → **0**, five times (after each fix); the last one after
+  every edit in this release. `npm run build` itself is not used locally for the same reason as before:
+  it chains `prisma db push` and two scripts that write to production
+- ✅ Translation keys identical across he / en / ar / hi; placeholders match (the four flags were
+  plural forms, checked by hand)
+- ✅ No secret in the changeset: scanned for `pk_live_`, Paddle and Resend keys, database URLs, private
+  keys. The repository is **public**, so the ticket docs were also scanned for e-mail addresses, phone
+  numbers and ICCIDs: only values already public in the repo or sample data in examples
+- ✅ No `console.log`, `debugger`, TODO or FIXME added; the `console.warn` calls match the webhook's
+
+### Found by the build, fixed, rechecked
+
+- **A PikaSim outage could have slowed every page with a phone section.** The root layout reads
+  `headers()`, so every page renders per request — as before this release; nothing changed there.
+  But a failed catalogue fetch was not remembered, so while PikaSim hung each render could wait up to
+  15 s. Now page renders wait at most 6 s and skip PikaSim for a minute after a failure (using the last
+  list they had, or none); checkout and fulfilment still always ask. Tested with a failing fake PikaSim.
+- **Quantity above one** (predates the release, fixed at Gabriel's request): the cart caps it, saved
+  carts are migrated, `create-transaction` accepts only 1.
+
+## Gate B — risk and environment
+
+### B2 — environment variables
+
+| Variable | Status |
+|---|---|
+| `PIKASIM_API_KEY` | **New, required. Gabriel adds it in Vercel (Gabriel's projects → sim2me → Settings → Environment Variables → Production) before the push.** Without it the phone plans are simply absent (no error), and phone orders cannot be fulfilled |
+| `DISABLE_NEW_PRODUCTS_CHECKOUT` | New, **do not set.** Emergency brake only |
+| `CRON_SECRET` | Existing (the other two crons use it); the new cron requires it |
+| `ESIMACCESS_ACCESS_CODE`, `RESEND_*`, `PADDLE_*`, `DATABASE_URL`, `NEXT_PUBLIC_SITE_URL` | Existing, unchanged |
+| `ENABLE_NEW_PRODUCTS_CHECKOUT` | No longer read by any code |
+
+No variable is changed or deleted. No secret appears in the changeset, a log, or this file.
+
+### vercel.json
+
+Two crons added, both protected by `CRON_SECRET`: `/api/cron/phone-renewal-reminders` daily at 07:00 UTC,
+and `/api/cron/phone-number-ready` every 15 minutes.
+The existing `check-abandoned` runs every 30 minutes, so the plan already allows sub-daily crons.
+
+### B3 — backup
+
+- ✅ `git tag pre-deploy-20260928-1907` on `b905193`, immediately before the commit
+- ✅ Refund and Terms page rows saved before they were written (`backup/db-snapshot-*-2026-09-28.json`)
+- ✅ Per-file copies of every file 042 touched: `agent-workspace/tickets/042-unlimited-and-phone-numbers/backup/`
+  (`restore.cjs`), plus one checkpoint per round
+
+## Gate C — smoke, against the production build (`next start`) after the final edit
+
+### C0
+- ✅ `/en`, `/he`, `/ar`, `/hi` → 200; `/he/destinations/us`, `/en/destinations/fr`, `/he/destinations/jp` → 200
+- ✅ Screenshots of the production build: homepage (hero card cycling numbers, phone section),
+  `/en/phone-plans` (tiles and prices), `/he/destinations/us` and `/en/destinations/jp` at phone width
+  (phone tab first, "eSIM only" second)
+
+### C1 — checkout, money, eSIM
+- ✅ `GET /api/checkout/health` → `ok: true` (db, rate limit, overrides, packages cache, Paddle ping)
+- ✅ `/he/checkout` → 200
+- ✅ With `DISABLE_NEW_PRODUCTS_CHECKOUT=1`: a phone plan and a day pass → 403 `NEW_PRODUCTS_LOCKED`
+- ✅ Quantity 2 → 400, before anything else runs
+- ✅ None of these requests reached Paddle: the checks come before it
+- ⚠️ **Not run: a real payment for a phone plan or a day pass.** Neither has ever been bought for real
+  — not through Paddle, not through the admin's internal sale. Gabriel does the first one on the live
+  site right after the deploy (below)
+- ✅ Prices: phone price = cost + ~10% net after Paddle; day pass = cost × days × 1.5 + $0.60;
+  a phone deal never goes below the profit floor; checkout charges the server's price, never the client's
+
+### C3 — admin
+- ✅ `/admin/login` → 200
+- ✅ Homepage sections panel rendered and checked (three checkboxes, badge text per language)
+
+### C4 — content
+- ✅ `/he/refund`, `/hi/refund`, `/he/terms` → 200; the refund page's search description and the Hindi text (from the message files) state the no-refund policy
+- ✅ RTL on the homepage, phone page and destination pages in Hebrew
+
+### C6 — cron
+- ✅ Both new crons check `CRON_SECRET` (401 without it, verified on the production build); the two existing crons are unchanged
+
+## Known gaps, stated rather than smoothed over
+
+- **The first real purchase of the new products will be on the live site.** PikaSim orders, the
+  number email and the eSIMaccess `periodNum` purchase have been exercised against the APIs' real
+  catalogues and prices, but no money has gone through them.
+- **Fixed before the push, at Gabriel's request:** the purchase email promises a second email once the
+  number exists, and that email used to go out only when someone looked (account page or admin
+  status). A new cron, `/api/cron/phone-number-ready`, now checks every 15 minutes (orders older than
+  two weeks once an hour, up to 180 days) and sends it once. Tested: 401 without the secret, 200 with
+  it (0 orders due today); the timing rules are in `ticket-042.test.ts`.
+- **PikaSim fulfilment waits about 24 s** for the eSIM inside the webhook. If PikaSim is slower, the
+  order stays PROCESSING with PikaSim's order number saved; the Retry button (customer's account or
+  admin) then fetches that same eSIM rather than buying a second one. Retry is manual, as for eSIMaccess.
+- **The refund text is not legal advice.** `cms-texts.md` notes that Paddle may still refund within 14
+  days at its discretion.
+
+## Gate D — the pre-push checklist
+
+- ✅ Gabriel asked to prepare the deploy (2026-09-28)
+- ✅ **Gabriel approved the push** (2026-09-28, "מאשר")
+- ✅ Risk level set: R2, with R3 precautions for the legal-pages script
+- ✅ Gate A green, including `next build` = 0 after the last edit
+- ✅ Gate B filled; ✅ `PIKASIM_API_KEY` added in Vercel (Production) by Gabriel, screenshot 2026-09-28
+- ✅ Gate C green, except the real purchase, which is scheduled right after the deploy
+- ✅ Refund texts in the CMS (he/en/ar) and the Terms summary sentence, verified on the live site
+- ✅ Backup tag `pre-deploy-20260928-1907` on `b905193`
+- ✅ The commit holds only ticket 042 (list in "Where the repo stands")
+- ✅ Deploy by `git push origin main` only; no Vercel CLI
+
+## Post-deploy smoke, to run once Vercel reports Ready
+
+Always:
+- `https://www.sim2me.net/en`, `/he`, `/ar`, `/hi` → 200
+- `https://www.sim2me.net/api/checkout/health` → `ok: true`
+- Admin → Orders loads; Admin → Phone plans lists PikaSim's plans; the dashboard shows the PikaSim balance
+
+This release:
+- `/he/phone-plans` shows the tiles with prices (proves `PIKASIM_API_KEY` is live)
+- `/he/destinations/us` opens on the phone tab; `/he/destinations/jp` shows the global number
+- Vercel → Settings → Cron Jobs lists `phone-renewal-reminders` and `phone-number-ready`
+- **Gabriel's real purchase:** one phone plan and one unlimited, through Paddle. Then: order
+  `COMPLETED`, QR in the email, the eSIM installs, the number appears in the account after
+  activation, the "number ready" email arrives, the PikaSim balance drops by the plan's cost
+- Vercel function logs: no new errors from `webhooks/paddle`, `create-transaction`, `phone-catalog`
+
+## Rollback
+
+```bash
+# only with Gabriel's approval
+git push origin pre-deploy-20260928-1907:main
+```
+
+Returns the code to `b905193`. The database needs nothing: no schema change, and the new code's rows
+(`phone_number_notified:*`, `renewal_reminded:*`, `homepage_sections`, `pk:` overrides) are simply not
+read by the old code. The refund page keeps whatever the CMS holds; the snapshot above restores the old
+text if ever wanted. A phone number already sold keeps working — the old code just cannot show or renew
+it, so roll back only for a reason that outweighs that.
+
+# Previous release — Tickets 026 / 034 / 036 / 037 plus the menu and hero pass, prepared 2026-08-10
 
 Everything below is **local and unpushed**. `DEPLOY-PROTOCOL.md` governs; this file records how each of
 its gates was answered for this changeset.

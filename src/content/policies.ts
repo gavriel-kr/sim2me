@@ -85,7 +85,7 @@ Prices for eSIMs and data plans are displayed on our website and may change with
 
 9. Refund Policy
 
-Refunds are subject to our Refund Policy. In summary: unused and uninstalled eSIMs may be refunded within 14 days of purchase. Once an eSIM is installed or activated, it cannot be refunded. For full conditions and how to request a refund, see our Refund Policy page and contact us at ${CONTACT} or via ${CONTACT_PAGE}.
+Refunds are subject to our Refund Policy. In summary: the eSIM is delivered immediately after payment, so there are no refunds after purchase, even if it has not been installed. For full conditions and how to request a refund, see our Refund Policy page and contact us at ${CONTACT} or via ${CONTACT_PAGE}.
 
 10. Prohibited Use
 
@@ -256,55 +256,20 @@ Sim2Me – This Privacy Policy applies globally to all countries and customers w
     titleEn: 'Refund Policy',
     titleHe: 'מדיניות החזרים',
     titleAr: 'سياسة الاسترداد',
-    contentEn: `This Refund Policy applies globally to all countries and customers worldwide.
+    contentEn: `This Refund Policy applies to all customers in all countries.
 
-Last updated: February 2025
+The eSIM is delivered immediately after payment. There are therefore no refunds after purchase, even if the eSIM has not been installed. This applies to every plan: data by the GB, unlimited, and plans with a phone number.
 
-We want you to be satisfied with your purchase. Our refund policy is designed to be fair while protecting against abuse. In general, eSIMs are digital products: once delivered or activated, they cannot be "returned." You may be eligible for a refund under the conditions below.
+If your eSIM was not delivered because of a fault on our side, contact support with your order number and we will sort it out.`,
+    contentHe: `מדיניות החזרים זו חלה על כל הלקוחות בכל המדינות.
 
-1. Unused and Uninstalled eSIMs (Within 14 Days)
+ה-eSIM נמסר באופן מיידי לאחר התשלום. לכן אין החזר כספי לאחר הרכישה, גם אם ה-eSIM לא הותקן. הדבר חל על כל החבילות: גלישה לפי GB, ללא הגבלה ועם מספר טלפון.
 
-If you have not installed or activated the eSIM on your device, you may request a full refund within 14 days of purchase. For example, if your travel plans changed and you no longer need the plan, contact us before activating the eSIM. We will process eligible refunds to the original payment method where possible.
+אם ה-eSIM לא נמסר לכם בגלל תקלה אצלנו, פנו לתמיכה עם מספר ההזמנה ונטפל בזה.`,
+    contentAr: `تنطبق سياسة الاسترداد هذه على جميع العملاء في جميع الدول.
 
-2. Device Incompatibility
+تُسلَّم شريحة eSIM فور الدفع. لذلك لا يوجد استرداد بعد الشراء، حتى لو لم تُثبَّت الشريحة. ينطبق ذلك على جميع الباقات: البيانات حسب الغيغابايت، وبلا حدود، ومع رقم هاتف.
 
-If after purchase you discover that your device is not eSIM-compatible or is carrier-locked (and you cannot use our service), you may be eligible for a full refund. We may ask for proof that the eSIM was never successfully activated or used. Contact us as soon as you discover the issue and within 14 days of purchase.
-
-3. Technical or Service Issues
-
-If you experience technical problems that originate from Sim2Me or our network partners (e.g. the eSIM does not provide data connectivity due to our systems or a covered network outage), contact our support and cooperate with troubleshooting. If we determine the issue is on our side and we cannot resolve it, we may issue a full or partial refund depending on usage.
-
-4. Refund Request Procedure
-
-• Contact us within 14 days of your purchase date (or within a reasonable time for technical issues).
-• Include the email used for purchase, order confirmation or order ID, and a clear description of the reason for the refund.
-• We may ask for additional information or steps (e.g. device settings, screenshots) before approving a refund.
-• Refunds are issued to the original payment method when possible. Processing may take 5–10 business days depending on your bank or payment provider.
-
-Reach us via ${CONTACT_PAGE} or ${CONTACT}.
-
-5. When We Do Not Refund
-
-We do not issue refunds in the following cases:
-
-• The eSIM has already been installed or activated on a device
-• You have used a significant portion of the data (except in cases of technical failure on our side)
-• The request is made after 14 days from purchase (except where we agree otherwise for technical issues)
-• Change of mind after activation, or selection of the wrong plan by the customer
-• Issues outside our control (e.g. poor coverage in a specific location when our coverage information was accurate, or user configuration errors)
-• Violation of our Terms of Service or misuse of the service
-• Fees not paid to Sim2Me (e.g. bank or card fees, currency conversion fees)
-
-6. Final Decisions
-
-Sim2Me reserves the right to decline refund requests that do not meet this policy. All refund decisions are final. For questions, contact us at ${CONTACT} or via ${CONTACT_PAGE}.
-
-Sim2Me – This Refund Policy applies globally to all countries and customers worldwide.`,
-    contentHe: `מדיניות החזרים זו חלה באופן גלובלי על כל המדינות והלקוחות ברחבי העולם.
-
-eSIM שלא הותקן ולא נעשה בו שימוש ניתן להחזרה תוך 14 יום מהרכישה. לאחר התקנה או הפעלה, החבילות אינן ניתנות להחזרה. לגרסה המלאה באנגלית: ${SITE}/refund`,
-    contentAr: `تطبق سياسة الاسترداد هذه عالميًا على جميع البلدان والعملاء في جميع أنحاء العالم.
-
-يمكن استرداد eSIM غير المستخدم خلال 14 يومًا من الشراء. بعد التثبيت أو التفعيل، الخطط غير قابلة للاسترداد. للنص الكامل بالإنجليزية: ${SITE}/refund`,
+إذا لم تصلك الشريحة بسبب خلل من جهتنا، تواصل مع الدعم مع رقم الطلب وسنعالج الأمر.`,
   },
 } as const;

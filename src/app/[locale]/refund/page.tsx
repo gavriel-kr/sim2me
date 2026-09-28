@@ -5,10 +5,11 @@ import { getCmsPage } from '@/lib/cms';
 export const dynamic = 'force-dynamic';
 
 const siteUrl = 'https://www.sim2me.net';
+// Ticket 042: no refunds after purchase (the CMS page says the same; its SEO description is empty).
 const descByLocale: Record<string, string> = {
-  en: 'Sim2Me refund policy. Unused eSIMs can be refunded within 14 days. Learn about eligibility, the refund process, and how to request a refund.',
-  he: 'מדיניות ההחזרים של Sim2Me. eSIM שלא הותקן ולא נעשה בו שימוש ניתן להחזרה תוך 14 יום. תנאי הזכאות ואיך מגישים בקשה.',
-  ar: 'سياسة الاسترداد في Sim2Me. يمكن استرداد eSIM غير المثبت وغير المستخدم خلال 14 يوماً. شروط الأهلية وكيفية تقديم الطلب.',
+  en: 'Sim2Me refund policy: the eSIM is delivered right after payment, so there are no refunds after purchase. If it was not delivered because of a fault on our side, contact support.',
+  he: 'מדיניות ההחזרים של Sim2Me: ה-eSIM נמסר מיד לאחר התשלום, ולכן אין החזר כספי לאחר הרכישה. אם לא נמסר בגלל תקלה אצלנו, פנו לתמיכה.',
+  ar: 'سياسة الاسترداد في Sim2Me: تُسلَّم شريحة eSIM فور الدفع، لذلك لا يوجد استرداد بعد الشراء. إذا لم تصلك بسبب خلل من جهتنا، تواصل مع الدعم.',
 };
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {

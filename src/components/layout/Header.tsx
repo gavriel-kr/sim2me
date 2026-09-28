@@ -27,6 +27,7 @@ const { usePathname: useIntlPathname, Link: IntlLink } = createSharedPathnamesNa
 const defaultNavLinks = [
   { href: '/', key: 'home' },
   { href: '/destinations', key: 'destinations' },
+  { href: '/phone-plans', key: 'phones' },
   { href: '/how-it-works', key: 'howItWorks' },
   { href: '/data-calculator', key: 'calculator' },
   { href: '/help', key: 'help' },

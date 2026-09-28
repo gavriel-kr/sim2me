@@ -27,6 +27,27 @@ export interface HotDeal {
   discountPercent: number;
   currency: string;
   endsAt: string;
+  /**
+   * Ticket 042. Present on a phone-plan deal (`packageCode` = `pk:<code>`); absent on every eSIM deal,
+   * which is how all existing code keeps reading them unchanged.
+   */
+  phone?: {
+    region: 'us' | 'europe' | 'global' | 'local';
+    numberCountry: string;
+    dialCode: string;
+    voiceMinutes: number;
+    sms: number;
+    coverageCount: number;
+    renewable: boolean;
+    dataGb: number;
+  };
+}
+
+/** Where a deal's "all plans" link goes: the destination page, or for a phone deal its tile on /phone-plans. */
+export function dealHref(deal: HotDeal): string {
+  if (!deal.phone) return `/destinations/${deal.locationCode.toLowerCase()}`;
+  const r = deal.phone.region;
+  return `/phone-plans#${r === 'local' ? `local-${deal.phone.numberCountry.toLowerCase()}` : r}`;
 }
 
 export function volumeToDisplay(volumeBytes: number): { dataDisplay: string; dataAmountMb: number } {
@@ -50,6 +71,28 @@ export function localizedCountryName(isoCode: string, fallback: string, locale: 
 
 export function dealToPlan(deal: HotDeal, locale: string): Plan {
   const { dataDisplay, dataAmountMb } = volumeToDisplay(deal.volume);
+  if (deal.phone) {
+    const p = deal.phone;
+    return {
+      id: deal.packageCode,
+      destinationId: 'phone-plans',
+      name: deal.name,
+      dataAmount: p.dataGb * 1024,
+      dataDisplay: `${p.dataGb} GB`,
+      days: deal.duration,
+      price: deal.dealPrice,
+      originalPrice: deal.originalPrice,
+      currency: deal.currency,
+      networkType: deal.speed?.includes('5G') ? '5G' : '4G',
+      speed: deal.speed,
+      tethering: true,
+      topUps: false,
+      operatorName: '',
+      saleBadge: `-${deal.discountPercent}%`,
+      kind: 'phone',
+      phone: { region: p.region, numberCountry: p.numberCountry, dialCode: p.dialCode, voiceMinutes: p.voiceMinutes, sms: p.sms, coverageCount: p.coverageCount },
+    };
+  }
   return {
     id: deal.packageCode,
     destinationId: deal.locationCode.toLowerCase(),

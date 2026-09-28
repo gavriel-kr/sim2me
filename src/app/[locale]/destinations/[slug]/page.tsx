@@ -58,6 +58,8 @@ export default async function DestinationDetailPage({ params }: PageProps) {
         <DestinationDetailClient
           destination={data.destination}
           initialPlans={data.plans}
+          unlimited={data.unlimited}
+          phonePlans={data.phonePlans}
         />
       </MainLayout>
     );

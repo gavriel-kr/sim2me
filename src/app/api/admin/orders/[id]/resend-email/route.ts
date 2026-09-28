@@ -29,6 +29,7 @@ export async function POST(
       customerEmail: true,
       customerName: true,
       packageName: true,
+      packageCode: true,
       dataAmount: true,
       validity: true,
       iccid: true,
@@ -56,6 +57,7 @@ export async function POST(
     await sendPostPurchaseEmail(order.customerEmail, {
       customerName: order.customerName || 'Customer',
       planName: order.packageName,
+      phoneNumberPending: order.packageCode.startsWith('pk:'),
       dataGb: order.dataAmount,
       validityDays: order.validity,
       qrCodeUrl: order.qrCodeUrl ?? null,

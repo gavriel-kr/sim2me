@@ -5,7 +5,8 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { requireAdmin } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
-import { purchasePackage, getEsimProfileWithRetry, getPackages } from '@/lib/esimaccess';
+import { describeProduct, placeSupplierOrder, awaitProfile } from '@/lib/fulfillment';
+import { sendRenewalConfirmation } from '@/lib/renewal';
 import { sendPostPurchaseEmail, sendRetrySucceededEmail, sendRetryFailedEmail, toEmailLocale } from '@/lib/email';
 import { checkAndAutoBlockEmail } from '@/lib/fraud';
 import { hash } from 'bcryptjs';
@@ -37,9 +38,8 @@ export async function POST(
     // Refresh supplierCost at retry time (price may have changed; also ensures cost is tracked)
     let retryCost: number | undefined;
     try {
-      const { packageList } = await getPackages();
-      const pkg = packageList?.find((p: { packageCode: string }) => p.packageCode === order.packageCode);
-      if (pkg?.price != null) retryCost = pkg.price / 10000;
+      // Ticket 042: priced by the product's own supplier (eSIMaccess, day pass or PikaSim).
+      retryCost = (await describeProduct(order.packageCode))?.supplierCostUsd;
     } catch {
       // Non-fatal: proceed without refreshing cost
     }
@@ -48,13 +48,13 @@ export async function POST(
        purchasing again paid twice for one sale. Same guard as the customer-facing retry route. */
     let orderNo = order.esimOrderId;
     if (!orderNo) {
-      const purchase = await purchasePackage(order.packageCode, 1);
-      orderNo = purchase.orderNo;
+      const purchase = await placeSupplierOrder(order.packageCode, order.id);
+      orderNo = purchase.supplierOrderNo;
       await prisma.order.update({
         where: { id: order.id },
         data: {
           esimOrderId: orderNo,
-          esimTransactionId: purchase.transactionId,
+          esimTransactionId: purchase.supplierTxnId,
           ...(retryCost != null && { supplierCost: retryCost }),
         },
       });
@@ -67,8 +67,7 @@ export async function POST(
       }
     }
 
-    const profileResult = await getEsimProfileWithRetry(orderNo, 5, 5000);
-    const firstProfile = profileResult?.esimList?.[0];
+    const firstProfile = await awaitProfile(order.packageCode, orderNo);
 
     /* No profile means fulfilment is still in flight, so the order stays `PROCESSING`. */
     await prisma.order.update({
@@ -113,9 +112,16 @@ export async function POST(
       // The buyer's own language, stored on the order at checkout. Orders placed before that column
       // existed read null, which `toEmailLocale` maps to Hebrew — exactly what they got before.
       const emailLocale = toEmailLocale(order.locale);
-      customerEmailSent = await sendPostPurchaseEmail(order.customerEmail, {
+      // Ticket 042: a renewal confirms the kept number instead of resending install details.
+      customerEmailSent = order.packageCode.startsWith('rn:')
+        ? await sendRenewalConfirmation({
+            packageCode: order.packageCode, orderNo: order.orderNo, customerEmail: order.customerEmail,
+            customerName: order.customerName, locale: order.locale, dataAmount: order.dataAmount, validity: order.validity,
+          })
+        : await sendPostPurchaseEmail(order.customerEmail, {
         customerName: order.customerName || 'Customer',
         planName: order.packageName,
+        phoneNumberPending: order.packageCode.startsWith('pk:'),
         dataGb: order.dataAmount,
         validityDays: order.validity,
         qrCodeUrl: firstProfile.qrCodeUrl || null,

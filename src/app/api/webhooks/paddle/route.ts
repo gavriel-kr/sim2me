@@ -11,7 +11,9 @@ export const maxDuration = 60;
 import { NextResponse } from 'next/server';
 import { verifyPaddleWebhook, safeJsonParse } from '@/lib/paddle';
 import { prisma } from '@/lib/prisma';
-import { purchasePackage, getEsimProfileWithRetry, getPackages, formatDataVolume, getBalance } from '@/lib/esimaccess';
+import { getBalance } from '@/lib/esimaccess';
+import { describeProduct, placeSupplierOrder, awaitProfile } from '@/lib/fulfillment';
+import { sendRenewalConfirmation } from '@/lib/renewal';
 import { sendPostPurchaseEmail, sendOrderDelayedEmail, sendAdminOrderNotificationEmail, sendFraudAlertEmail, sendOrderFailedEmail, sendCustomerEmailFailedAlert, toEmailLocale } from '@/lib/email';
 import { autoBlock, checkAndAutoBlockEmail } from '@/lib/fraud';
 import { hash } from 'bcryptjs';
@@ -209,16 +211,16 @@ export async function POST(request: Request) {
   let validityStr = '';
   let supplierCostUsd: number | undefined;
 
+  /* Ticket 042: the same lookup as before for an eSIMaccess package; a day pass or a phone plan is
+     described (and its wholesale cost worked out) by its own supplier's rules. */
   try {
-    const { packageList } = await getPackages();
-    const pkg = packageList?.find((p: { packageCode: string }) => p.packageCode === planId);
-    if (pkg) {
-      packageName = pkg.name || planId;
-      destination = pkg.location || pkg.locationCode || '';
-      dataAmountStr = pkg.volume != null ? formatDataVolume(pkg.volume) : '';
-      validityStr = pkg.duration != null ? `${pkg.duration} days` : '';
-      // Wholesale cost in USD (API returns price in units where $1 = 10000)
-      if (pkg.price != null) supplierCostUsd = pkg.price / 10000;
+    const described = await describeProduct(planId);
+    if (described) {
+      packageName = described.packageName || planId;
+      destination = described.destination;
+      dataAmountStr = described.dataAmount;
+      validityStr = described.validity;
+      supplierCostUsd = described.supplierCostUsd;
     }
   } catch (e) {
     console.warn('[Paddle webhook] Could not resolve package details', e);
@@ -342,9 +344,10 @@ export async function POST(request: Request) {
   }
 
   try {
-    const purchase = await purchasePackage(planId, 1);
-    const orderNo = purchase.orderNo;
-    const esimTxnId = purchase.transactionId;
+    // Ticket 042: eSIMaccess (with `periodNum` for a day pass) or PikaSim, keyed by our order id.
+    const purchase = await placeSupplierOrder(planId, order.id);
+    const orderNo = purchase.supplierOrderNo;
+    const esimTxnId = purchase.supplierTxnId;
 
     await prisma.order.update({
       where: { id: order.id },
@@ -355,8 +358,7 @@ export async function POST(request: Request) {
     });
 
     // Retry up to 5 times with 5s delay — eSIMaccess may take time to provision the profile
-    const profileResult = await getEsimProfileWithRetry(orderNo, 5, 5000);
-    const firstProfile = profileResult?.esimList?.[0];
+    const firstProfile = await awaitProfile(planId, orderNo);
 
     /* Ticket 037. COMPLETED used to be set unconditionally, so an order with no profile in it told the
        customer their eSIM was ready and showed them an empty install panel. The status is now
@@ -410,11 +412,20 @@ export async function POST(request: Request) {
 
     // Send email independently — never fail the order if email fails
     const accountLink = `${baseUrl()}/${emailLocale}/account`;
-    if (firstProfile) {
+    if (firstProfile && planId.startsWith('rn:')) {
+      // Ticket 042: a renewal keeps the eSIM the customer already has — confirm it, no new QR.
+      pending.push(
+        sendRenewalConfirmation({
+          packageCode: planId, orderNo: order.orderNo, customerEmail, customerName: customerName || '',
+          locale: emailLocale, dataAmount: dataAmountStr, validity: validityStr,
+        }).catch(() => {}),
+      );
+    } else if (firstProfile) {
       pending.push(
         sendPostPurchaseEmail(customerEmail, {
           customerName: customerName || 'Customer',
           planName: packageName,
+          phoneNumberPending: planId.startsWith('pk:'),
           dataGb: dataAmountStr,
           validityDays: validityStr,
           qrCodeUrl: firstProfile.qrCodeUrl || null,

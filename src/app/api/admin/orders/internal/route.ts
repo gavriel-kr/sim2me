@@ -20,13 +20,8 @@ import { Prisma } from '@prisma/client';
 import { authOptions } from '@/lib/auth';
 import { requireAdmin } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
-import {
-  getBalance,
-  getEsimProfileWithRetry,
-  getPackages,
-  purchasePackage,
-  formatDataVolume,
-} from '@/lib/esimaccess';
+import { describeProduct, placeSupplierOrder, awaitProfile, supplierBalanceUsd } from '@/lib/fulfillment';
+import { sendRenewalConfirmation } from '@/lib/renewal';
 import { sendPostPurchaseEmail, toEmailLocale } from '@/lib/email';
 import { createAuditLog } from '@/lib/audit';
 import { internalSaleSchema } from '@/lib/validation/schemas';
@@ -111,26 +106,26 @@ export async function POST(request: Request) {
   }
 
   // ── Resolve the package and its real wholesale cost ───────────
-  let pkg;
+  // Ticket 042: also a day pass (`dp:code:days`) or a PikaSim phone plan (`pk:code`). The admin can
+  // sell a plan the site hides; only a code that does not resolve at all is refused.
+  let described;
   try {
-    const { packageList } = await getPackages();
-    pkg = packageList?.find((p) => p.packageCode === packageCode);
+    described = await describeProduct(packageCode);
   } catch (e) {
     return NextResponse.json(
-      { error: `Could not reach eSIMaccess to price this package: ${e instanceof Error ? e.message : String(e)}` },
+      { error: `Could not reach the supplier to price this package: ${e instanceof Error ? e.message : String(e)}` },
       { status: 502 },
     );
   }
-  if (!pkg) {
+  if (!described) {
     return NextResponse.json({ error: `Unknown package code: ${packageCode}` }, { status: 400 });
   }
 
-  // pkg.price is in API units where $1 = 10000. PackageOverride.simCost is deliberately
-  // not used here — it exists for profit modelling, while the balance only responds to
-  // what the supplier actually charges.
-  const supplierCost = (pkg.price ?? 0) / 10000;
+  // What the supplier actually charges. PackageOverride.simCost is deliberately not used here — it
+  // exists for profit modelling, while the balance only responds to the real price.
+  const supplierCost = described.supplierCostUsd ?? 0;
   if (!(supplierCost > 0)) {
-    return NextResponse.json({ error: 'eSIMaccess did not return a price for this package' }, { status: 502 });
+    return NextResponse.json({ error: `${described.supplier} did not return a price for this package` }, { status: 502 });
   }
 
   // ── The floor, enforced server-side ───────────────────────────
@@ -149,12 +144,11 @@ export async function POST(request: Request) {
   // Fails open: a transient balance-API error should not block a legitimate sale, and a
   // real shortfall still surfaces as a clean supplier error on the order below.
   try {
-    const { balance } = await getBalance();
-    const balanceUsd = (balance ?? 0) / 10000;
+    const balanceUsd = await supplierBalanceUsd(packageCode);
     if (balanceUsd < supplierCost) {
       return NextResponse.json(
         {
-          error: `eSIMaccess balance is $${balanceUsd.toFixed(2)}, which is not enough for this package ($${supplierCost.toFixed(2)}). Top up first.`,
+          error: `${described.supplier} balance is $${balanceUsd.toFixed(2)}, which is not enough for this package ($${supplierCost.toFixed(2)}). Top up first.`,
           balance: balanceUsd,
           supplierCost,
         },
@@ -224,10 +218,10 @@ export async function POST(request: Request) {
         totalAmount: priceToCustomer,
         currency: 'USD',
         packageCode,
-        packageName: pkg.name || packageCode,
-        destination: pkg.location || pkg.locationCode || '',
-        dataAmount: pkg.volume != null ? formatDataVolume(pkg.volume) : '',
-        validity: pkg.duration != null ? `${pkg.duration} days` : '',
+        packageName: described.packageName || packageCode,
+        destination: described.destination,
+        dataAmount: described.dataAmount,
+        validity: described.validity,
         supplierCost,
         source: 'ADMIN_INTERNAL',
         idempotencyKey,
@@ -252,16 +246,17 @@ export async function POST(request: Request) {
 
   // ── Buy it, then fetch the profile ────────────────────────────
   try {
-    const purchase = await purchasePackage(packageCode, 1);
+    const purchase = await placeSupplierOrder(packageCode, order.id);
     await prisma.order.update({
       where: { id: order.id },
-      data: { esimOrderId: purchase.orderNo, esimTransactionId: purchase.transactionId },
+      data: { esimOrderId: purchase.supplierOrderNo, esimTransactionId: purchase.supplierTxnId },
     });
 
     let profile;
     try {
-      const result = await getEsimProfileWithRetry(purchase.orderNo, 5, 5000);
-      profile = result?.esimList?.[0];
+      profile = await awaitProfile(packageCode, purchase.supplierOrderNo);
+      // An order the supplier has not produced yet is pending, never "completed" with no eSIM in it.
+      if (!profile) throw new Error('the supplier has not produced the eSIM yet');
     } catch (profileErr) {
       // Money is spent and the batch id is recorded. PROCESSING, not FAILED, so nothing
       // invites a retry that would buy a second eSIM.
@@ -270,7 +265,7 @@ export async function POST(request: Request) {
         where: { id: order.id },
         data: {
           status: 'PROCESSING',
-          errorMessage: `Purchased at eSIMaccess (batch ${purchase.orderNo}) but the profile has not arrived yet: ${msg}`.slice(0, 1000),
+          errorMessage: `Purchased at ${described.supplier} (order ${purchase.supplierOrderNo}) but the profile has not arrived yet: ${msg}`.slice(0, 1000),
         },
       });
       createAuditLog({
@@ -280,7 +275,7 @@ export async function POST(request: Request) {
         targetType: 'Order',
         targetId: order.id,
         details: {
-          orderNo: pending.orderNo, packageCode, packageName: pkg.name,
+          orderNo: pending.orderNo, packageCode, packageName: described.packageName,
           priceToCustomer, supplierCost, customerEmail: customer.email,
           createdCustomer: tempPassword != null, outcome: 'profile_pending',
         },
@@ -309,12 +304,20 @@ export async function POST(request: Request) {
 
     // Ticket 039: awaited, and the outcome is returned so the agent knows if the buyer was told.
     let customerEmailSent = true;
-    if (profile) {
+    if (profile && packageCode.startsWith('rn:')) {
+      // Ticket 042: a renewal confirms the kept number instead of resending install details.
+      customerEmailSent = await sendRenewalConfirmation({
+        packageCode, orderNo: completed.orderNo, customerEmail: customer.email,
+        customerName: customer.name || customerFullName, locale: emailLocale,
+        dataAmount: completed.dataAmount, validity: completed.validity,
+      });
+    } else if (profile) {
       customerEmailSent = await sendPostPurchaseEmail(
         customer.email,
         {
           customerName: customer.name || customerFullName,
           planName: completed.packageName,
+          phoneNumberPending: packageCode.startsWith('pk:'),
           dataGb: completed.dataAmount,
           validityDays: completed.validity,
           qrCodeUrl: profile.qrCodeUrl || null,

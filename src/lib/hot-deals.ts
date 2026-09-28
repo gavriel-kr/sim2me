@@ -60,7 +60,8 @@ export function utcDay(offsetDays = 0): string {
 }
 
 /** Deterministic PRNG (mulberry32) seeded from a string — same day, same deals. */
-function seededRng(seed: string): () => number {
+/** Exported for the phone deals (ticket 042), which pick with the same seeded generator. */
+export function seededRng(seed: string): () => number {
   let h = 1779033703 ^ seed.length;
   for (let i = 0; i < seed.length; i++) {
     h = Math.imul(h ^ seed.charCodeAt(i), 3432918353);
@@ -76,7 +77,7 @@ function seededRng(seed: string): () => number {
   };
 }
 
-interface DealCandidate {
+export interface DealCandidate {
   packageCode: string;
   packageName: string;
   locationCode: string;
@@ -84,13 +85,13 @@ interface DealCandidate {
   simCost: number;
 }
 
-interface ProfitContext {
+export interface ProfitContext {
   percentageFee: number;
   fixedFee: number;
   additionalFees: AdditionalFeeItem[];
 }
 
-function dealNetProfit(candidate: DealCandidate, dealPrice: number, ctx: ProfitContext): number {
+export function dealNetProfit(candidate: DealCandidate, dealPrice: number, ctx: ProfitContext): number {
   const otherFeesTotal = computeOtherFeesTotal(dealPrice, ctx.additionalFees, candidate.packageCode);
   return computeProfit({
     salePrice: dealPrice,
@@ -142,7 +143,7 @@ async function buildCandidatePool(config: HotDealsConfig): Promise<DealCandidate
   return pool;
 }
 
-async function loadProfitContext(): Promise<ProfitContext> {
+export async function loadProfitContext(): Promise<ProfitContext> {
   const [feeSettings, additionalFees] = await Promise.all([
     prisma.feeSettings.findFirst(),
     prisma.additionalFee.findMany(),

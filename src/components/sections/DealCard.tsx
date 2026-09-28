@@ -4,10 +4,11 @@ import { useTranslations, useLocale } from 'next-intl';
 import { createSharedPathnamesNavigation } from 'next-intl/navigation';
 import { routing } from '@/i18n/routing';
 import { formatPrice, localizeDataDisplay } from '@/lib/utils';
-import { localizedCountryName, volumeToDisplay, type HotDeal } from '@/lib/deals';
-import { useAddDeal } from '@/hooks/useAddDeal';
+import { dealHref, volumeToDisplay, type HotDeal } from '@/lib/deals';
+import { useAddDeal, useDealTitle } from '@/hooks/useAddDeal';
+import { usePhonePlanLabels } from '@/components/sections/PhonePlanCard';
 import { Button } from '@/components/ui/button';
-import { Flame, ShoppingCart } from 'lucide-react';
+import { Flame, ShoppingCart, Phone, Smartphone } from 'lucide-react';
 
 /**
  * One hot deal, as sold on the homepage and in the hero.
@@ -21,12 +22,17 @@ const { Link: IntlLink } = createSharedPathnamesNavigation(routing);
 export function DealCard({ deal }: { deal: HotDeal }) {
   const t = useTranslations('home');
   const tPlan = useTranslations('plan');
+  const tP = useTranslations('phonePlans');
   const locale = useLocale();
   const addDeal = useAddDeal();
+  const dealTitle = useDealTitle();
+  const phoneLabels = usePhonePlanLabels();
 
-  const countryName = localizedCountryName(deal.locationCode, deal.name, locale);
-  const slug = deal.locationCode.toLowerCase();
+  // Ticket 042: a deal is either an eSIM (data only) or a plan with a phone number, and says which.
+  const phone = deal.phone;
+  const countryName = dealTitle(deal);
   const dataDisplay = localizeDataDisplay(volumeToDisplay(deal.volume).dataDisplay, locale);
+  const phoneShape = phone ? { region: phone.region, dialCode: phone.dialCode, numberCountry: phone.numberCountry, voiceMinutes: phone.voiceMinutes } : null;
 
   return (
     <div className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-amber-200/70 bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-amber-900/10">
@@ -51,10 +57,24 @@ export function DealCard({ deal }: { deal: HotDeal }) {
           <div className="min-w-0">
             <p className="truncate font-bold text-foreground">{countryName}</p>
             <p className="text-sm text-muted-foreground">
-              {dataDisplay} · {deal.duration} {tPlan('days')}
+              {phoneShape && phone
+                ? `${phoneLabels.minutesShort(phoneShape)} · ${phone.dataGb}GB · ${tP('days', { days: deal.duration })}`
+                : `${dataDisplay} · ${deal.duration} ${tPlan('days')}`}
             </p>
           </div>
         </div>
+
+        {phoneShape ? (
+          <span className="mt-3 inline-flex w-fit items-center gap-1.5 rounded-full bg-sky-100 px-2.5 py-1 text-xs font-semibold text-sky-800">
+            <Phone className="h-3.5 w-3.5" aria-hidden />
+            {phoneLabels.number(phoneShape)}
+          </span>
+        ) : (
+          <span className="mt-3 inline-flex w-fit items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-700">
+            <Smartphone className="h-3.5 w-3.5" aria-hidden />
+            {t('dealEsimOnly')}
+          </span>
+        )}
 
         <div className="mt-4 flex items-baseline gap-2.5">
           <span className="text-2xl font-extrabold text-emerald-600">
@@ -75,13 +95,17 @@ export function DealCard({ deal }: { deal: HotDeal }) {
         */}
         <div className="mt-auto pt-4">
           <IntlLink
-            href={`/destinations/${slug}`}
+            href={dealHref(deal)}
             className="block text-center text-xs font-semibold text-emerald-700 underline-offset-2 hover:underline"
           >
-            {t('hotDealsViewAll', { destination: countryName })}
+            {phone ? tP('morePlans') : t('hotDealsViewAll', { destination: countryName })}
           </IntlLink>
 
-          <Button className="mt-2 w-full gap-1.5" onClick={() => addDeal(deal)}>
+          {/* Phone deals take the sky-teal button of the phone cards (ticket 042); eSIM deals keep theirs. */}
+          <Button
+            className={`mt-2 w-full gap-1.5 ${phone ? 'bg-gradient-to-r from-sky-600 to-teal-500 text-white hover:from-sky-700 hover:to-teal-600' : ''}`}
+            onClick={() => addDeal(deal)}
+          >
             <ShoppingCart className="h-4 w-4" />
             {t('hotDealsAddToCart')}
           </Button>

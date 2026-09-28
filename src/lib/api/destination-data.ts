@@ -14,6 +14,10 @@ import { cache } from 'react';
 import { headers } from 'next/headers';
 import { translatePlanName } from '@/lib/translate-plan-name';
 import { getTodayDealsForLocation } from '@/lib/hot-deals';
+import { getPhonePlans } from '@/lib/phone-catalog';
+import { phonePlansForDestination, toPublicPhonePlan, type PhonePlan } from '@/lib/phone-plans';
+import type { UnlimitedOffer } from '@/lib/unlimited';
+import { applyPhoneDeals, getTodayPhoneDeals } from '@/lib/phone-deals';
 
 const REGION_TRANSLATIONS: Record<string, Record<string, string>> = {
   he: {
@@ -106,7 +110,15 @@ export type PlanPayload = {
 };
 
 export type PackagesFetchResult =
-  | { status: 'ok'; destination: DestinationPayload; plans: PlanPayload[] }
+  | {
+      status: 'ok';
+      destination: DestinationPayload;
+      plans: PlanPayload[];
+      /** Ticket 042 — the day pass sold by the number of days. Null when the destination has none. */
+      unlimited: UnlimitedOffer | null;
+      /** Ticket 042 — PikaSim plans with a phone number. Empty hides the phone tab. */
+      phonePlans: PhonePlan[];
+    }
   | { status: 'empty' }
   | { status: 'error' };
 
@@ -237,7 +249,14 @@ export const getDestinationData = cache(async function getDestinationData(slug: 
       fromCurrency: 'USD',
     };
 
-    return { status: 'ok', destination, plans };
+    // A phone catalogue that is down must not take the destination page down with it.
+    const phonePlans = applyPhoneDeals(
+      phonePlansForDestination(await getPhonePlans().catch(() => []), isoCode).map(toPublicPhonePlan),
+      await getTodayPhoneDeals(),
+    );
+    const unlimited = (data.unlimited ?? null) as UnlimitedOffer | null;
+
+    return { status: 'ok', destination, plans, unlimited, phonePlans };
   } catch {
     return { status: 'error' };
   }

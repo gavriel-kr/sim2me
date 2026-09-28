@@ -18,14 +18,58 @@ import { usePaddle } from '@/components/paddle/PaddleScript';
 import { TurnstileWidget, type TurnstileWidgetRef } from '@/components/ui/TurnstileWidget';
 import { planToGaItem, trackAddPaymentInfo, trackBeginCheckout } from '@/lib/analytics';
 import { CharacterFigure } from '@/components/brand/CharacterFigure';
+import { PhoneConditions } from '@/components/sections/PhoneConditions';
+import { countryName } from '@/components/sections/PhonePlanCard';
+import type { Plan } from '@/types';
 
 const { Link: IntlLink } = createSharedPathnamesNavigation(routing);
 
 type Step = 'cart' | 'details';
 
+/*
+  Ticket 042. How a cart line reads. A plain eSIMaccess package keeps its old wording exactly; a day
+  pass and a phone plan say what they are, because "Unlimited / 7 days · Network 4G" would hide the
+  daily allowance and a phone plan's number is the whole point of it.
+*/
+function usePlanLines() {
+  const lineLocale = useLocale();
+  const tPlan = useTranslations('plan');
+  const tU = useTranslations('unlimited');
+  const tP = useTranslations('phonePlans');
+  return (plan: Plan): { main: string; sub: string } => {
+    if (plan.kind === 'daypass') {
+      return {
+        main: tU('cartLine', { days: tU('days', { days: plan.days }) }),
+        sub: `${tU('cartFairUse', { gb: plan.fairUse?.dailyGb ?? 2 })} · ${tU('dataOnly')}`,
+      };
+    }
+    if (plan.kind === 'phone' && plan.phone?.renewalOf) {
+      const number = plan.phone.renewalOf.phoneNumber;
+      return {
+        main: number ? tP('renewCartLine', { number: `‎${number}` }) : tP('renewCartLineNoNumber'),
+        sub: tP('renewCartSub', { data: tP('data', { gb: plan.dataAmount / 1024 }), days: tP('days', { days: plan.days }) }),
+      };
+    }
+    if (plan.kind === 'phone' && plan.phone) {
+      const p = plan.phone;
+      const number =
+        p.region === 'us' ? tP('numberUs') : p.region === 'europe' ? tP('numberEurope') : p.region === 'global' ? tP('numberGlobal') : tP('numberLocal', { dial: `‎${p.dialCode}`, country: countryName(p.numberCountry, lineLocale) });
+      const minutes = p.voiceMinutes < 0 ? (p.region === 'europe' ? tP('minutesUnlimitedEurope') : tP('minutesUnlimited')) : tP('minutes', { count: p.voiceMinutes });
+      const sms = p.sms < 0 ? tP('smsUnlimited') : tP('sms', { count: p.sms });
+      return {
+        main: `${number} · ${tP('data', { gb: plan.dataAmount / 1024 })} · ${tP('days', { days: plan.days })}`,
+        sub: `${minutes} · ${sms}`,
+      };
+    }
+    return {
+      main: `${plan.dataDisplay} / ${plan.days} ${tPlan('days')}`,
+      sub: `${tPlan('network')}: ${plan.networkType} · ${tPlan('tethering')}: ${plan.tethering ? tPlan('yes') : tPlan('no')} · ${tPlan('topUps')}: ${plan.topUps ? tPlan('available') : tPlan('no')}`,
+    };
+  };
+}
+
 export function CheckoutClient() {
   const t = useTranslations('checkout');
-  const tPlan = useTranslations('plan');
   const router = useRouter();
   const locale = useLocale();
   const items = useCartStore((s) => s.items);
@@ -34,6 +78,10 @@ export function CheckoutClient() {
   const removeItem = useCartStore((s) => s.removeItem);
   const setTravelerInfo = useCartStore((s) => s.setTravelerInfo);
   const { ready: paddleReady, openCheckout, closeCheckout } = usePaddle();
+  const planLines = usePlanLines();
+  const tU = useTranslations('unlimited');
+  const phoneItem = items.find((i) => i.plan.kind === 'phone');
+  const dayPassItem = items.find((i) => i.plan.kind === 'daypass');
 
   const MIN_PURCHASE = 1.20;
   const belowMinimum = total < MIN_PURCHASE;
@@ -138,6 +186,10 @@ export function CheckoutClient() {
       }
 
       if (!res.ok) {
+        if (checkout.error === 'NEW_PRODUCTS_LOCKED') {
+          setPaymentError(t('newProductsLocked'));
+          return;
+        }
         const detail = checkout.details ? ` (${checkout.details})` : '';
         const msg = checkout.error || t('genericError');
         setPaymentError(msg + detail);
@@ -220,16 +272,8 @@ export function CheckoutClient() {
                   >
                     <div>
                       <p className="font-medium">{item.destinationName}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {item.plan.dataDisplay} / {item.plan.days} {tPlan('days')}
-                      </p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {tPlan('network')}: {item.plan.networkType}
-                        {' · '}
-                        {tPlan('tethering')}: {item.plan.tethering ? tPlan('yes') : tPlan('no')}
-                        {' · '}
-                        {tPlan('topUps')}: {item.plan.topUps ? tPlan('available') : tPlan('no')}
-                      </p>
+                      <p className="text-sm text-muted-foreground">{planLines(item.plan).main}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">{planLines(item.plan).sub}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="font-medium">
@@ -329,6 +373,30 @@ export function CheckoutClient() {
                     </div>
                   </div>
 
+                  {/* Ticket 042. What a phone plan or a day pass involves, said before the consent box
+                      rather than after the payment. */}
+                  {phoneItem && phoneItem.plan.phone?.renewalOf && (
+                    <div className="rounded-lg border border-sky-200 bg-sky-50/60 px-3 py-3 text-sm text-gray-700">
+                      <span className="font-semibold text-gray-800">{t('renewTermsIntro')}</span> {t('renewTerms')}
+                    </div>
+                  )}
+                  {phoneItem && !phoneItem.plan.phone?.renewalOf && (
+                    <div className="rounded-lg border border-sky-200 bg-sky-50/60 px-3 py-3">
+                      <p className="mb-2 text-sm font-semibold text-gray-800">{t('phoneTermsIntro')}</p>
+                      <PhoneConditions
+                        includeEurope={phoneItem.plan.phone?.region === 'europe'}
+                        includeRenewable={phoneItem.plan.phone?.region === 'us' || phoneItem.plan.phone?.region === 'global'}
+                        includeNotRenewable={phoneItem.plan.phone?.region === 'europe' || phoneItem.plan.phone?.region === 'local'}
+                      />
+                    </div>
+                  )}
+                  {dayPassItem && (
+                    <div className="rounded-lg border border-emerald-200 bg-emerald-50/60 px-3 py-3 text-sm text-gray-700">
+                      <span className="font-semibold text-gray-800">{t('unlimitedTermsIntro')}</span>{' '}
+                      {tU('fairUseNoSpeed', { gb: dayPassItem.plan.fairUse?.dailyGb ?? 2 })} {tU('dataOnlyHint')}
+                    </div>
+                  )}
+
                   {/* Ticket 037. Express consent to immediate delivery is what makes the published refund
                       policy enforceable, so it is captured here and re-checked on the server. */}
                   <div className="rounded-lg border border-border bg-muted/40 px-3 py-3">
@@ -407,15 +475,9 @@ export function CheckoutClient() {
                 >
                   <div className="min-w-0">
                     <p>
-                      {item.destinationName} – {item.plan.dataDisplay} / {item.plan.days} {tPlan('days')}
+                      {item.destinationName} – {planLines(item.plan).main}
                     </p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {tPlan('network')}: {item.plan.networkType}
-                      {' · '}
-                      {tPlan('tethering')}: {item.plan.tethering ? tPlan('yes') : tPlan('no')}
-                      {' · '}
-                      {tPlan('topUps')}: {item.plan.topUps ? tPlan('available') : tPlan('no')}
-                    </p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">{planLines(item.plan).sub}</p>
                   </div>
                   <span className="shrink-0">
                     {formatPrice(item.plan.price * item.quantity, item.plan.currency)}

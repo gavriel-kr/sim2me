@@ -22,6 +22,8 @@ type StaticPage = {
 const staticPages: StaticPage[] = [
   { path: '', changeFrequency: 'daily', priority: 1 },
   { path: '/destinations', changeFrequency: 'daily', priority: 0.95 },
+  // Ticket 042
+  { path: '/phone-plans', changeFrequency: 'weekly', priority: 0.9 },
   { path: '/articles', changeFrequency: 'weekly', priority: 0.9 },
   { path: '/how-it-works', changeFrequency: 'monthly', priority: 0.85 },
   { path: '/compatible-devices', changeFrequency: 'monthly', priority: 0.8 },

@@ -6,6 +6,7 @@ import { signOut } from 'next-auth/react';
 import {
   LayoutDashboard, FileText, Settings, Users, UserCircle, ShoppingCart,
   Globe, Search, LogOut, Package, BarChart3, Menu, X, DollarSign, MessageSquare, MenuSquare, MapPin, ClipboardList, Shield, Ban, Flame,
+  Phone, Infinity as InfinityIcon,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -20,6 +21,9 @@ const navItems = [
   { href: '/admin/contact', label: 'Contact Submissions', icon: MessageSquare },
   { href: '/admin/accounts', label: 'Accounts', icon: UserCircle },
   { href: '/admin/packages', label: 'eSIM Packages', icon: Package },
+  // Ticket 042
+  { href: '/admin/day-passes', label: 'Unlimited (day passes)', icon: InfinityIcon },
+  { href: '/admin/phone-plans', label: 'Phone plans (PikaSim)', icon: Phone },
   { href: '/admin/packages/fees', label: 'Fees / Charges', icon: DollarSign },
   { href: '/admin/hot-deals', label: 'Hot Deals', icon: Flame },
   { href: '/admin/destinations', label: 'Homepage Destinations', icon: MapPin },

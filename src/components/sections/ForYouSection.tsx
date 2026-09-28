@@ -196,7 +196,8 @@ export function ForYouSection() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signal?.slug, tiers.length]);
 
-  if (!signal || tiers.length < 3) return null;
+  // Ticket 042: with the week tier retired a shelf can hold two, which is still worth showing.
+  if (!signal || tiers.length < 2) return null;
 
   const titleKey = signal.mode === 'recent' ? 'forYouRecentTitle' : signal.mode === 'order' ? 'forYouOrderTitle' : 'forYouDefaultTitle';
   const subtitleKey = signal.mode === 'recent' ? 'forYouRecentSubtitle' : signal.mode === 'order' ? 'forYouOrderSubtitle' : 'forYouDefaultSubtitle';

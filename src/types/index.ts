@@ -45,6 +45,25 @@ export interface Plan {
    * be filled in with the same value as `price`.
    */
   originalPrice?: number | null;
+  /**
+   * Ticket 042. Absent on every eSIMaccess package, which is how all existing code keeps reading a
+   * plan exactly as before. `daypass` = the unlimited tab, bought by the number of days; `phone` = a
+   * PikaSim plan that comes with a phone number.
+   */
+  kind?: 'daypass' | 'phone';
+  /** Day pass only: high-speed data per day and the speed after it (0 when the supplier is silent). */
+  fairUse?: { dailyGb: number; fupKbps: number };
+  /** Phone plan only. -1 minutes or SMS means unlimited. */
+  phone?: {
+    region: 'us' | 'europe' | 'global' | 'local';
+    numberCountry: string;
+    dialCode: string;
+    voiceMinutes: number;
+    sms: number;
+    coverageCount: number;
+    /** Set on a renewal: time added to an existing eSIM, which keeps its number. */
+    renewalOf?: { baseOrderId: string; phoneNumber: string | null };
+  };
 }
 
 export interface FAQ {

@@ -9,6 +9,7 @@ import { applyOrderFilters, type OrderFiltersState, ORDER_STATUSES } from './ord
 import { OrdersFilters } from './OrdersFilters';
 import { exportOrdersToExcel, parseOrdersExcelFile } from './ordersExcel';
 import { ConfirmDialog } from './ConfirmDialog';
+import { RenewPhoneButton } from './RenewPhoneButton';
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -18,6 +19,8 @@ interface DbOrder {
   customerName: string;
   customerEmail: string;
   packageName: string;
+  /** Ticket 042: `pk:` = PikaSim phone plan, `dp:` = day pass, anything else = eSIMaccess package. */
+  packageCode?: string;
   destination: string;
   totalAmount: number;
   currency: string;
@@ -42,6 +45,7 @@ interface DisplayOrder {
   customerName: string;
   customerEmail: string;
   packageName: string;
+  packageCode?: string;
   destination: string;
   totalAmount: number;
   currency: string;
@@ -64,6 +68,9 @@ interface DisplayOrder {
 }
 
 interface EsimStatusData {
+  /** Ticket 042: set for PikaSim orders. `phoneNumber` stays null until the eSIM is installed. */
+  supplier?: string;
+  phoneNumber?: string | null;
   status?: string | null;
   esimStatus?: string | null;
   smdpStatus?: string | null;
@@ -205,6 +212,17 @@ function EsimStatusPanel({ data, order }: { data: EsimStatusData; order: Display
 
   return (
     <div className="space-y-2">
+      {data.supplier === 'PikaSim' && (
+        <div className="rounded-md border border-sky-200 bg-sky-50 px-2.5 py-1.5 text-xs">
+          <span className="font-semibold text-sky-800">Phone number: </span>
+          {data.phoneNumber ? (
+            <span dir="ltr" className="font-mono font-semibold text-gray-900">{data.phoneNumber}</span>
+          ) : (
+            <span className="text-gray-600">not assigned yet (appears after the customer installs the eSIM)</span>
+          )}
+          {order.packageCode?.startsWith('pk:') && order.status === 'COMPLETED' && <RenewPhoneButton orderId={order.id} />}
+        </div>
+      )}
       {/* Status row */}
       {(data.esimStatus || data.status) && (
         <div className="flex flex-wrap items-center gap-2">
@@ -878,7 +896,18 @@ export function AdminOrdersClient({
                     <p className="truncate text-xs text-gray-500">{order.customerEmail || '—'}</p>
                   </div>
                   <div className="hidden min-w-0 flex-1 md:block">
-                    <p className="truncate text-sm text-gray-700">{order.packageName || '—'}</p>
+                    <p className="truncate text-sm text-gray-700">
+                      {order.packageCode?.startsWith('pk:') && (
+                        <span className="me-1.5 rounded bg-sky-100 px-1.5 py-0.5 text-[10px] font-bold text-sky-700">PikaSim · phone</span>
+                      )}
+                      {order.packageCode?.startsWith('rn:') && (
+                        <span className="me-1.5 rounded bg-sky-100 px-1.5 py-0.5 text-[10px] font-bold text-sky-700">PikaSim · renewal</span>
+                      )}
+                      {order.packageCode?.startsWith('dp:') && (
+                        <span className="me-1.5 rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">Unlimited</span>
+                      )}
+                      {order.packageName || '—'}
+                    </p>
                     <p className="text-xs text-gray-400">{order.destination || '—'}</p>
                   </div>
                   <span className="font-semibold text-gray-800">

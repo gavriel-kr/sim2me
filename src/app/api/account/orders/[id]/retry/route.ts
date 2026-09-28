@@ -3,7 +3,8 @@ export const maxDuration = 60;
 import { NextResponse } from 'next/server';
 import { getSessionForRequest, isCustomerSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
-import { purchasePackage, getEsimProfileWithRetry } from '@/lib/esimaccess';
+import { placeSupplierOrder, awaitProfile } from '@/lib/fulfillment';
+import { sendRenewalConfirmation } from '@/lib/renewal';
 import { sendPostPurchaseEmail, sendRetrySucceededEmail, sendRetryFailedEmail, sendCustomerEmailFailedAlert, toEmailLocale } from '@/lib/email';
 import { checkAndAutoBlockEmail } from '@/lib/fraud';
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
@@ -59,11 +60,12 @@ export async function POST(
        we fetch it. Calling `purchasePackage` again here paid the supplier twice for one sale. */
     let orderNo = order.esimOrderId;
     if (!orderNo) {
-      const purchase = await purchasePackage(order.packageCode, 1);
-      orderNo = purchase.orderNo;
+      // Ticket 042: the product's own supplier, keyed by our order id.
+      const purchase = await placeSupplierOrder(order.packageCode, order.id);
+      orderNo = purchase.supplierOrderNo;
       await prisma.order.update({
         where: { id: order.id },
-        data: { esimOrderId: orderNo, esimTransactionId: purchase.transactionId },
+        data: { esimOrderId: orderNo, esimTransactionId: purchase.supplierTxnId },
       });
     } else {
       console.log('[Order retry] Supplier order already exists, fetching profile only', {
@@ -71,8 +73,7 @@ export async function POST(
       });
     }
 
-    const profileResult = await getEsimProfileWithRetry(orderNo, 5, 5000);
-    const firstProfile = profileResult?.esimList?.[0];
+    const firstProfile = await awaitProfile(order.packageCode, orderNo);
 
     /* No profile yet means still pending, not complete — same rule as the webhook. */
     await prisma.order.update({
@@ -99,9 +100,16 @@ export async function POST(
     let customerEmailSent = true;
     {
       const emailLocale = toEmailLocale(order.locale);
-      customerEmailSent = await sendPostPurchaseEmail(order.customerEmail, {
+      // Ticket 042: a renewal confirms the kept number instead of resending install details.
+      customerEmailSent = order.packageCode.startsWith('rn:')
+        ? await sendRenewalConfirmation({
+            packageCode: order.packageCode, orderNo: order.orderNo, customerEmail: order.customerEmail,
+            customerName: order.customerName, locale: order.locale, dataAmount: order.dataAmount, validity: order.validity,
+          })
+        : await sendPostPurchaseEmail(order.customerEmail, {
         customerName: order.customerName || 'Customer',
         planName: order.packageName,
+        phoneNumberPending: order.packageCode.startsWith('pk:'),
         dataGb: order.dataAmount,
         validityDays: order.validity,
         qrCodeUrl: firstProfile.qrCodeUrl || null,

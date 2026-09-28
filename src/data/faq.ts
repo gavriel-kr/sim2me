@@ -73,4 +73,10 @@ export const mockFaqs: FAQ[] = [
   },
   { id: '18', questionKey: 'noServiceBeforeFlight', answerKey: 'answerNoServiceBeforeFlight', category: 'general', group: 'troubleshootingTitle' },
   { id: '19', questionKey: 'dataRunsOut', answerKey: 'answerDataRunsOut', category: 'coverage', group: 'dataPlansTitle' },
+
+  /* Ticket 042 — the two new products: the unlimited tab and plans with a phone number. */
+  { id: '20', questionKey: 'unlimitedHowWorks', answerKey: 'answerUnlimitedHowWorks', category: 'coverage', group: 'dataPlansTitle' },
+  { id: '21', questionKey: 'phoneWhatIs', answerKey: 'answerPhoneWhatIs', category: 'general', group: 'dataPlansTitle' },
+  { id: '22', questionKey: 'phoneWhenNumber', answerKey: 'answerPhoneWhenNumber', category: 'general', group: 'dataPlansTitle' },
+  { id: '23', questionKey: 'renewHow', answerKey: 'answerRenewHow', category: 'general', group: 'dataPlansTitle' },
 ];

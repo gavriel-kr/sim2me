@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { PhoneInput } from '@/components/PhoneInput';
 import { CharacterFigure } from '@/components/brand/CharacterFigure';
 import { brandConfig } from '@/config/brand';
+import { RenewNumberPanel } from '@/components/account/RenewNumberPanel';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   User, ShoppingBag, Wifi, Settings, LogOut, Phone, Mail,
@@ -45,6 +46,8 @@ type Profile = {
 type Order = {
   id: string;
   packageName: string;
+  /** Ticket 042: `pk:` phone plan, `rn:` renewal, `dp:` day pass, anything else eSIMaccess. */
+  packageCode?: string;
   destination: string | null;
   dataAmount: string | null;
   validity: string | null;
@@ -140,15 +143,19 @@ function resolveStatus(esimStatus: string | null | undefined, smdpStatus: string
   return (esimStatus || '').toUpperCase() || null;
 }
 
-function UsageBar({ orderId, iccid, onStatusChange }: { orderId: string; iccid: string; onStatusChange?: (key: string | null) => void }) {
+function UsageBar({ orderId, iccid, onStatusChange, canRenew }: { orderId: string; iccid: string; onStatusChange?: (key: string | null) => void; canRenew?: boolean }) {
   const [usage, setUsage] = useState<UsageData | null | 'loading' | 'unavailable'>('loading');
   const [now, setNow] = useState(0);
+  // Ticket 042: a phone plan's number, read live from PikaSim by the usage endpoint.
+  const tPhone = useTranslations('phonePlans');
+  const [phone, setPhone] = useState<{ plan: boolean; number: string | null; renewable: boolean }>({ plan: false, number: null, renewable: false });
 
   useEffect(() => {
     setNow(Date.now());
     fetch(`/api/account/esims/usage?iccid=${encodeURIComponent(iccid)}&orderId=${encodeURIComponent(orderId)}`)
       .then((r) => r.ok ? r.json() : null)
       .then((data) => {
+        if (data?.phonePlan) setPhone({ plan: true, number: data.phoneNumber ?? null, renewable: Boolean(data.renewable) });
         if (data?.usage) {
           setUsage(data.usage);
           onStatusChange?.(resolveStatus(data.usage.esimStatus, data.usage.smdpStatus));
@@ -160,8 +167,27 @@ function UsageBar({ orderId, iccid, onStatusChange }: { orderId: string; iccid: 
       .catch(() => { setUsage('unavailable'); onStatusChange?.(null); });
   }, [iccid, orderId, onStatusChange]);
 
+  const phoneBox = phone.plan ? (
+    <div className="rounded-lg border border-sky-200 bg-sky-50/70 px-3 py-2">
+      {phone.number ? (
+        <p className="text-sm">
+          <span className="text-sky-800">{tPhone('yourNumber')}:</span>{' '}
+          <span dir="ltr" className="font-bold tracking-wide text-gray-900">{phone.number}</span>
+        </p>
+      ) : (
+        <>
+          <p className="text-sm font-semibold text-sky-800">{tPhone('numberPending')}</p>
+          <p className="text-xs text-muted-foreground">{tPhone('numberPendingHint')}</p>
+        </>
+      )}
+      {/* Ticket 042: renewing keeps the number — offered on the original sale, not on renewal records. */}
+      {canRenew && phone.renewable && <RenewNumberPanel orderId={orderId} />}
+      {canRenew && !phone.renewable && <p className="mt-1 text-xs text-muted-foreground">{tPhone('renewNotPossible')}</p>}
+    </div>
+  ) : null;
+
   if (usage === 'loading') return <p className="text-xs text-muted-foreground animate-pulse">Loading status…</p>;
-  if (usage === 'unavailable' || !usage) return (
+  if (usage === 'unavailable' || !usage) return phoneBox ?? (
     <p className="text-xs text-muted-foreground">Status unavailable</p>
   );
 
@@ -173,6 +199,7 @@ function UsageBar({ orderId, iccid, onStatusChange }: { orderId: string; iccid: 
 
   return (
     <div className="space-y-2">
+      {phoneBox}
       {/* Status + time row */}
       <div className="flex flex-wrap items-center gap-2">
         {statusInfo && (
@@ -741,9 +768,10 @@ export function AccountClient() {
 
                               {/* COMPLETED: QR + install details */}
                               {isCompleted && order.iccid && (
-                                <UsageBar orderId={order.id} iccid={order.iccid} />
+                                <UsageBar orderId={order.id} iccid={order.iccid} canRenew={order.packageCode?.startsWith('pk:')} />
                               )}
-                              {isCompleted && (
+                              {/* Ticket 042: a renewal adds time to an eSIM already installed — nothing to install again. */}
+                              {isCompleted && !order.packageCode?.startsWith('rn:') && (
                                 <div className="flex flex-col sm:flex-row gap-4">
                                   {order.qrCodeUrl ? (
                                     <div className="flex-shrink-0">
@@ -913,6 +941,7 @@ export function AccountClient() {
                             <UsageBar
                               orderId={order.id}
                               iccid={order.iccid}
+                              canRenew={order.packageCode?.startsWith('pk:')}
                               onStatusChange={(key) => handleStatusChange(order.id, key)}
                             />
                           )}

@@ -15,12 +15,17 @@ import { getActiveDealPrice } from '@/lib/hot-deals';
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
 import { verifyTurnstile } from '@/lib/turnstile';
 import { sanitizeDestinationSlug } from '@/lib/package-display';
+import { parseProductId } from '@/lib/product-id';
+import { describeProduct } from '@/lib/fulfillment';
+import { customerOwnsRenewal } from '@/lib/renewal';
 import { z } from 'zod';
 
 const bodySchema = z.object({
   items: z.array(z.object({
     planId: z.string().min(1).max(128),
-    quantity: z.number().int().min(1).max(10),
+    // One per order: the webhook delivers a single eSIM, so a larger quantity would charge for eSIMs
+    // that never arrive. The cart already caps it; this is the control.
+    quantity: z.literal(1),
     unitPrice: z.number().min(0),
     planName: z.string().max(300),
     destinationName: z.string().max(200).optional(),
@@ -64,6 +69,16 @@ export async function POST(request: Request) {
       );
     }
 
+    /*
+      Ticket 042. Day passes and phone plans are open for sale. `DISABLE_NEW_PRODUCTS_CHECKOUT=1` is
+      the emergency brake: it stops new payments for those two kinds only (a supplier outage, a
+      pricing mistake) while regular eSIMs keep selling. Set it in Vercel and redeploy to apply.
+    */
+    const productKind = parseProductId(items[0].planId).kind;
+    if (productKind !== 'esim' && process.env.DISABLE_NEW_PRODUCTS_CHECKOUT === '1') {
+      return NextResponse.json({ error: 'NEW_PRODUCTS_LOCKED' }, { status: 403 });
+    }
+
     const apiKey = process.env.PADDLE_API_KEY?.trim();
     const item = items[0];
     const planId = item.planId;
@@ -88,6 +103,15 @@ export async function POST(request: Request) {
     if (!turnstileOk) return NextResponse.json({ error: 'Security check failed. Please refresh and try again.' }, { status: 400 });
 
     const userId = isCustomerSession(session) ? session.user.id : null;
+
+    /* Ticket 042. A renewal adds time to one customer's number, so only that customer, signed in,
+       may pay for it. */
+    if (productKind === 'renewal') {
+      const owns = isCustomerSession(session)
+        ? await customerOwnsRenewal(planId, { id: session.user.id, email: session.user.email ?? '' })
+        : false;
+      if (!owns) return NextResponse.json({ error: 'Please sign in to the account that owns this number.' }, { status: 403 });
+    }
 
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') || 'https://www.sim2me.net';
     const successUrl = `${baseUrl}/success`;
@@ -122,7 +146,17 @@ export async function POST(request: Request) {
       }
 
       let serverPrice: number;
-      if (override?.customPrice != null) {
+      if (productKind !== 'esim') {
+        // Computed prices (ticket 042): the day-pass table and the phone-plan rule, with any admin override.
+        const described = await describeProduct(planId).catch(() => null);
+        if (!described || !described.purchasable || described.serverPriceUsd == null) {
+          return NextResponse.json(
+            { error: 'Plan not available for checkout', planId },
+            { status: 400 }
+          );
+        }
+        serverPrice = described.serverPriceUsd;
+      } else if (override?.customPrice != null) {
         serverPrice = Number(override.customPrice);
       } else {
         const pkg = cached?.packageList?.find((p: { packageCode: string; retailPrice?: number; price: number }) => p.packageCode === planId);

@@ -9,6 +9,7 @@ import { PaddleKeyBanner } from './PaddleKeyBanner';
 import { DashboardCubicks } from './DashboardCubicks';
 import { paddleFeeAmount } from '@/lib/profit';
 import { getBalance } from '@/lib/esimaccess';
+import { getPikaAccount, isPikaSimConfigured } from '@/lib/pikasim';
 
 export default async function AdminDashboard() {
   const session = await getServerSession(authOptions);
@@ -55,14 +56,17 @@ export default async function AdminDashboard() {
   const esimAdditionalCost = esimAdditionalCostSetting ? parseFloat(esimAdditionalCostSetting.value) || 0 : 0;
   const esimCost = Number(allEsimCostAgg._sum.supplierCost || 0) + esimAdditionalCost;
   const profit = revenue - esimCost - feeCost;
-  const [completedCount, missingCostCount, missingCredsCount, balanceData] = await Promise.all([
+  const [completedCount, missingCostCount, missingCredsCount, balanceData, pikaAccount] = await Promise.all([
     prisma.order.count({ where: { status: 'COMPLETED', paddleTransactionId: { not: null } } }),
     prisma.order.count({ where: { esimOrderId: { not: null }, supplierCost: null } }),
     prisma.order.count({ where: { status: 'COMPLETED', iccid: { not: null }, OR: [{ smdpAddress: null }, { activationCode: null }] } }),
     getBalance().catch(() => null),
+    // Ticket 042: the PikaSim wallet pays for phone plans and renewals. Cents, $1 = 100.
+    isPikaSimConfigured() ? getPikaAccount().catch(() => null) : Promise.resolve(null),
   ]);
 
   const esimAccessBalance = balanceData ? (balanceData.balance ?? 0) / 10000 : null;
+  const pikaSimBalance = pikaAccount ? (pikaAccount.balance ?? 0) / 100 : null;
 
   const stats = [
     { label: 'Total Orders', value: orderCount, iconName: 'ShoppingCart' as const, color: 'bg-blue-100 text-blue-600' },
@@ -86,15 +90,30 @@ export default async function AdminDashboard() {
 
       <DashboardCubicks stats={stats} />
 
-      {esimAccessBalance !== null && (
-        <div className="mt-3 flex items-center gap-2 text-sm">
-          <span className="text-gray-500">eSIMaccess balance:</span>
-          <Link
-            href="/admin/esimaccess-orders"
-            className={`font-semibold underline-offset-2 hover:underline ${esimAccessBalance < 10 ? 'text-red-600' : 'text-emerald-600'}`}
-          >
-            ${esimAccessBalance.toFixed(2)}
-          </Link>
+      {(esimAccessBalance !== null || pikaSimBalance !== null) && (
+        <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-1 text-sm">
+          {esimAccessBalance !== null && (
+            <span className="flex items-center gap-2">
+              <span className="text-gray-500">eSIMaccess balance:</span>
+              <Link
+                href="/admin/esimaccess-orders"
+                className={`font-semibold underline-offset-2 hover:underline ${esimAccessBalance < 10 ? 'text-red-600' : 'text-emerald-600'}`}
+              >
+                ${esimAccessBalance.toFixed(2)}
+              </Link>
+            </span>
+          )}
+          {pikaSimBalance !== null && (
+            <span className="flex items-center gap-2">
+              <span className="text-gray-500">PikaSim balance (phone numbers):</span>
+              <Link
+                href="/admin/phone-plans"
+                className={`font-semibold underline-offset-2 hover:underline ${pikaSimBalance < 10 ? 'text-red-600' : 'text-emerald-600'}`}
+              >
+                ${pikaSimBalance.toFixed(2)}
+              </Link>
+            </span>
+          )}
         </div>
       )}
 

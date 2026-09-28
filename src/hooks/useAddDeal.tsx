@@ -9,6 +9,24 @@ import { routing } from '@/i18n/routing';
 import { planToGaItem, trackAddToCart } from '@/lib/analytics';
 import { localizeDataDisplay } from '@/lib/utils';
 import { dealToPlan, localizedCountryName, volumeToDisplay, type HotDeal } from '@/lib/deals';
+import { countryName as regionName } from '@/components/sections/PhonePlanCard';
+
+/**
+ * Ticket 042 — what a deal is called: the country for an eSIM deal, and for a phone deal the kind of
+ * number ("USA", "Europe · 36 countries", "Global · 168 countries", or the local number's country).
+ */
+export function useDealTitle() {
+  const locale = useLocale();
+  const tP = useTranslations('phonePlans');
+  return (deal: HotDeal): string => {
+    const p = deal.phone;
+    if (!p) return localizedCountryName(deal.locationCode, deal.name, locale);
+    if (p.region === 'us') return tP('regionUs');
+    if (p.region === 'europe') return tP('regionEurope');
+    if (p.region === 'global') return tP('regionGlobal', { count: p.coverageCount });
+    return regionName(p.numberCountry, locale);
+  };
+}
 
 const { Link: IntlLink } = createSharedPathnamesNavigation(routing);
 
@@ -25,9 +43,10 @@ export function useAddDeal() {
   const locale = useLocale();
   const addItem = useCartStore((s) => s.addItem);
   const { toast } = useToast();
+  const dealTitle = useDealTitle();
 
   return (deal: HotDeal) => {
-    const countryName = localizedCountryName(deal.locationCode, deal.name, locale);
+    const countryName = dealTitle(deal);
     const dataDisplay = localizeDataDisplay(volumeToDisplay(deal.volume).dataDisplay, locale);
     const plan = dealToPlan(deal, locale);
 
@@ -35,7 +54,7 @@ export function useAddDeal() {
       planId: plan.id,
       destinationId: plan.destinationId,
       destinationName: countryName,
-      destinationSlug: deal.locationCode.toLowerCase(),
+      destinationSlug: deal.phone ? 'phone-plans' : deal.locationCode.toLowerCase(),
       plan,
     });
     trackAddToCart(planToGaItem(plan, countryName));

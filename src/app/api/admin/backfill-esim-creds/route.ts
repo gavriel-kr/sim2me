@@ -66,6 +66,9 @@ export async function POST() {
       OR: [{ smdpAddress: null }, { activationCode: null }],
       AND: [
         { OR: [{ esimOrderId: { not: null } }, { iccid: { not: null } }] },
+        // Ticket 042: PikaSim orders are not eSIMaccess orders.
+        { NOT: { packageCode: { startsWith: 'pk:' } } },
+        { NOT: { packageCode: { startsWith: 'rn:' } } },
       ],
     },
     select: { id: true, esimOrderId: true, iccid: true },

@@ -166,6 +166,7 @@ export default async function OrdersPage({ searchParams }: PageProps) {
           customerName: o.customerName,
           customerEmail: o.customerEmail,
           packageName: o.packageName,
+          packageCode: o.packageCode,
           destination: o.destination,
           totalAmount: Number(o.totalAmount),
           currency: o.currency,

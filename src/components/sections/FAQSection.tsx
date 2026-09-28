@@ -17,6 +17,10 @@ import { routing } from '@/i18n/routing';
 
 const { Link: IntlLink } = createSharedPathnamesNavigation(routing);
 
+/* Ticket 042: two of the homepage's five questions are about plans with a phone number — what they
+   are, and how to keep the number. The other three stay the first three of the list, as before. */
+const HOME_PHONE_QUESTIONS = ['phoneWhatIs', 'renewHow'];
+
 export function FAQSection() {
   const t = useTranslations('home');
   const tFaq = useTranslations('faq');
@@ -24,6 +28,10 @@ export function FAQSection() {
     queryKey: ['faqs'],
     queryFn: getFaqs,
   });
+  const homeFaqs = [
+    ...faqs.filter((f) => !HOME_PHONE_QUESTIONS.includes(f.questionKey)).slice(0, 3),
+    ...HOME_PHONE_QUESTIONS.map((key) => faqs.find((f) => f.questionKey === key)).filter((f): f is (typeof faqs)[number] => Boolean(f)),
+  ];
 
   return (
     <section className="bg-white py-20 sm:py-24">
@@ -56,7 +64,7 @@ export function FAQSection() {
               </p>
             </div>
             <Accordion type="single" collapsible className="mt-10">
-              {faqs.slice(0, 5).map((faq) => (
+              {homeFaqs.map((faq) => (
                 <AccordionItem key={faq.id} value={faq.id} className="border-b border-border/60">
                   <AccordionTrigger className="py-5 text-left text-base font-semibold hover:text-primary transition-colors">
                     {tFaq(faq.questionKey)}

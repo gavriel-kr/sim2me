@@ -1,0 +1,31 @@
+{
+  "insert": {
+    "phonePlans": {
+      "renewTitle": "Renew and keep my number",
+      "renewButton": "Renew",
+      "renewValidUntil": "Valid until {date}",
+      "renewDaysLeft": "{days, plural, one {# day left} other {# days left}}",
+      "renewExpired": "The plan has ended",
+      "renewKeepsNumber": "The renewal is added to your current eSIM and keeps the same number. No new installation.",
+      "renewNotPossible": "This plan cannot be renewed. When it ends, a new plan comes with a new number.",
+      "renewLoading": "Loading renewal options…",
+      "renewNone": "There are no renewal options for this plan right now.",
+      "renewError": "We could not load the renewal options. Please try again in a moment.",
+      "renewCartLine": "Renewal for {number}",
+      "renewCartLineNoNumber": "Renewal of your current number",
+      "renewCartSub": "{data} · {days} · same number",
+      "condRenewable": "US and global numbers: renewing before the plan ends keeps the same number.",
+      "condNotRenewable": "The French number and local numbers cannot be renewed: a new plan comes with a new number.",
+      "badgeRenewable": "Renewable, keeps your number",
+      "badgeNotRenewable": "Not renewable · new plan = new number"
+    },
+    "checkout": {
+      "renewTermsIntro": "Renewing an existing number:",
+      "renewTerms": "The renewal is added to the eSIM already on your phone, and the number stays the same. No refunds after purchase."
+    },
+    "faq": {
+      "renewHow": "How do I keep my number after the plan ends?",
+      "answerRenewHow": "US and global numbers can be renewed in your account before the plan ends. The renewal is added to your current eSIM and keeps the same number, with no new installation. We send a reminder a few days before it ends. If the plan ends without a renewal, the number is cancelled and cannot be recovered. The French number and local numbers cannot be renewed: a new plan comes with a new number."
+    }
+  }
+}

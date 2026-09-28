@@ -33,6 +33,7 @@ export async function GET(request: Request) {
     select: {
       id: true,
       packageName: true,
+      packageCode: true,
       destination: true,
       dataAmount: true,
       validity: true,
@@ -61,7 +62,10 @@ export async function GET(request: Request) {
   // Backfill missing eSIM credentials for COMPLETED orders
   type OrderRow = typeof orders[number];
   const needsBackfill = (orders as OrderRow[]).filter(
-    (o) => o.status === 'COMPLETED' && (!o.smdpAddress || !o.activationCode) && (o.esimOrderId || o.iccid)
+    (o) =>
+      o.status === 'COMPLETED' && (!o.smdpAddress || !o.activationCode) && (o.esimOrderId || o.iccid) &&
+      // Ticket 042: a PikaSim order is not an eSIMaccess order; asking eSIMaccess about it only fails.
+      !o.packageCode.startsWith('pk:') && !o.packageCode.startsWith('rn:')
   ).slice(0, 5);
 
   if (needsBackfill.length > 0) {

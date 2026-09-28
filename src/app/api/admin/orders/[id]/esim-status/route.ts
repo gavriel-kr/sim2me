@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { requireAdmin } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { getEsimUsage, getEsimProfile } from '@/lib/esimaccess';
+import { announcePhoneNumberOnce, isPhoneOrder, readPhoneOrder } from '@/lib/phone-number';
 
 export async function GET(
   _request: Request,
@@ -16,7 +17,10 @@ export async function GET(
 
   const order = await prisma.order.findUnique({
     where: { id },
-    select: { iccid: true, esimOrderId: true },
+    select: {
+      id: true, iccid: true, esimOrderId: true, packageCode: true,
+      orderNo: true, customerEmail: true, customerName: true, packageName: true, locale: true,
+    },
   });
 
   if (!order) {
@@ -25,6 +29,31 @@ export async function GET(
 
   if (!order.iccid && !order.esimOrderId) {
     return NextResponse.json({ noEsim: true });
+  }
+
+  // Ticket 042: a PikaSim phone plan is read from PikaSim, and shows the phone number once it exists.
+  if (isPhoneOrder(order.packageCode)) {
+    const { esim, phoneNumber } = await readPhoneOrder(order.iccid);
+    if (!esim) return NextResponse.json({ noEsim: !order.iccid, error: order.iccid ? 'PikaSim did not return this eSIM' : undefined });
+    if (phoneNumber) await announcePhoneNumberOnce(order, phoneNumber);
+    return NextResponse.json({
+      supplier: 'PikaSim',
+      phoneNumber,
+      status: esim.status ?? null,
+      smdpStatus: esim.smdpStatus ?? null,
+      esimStatus: esim.status ?? null,
+      usedVolume: esim.usedData ?? null,
+      remainingVolume: esim.remainingData ?? null,
+      orderVolume: esim.totalData ?? null,
+      expiredTime: esim.expireTime ?? null,
+      activateTime: null,
+      totalDuration: null,
+      durationUnit: null,
+      iccid: esim.iccid ?? null,
+      qrCodeUrl: esim.qrCodeUrl ?? null,
+      smdpAddress: null,
+      activationCode: esim.activationCode ?? null,
+    });
   }
 
   try {

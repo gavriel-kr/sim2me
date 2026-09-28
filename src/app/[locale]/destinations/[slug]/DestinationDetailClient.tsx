@@ -12,6 +12,11 @@ import { planToGaItem, trackViewItemList } from '@/lib/analytics';
 import { X, SlidersHorizontal, ArrowUpDown, Zap, Wifi, Database, Clock, DollarSign, LayoutGrid, Info, BarChart2, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { DataUsageCalculator } from '@/components/sections/DataUsageCalculator';
+import { PlanKindTabs, type PlanKindTab } from '@/components/sections/PlanKindTabs';
+import { UnlimitedPicker } from '@/components/sections/UnlimitedPicker';
+import { PhonePlansPanel } from '@/components/sections/PhonePlansPanel';
+import type { UnlimitedOffer } from '@/lib/unlimited';
+import type { PhonePlan } from '@/lib/phone-plans';
 
 /*
   How long the "show all plans" button spins before the catalogue appears.
@@ -152,14 +157,58 @@ function FilterInfo({ title, content }: { title: string; content: string }) {
 interface DestinationDetailClientProps {
   destination: Destination;
   initialPlans: Plan[];
+  /** Ticket 042 — the day pass sold by the number of days, when the destination has one. */
+  unlimited?: UnlimitedOffer | null;
+  /** Ticket 042 — PikaSim plans with a phone number for this destination. */
+  phonePlans?: PhonePlan[];
 }
+
+const TAB_HASHES: PlanKindTab[] = ['phone', 'esim'];
+
+/*
+  Ticket 042 (Gabriel, 2026-09-28): the "show all N plans" catalogue is switched off on every
+  destination page to keep the choice short. The code is left in place; set this to true to bring the
+  button, the catalogue and its filters back. A destination with no shelf still gets the list, since
+  there would otherwise be nothing to buy.
+*/
+const SHOW_FULL_CATALOG = false;
 
 export function DestinationDetailClient({
   destination,
   initialPlans,
+  unlimited = null,
+  phonePlans = [],
 }: DestinationDetailClientProps) {
   const t = useTranslations('destinations');
   const tc = useTranslations('calculator');
+
+  /*
+    Ticket 042. Two tabs over the page (Gabriel, 2026-09-28): "With a phone number" first and the
+    default wherever the destination has one, then "eSIM only" — the unlimited picker on top and the
+    by-GB shelf under it. The choice lives in the URL hash so the homepage can link to #phone; the
+    older #unlimited and #gb links land on "eSIM only".
+  */
+  const availableTabs = useMemo<PlanKindTab[]>(
+    () => [
+      ...(phonePlans.length > 0 ? (['phone'] as const) : []),
+      ...(unlimited || initialPlans.length > 0 ? (['esim'] as const) : []),
+    ],
+    [unlimited, initialPlans.length, phonePlans.length],
+  );
+  const [tab, setTab] = useState<PlanKindTab>(availableTabs[0] ?? 'esim');
+  useEffect(() => {
+    const raw = window.location.hash.replace('#', '');
+    const fromHash = (raw === 'unlimited' || raw === 'gb' ? 'esim' : raw) as PlanKindTab;
+    if (TAB_HASHES.includes(fromHash) && availableTabs.includes(fromHash)) setTab(fromHash);
+  }, [availableTabs]);
+  const tabsRef = useRef<HTMLDivElement>(null);
+  const selectTab = useCallback((next: PlanKindTab, scroll = false) => {
+    setTab(next);
+    try {
+      window.history.replaceState(null, '', `#${next}`);
+    } catch { /* hash is a convenience only */ }
+    if (scroll) setTimeout(() => tabsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 40);
+  }, []);
 
   // Smart shelf (ticket 023): curated trip-intent tiers always on top;
   // full catalog expands below them on the same page (ticket 025 revision)
@@ -188,7 +237,7 @@ export function DestinationDetailClient({
     [curatedTiers, dealPlan]
   );
 
-  const canCurate = curatedTiers.length >= 3;
+  const canCurate = curatedTiers.length > 0;
   const [showAll, setShowAll] = useState(!canCurate);
   const catalogRef = useRef<HTMLDivElement>(null);
   const curatedRef = useRef<HTMLDivElement>(null);
@@ -233,8 +282,13 @@ export function DestinationDetailClient({
   const handleCalcFindPlan = useCallback((weeklyGB: number) => {
     setMinDataGB(weeklyGbToMinData(weeklyGB));
     setCalcNudgeOpen(false);
+    if (!SHOW_FULL_CATALOG && canCurate) {
+      // No catalogue to filter: bring the shelf back into view instead.
+      setTimeout(() => curatedRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+      return;
+    }
     openCatalog(); // the data filter lives in the full catalog — make it visible
-  }, [openCatalog]);
+  }, [openCatalog, canCurate]);
 
   const clearAll = useCallback(() => {
     setMinDataGB(0);
@@ -337,12 +391,16 @@ export function DestinationDetailClient({
         {/* `min-w-0` so a long country name wraps inside the row instead of pushing the pair out. */}
         <div className="min-w-0">
           <h1 className="text-2xl font-bold sm:text-3xl">{destination.name}</h1>
-          <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <LayoutGrid className="h-3.5 w-3.5" />
-              {destination.planCount} {t('plansCount')}
-            </span>
-          </div>
+          {/* Ticket 042 (Gabriel, 2026-09-28): the total count ("75 plans") is hidden with the full
+              catalogue — it promised a list the page no longer shows. Returns with SHOW_FULL_CATALOG. */}
+          {SHOW_FULL_CATALOG && (
+            <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <LayoutGrid className="h-3.5 w-3.5" />
+                {destination.planCount} {t('plansCount')}
+              </span>
+            </div>
+          )}
         </div>
         {/*
           104 px is the ceiling on a phone, set by the widest pose rather than by taste: the seated
@@ -358,6 +416,35 @@ export function DestinationDetailClient({
         />
       </div>
 
+      {/* ─── Ticket 042: unlimited / by GB / with a phone number ─── */}
+      <div ref={tabsRef} className="mt-6 scroll-mt-24">
+        <PlanKindTabs value={tab} onChange={(next) => selectTab(next)} available={availableTabs} />
+      </div>
+
+      {tab === 'phone' && phonePlans.length > 0 && (
+        <div id="plan-panel-phone" role="tabpanel" aria-labelledby="plan-tab-phone" className="mt-6">
+          <PhonePlansPanel
+            plans={phonePlans}
+            destinationName={destination.name}
+            destinationSlug={destination.slug}
+            isoCode={destination.isoCode}
+          />
+        </div>
+      )}
+
+      {tab === 'esim' && (
+      <div id="plan-panel-esim" role="tabpanel" aria-labelledby="plan-tab-esim">
+      {/* Unlimited by days on top (Gabriel's choice), the by-GB shelf under it. */}
+      {unlimited && (
+        <div className="mt-6">
+          <UnlimitedPicker
+            offer={unlimited}
+            destinationName={destination.name}
+            destinationSlug={destination.slug}
+            onShowPhonePlans={phonePlans.length > 0 ? () => selectTab('phone', true) : undefined}
+          />
+        </div>
+      )}
       {/* ─── Calculator nudge (opens popup) ─────────────────── */}
       <Dialog open={calcNudgeOpen} onOpenChange={setCalcNudgeOpen}>
         <DialogTrigger asChild>
@@ -417,7 +504,7 @@ export function DestinationDetailClient({
               />
             ))}
           </div>
-          {!showAll && (
+          {SHOW_FULL_CATALOG && !showAll && (
             /*
               The two figures are pinned with physical `left` and `right`, not `start` and `end`.
               Each was drawn pointing one specific way, so the one on the left has to stay on the
@@ -679,6 +766,8 @@ export function DestinationDetailClient({
             <X className="h-3.5 w-3.5" /> {t('clearFilters')}
           </button>
         </div>
+      )}
+      </div>
       )}
       </div>
       )}

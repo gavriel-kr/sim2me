@@ -14,7 +14,8 @@ export type HomepageSlot =
   | 'destinationsScout'
   | 'faqCurious'
   | 'ctaClose'
-  | 'ctaCloseSima';
+  | 'ctaCloseSima'
+  | 'phoneSectionWaving';
 
 export type DestinationSlot =
   | 'destinationSuitcases'
@@ -26,7 +27,9 @@ export type DestinationSlot =
   | 'catalogReaction'
   | 'destinationsListScouting'
   | 'planPriceSimi'
-  | 'planPriceSima';
+  | 'planPriceSima'
+  | 'unlimitedEstimating'
+  | 'phoneTabWaving';
 
 /**
  * Ticket 031 — the rest of the site: the pages the main menu and the header controls lead to.
@@ -43,7 +46,8 @@ export type SiteSlot =
   | 'helpReassuring'
   | 'contactWaving'
   | 'genericSimi'
-  | 'genericSima';
+  | 'genericSima'
+  | 'phonePlansPagePair';
 
 export type CharacterSlot = HomepageSlot | DestinationSlot | SiteSlot;
 
@@ -83,6 +87,11 @@ const HOMEPAGE: Record<HomepageSlot, CharacterArt> = {
   // the inline start has it pointing inward at the text, and that swaps with the writing direction.
   ctaClose: { src: '/characters/simi-closing-v1', width: 524, height: 1470, mirror: 'rtl' },
   ctaCloseSima: { src: '/characters/sima-closing-v1', width: 499, height: 1405, mirror: 'ltr' },
+  // Ticket 042. Simi waving with a phone in his hand, in the homepage wardrobe, beside the new
+  // "eSIM with a phone number" section. He sits at the inline end, right after Sima opens the deals
+  // at the inline start, which keeps the alternating rhythm. Drawn waving toward image-right, so RTL
+  // already faces inward and LTR is the flip, like `contactWaving`.
+  phoneSectionWaving: { src: '/characters/simi-waving-v1', width: 641, height: 1377, mirror: 'ltr' },
 };
 
 const DESTINATION: Record<DestinationSlot, CharacterArt> = {
@@ -112,6 +121,12 @@ const DESTINATION: Record<DestinationSlot, CharacterArt> = {
   // facing the camera, so neither has a direction to be mirrored into.
   planPriceSimi: { src: '/characters/simi-generic', width: 465, height: 1392 },
   planPriceSima: { src: '/characters/sima-generic', width: 439, height: 1385 },
+  // Ticket 042. Sima working a number out on her notepad beside the "how many days" picker, at the
+  // inline end. Same art and same mirroring as `calculatorEstimating`, a separate slot so either
+  // placement can be re-pointed on its own.
+  unlimitedEstimating: { src: '/characters/sima-estimating-v1', width: 450, height: 1358, mirror: 'ltr' },
+  // Ticket 042. Simi waving, phone in hand, at the inline end of the phone tab's intro.
+  phoneTabWaving: { src: '/characters/simi-waving-v1', width: 641, height: 1377, mirror: 'ltr' },
 };
 
 const SITE: Record<SiteSlot, CharacterArt> = {
@@ -137,6 +152,9 @@ const SITE: Record<SiteSlot, CharacterArt> = {
   */
   genericSimi: { src: '/characters/simi-generic', width: 465, height: 1392 },
   genericSima: { src: '/characters/sima-generic', width: 439, height: 1385 },
+  // Ticket 042. Heads the phone-plans page: the pair over one phone, the picture of "a number that
+  // travels with you". Turned toward each other, so like the destination headers it is never mirrored.
+  phonePlansPagePair: { src: '/characters/pair-checking-phone-v1', width: 657, height: 962 },
 };
 
 /*

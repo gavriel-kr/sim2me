@@ -56,6 +56,10 @@ export interface EsimPackage {
   retailPrice?: number;    // in cents (USD)
   favorite: boolean;
   activeType: number;
+  /** 1 = fixed data, 2 = day pass (price is per day, bought with `periodNum`). Ticket 042. */
+  dataType?: number;
+  /** Speed after a day pass's daily allowance, e.g. "1 Mbps". */
+  fupPolicy?: string;
   locationNetworkList?: { locationCode: string; locationName: string; operatorList: { operatorName: string }[] }[];
 }
 
@@ -167,11 +171,15 @@ export async function getPackagesByLocation(locationCode: string): Promise<EsimP
 }
 
 /** Purchase an eSIM package */
-export async function purchasePackage(packageCode: string, quantity: number = 1): Promise<EsimOrderResult> {
+/**
+ * `periodNum` is the day count for a day pass (`dataType: 2`) and must be omitted for every other
+ * package. Without it eSIMaccess sells a day pass for a single day (ticket 042).
+ */
+export async function purchasePackage(packageCode: string, quantity: number = 1, periodNum?: number): Promise<EsimOrderResult> {
   const transactionId = `sim2me-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   return apiCall<EsimOrderResult>('/open/esim/order', {
     transactionId,
-    packageInfoList: [{ packageCode, count: quantity }],
+    packageInfoList: [{ packageCode, count: quantity, ...(periodNum ? { periodNum } : {}) }],
   });
 }
 

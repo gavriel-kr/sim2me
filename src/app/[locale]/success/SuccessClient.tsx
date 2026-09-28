@@ -53,6 +53,7 @@ function formatRemaining(ms: number): string {
 
 export function SuccessClient({ transactionId }: { transactionId: string | null }) {
   const t = useTranslations('success');
+  const tPhone = useTranslations('phonePlans');
   const [status, setStatus] = useState<Status>(transactionId ? 'loading' : 'not_found');
   const [order, setOrder] = useState<OrderData | null>(null);
   const [, setAttempts] = useState(0);
@@ -106,7 +107,9 @@ export function SuccessClient({ transactionId }: { transactionId: string | null 
   const remainingMs = order?.credsExpiresAt
     ? new Date(order.credsExpiresAt).getTime() - now
     : 0;
-  const showSecrets = status === 'completed' && hasSecrets(order) && remainingMs > 0;
+  // Ticket 042: a renewal keeps the eSIM already installed, so there are no install details to show.
+  const isRenewal = Boolean(order?.packageCode?.startsWith('rn:'));
+  const showSecrets = status === 'completed' && hasSecrets(order) && remainingMs > 0 && !isRenewal;
 
   useEffect(() => {
     if (!showSecrets) return;
@@ -198,6 +201,19 @@ export function SuccessClient({ transactionId }: { transactionId: string | null 
             </p>
           </CardHeader>
           <CardContent className="pt-6">
+            {/* Ticket 042: a phone plan's number only exists after installation — say so up front. */}
+            {isRenewal && status === 'completed' && (
+              <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50/70 px-4 py-3 text-center">
+                <p className="text-sm font-semibold text-emerald-800">{tPhone('renewDone')}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">{tPhone('renewKeepsNumber')}</p>
+              </div>
+            )}
+            {order.packageCode?.startsWith('pk:') && (
+              <div className="mb-4 rounded-lg border border-sky-200 bg-sky-50/70 px-4 py-3 text-center">
+                <p className="text-sm font-semibold text-sky-800">{tPhone('numberPending')}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">{tPhone('numberPendingHint')}</p>
+              </div>
+            )}
             {showSecrets ? (
               <div className="flex flex-col items-center space-y-4">
                 <div
