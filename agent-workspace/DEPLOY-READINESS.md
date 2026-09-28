@@ -214,6 +214,20 @@ read by the old code. The refund page keeps whatever the CMS holds; the snapshot
 text if ever wanted. A phone number already sold keeps working — the old code just cannot show or renew
 it, so roll back only for a reason that outweighs that.
 
+## Shipped
+
+- **2026-09-28 19:10**, `b905193..fe887e1` pushed to `main` with Gabriel's approval; Vercel reported
+  "Deployment has completed" at 19:12.
+- Post-deploy smoke on https://www.sim2me.net, all green: `/en`, `/he`, `/ar`, `/hi`, `/he/phone-plans`,
+  `/en/phone-plans`, `/he/destinations/us`, `/he/destinations/jp`, `/en/destinations/fr`, `/he/checkout`,
+  `/he/refund`, `/he/terms`, `/admin/login`, `/sitemap.xml` → 200; `/api/checkout/health` → `ok: true`.
+- `/he/phone-plans` shows PikaSim's plans with prices, so `PIKASIM_API_KEY` is live. The sitemap lists
+  `/phone-plans` in four languages. The refund page's description states the no-refund policy.
+- Both new crons answer 401 without the secret. Screenshots of the live homepage and
+  `/he/destinations/us` at phone width match the local build.
+- ⬜ Gabriel's first real purchase (one phone plan, one unlimited) — pending.
+- ⬜ Vercel → Settings → Cron Jobs shows `phone-renewal-reminders` and `phone-number-ready` — to glance at.
+
 # Previous release — Tickets 026 / 034 / 036 / 037 plus the menu and hero pass, prepared 2026-08-10
 
 Everything below is **local and unpushed**. `DEPLOY-PROTOCOL.md` governs; this file records how each of
