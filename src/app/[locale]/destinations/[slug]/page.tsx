@@ -19,6 +19,31 @@ interface PageProps {
 
 const SITE_URL = 'https://www.sim2me.net';
 
+/**
+ * Ticket 043 — the search title and description, in the reader's language (they were English on every
+ * language until now), and saying so when the destination also has plans with a phone number.
+ */
+function destinationSeo(lang: ReturnType<typeof toUiLang>, name: string, plans: number, phone: boolean) {
+  switch (lang) {
+    case 'he':
+      return phone
+        ? { title: `eSIM ל${name} – גלישה ומספר טלפון`, description: `eSIM ל${name}: ${plans} חבילות גלישה, וגם חבילות עם מספר טלפון לשיחות ו-SMS. נשלח מיד למייל, בלי סים פיזי, מוכן תוך דקות.` }
+        : { title: `eSIM ל${name} – ${plans} חבילות גלישה`, description: `eSIM ל${name}: ${plans} חבילות גלישה לבחירה. נשלח מיד למייל, בלי סים פיזי, מוכן תוך דקות.` };
+    case 'ar':
+      return phone
+        ? { title: `eSIM ${name} – باقات إنترنت ورقم هاتف`, description: `شريحة eSIM ${name}: باقات إنترنت متعددة، وباقات مع رقم هاتف للمكالمات والرسائل القصيرة. تسليم فوري بالبريد الإلكتروني، بدون شريحة فعلية، وتفعيل خلال دقائق.` }
+        : { title: `eSIM ${name} – باقات إنترنت فورية`, description: `شريحة eSIM ${name}: باقات إنترنت متعددة للاختيار. تسليم فوري بالبريد الإلكتروني، بدون شريحة فعلية، وتفعيل خلال دقائق.` };
+    case 'hi':
+      return phone
+        ? { title: `${name} के लिए eSIM – डेटा प्लान और फ़ोन नंबर`, description: `${name} के लिए eSIM: ${plans} डेटा प्लान, और कॉल व SMS के लिए फ़ोन नंबर वाले प्लान। ईमेल पर तुरंत डिलीवरी, कोई फ़िज़िकल SIM नहीं, मिनटों में सेटअप।` }
+        : { title: `${name} के लिए eSIM – ${plans} डेटा प्लान`, description: `${name} के लिए eSIM: ${plans} डेटा प्लान में से चुनें। ईमेल पर तुरंत डिलीवरी, कोई फ़िज़िकल SIM नहीं, मिनटों में सेटअप।` };
+    default:
+      return phone
+        ? { title: `eSIM for ${name} – Data Plans & Phone Number`, description: `eSIM for ${name}: ${plans} data plans, plus plans with a phone number for calls and SMS. Instant delivery by email, no physical SIM, set up in minutes.` }
+        : { title: `Buy eSIM for ${name} – ${plans} Data Plans`, description: `eSIM for ${name}: ${plans} data plans to choose from. Instant delivery by email, no physical SIM, set up in minutes.` };
+  }
+}
+
 export async function generateMetadata({ params }: PageProps) {
   const { slug, locale } = await params;
   const data = await getDestinationData(slug, locale);
@@ -26,9 +51,11 @@ export async function generateMetadata({ params }: PageProps) {
   if (data.status === 'ok') {
     const { destination } = data;
     const prefix = `/${locale}`;
+    const seo = destinationSeo(lang, destination.name, destination.planCount, data.phonePlans.length > 0);
     return {
-      title: `Buy eSIM for ${destination.name} – ${destination.planCount} Plans`,
-      description: `Buy prepaid eSIM for ${destination.name}. ${destination.planCount} data plans available. Instant delivery, no physical SIM needed. Compare plans and connect in minutes.`,
+      title: seo.title,
+      description: seo.description,
+      openGraph: { title: seo.title, description: seo.description, url: `${SITE_URL}${prefix}/destinations/${slug}` },
       alternates: {
         canonical: `${SITE_URL}${prefix}/destinations/${slug}`,
         languages: {

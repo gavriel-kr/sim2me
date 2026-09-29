@@ -62,14 +62,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }
 
   // Fetch published articles (one row per article; emit URL per locale where status is PUBLISHED)
-  let articles: { slug: string; statusEn: string; statusHe: string; statusAr: string; updatedAt: Date }[] = [];
+  let articles: { slug: string; statusEn: string; statusHe: string; statusAr: string; statusHi: string; updatedAt: Date }[] = [];
   try {
     articles = await prisma.article.findMany({
-      select: { slug: true, statusEn: true, statusHe: true, statusAr: true, updatedAt: true },
+      select: { slug: true, statusEn: true, statusHe: true, statusAr: true, statusHi: true, updatedAt: true },
     });
   } catch {
     // graceful fallback
   }
+  const hasHindiArticles = articles.some((a) => a.statusHi === 'PUBLISHED');
 
   const entries: MetadataRoute.Sitemap = [];
   const now = new Date();
@@ -78,8 +79,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const prefix = `/${locale}`;
 
     for (const page of staticPages) {
-      // The Hindi articles index lists English articles, and is marked noindex for that reason.
-      if (locale === 'hi' && page.path === '/articles') continue;
+      // Until an article is published in Hindi, the Hindi articles index lists English articles and is
+      // marked noindex for that reason.
+      if (locale === 'hi' && page.path === '/articles' && !hasHindiArticles) continue;
       entries.push({
         url: `${baseUrl}${prefix}${page.path || ''}`,
         lastModified: now,
@@ -99,22 +101,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }
 
   /*
-    Articles are listed for the locales they are actually written in, which is not every routing locale.
-    Hindi has no article columns and its article URLs serve the English text, so submitting them would
-    offer the crawler a second address for a page it already has.
+    Articles are listed for the languages they are actually written in, which is not every article in
+    every language. A Hindi URL of an article with no Hindi version serves the English text, so
+    submitting it would offer the crawler a second address for a page it already has. Each entry names
+    its other language versions, the same set the page's hreflang tags list.
   */
-  const statusByLocale = { en: 'statusEn' as const, he: 'statusHe' as const, ar: 'statusAr' as const };
+  const statusByLocale = { en: 'statusEn' as const, he: 'statusHe' as const, ar: 'statusAr' as const, hi: 'statusHi' as const };
   for (const article of articles) {
-    for (const locale of ['en', 'he', 'ar'] as const) {
-      if (article[statusByLocale[locale]] === 'PUBLISHED') {
-        const prefix = `/${locale}`;
-        entries.push({
-          url: `${baseUrl}${prefix}/articles/${article.slug}`,
-          lastModified: article.updatedAt,
-          changeFrequency: 'monthly',
-          priority: 0.6,
-        });
-      }
+    const published = (['en', 'he', 'ar', 'hi'] as const).filter((locale) => article[statusByLocale[locale]] === 'PUBLISHED');
+    const languages = Object.fromEntries(published.map((locale) => [locale, `${baseUrl}/${locale}/articles/${article.slug}`]));
+    for (const locale of published) {
+      entries.push({
+        url: `${baseUrl}/${locale}/articles/${article.slug}`,
+        lastModified: article.updatedAt,
+        changeFrequency: 'monthly',
+        priority: 0.6,
+        ...(published.length > 1 && { alternates: { languages } }),
+      });
     }
   }
 

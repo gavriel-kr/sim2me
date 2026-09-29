@@ -1,0 +1,42 @@
+{
+  "slug": "esim-with-phone-number",
+  "order": 0,
+  "locales": {
+    "he": {
+      "title": "eSIM עם מספר טלפון: מה זה ולמי זה מתאים",
+      "excerpt": "גלישה, מספר טלפון אמיתי, שיחות ו-SMS על סים דיגיטלי אחד, והמספר הישראלי נשאר פעיל. מה מקבלים, במה זה שונה מ-eSIM רגיל ואיזה מספר מתאים לאיזה טיול.",
+      "focusKeyword": "eSIM עם מספר טלפון",
+      "metaTitle": "eSIM עם מספר טלפון: מה זה ולמי זה מתאים",
+      "metaDesc": "eSIM עם מספר טלפון נותן בחו״ל גלישה, מספר אמיתי, שיחות ו-SMS, והמספר הישראלי נשאר פעיל. ההבדל מ-eSIM רגיל, איזה מספר לבחור וכמה זה עולה.",
+      "ogTitle": "eSIM עם מספר טלפון: כל מה שצריך לדעת לפני הטיסה",
+      "ogDesc": "מספר אמריקאי, צרפתי לכל אירופה או גלובלי ל-168 מדינות. מה כלול, למי זה מתאים ואיך שומרים על המספר."
+    },
+    "en": {
+      "title": "eSIM with a Phone Number: What It Is and Who Needs One",
+      "excerpt": "Data, a real phone number, call minutes and SMS on one digital SIM, while your usual number keeps working. What you get, how it differs from a data-only eSIM, and which number suits which trip.",
+      "focusKeyword": "eSIM with phone number",
+      "metaTitle": "eSIM with a Phone Number: What It Is, Who Needs One",
+      "metaDesc": "An eSIM with a phone number gives you data, a real number, calls and SMS abroad while your own number keeps working. How it differs, which number to pick, prices.",
+      "ogTitle": "eSIM with a Phone Number: the Complete Guide",
+      "ogDesc": "A US number, a French number for all of Europe, or a global number for 168 countries. What is included, who needs one and how to keep the number."
+    },
+    "ar": {
+      "title": "شريحة eSIM مع رقم هاتف: ما هي ومن يحتاج إليها؟",
+      "excerpt": "إنترنت ورقم هاتف حقيقي ومكالمات ورسائل SMS على شريحة رقمية واحدة، مع بقاء رقمك الأصلي يعمل. ماذا تحصل عليه، وما الفرق عن شريحة الإنترنت فقط، وأي رقم يناسب رحلتك.",
+      "focusKeyword": "شريحة eSIM مع رقم هاتف",
+      "metaTitle": "شريحة eSIM مع رقم هاتف: ما هي ومن يحتاج إليها؟",
+      "metaDesc": "شريحة eSIM مع رقم هاتف تمنحك في السفر إنترنت ورقمًا حقيقيًا ومكالمات ورسائل SMS، ويبقى رقمك الأصلي يعمل. الفرق، وأي رقم تختار، والأسعار.",
+      "ogTitle": "شريحة eSIM مع رقم هاتف: الدليل الكامل",
+      "ogDesc": "رقم أمريكي، أو رقم فرنسي لكل أوروبا، أو رقم عالمي في 168 دولة. ماذا يشمل، ومن يحتاج إليه، وكيف تحتفظ بالرقم."
+    },
+    "hi": {
+      "title": "फ़ोन नंबर वाला eSIM: यह क्या है और किसे चाहिए?",
+      "excerpt": "एक ही डिजिटल SIM पर डेटा, असली फ़ोन नंबर, कॉल मिनट और SMS, और आपका भारतीय नंबर भी चालू रहता है। इसमें क्या मिलता है, डेटा-ओनली eSIM से क्या फ़र्क है और कौन सा नंबर किस यात्रा के लिए सही है।",
+      "focusKeyword": "फ़ोन नंबर वाला eSIM",
+      "metaTitle": "फ़ोन नंबर वाला eSIM: यह क्या है और किसे चाहिए?",
+      "metaDesc": "फ़ोन नंबर वाला eSIM विदेश में डेटा, असली नंबर, कॉल और SMS देता है, और आपका भारतीय नंबर भी चालू रहता है। फ़र्क, सही नंबर कैसे चुनें और कीमतें।",
+      "ogTitle": "फ़ोन नंबर वाला eSIM: पूरी गाइड",
+      "ogDesc": "अमेरिकी नंबर, पूरे यूरोप के लिए फ़्रांसीसी नंबर, या 168 देशों के लिए ग्लोबल नंबर। क्या शामिल है, किसे चाहिए और नंबर कैसे बनाए रखें।"
+    }
+  }
+}

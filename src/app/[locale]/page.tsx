@@ -15,21 +15,22 @@ type Props = { params: Promise<{ locale: string }> };
 const siteUrl = 'https://www.sim2me.net';
 
 const seoByLocale: Record<string, { title: string; description: string }> = {
+  // Ticket 043: the description names the plans with a phone number as well as the data plans.
   en: {
-    title: 'Buy eSIM Online – Instant Travel Data for 200+ Countries',
-    description: 'Get instant eSIM for travel. No physical SIM, no roaming fees. Compare plans for 200+ countries, scan QR code and connect in minutes. Best prices guaranteed.',
+    title: 'Buy eSIM Online – Data & Phone Numbers for 200+ Countries',
+    description: 'Instant travel eSIM: data plans for 200+ countries, and eSIMs with a phone number for calls and SMS (US, Europe, global). No physical SIM, ready in minutes.',
   },
   he: {
-    title: 'eSIM אונליין – נתונים מיידיים ל-200+ מדינות',
-    description: 'קבל eSIM מיידי לנסיעות. בלי סים פיזי, בלי דמי נדידה. השווה חבילות ל-200+ מדינות, סרוק QR והתחבר תוך דקות.',
+    title: 'eSIM אונליין – גלישה ומספר טלפון ל-200+ מדינות',
+    description: 'eSIM מיידי לחו״ל: חבילות גלישה ל-200+ מדינות, וגם eSIM עם מספר טלפון לשיחות ו-SMS (אמריקאי, אירופי וגלובלי). בלי סים פיזי, מוכן תוך דקות.',
   },
   ar: {
-    title: 'اشترِ eSIM أونلاين – بيانات سفر فورية لأكثر من 200 دولة',
-    description: 'احصل على eSIM فوري للسفر. بدون شريحة فيزيائية، بدون رسوم تجوال. قارن الخطط لأكثر من 200 دولة واتصل في دقائق.',
+    title: 'اشترِ eSIM أونلاين – إنترنت ورقم هاتف لأكثر من 200 دولة',
+    description: 'شريحة eSIM فورية للسفر: باقات إنترنت لأكثر من 200 دولة، وشرائح eSIM مع رقم هاتف للمكالمات والرسائل (أمريكي وأوروبي وعالمي). بدون شريحة فعلية، جاهزة خلال دقائق.',
   },
   hi: {
-    title: 'ऑनलाइन eSIM खरीदें – 200+ देशों के लिए तुरंत ट्रैवल डेटा',
-    description: 'यात्रा के लिए तुरंत eSIM पाएँ। कोई फ़िज़िकल SIM नहीं, कोई रोमिंग शुल्क नहीं। 200+ देशों के प्लान की तुलना करें, QR कोड स्कैन करें और मिनटों में जुड़ जाएँ।',
+    title: 'ऑनलाइन eSIM – 200+ देशों के लिए डेटा और फ़ोन नंबर',
+    description: 'यात्रा के लिए तुरंत eSIM: 200+ देशों के डेटा प्लान, और कॉल व SMS के लिए फ़ोन नंबर वाले eSIM (अमेरिका, यूरोप, ग्लोबल)। कोई फ़िज़िकल SIM नहीं, मिनटों में तैयार।',
   },
 };
 

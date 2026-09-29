@@ -303,35 +303,45 @@ model Article {
   titleEn             String   @default("")
   titleHe             String   @default("")
   titleAr             String   @default("")
+  titleHi             String   @default("") // ticket 043: Hindi articles
   contentEn            String   @default("") @db.Text
   contentHe            String   @default("") @db.Text
   contentAr            String   @default("") @db.Text
+  contentHi            String   @default("") @db.Text
   excerptEn           String?   @db.Text
   excerptHe           String?   @db.Text
   excerptAr           String?   @db.Text
+  excerptHi           String?   @db.Text
   // SEO per locale
   focusKeywordEn      String?
   focusKeywordHe      String?
   focusKeywordAr      String?
+  focusKeywordHi      String?
   metaTitleEn         String?
   metaTitleHe         String?
   metaTitleAr         String?
+  metaTitleHi         String?
   metaDescEn          String?   @db.Text
   metaDescHe          String?   @db.Text
   metaDescAr          String?   @db.Text
+  metaDescHi          String?   @db.Text
   ogTitleEn           String?
   ogTitleHe           String?
   ogTitleAr           String?
+  ogTitleHi           String?
   ogDescEn            String?   @db.Text
   ogDescHe            String?   @db.Text
   ogDescAr            String?   @db.Text
+  ogDescHi            String?   @db.Text
   canonicalUrlEn      String?
   canonicalUrlHe      String?
   canonicalUrlAr      String?
+  canonicalUrlHi      String?
   // Status per locale
   statusEn            ArticleStatus @default(DRAFT)
   statusHe            ArticleStatus @default(DRAFT)
   statusAr            ArticleStatus @default(DRAFT)
+  statusHi            ArticleStatus @default(DRAFT)
   // Shared
   featuredImage       String?
   articleOrder        Int      @default(0)

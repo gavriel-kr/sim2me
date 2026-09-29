@@ -2,6 +2,31 @@
 
 ## [Unreleased]
 
+### Added (ticket 043: articles and search for eSIMs with a phone number, Gabriel, 2026-09-29)
+
+- 14 in-depth articles about eSIMs with a phone number, each written separately in Hebrew, English,
+  Arabic and Hindi, with FAQ structured data, buttons to the right number page and links between them.
+  Stored as drafts until published.
+- Hindi articles: Hindi columns in the articles table, a Hindi tab in the admin, Hindi in the article
+  pages, index, sitemap and hreflang. Articles with no Hindi version still show in English to Hindi
+  readers, kept out of the index.
+- Admins can preview a draft on the real page with `?preview=1` (never indexed); the admin's article
+  links open drafts that way.
+
+### Changed (ticket 043)
+
+- Article pages: readable typography for all articles (the `prose` classes did nothing without the
+  typography plugin), `Article` structured data, hreflang for all four languages plus `x-default`,
+  social image fallback, FAQ structured data printed once instead of twice.
+- Search titles and descriptions now mention phone numbers: homepage, destination pages (now in the
+  reader's language instead of English everywhere), `/phone-plans` and each number page (with hreflang).
+
+### Fixed (ticket 043)
+
+- Arabic related-articles cards said "read more" in Hebrew.
+- The articles index, and older articles whose meta title already names the brand, showed
+  "| Sim2Me | Sim2Me" in the browser tab and in search results.
+
 ### Changed (a page per kind of phone number — Gabriel, 2026-09-29)
 
 - /phone-plans shows only the tiles; each kind of number has its own page with its plans, terms and

@@ -286,3 +286,50 @@ html.a11y-highlight-focus *:focus-visible {
   text-align: right;
   direction: rtl;
 }
+
+/*
+  Ticket 043 — article body typography. The article page used `prose` classes, but the typography
+  plugin is not installed, so a bare <h2> looked like body text. These rules style the plain elements
+  an article is written with; `:where()` keeps them at the weight of one class and the layer puts them
+  before the utilities, so the Tailwind classes older articles carry on their elements still win.
+*/
+@layer components {
+  .article-body { color: #374151; font-size: 1.0625rem; line-height: 1.8; overflow-wrap: break-word; }
+  .article-body :where(h2) { margin: 2.5rem 0 0.75rem; font-size: 1.5rem; line-height: 1.3; font-weight: 800; color: #111827; }
+  .article-body :where(h3) { margin: 1.75rem 0 0.5rem; font-size: 1.2rem; line-height: 1.4; font-weight: 700; color: #111827; }
+  .article-body :where(p) { margin: 0.9rem 0; }
+  .article-body :where(ul) { margin: 0.9rem 0; padding-inline-start: 1.5rem; list-style: disc; }
+  .article-body :where(ol) { margin: 0.9rem 0; padding-inline-start: 1.5rem; list-style: decimal; }
+  .article-body :where(li) { margin: 0.35rem 0; }
+  .article-body :where(li)::marker { color: #059669; }
+  .article-body :where(a) { color: #047857; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+  .article-body :where(a:hover) { color: #065f46; }
+  .article-body :where(strong) { font-weight: 700; color: #111827; }
+  .article-body :where(table) { width: 100%; margin: 1.5rem 0; border-collapse: collapse; font-size: 0.9375rem; line-height: 1.5; }
+  .article-body :where(th, td) { padding: 0.6rem 0.75rem; border: 1px solid #e5e7eb; text-align: start; vertical-align: top; }
+  .article-body :where(th) { background: #f3f4f6; font-weight: 700; color: #111827; }
+  .article-body :where(blockquote) { margin: 1.25rem 0; padding-inline-start: 1rem; border-inline-start: 4px solid #a7f3d0; color: #4b5563; }
+
+  /* Wide tables scroll inside the article instead of widening the page on a phone. */
+  .article-body .article-table { margin: 1.5rem 0; overflow-x: auto; }
+  .article-body .article-table table { margin: 0; min-width: 32rem; }
+
+  /* The short answer at the top of an article. */
+  .article-body .article-summary { margin: 0 0 2rem; padding: 1.25rem 1.5rem; border: 1px solid #a7f3d0; border-radius: 1rem; background: #ecfdf5; }
+  .article-body .article-summary :where(p:first-child) { margin-top: 0; font-weight: 700; color: #065f46; }
+  .article-body .article-summary :where(ul) { margin-bottom: 0; }
+
+  /* Something the reader should not miss. */
+  .article-body .article-note { margin: 1.5rem 0; padding: 1rem 1.25rem; border-inline-start: 4px solid #0ea5e9; border-radius: 0.75rem; background: #f0f9ff; color: #0c4a6e; }
+  .article-body .article-note :where(p) { margin: 0.4rem 0; }
+
+  /* A call to action with one or two buttons. */
+  .article-body .article-cta { margin: 2rem 0; padding: 1.5rem; border: 1px solid #a7f3d0; border-radius: 1rem; background: linear-gradient(135deg, #ecfdf5 0%, #f0f9ff 100%); text-align: center; }
+  .article-body .article-cta :where(p) { margin: 0.25rem 0 1rem; text-align: center; }
+  .article-body .article-cta-title { font-size: 1.2rem; font-weight: 800; color: #064e3b; }
+  .article-body .article-cta-buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem; }
+  .article-body a.article-btn { display: inline-block; padding: 0.75rem 1.5rem; border-radius: 0.75rem; background: #059669; color: #fff; font-weight: 700; text-decoration: none; box-shadow: 0 1px 2px rgb(0 0 0 / 0.08); }
+  .article-body a.article-btn:hover { background: #047857; color: #fff; }
+  .article-body a.article-btn-secondary { background: #fff; color: #065f46; border: 1px solid #6ee7b7; }
+  .article-body a.article-btn-secondary:hover { background: #ecfdf5; color: #064e3b; }
+}

@@ -1,0 +1,42 @@
+{
+  "slug": "uk-esim-with-phone-number",
+  "order": 0,
+  "locales": {
+    "he": {
+      "title": "eSIM עם מספר טלפון לבריטניה",
+      "excerpt": "שתי דרכים לקבל מספר טלפון לטיול בבריטניה: המספר הצרפתי עם 20GB ושיחות ללא הגבלה בכל אירופה, או המספר הגלובלי שאפשר לחדש. מה מתאים לסופ״ש בלונדון, לטיול בסקוטלנד ולנסיעות עבודה.",
+      "focusKeyword": "eSIM לבריטניה עם מספר טלפון",
+      "metaTitle": "eSIM לבריטניה עם מספר טלפון: לונדון וכל אירופה",
+      "metaDesc": "eSIM לבריטניה עם מספר טלפון: מספר צרפתי עם 20GB ושיחות ללא הגבלה בבריטניה ובכל אירופה ב-33.90$, או מספר גלובלי שאפשר לחדש. מה מתאים לאיזה טיול.",
+      "ogTitle": "מספר טלפון ללונדון: שיחות ללא הגבלה בבריטניה",
+      "ogDesc": "המספר הצרפתי עובד בבריטניה עם 20GB ושיחות ללא הגבלה. מתי עדיף המספר הגלובלי."
+    },
+    "en": {
+      "title": "UK eSIM with a Phone Number: Your Two Options Compared",
+      "excerpt": "Two ways to get a phone number for a UK trip: the French number with 20GB and unlimited calls across Europe, or the renewable global number. Which suits a London weekend, a Scottish road trip or business travel.",
+      "focusKeyword": "UK eSIM with phone number",
+      "metaTitle": "UK eSIM with a Phone Number: Unlimited UK Calls",
+      "metaDesc": "UK eSIM with a phone number: a French number with 20GB and unlimited calls in the UK and Europe for $33.90, or a renewable global number. Which fits your trip.",
+      "ogTitle": "A Phone Number for London with Unlimited UK Calls",
+      "ogDesc": "The French number works in the UK with 20GB and unlimited calls. When the global number is the better pick."
+    },
+    "ar": {
+      "title": "eSIM بريطانيا مع رقم هاتف: مقارنة بين الخيارين",
+      "excerpt": "طريقتان للحصول على رقم هاتف في بريطانيا: الرقم الفرنسي مع 20GB ومكالمات غير محدودة في أوروبا، أو الرقم العالمي القابل للتجديد. ما يناسب صيف العائلة والعلاج والدراسة والأعمال.",
+      "focusKeyword": "eSIM بريطانيا مع رقم هاتف",
+      "metaTitle": "eSIM بريطانيا مع رقم هاتف: مكالمات غير محدودة",
+      "metaDesc": "eSIM بريطانيا مع رقم هاتف: رقم فرنسي مع 20GB ومكالمات غير محدودة في بريطانيا وأوروبا بـ33.90 دولار، أو رقم عالمي قابل للتجديد. ما يناسب رحلتك.",
+      "ogTitle": "رقم هاتف للندن مع مكالمات غير محدودة",
+      "ogDesc": "الرقم الفرنسي يعمل في بريطانيا مع 20GB ومكالمات غير محدودة. ومتى يكون الرقم العالمي أفضل."
+    },
+    "hi": {
+      "title": "फ़ोन नंबर वाला यूके eSIM: दोनों विकल्पों की तुलना",
+      "excerpt": "ब्रिटेन यात्रा के लिए फ़ोन नंबर के दो तरीके: 20GB और पूरे यूरोप में अनलिमिटेड कॉल वाला फ़्रांसीसी नंबर, या रिन्यू होने वाला ग्लोबल नंबर। छात्रों, परिवार की विज़िट और बिज़नेस के लिए कौन सा सही है।",
+      "focusKeyword": "यूके eSIM फ़ोन नंबर",
+      "metaTitle": "यूके eSIM फ़ोन नंबर के साथ: ब्रिटेन में अनलिमिटेड कॉल",
+      "metaDesc": "यूके eSIM फ़ोन नंबर के साथ: 20GB और ब्रिटेन व यूरोप में अनलिमिटेड कॉल वाला फ़्रांसीसी नंबर $33.90 में, या रिन्यू होने वाला ग्लोबल नंबर। छात्रों और परिवारों के लिए।",
+      "ogTitle": "लंदन के लिए अनलिमिटेड कॉल वाला फ़ोन नंबर",
+      "ogDesc": "फ़्रांसीसी नंबर ब्रिटेन में 20GB और अनलिमिटेड कॉल के साथ चलता है। कब ग्लोबल नंबर बेहतर है।"
+    }
+  }
+}

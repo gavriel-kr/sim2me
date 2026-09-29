@@ -1,0 +1,42 @@
+{
+  "slug": "thailand-esim-with-phone-number",
+  "order": 0,
+  "locales": {
+    "he": {
+      "title": "eSIM עם מספר טלפון לתאילנד",
+      "excerpt": "מספר טלפון שעובד בתאילנד וממשיך איתכם ללאוס, לווייטנאם ולמלזיה. ההבדל מסים תיירים תאילנדי, השילוב עם גלישה זולה, וטיפים לאיים ולמעבורות.",
+      "focusKeyword": "eSIM לתאילנד עם מספר טלפון",
+      "metaTitle": "eSIM לתאילנד עם מספר טלפון: מספר לכל המסלול",
+      "metaDesc": "eSIM לתאילנד עם מספר טלפון: מספר גלובלי שעובד בתאילנד, בלאוס, בווייטנאם ובמלזיה, עם גלישה, דקות ו-SMS. מול סים תיירים, ואיך משלבים עם גלישה זולה.",
+      "ogTitle": "מספר טלפון לתאילנד ולכל הטיול במזרח",
+      "ogDesc": "מבנגקוק ועד קו פנגן, וממשיכים ללאוס ולווייטנאם באותו מספר. מתי זה עדיף על סים מקומי."
+    },
+    "en": {
+      "title": "Thailand eSIM with a Phone Number: Your Options Explained",
+      "excerpt": "A number that works in Thailand and follows you to Laos, Vietnam and Malaysia. How it compares with a Thai tourist SIM, the cheap-data combination, and tips for the islands.",
+      "focusKeyword": "Thailand eSIM with phone number",
+      "metaTitle": "Thailand eSIM with a Phone Number: Options & Prices",
+      "metaDesc": "Thailand eSIM with a phone number: a global number that works in Thailand, Laos, Vietnam and Malaysia, with data, minutes and SMS. Compared with a Thai tourist SIM.",
+      "ogTitle": "A Phone Number for Thailand and Beyond",
+      "ogDesc": "From Bangkok to Koh Phangan and on to Laos and Vietnam on one number. When it beats a local SIM, and when it does not."
+    },
+    "ar": {
+      "title": "eSIM تايلاند مع رقم هاتف: خياراتك بالتفصيل",
+      "excerpt": "رقم يعمل في تايلاند ويستمر معك في ماليزيا وسنغافورة. الفرق عن الشريحة السياحية التايلاندية، وطريقة الجمع مع إنترنت رخيص، ونصائح للجزر والسياحة العلاجية.",
+      "focusKeyword": "eSIM تايلاند مع رقم هاتف",
+      "metaTitle": "eSIM تايلاند مع رقم هاتف: الخيارات والأسعار",
+      "metaDesc": "eSIM تايلاند مع رقم هاتف: رقم عالمي يعمل في تايلاند وماليزيا وسنغافورة مع إنترنت ودقائق ورسائل. مقارنة بالشريحة السياحية، ونصائح لشهر العسل والعلاج.",
+      "ogTitle": "رقم هاتف لتايلاند والدول المجاورة",
+      "ogDesc": "من بانكوك إلى بوكيت ثم كوالالمبور وسنغافورة برقم واحد. متى يكون أفضل من الشريحة المحلية."
+    },
+    "hi": {
+      "title": "फ़ोन नंबर वाला थाईलैंड eSIM: आपके विकल्प",
+      "excerpt": "ऐसा नंबर जो थाईलैंड में चले और मलेशिया, सिंगापुर और भारत में भी साथ रहे। थाई टूरिस्ट SIM से तुलना, सस्ते डेटा के साथ जोड़ने का तरीका और आइलैंड्स के लिए टिप्स।",
+      "focusKeyword": "थाईलैंड eSIM फ़ोन नंबर",
+      "metaTitle": "थाईलैंड eSIM फ़ोन नंबर के साथ: विकल्प और कीमतें",
+      "metaDesc": "थाईलैंड eSIM फ़ोन नंबर के साथ: ग्लोबल नंबर जो थाईलैंड, मलेशिया, सिंगापुर और भारत में चले, डेटा, मिनट और SMS के साथ। टूरिस्ट SIM से तुलना और टिप्स।",
+      "ogTitle": "थाईलैंड और आसपास के देशों के लिए एक नंबर",
+      "ogDesc": "बैंकॉक से फुकेत और फिर सिंगापुर तक एक ही नंबर। कब यह लोकल SIM से बेहतर है।"
+    }
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "slug": "europe-esim-with-phone-number",
+  "order": 0,
+  "locales": {
+    "he": {
+      "title": "מספר צרפתי לטיול באירופה: שיחות ללא הגבלה ב-36 מדינות",
+      "excerpt": "eSIM לאירופה עם מספר טלפון צרפתי: 20GB, שיחות ללא הגבלה בתוך אירופה ו-200 SMS ל-30 יום. באילו מדינות הוא עובד, מה לא כלול ומתי עדיף המספר הגלובלי.",
+      "focusKeyword": "eSIM לאירופה עם מספר טלפון",
+      "metaTitle": "eSIM לאירופה עם מספר טלפון: שיחות ללא הגבלה",
+      "metaDesc": "eSIM לאירופה עם מספר טלפון צרפתי (+33): 20GB, שיחות ללא הגבלה בתוך 36 מדינות ו-200 SMS ל-30 יום ב-33.90$. רשימת המדינות, מה לא כלול ולמי זה מתאים.",
+      "ogTitle": "מספר צרפתי לכל אירופה: 20GB ושיחות ללא הגבלה",
+      "ogDesc": "מספר אירופי אחד ל-36 מדינות, כולל בריטניה ושוויץ. מה כלול, מה לא, ומתי עדיף המספר הגלובלי."
+    },
+    "en": {
+      "title": "Europe eSIM with a Phone Number: Unlimited Calls in 36 Countries",
+      "excerpt": "A French +33 number with 20GB, unlimited calls within Europe and 200 SMS for 30 days. Which countries are covered, what is not, and when the global number is the better choice.",
+      "focusKeyword": "Europe eSIM with phone number",
+      "metaTitle": "Europe eSIM with Phone Number: Unlimited EU Calls",
+      "metaDesc": "Europe eSIM with a French phone number (+33): 20GB, unlimited calls in 36 countries incl. the UK and Switzerland, 200 SMS for 30 days, $33.90. Full country list.",
+      "ogTitle": "A French Number for All of Europe: 20GB and Unlimited Calls",
+      "ogDesc": "One European number for 36 countries, including the UK and Switzerland. What is included, what is not, and when to choose the global number."
+    },
+    "ar": {
+      "title": "eSIM أوروبا مع رقم هاتف: مكالمات غير محدودة في 36 دولة",
+      "excerpt": "رقم فرنسي (+33) مع 20GB ومكالمات غير محدودة داخل أوروبا و200 رسالة لمدة 30 يومًا. الدول المشمولة، وما ليس مشمولًا مثل تركيا والبوسنة، ومتى تختار الرقم العالمي.",
+      "focusKeyword": "eSIM أوروبا مع رقم هاتف",
+      "metaTitle": "eSIM أوروبا مع رقم هاتف: مكالمات غير محدودة",
+      "metaDesc": "eSIM أوروبا مع رقم هاتف فرنسي (+33): 20GB ومكالمات غير محدودة في 36 دولة منها بريطانيا وسويسرا و200 رسالة لمدة 30 يومًا بسعر 33.90 دولار.",
+      "ogTitle": "رقم فرنسي لكل أوروبا: 20GB ومكالمات غير محدودة",
+      "ogDesc": "رقم أوروبي واحد لـ36 دولة منها بريطانيا وسويسرا. ماذا يشمل، وما ليس مشمولًا، ومتى تختار الرقم العالمي."
+    },
+    "hi": {
+      "title": "फ़ोन नंबर वाला यूरोप eSIM: 36 देशों में अनलिमिटेड कॉल",
+      "excerpt": "फ़्रांसीसी +33 नंबर, 30 दिन के लिए 20GB, यूरोप के अंदर अनलिमिटेड कॉल और 200 SMS के साथ। कौन से देश शामिल हैं, कौन से नहीं, और कब ग्लोबल नंबर बेहतर है।",
+      "focusKeyword": "यूरोप eSIM फ़ोन नंबर के साथ",
+      "metaTitle": "यूरोप eSIM फ़ोन नंबर के साथ: 36 देशों में अनलिमिटेड कॉल",
+      "metaDesc": "फ़्रांसीसी नंबर (+33) वाला यूरोप eSIM: 20GB, स्विट्ज़रलैंड और ब्रिटेन समेत 36 देशों में अनलिमिटेड कॉल, 200 SMS, 30 दिन, $33.90। देशों की पूरी सूची।",
+      "ogTitle": "पूरे यूरोप के लिए फ़्रांसीसी नंबर: 20GB और अनलिमिटेड कॉल",
+      "ogDesc": "36 देशों के लिए एक यूरोपीय नंबर, ब्रिटेन और स्विट्ज़रलैंड सहित। क्या शामिल है, क्या नहीं, और कब ग्लोबल नंबर लें।"
+    }
+  }
+}

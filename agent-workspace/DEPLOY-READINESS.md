@@ -1,3 +1,31 @@
+# Ticket 043: phone-number articles and search, prepared 2026-09-29
+
+Gabriel approved the articles and the deploy ("המאמרים מאושרים להעלאה לדיפלוי"). `DEPLOY-PROTOCOL.md` governs.
+
+| | |
+|---|---|
+| HEAD before | `f2fa501` (live) |
+| Backup tag | `pre-deploy-20260929-1400` |
+| Risk | **R3**: Prisma schema (10 additive Hindi columns on `articles`, already applied; Vercel's `db push` is a no-op), plus articles, SEO metadata, sitemap and admin articles. No checkout, payment, email, supplier or price change; no new environment variable |
+| DB backup | `tickets/043-phone-seo-articles/backup/db-snapshot-articles-2026-09-29.json` (181 rows, before any change) |
+
+What and why: the top entries of `CHANGELOG.md`; details in `tickets/043-phone-seo-articles/`.
+
+Gates:
+- ✅ `npx tsc --noEmit` → 0; `npm run lint` → 0 errors; all six test suites pass
+- ✅ `prisma migrate diff` DB → schema: empty (columns added earlier, additive only; diff before was 10 × ADD COLUMN)
+- ✅ Articles: `build.cjs` 56/56 pages pass (SEO lengths, links, no verification-code wording, HTML, FAQ JSON)
+- ✅ `npx next build` → 0; `next start` smoke: home, articles index and an article in 4 languages, phone-plans and
+  number pages, destinations, checkout, help, admin login, sitemap, robots all 200; checkout health `ok: true`;
+  draft with `?preview=1` and no admin → redirect; localized titles/descriptions and hreflang checked
+- ✅ Admin preview (local, test admin session): he desktop, hi/ar at 500px, noindex, FAQPage + Article + Breadcrumb
+
+After the deploy: publish the 14 articles (`articles/import.ts --apply --publish=en,he,ar,hi`), then check them live.
+
+Rollback: **do not** push the tag as is. The build runs `prisma db push`, and a schema without the Hindi columns would
+try to drop them and fail the build. Instead, with Gabriel's approval: `git checkout pre-deploy-20260929-1400 -- src`,
+keep `prisma/schema.prisma` as it is, commit and push. To hide the articles only: set their statuses back to DRAFT.
+
 # A page per kind of phone number, prepared 2026-09-29
 
 Gabriel reviewed it locally and approved the deploy ("אפשר להעלות לדיפלוי"). `DEPLOY-PROTOCOL.md` governs.

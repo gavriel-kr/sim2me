@@ -1,0 +1,42 @@
+{
+  "slug": "how-to-find-esim-phone-number",
+  "order": 0,
+  "locales": {
+    "he": {
+      "title": "איך רואים את מספר ה-eSIM באייפון ובאנדרואיד",
+      "excerpt": "מספר הטלפון של ה-eSIM לא מגיע במייל, הוא בהגדרות הטלפון. איפה בדיוק למצוא אותו באייפון, בסמסונג, בפיקסל ובשיאומי, ומה עושים כשהשדה ריק.",
+      "focusKeyword": "איך רואים מספר eSIM",
+      "metaTitle": "איך רואים את מספר ה-eSIM באייפון ובאנדרואיד",
+      "metaDesc": "איך רואים מספר eSIM: באייפון בהגדרות ← סלולרי ← ״המספר שלי״, ובאנדרואיד במצב SIM. מסלולים לסמסונג, פיקסל ושיאומי, ומה לעשות כשהמספר לא מופיע.",
+      "ogTitle": "איפה המספר של ה-eSIM? כך מוצאים אותו",
+      "ogDesc": "המספר לא במייל, הוא בהגדרות הטלפון. מסלול מדויק לאייפון ולאנדרואיד, ופתרון כשהשדה ריק."
+    },
+    "en": {
+      "title": "How to Find Your eSIM Phone Number on iPhone and Android",
+      "excerpt": "Your eSIM's phone number is not in the email; it is in your phone's settings. Exactly where to find it on iPhone, Samsung, Pixel and Xiaomi, and what to do when the field is empty.",
+      "focusKeyword": "how to find eSIM phone number",
+      "metaTitle": "How to Find Your eSIM Phone Number (iPhone & Android)",
+      "metaDesc": "How to find your eSIM phone number: on iPhone go to Settings → Mobile Service → My Number; on Android, SIM status. Paths for Samsung, Pixel and Xiaomi, plus fixes.",
+      "ogTitle": "Where Is My eSIM Phone Number?",
+      "ogDesc": "It is not in the email; it is in your settings. Exact steps for iPhone and Android, and what to do if the number is blank."
+    },
+    "ar": {
+      "title": "كيف تعرف رقم شريحة eSIM على آيفون وأندرويد",
+      "excerpt": "رقم هاتف شريحة eSIM لا يصل بالبريد الإلكتروني، بل تجده في إعدادات الهاتف. أين تجده بالضبط في آيفون وسامسونج وبكسل وشاومي، وماذا تفعل إذا كان الحقل فارغًا.",
+      "focusKeyword": "كيف أعرف رقم eSIM",
+      "metaTitle": "كيف تعرف رقم شريحة eSIM على آيفون وأندرويد",
+      "metaDesc": "كيف أعرف رقم eSIM؟ في آيفون: الإعدادات ← الخدمة الخلوية ← رقمي، وفي أندرويد: حالة SIM. خطوات لسامسونج وبكسل وشاومي، وحلول إذا لم يظهر الرقم.",
+      "ogTitle": "أين رقم شريحة eSIM؟ هكذا تجده",
+      "ogDesc": "الرقم ليس في البريد بل في إعدادات الهاتف. خطوات دقيقة لآيفون وأندرويد، وحل عندما يكون الحقل فارغًا."
+    },
+    "hi": {
+      "title": "iPhone और Android में eSIM नंबर कैसे देखें",
+      "excerpt": "eSIM का फ़ोन नंबर ईमेल में नहीं, फ़ोन की सेटिंग्स में होता है। iPhone, Samsung, Pixel और Xiaomi में इसे ठीक कहाँ देखें, और नंबर ख़ाली दिखे तो क्या करें।",
+      "focusKeyword": "eSIM नंबर कैसे देखें",
+      "metaTitle": "eSIM नंबर कैसे देखें: iPhone और Android",
+      "metaDesc": "eSIM नंबर कैसे देखें: iPhone में Settings → Mobile Service → My Number, Android में SIM status। Samsung, Pixel, Xiaomi के रास्ते और नंबर न दिखे तो क्या करें।",
+      "ogTitle": "मेरा eSIM नंबर कहाँ है? ऐसे देखें",
+      "ogDesc": "नंबर ईमेल में नहीं, सेटिंग्स में है। iPhone और Android के लिए सटीक स्टेप्स, और नंबर ख़ाली हो तो उपाय।"
+    }
+  }
+}

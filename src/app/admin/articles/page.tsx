@@ -18,15 +18,15 @@ export default async function ArticlesAdminPage() {
     orderBy: [{ articleOrder: 'asc' }, { createdAt: 'desc' }],
     select: {
       id: true, slug: true,
-      titleEn: true, titleHe: true, titleAr: true,
-      excerptEn: true, excerptHe: true, excerptAr: true,
-      focusKeywordEn: true, focusKeywordHe: true, focusKeywordAr: true,
-      metaTitleEn: true, metaTitleHe: true, metaTitleAr: true,
-      metaDescEn: true, metaDescHe: true, metaDescAr: true,
-      ogTitleEn: true, ogTitleHe: true, ogTitleAr: true,
-      ogDescEn: true, ogDescHe: true, ogDescAr: true,
-      canonicalUrlEn: true, canonicalUrlHe: true, canonicalUrlAr: true,
-      statusEn: true, statusHe: true, statusAr: true,
+      titleEn: true, titleHe: true, titleAr: true, titleHi: true,
+      excerptEn: true, excerptHe: true, excerptAr: true, excerptHi: true,
+      focusKeywordEn: true, focusKeywordHe: true, focusKeywordAr: true, focusKeywordHi: true,
+      metaTitleEn: true, metaTitleHe: true, metaTitleAr: true, metaTitleHi: true,
+      metaDescEn: true, metaDescHe: true, metaDescAr: true, metaDescHi: true,
+      ogTitleEn: true, ogTitleHe: true, ogTitleAr: true, ogTitleHi: true,
+      ogDescEn: true, ogDescHe: true, ogDescAr: true, ogDescHi: true,
+      canonicalUrlEn: true, canonicalUrlHe: true, canonicalUrlAr: true, canonicalUrlHi: true,
+      statusEn: true, statusHe: true, statusAr: true, statusHi: true,
       featuredImage: true, articleOrder: true, showRelatedArticles: true,
       createdAt: true, updatedAt: true,
     },
@@ -36,10 +36,11 @@ export default async function ArticlesAdminPage() {
     <div className="p-6 lg:p-8">
       <h1 className="text-2xl font-bold text-gray-900">Articles (SEO Guides)</h1>
       <p className="mt-1 text-sm text-gray-500">
-        Create and manage SEO articles in EN / HE / AR. Published articles appear on{' '}
-        <code className="rounded bg-gray-100 px-1 text-xs">/articles</code>,{' '}
-        <code className="rounded bg-gray-100 px-1 text-xs">/he/articles</code>, and{' '}
-        <code className="rounded bg-gray-100 px-1 text-xs">/ar/articles</code>.
+        Create and manage SEO articles in EN / HE / AR / HI. Published articles appear on{' '}
+        <code className="rounded bg-gray-100 px-1 text-xs">/en/articles</code>,{' '}
+        <code className="rounded bg-gray-100 px-1 text-xs">/he/articles</code>,{' '}
+        <code className="rounded bg-gray-100 px-1 text-xs">/ar/articles</code> and{' '}
+        <code className="rounded bg-gray-100 px-1 text-xs">/hi/articles</code>.
       </p>
       <ArticlesClient articles={articles} initialDefaultImage={defaultImage} />
     </div>

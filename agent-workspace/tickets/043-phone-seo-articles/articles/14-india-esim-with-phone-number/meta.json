@@ -1,0 +1,42 @@
+{
+  "slug": "india-esim-with-phone-number",
+  "order": 0,
+  "locales": {
+    "he": {
+      "title": "eSIM עם מספר טלפון להודו",
+      "excerpt": "מספר טלפון שעובד בהודו מהרגע שנוחתים, בלי ניירת של סים מקומי. מתי הוא עדיף ומתי סים הודי זול יותר, מה עם נפאל, והשילוב עם גלישה לטיול הגדול.",
+      "focusKeyword": "eSIM להודו עם מספר טלפון",
+      "metaTitle": "eSIM להודו עם מספר טלפון: בלי ניירת של סים מקומי",
+      "metaDesc": "eSIM להודו עם מספר טלפון: מספר גלובלי שעובד מהנחיתה, בלי דרכון ותהליך רישום. מתי עדיף סים הודי, מה עם נפאל, וחבילות לטיול הגדול. החל מ-27.90$.",
+      "ogTitle": "מספר טלפון לטיול בהודו, מוכן מהנחיתה",
+      "ogDesc": "בלי ניירת ובלי לחכות להפעלה. מתי המספר הגלובלי עדיף על סים הודי, ומה עם נפאל."
+    },
+    "en": {
+      "title": "India eSIM with a Phone Number: Skip the Local SIM Paperwork",
+      "excerpt": "A phone number that works in India from the moment you land, without the local SIM paperwork. When it beats an Indian SIM and when it does not, what about Nepal, and the best setup for long trips.",
+      "focusKeyword": "India eSIM with phone number",
+      "metaTitle": "India eSIM with a Phone Number: No SIM Paperwork",
+      "metaDesc": "India eSIM with a phone number: a global number that works on landing, with no forms or activation wait. When an Indian SIM is better, and Nepal. From $27.90.",
+      "ogTitle": "A Phone Number for India, Ready When You Land",
+      "ogDesc": "No paperwork, no waiting for activation. When the global number beats an Indian SIM, and what about Nepal."
+    },
+    "ar": {
+      "title": "eSIM الهند مع رقم هاتف: دون إجراءات الشريحة المحلية",
+      "excerpt": "رقم هاتف يعمل في الهند لحظة الوصول دون أوراق الشريحة المحلية. مفيد للسياحة العلاجية والأعمال، ومتى تكون الشريحة الهندية أفضل، والدول غير المشمولة.",
+      "focusKeyword": "eSIM الهند مع رقم هاتف",
+      "metaTitle": "eSIM الهند مع رقم هاتف: دون أوراق الشريحة المحلية",
+      "metaDesc": "eSIM الهند مع رقم هاتف: رقم عالمي يعمل لحظة الوصول دون أوراق أو انتظار تفعيل. مناسب للسياحة العلاجية والمرافقين والأعمال. من 27.90 دولار.",
+      "ogTitle": "رقم هاتف للهند جاهز لحظة الوصول",
+      "ogDesc": "دون أوراق ودون انتظار. رقم يتواصل به المستشفى والفندق من اليوم الأول."
+    },
+    "hi": {
+      "title": "फ़ोन नंबर वाला भारत eSIM: NRI और भारत आने वालों के लिए",
+      "excerpt": "भारत आने वाले NRI और विदेशी मेहमानों के लिए ऐसा नंबर जो उतरते ही चले, बिना SIM के काग़ज़ी काम के। कब यह भारतीय SIM से बेहतर है और कब नहीं, और कौन से देश शामिल नहीं हैं।",
+      "focusKeyword": "भारत eSIM फ़ोन नंबर",
+      "metaTitle": "भारत eSIM फ़ोन नंबर के साथ: NRI के लिए आसान",
+      "metaDesc": "भारत eSIM फ़ोन नंबर के साथ: उतरते ही चलने वाला ग्लोबल नंबर, बिना पासपोर्ट फ़ॉर्म या एक्टिवेशन के इंतज़ार के। NRI और विदेशी मेहमानों के लिए, $27.90 से।",
+      "ogTitle": "भारत आने वाले NRI के लिए फ़ोन नंबर",
+      "ogDesc": "उतरते ही चालू नंबर, बिना काग़ज़ी काम। कब यह भारतीय SIM से बेहतर है।"
+    }
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "slug": "greece-esim-with-phone-number",
+  "order": 0,
+  "locales": {
+    "he": {
+      "title": "eSIM עם מספר טלפון ליוון",
+      "excerpt": "מספר אירופי לחופשה ביוון: 20GB ושיחות ללא הגבלה לטברנות, לחברות ההשכרה ולמעבורות, ב-33.90$ ל-30 יום. מה עושים כשממשיכים לטורקיה או לאלבניה, וטיפים לאיים.",
+      "focusKeyword": "eSIM ליוון עם מספר טלפון",
+      "metaTitle": "eSIM ליוון עם מספר טלפון: שיחות ללא הגבלה",
+      "metaDesc": "eSIM ליוון עם מספר טלפון: מספר צרפתי עם 20GB, שיחות ללא הגבלה ביוון ובאירופה ו-200 SMS ל-30 יום ב-33.90$. מעבורות, השכרת רכב, ומה עם טורקיה.",
+      "ogTitle": "מספר טלפון לחופשה ביוון, עם שיחות ללא הגבלה",
+      "ogDesc": "טברנות, מעבורות וחברות השכרה ביוון עובדות בטלפון. מספר אירופי עם 20GB לכל האיים."
+    },
+    "en": {
+      "title": "Greece eSIM with a Phone Number: Unlimited Calls on the Islands",
+      "excerpt": "A European number for your Greek holiday: 20GB and unlimited calls to tavernas, rental firms and ferry offices, for $33.90 for 30 days. What to do if you hop over to Turkey or Albania, plus island tips.",
+      "focusKeyword": "Greece eSIM with phone number",
+      "metaTitle": "Greece eSIM with a Phone Number: Unlimited Calls",
+      "metaDesc": "Greece eSIM with a phone number: a French number with 20GB, unlimited calls in Greece and Europe and 200 SMS for 30 days, $33.90. Ferries, car hire and Turkey trips.",
+      "ogTitle": "A Phone Number for Greece with Unlimited Calls",
+      "ogDesc": "Tavernas, ferries and rental firms in Greece run on phone calls. A European number with 20GB for every island."
+    },
+    "ar": {
+      "title": "eSIM اليونان مع رقم هاتف: مكالمات غير محدودة في الجزر",
+      "excerpt": "رقم أوروبي لعطلتك في اليونان: 20GB ومكالمات غير محدودة للمطاعم ومكاتب التأجير والعبّارات، بـ33.90 دولار لـ30 يومًا. ماذا تفعل إن زرت تركيا أو ألبانيا، ونصائح للجزر.",
+      "focusKeyword": "eSIM اليونان مع رقم هاتف",
+      "metaTitle": "eSIM اليونان مع رقم هاتف: مكالمات غير محدودة",
+      "metaDesc": "eSIM اليونان مع رقم هاتف: رقم فرنسي مع 20GB ومكالمات غير محدودة في اليونان وأوروبا و200 رسالة لـ30 يومًا بـ33.90 دولار. العبّارات وشهر العسل وتركيا.",
+      "ogTitle": "رقم هاتف لليونان مع مكالمات غير محدودة",
+      "ogDesc": "المطاعم والعبّارات ومكاتب التأجير في اليونان تعتمد على الهاتف. رقم أوروبي مع 20GB لكل الجزر."
+    },
+    "hi": {
+      "title": "फ़ोन नंबर वाला ग्रीस eSIM: आइलैंड्स पर अनलिमिटेड कॉल",
+      "excerpt": "ग्रीस की छुट्टी के लिए यूरोपीय नंबर: 20GB और रेस्टोरेंट, रेंटल कंपनियों और फ़ेरी ऑफ़िस को अनलिमिटेड कॉल, 30 दिन के लिए $33.90। तुर्की या अल्बानिया जाना हो तो क्या करें, और आइलैंड्स के लिए टिप्स।",
+      "focusKeyword": "ग्रीस eSIM फ़ोन नंबर",
+      "metaTitle": "ग्रीस eSIM फ़ोन नंबर के साथ: अनलिमिटेड कॉल",
+      "metaDesc": "ग्रीस eSIM फ़ोन नंबर के साथ: 20GB, ग्रीस और यूरोप में अनलिमिटेड कॉल और 200 SMS वाला फ़्रांसीसी नंबर, 30 दिन, $33.90। हनीमून, फ़ेरी और रेंटल के लिए।",
+      "ogTitle": "ग्रीस के लिए अनलिमिटेड कॉल वाला फ़ोन नंबर",
+      "ogDesc": "ग्रीस में रेस्टोरेंट, फ़ेरी और रेंटल कंपनियाँ फ़ोन पर चलती हैं। हर आइलैंड के लिए 20GB वाला यूरोपीय नंबर।"
+    }
+  }
+}

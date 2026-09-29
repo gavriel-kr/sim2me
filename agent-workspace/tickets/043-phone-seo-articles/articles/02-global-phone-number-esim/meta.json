@@ -1,0 +1,42 @@
+{
+  "slug": "global-phone-number-esim",
+  "order": 0,
+  "locales": {
+    "he": {
+      "title": "מספר טלפון גלובלי: מספר אחד שעובד ב-168 מדינות",
+      "excerpt": "מספר אמריקאי על eSIM שנשאר איתכם בכל המסלול, כולל בישראל. איפה הוא עובד ואיפה לא, החבילות משבוע ועד שנה, וטריק שחוסך כסף על הגלישה.",
+      "focusKeyword": "מספר טלפון גלובלי",
+      "metaTitle": "מספר טלפון גלובלי ב-eSIM: מספר אחד ב-168 מדינות",
+      "metaDesc": "מספר טלפון גלובלי על eSIM: מספר אמריקאי שעובד ב-168 מדינות, כולל ישראל. חבילות משבוע ועד שנה, חידוש ששומר על המספר, ואילו מדינות לא נכללות.",
+      "ogTitle": "מספר טלפון גלובלי: מספר אחד לכל הטיול",
+      "ogDesc": "איך עובד מספר אמריקאי שעובד ב-168 מדינות, כמה זה עולה ואיך משלבים אותו עם חבילת גלישה זולה."
+    },
+    "en": {
+      "title": "Global Phone Number eSIM: One Number That Works in 168 Countries",
+      "excerpt": "A US number on an eSIM that stays with you across 168 countries. Where it works and where it does not, plans from a week to a year, and a setup that cuts your data costs.",
+      "focusKeyword": "global phone number eSIM",
+      "metaTitle": "Global Phone Number eSIM: One Number, 168 Countries",
+      "metaDesc": "A global phone number on an eSIM: one US number for 168 countries. Plans from 7 to 365 days, renewals that keep the number, and which countries are not covered.",
+      "ogTitle": "Global Phone Number: One Number for Every Country on Your Route",
+      "ogDesc": "How a US number that works in 168 countries actually works, what it costs, and how to pair it with a cheap data plan."
+    },
+    "ar": {
+      "title": "رقم هاتف دولي عبر eSIM: رقم واحد يعمل في 168 دولة",
+      "excerpt": "رقم أمريكي على شريحة eSIM يرافقك في 168 دولة، منها الإمارات وقطر وتركيا ومصر. أين يعمل وأين لا يعمل، والباقات من أسبوع إلى سنة، وطريقة لتوفير تكلفة الإنترنت.",
+      "focusKeyword": "رقم هاتف دولي eSIM",
+      "metaTitle": "رقم هاتف دولي عبر eSIM: رقم واحد في 168 دولة",
+      "metaDesc": "رقم هاتف دولي على شريحة eSIM: رقم أمريكي يعمل في 168 دولة منها الإمارات وقطر وتركيا. باقات من 7 إلى 365 يومًا، والتجديد مع الاحتفاظ بالرقم.",
+      "ogTitle": "رقم هاتف دولي: رقم واحد لكل دول رحلتك",
+      "ogDesc": "كيف يعمل رقم أمريكي في 168 دولة، وكم يكلّف، وكيف تجمعه مع باقة إنترنت رخيصة."
+    },
+    "hi": {
+      "title": "ग्लोबल फ़ोन नंबर eSIM: 168 देशों में चलने वाला एक नंबर",
+      "excerpt": "eSIM पर एक अमेरिकी नंबर जो 168 देशों में आपके साथ रहता है, जिनमें भारत, UAE और थाईलैंड शामिल हैं। कहाँ चलता है, कहाँ नहीं, एक हफ़्ते से एक साल तक के प्लान और डेटा का ख़र्च घटाने का तरीका।",
+      "focusKeyword": "ग्लोबल फ़ोन नंबर eSIM",
+      "metaTitle": "ग्लोबल फ़ोन नंबर eSIM: 168 देशों में एक नंबर",
+      "metaDesc": "eSIM पर ग्लोबल फ़ोन नंबर: एक अमेरिकी नंबर जो भारत, UAE और थाईलैंड समेत 168 देशों में चलता है। 7 से 365 दिन के प्लान, रिन्यूअल में वही नंबर।",
+      "ogTitle": "ग्लोबल फ़ोन नंबर: पूरी यात्रा के लिए एक नंबर",
+      "ogDesc": "168 देशों में चलने वाला अमेरिकी नंबर कैसे काम करता है, कितना पड़ता है और सस्ते डेटा प्लान के साथ इसे कैसे जोड़ें।"
+    }
+  }
+}

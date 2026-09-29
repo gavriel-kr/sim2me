@@ -19,16 +19,16 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 }
 
 const LOCALE_FIELDS = [
-  'titleEn', 'titleHe', 'titleAr',
-  'contentEn', 'contentHe', 'contentAr',
-  'excerptEn', 'excerptHe', 'excerptAr',
-  'focusKeywordEn', 'focusKeywordHe', 'focusKeywordAr',
-  'metaTitleEn', 'metaTitleHe', 'metaTitleAr',
-  'metaDescEn', 'metaDescHe', 'metaDescAr',
-  'ogTitleEn', 'ogTitleHe', 'ogTitleAr',
-  'ogDescEn', 'ogDescHe', 'ogDescAr',
-  'canonicalUrlEn', 'canonicalUrlHe', 'canonicalUrlAr',
-  'statusEn', 'statusHe', 'statusAr',
+  'titleEn', 'titleHe', 'titleAr', 'titleHi',
+  'contentEn', 'contentHe', 'contentAr', 'contentHi',
+  'excerptEn', 'excerptHe', 'excerptAr', 'excerptHi',
+  'focusKeywordEn', 'focusKeywordHe', 'focusKeywordAr', 'focusKeywordHi',
+  'metaTitleEn', 'metaTitleHe', 'metaTitleAr', 'metaTitleHi',
+  'metaDescEn', 'metaDescHe', 'metaDescAr', 'metaDescHi',
+  'ogTitleEn', 'ogTitleHe', 'ogTitleAr', 'ogTitleHi',
+  'ogDescEn', 'ogDescHe', 'ogDescAr', 'ogDescHi',
+  'canonicalUrlEn', 'canonicalUrlHe', 'canonicalUrlAr', 'canonicalUrlHi',
+  'statusEn', 'statusHe', 'statusAr', 'statusHi',
 ] as const;
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {

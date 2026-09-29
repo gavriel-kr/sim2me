@@ -30,7 +30,18 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   return {
     title: seo.title,
     description: seo.desc,
-    alternates: { canonical: `${siteUrl}/${locale}/phone-plans` },
+    openGraph: { title: seo.title, description: seo.desc, url: `${siteUrl}/${locale}/phone-plans` },
+    alternates: {
+      canonical: `${siteUrl}/${locale}/phone-plans`,
+      // Ticket 043: the four language versions point at each other.
+      languages: {
+        en: `${siteUrl}/en/phone-plans`,
+        he: `${siteUrl}/he/phone-plans`,
+        ar: `${siteUrl}/ar/phone-plans`,
+        hi: `${siteUrl}/hi/phone-plans`,
+        'x-default': `${siteUrl}/en/phone-plans`,
+      },
+    },
   };
 }
 

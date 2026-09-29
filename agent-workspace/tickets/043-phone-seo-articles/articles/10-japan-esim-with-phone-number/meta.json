@@ -1,0 +1,42 @@
+{
+  "slug": "japan-esim-with-phone-number",
+  "order": 0,
+  "locales": {
+    "he": {
+      "title": "eSIM עם מספר טלפון ליפן",
+      "excerpt": "ביפן כמעט כל סימי התיירים הם גלישה בלבד. איך מקבלים מספר טלפון לטיול, למה הוא שימושי במסעדות, בריוקאנים ובהעברת מזוודות, ואיך משלבים אותו עם גלישה זולה.",
+      "focusKeyword": "eSIM ליפן עם מספר טלפון",
+      "metaTitle": "eSIM ליפן עם מספר טלפון: שיחות, SMS וגלישה",
+      "metaDesc": "eSIM ליפן עם מספר טלפון: ביפן סימי התיירים הם גלישה בלבד. מספר גלובלי שעובד ביפן, בקוריאה ובהונג קונג, והשילוב עם גלישה זולה. החל מ-27.90$ לשבוע.",
+      "ogTitle": "מספר טלפון לטיול ביפן, כשסימי התיירים הם גלישה בלבד",
+      "ogDesc": "מסעדות, ריוקאנים והעברת מזוודות ביפן עובדים עם טלפון. איך מקבלים מספר לטיול ומה הוא עולה."
+    },
+    "en": {
+      "title": "Japan eSIM with a Phone Number: Getting a Number as a Tourist",
+      "excerpt": "Tourist SIMs in Japan are almost always data-only. How to get a phone number for your trip, why it helps with restaurants, ryokan and luggage forwarding, and how to pair it with cheap data.",
+      "focusKeyword": "Japan eSIM with phone number",
+      "metaTitle": "Japan eSIM with a Phone Number: Calls, SMS and Data",
+      "metaDesc": "Japan eSIM with a phone number: tourist SIMs in Japan are data-only. A global number that works in Japan, Korea and Hong Kong, plus cheap data. From $27.90 a week.",
+      "ogTitle": "A Phone Number for Japan When Tourist SIMs Are Data-Only",
+      "ogDesc": "Restaurants, ryokan and luggage services in Japan run on phone numbers. How to get one for your trip, and what it costs."
+    },
+    "ar": {
+      "title": "eSIM اليابان مع رقم هاتف: كيف يحصل السائح على رقم",
+      "excerpt": "الشرائح السياحية في اليابان للإنترنت فقط في الغالب. كيف تحصل على رقم هاتف لرحلتك، ولماذا يفيدك في المطاعم والنُّزُل ونقل الحقائب، وكيف تجمعه مع إنترنت رخيص.",
+      "focusKeyword": "eSIM اليابان مع رقم هاتف",
+      "metaTitle": "eSIM اليابان مع رقم هاتف: مكالمات ورسائل وإنترنت",
+      "metaDesc": "eSIM اليابان مع رقم هاتف: الشرائح السياحية هناك للإنترنت فقط. رقم عالمي يعمل في اليابان وكوريا وهونغ كونغ، مع إنترنت رخيص. من 27.90 دولار للأسبوع.",
+      "ogTitle": "رقم هاتف لليابان حين تكون الشرائح السياحية للإنترنت فقط",
+      "ogDesc": "المطاعم والنُّزُل وخدمات الحقائب في اليابان تعتمد على الهاتف. كيف تحصل على رقم لرحلتك وكم يكلّف."
+    },
+    "hi": {
+      "title": "फ़ोन नंबर वाला जापान eSIM: टूरिस्ट को नंबर कैसे मिले",
+      "excerpt": "जापान में टूरिस्ट SIM लगभग हमेशा सिर्फ़ डेटा वाली होती हैं। यात्रा के लिए फ़ोन नंबर कैसे लें, रेस्टोरेंट, र्योकान और सामान भेजने में यह कैसे काम आता है, और सस्ते डेटा के साथ कैसे जोड़ें।",
+      "focusKeyword": "जापान eSIM फ़ोन नंबर",
+      "metaTitle": "जापान eSIM फ़ोन नंबर के साथ: कॉल, SMS और डेटा",
+      "metaDesc": "जापान eSIM फ़ोन नंबर के साथ: वहाँ टूरिस्ट SIM सिर्फ़ डेटा वाली होती हैं। जापान, कोरिया और हांगकांग में चलने वाला ग्लोबल नंबर, सस्ते डेटा के साथ, $27.90 से।",
+      "ogTitle": "जापान यात्रा के लिए फ़ोन नंबर",
+      "ogDesc": "जापान में रेस्टोरेंट, र्योकान और सामान भेजने वाली सर्विस फ़ोन पर चलती हैं। यात्रा के लिए नंबर कैसे लें और कितना ख़र्च।"
+    }
+  }
+}

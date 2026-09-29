@@ -1,17 +1,17 @@
 import { prisma } from '@/lib/prisma';
 import type { Article } from '@prisma/client';
 
-export type ArticleLocale = 'en' | 'he' | 'ar';
+export type ArticleLocale = 'en' | 'he' | 'ar' | 'hi';
+
+/** Every language an article can be written in, in the order the admin shows them. */
+export const ARTICLE_LOCALES: readonly ArticleLocale[] = ['en', 'he', 'ar', 'hi'];
 
 /**
- * Maps a UI locale to the locale the article content is actually written in.
- *
- * Articles are authored per locale in the database, and Hindi has no columns there. Ticket 038 keeps it
- * that way: a Hindi visitor reads the English article inside the Hindi shell. Without this, a `hi` UI
- * locale reaches `status${undefined}` and Prisma rejects the query, so the articles pages return 500.
+ * Maps a UI locale to the article columns it reads. Ticket 043 gave Hindi its own columns, so every
+ * UI locale reads its own; anything else reads English.
  */
 export function toArticleLocale(locale: string): ArticleLocale {
-  return locale === 'he' || locale === 'ar' ? locale : 'en';
+  return (ARTICLE_LOCALES as readonly string[]).includes(locale) ? (locale as ArticleLocale) : 'en';
 }
 
 export interface ArticleSummary {
@@ -37,7 +37,7 @@ export interface ArticleFull extends ArticleSummary {
   showRelatedArticles: boolean;
 }
 
-const LOCALE_SUFFIX = { en: 'En', he: 'He', ar: 'Ar' } as const;
+const LOCALE_SUFFIX = { en: 'En', he: 'He', ar: 'Ar', hi: 'Hi' } as const;
 
 function pickLocaleFields<T extends Record<string, unknown>>(
   row: T,
@@ -80,7 +80,7 @@ function pickLocaleFieldsFull<T extends Record<string, unknown>>(
 }
 
 export async function getPublishedArticles(locale: ArticleLocale): Promise<ArticleSummary[]> {
-  const statusKey = `status${LOCALE_SUFFIX[locale]}` as 'statusEn' | 'statusHe' | 'statusAr';
+  const statusKey = `status${LOCALE_SUFFIX[locale]}` as 'statusEn' | 'statusHe' | 'statusAr' | 'statusHi';
   const rows = await prisma.article.findMany({
     where: { [statusKey]: 'PUBLISHED' },
     orderBy: [{ articleOrder: 'asc' }, { createdAt: 'desc' }],
@@ -90,16 +90,20 @@ export async function getPublishedArticles(locale: ArticleLocale): Promise<Artic
       titleEn: true,
       titleHe: true,
       titleAr: true,
+      titleHi: true,
       excerptEn: true,
       excerptHe: true,
       excerptAr: true,
+      excerptHi: true,
       featuredImage: true,
       metaTitleEn: true,
       metaTitleHe: true,
       metaTitleAr: true,
+      metaTitleHi: true,
       metaDescEn: true,
       metaDescHe: true,
       metaDescAr: true,
+      metaDescHi: true,
       articleOrder: true,
       createdAt: true,
       updatedAt: true,
@@ -125,7 +129,7 @@ export async function getPublishedArticles(locale: ArticleLocale): Promise<Artic
 }
 
 export async function getArticleBySlug(slug: string, locale: ArticleLocale): Promise<ArticleFull | null> {
-  const statusKey = `status${LOCALE_SUFFIX[locale]}` as 'statusEn' | 'statusHe' | 'statusAr';
+  const statusKey = `status${LOCALE_SUFFIX[locale]}` as 'statusEn' | 'statusHe' | 'statusAr' | 'statusHi';
   const article = await prisma.article.findFirst({
     where: { slug, [statusKey]: 'PUBLISHED' },
   });
@@ -138,7 +142,7 @@ export async function getRelatedArticlesForCarousel(
   excludeArticleId: string,
   locale: ArticleLocale
 ): Promise<ArticleSummary[]> {
-  const statusKey = `status${LOCALE_SUFFIX[locale]}` as 'statusEn' | 'statusHe' | 'statusAr';
+  const statusKey = `status${LOCALE_SUFFIX[locale]}` as 'statusEn' | 'statusHe' | 'statusAr' | 'statusHi';
   const rows = await prisma.article.findMany({
     where: {
       [statusKey]: 'PUBLISHED',
@@ -151,16 +155,20 @@ export async function getRelatedArticlesForCarousel(
       titleEn: true,
       titleHe: true,
       titleAr: true,
+      titleHi: true,
       excerptEn: true,
       excerptHe: true,
       excerptAr: true,
+      excerptHi: true,
       featuredImage: true,
       metaTitleEn: true,
       metaTitleHe: true,
       metaTitleAr: true,
+      metaTitleHi: true,
       metaDescEn: true,
       metaDescHe: true,
       metaDescAr: true,
+      metaDescHi: true,
       articleOrder: true,
       createdAt: true,
       updatedAt: true,
@@ -189,12 +197,15 @@ export async function getRelatedArticlesForCarousel(
 export async function getArticleHreflangs(slug: string): Promise<{ locale: string; slug: string }[]> {
   const article = await prisma.article.findUnique({
     where: { slug },
-    select: { statusEn: true, statusHe: true, statusAr: true, titleEn: true, titleHe: true, titleAr: true },
+    select: {
+      statusEn: true, statusHe: true, statusAr: true, statusHi: true,
+      titleEn: true, titleHe: true, titleAr: true, titleHi: true,
+    },
   });
   if (!article) return [];
 
   const result: { locale: string; slug: string }[] = [];
-  for (const loc of ['en', 'he', 'ar'] as const) {
+  for (const loc of ARTICLE_LOCALES) {
     const status = article[`status${LOCALE_SUFFIX[loc]}`];
     const title = article[`title${LOCALE_SUFFIX[loc]}`];
     if (status === 'PUBLISHED' && title && title.trim()) {
@@ -202,4 +213,58 @@ export async function getArticleHreflangs(slug: string): Promise<{ locale: strin
     }
   }
   return result;
+}
+
+/*
+  What a reader of one UI language gets (ticket 043). Hebrew, Arabic and English readers get their own
+  language only, as before. Hindi has far fewer articles, so a Hindi reader gets the Hindi ones first
+  and then the English articles that have no Hindi version — the way ticket 038 served every article —
+  and the article page keeps those English ones out of the index. `locale` on each result says which
+  language the text is in.
+*/
+
+/**
+ * An article in one language whatever its status, for an admin previewing a draft (ticket 043).
+ * Null when that language has no title yet. Callers must check the admin session first.
+ */
+export async function getArticleForPreview(slug: string, uiLocale: string): Promise<ArticleFull | null> {
+  const locale = toArticleLocale(uiLocale);
+  const article = await prisma.article.findUnique({ where: { slug } });
+  if (!article) return null;
+  const full = pickLocaleFieldsFull(article, locale);
+  return full.title.trim() ? full : null;
+}
+
+/** How many articles are published in one language. */
+export async function countPublishedArticles(locale: ArticleLocale): Promise<number> {
+  const statusKey = `status${LOCALE_SUFFIX[locale]}` as 'statusEn' | 'statusHe' | 'statusAr' | 'statusHi';
+  return prisma.article.count({ where: { [statusKey]: 'PUBLISHED' } });
+}
+
+/** The article at /<uiLocale>/articles/<slug>, or null. */
+export async function getArticleForReader(slug: string, uiLocale: string): Promise<ArticleFull | null> {
+  const locale = toArticleLocale(uiLocale);
+  const own = await getArticleBySlug(slug, locale);
+  if (own || locale !== 'hi') return own;
+  return getArticleBySlug(slug, 'en');
+}
+
+/** The articles index for one UI language. */
+export async function getArticlesForReader(uiLocale: string): Promise<ArticleSummary[]> {
+  const locale = toArticleLocale(uiLocale);
+  const own = await getPublishedArticles(locale);
+  if (locale !== 'hi') return own;
+  const translated = new Set(own.map((a) => a.slug));
+  const english = (await getPublishedArticles('en')).filter((a) => !translated.has(a.slug));
+  return [...own, ...english];
+}
+
+/** The related-articles carousel under one article, for one UI language. */
+export async function getRelatedArticlesForReader(excludeArticleId: string, uiLocale: string): Promise<ArticleSummary[]> {
+  const locale = toArticleLocale(uiLocale);
+  const own = await getRelatedArticlesForCarousel(excludeArticleId, locale);
+  if (locale !== 'hi') return own;
+  const translated = new Set(own.map((a) => a.slug));
+  const english = (await getRelatedArticlesForCarousel(excludeArticleId, 'en')).filter((a) => !translated.has(a.slug));
+  return [...own, ...english];
 }

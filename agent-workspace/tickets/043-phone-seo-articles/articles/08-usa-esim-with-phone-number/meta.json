@@ -1,0 +1,42 @@
+{
+  "slug": "usa-esim-with-phone-number",
+  "order": 0,
+  "locales": {
+    "he": {
+      "title": "eSIM עם מספר טלפון לארה״ב",
+      "excerpt": "מספר אמריקאי עם גלישה, דקות ו-SMS לטיול בארה״ב, החל מ-7.90$ לשבוע. איזו חבילה לאיזה טיול, מה עושים כשהטיול כולל קנדה או מקסיקו, ואיך זה עובד לצד הסים הישראלי.",
+      "focusKeyword": "eSIM לארה״ב עם מספר טלפון",
+      "metaTitle": "eSIM לארה״ב עם מספר טלפון אמריקאי, מ-7.90$",
+      "metaDesc": "eSIM לארה״ב עם מספר טלפון אמריקאי (+1): גלישה, דקות ו-SMS משבוע ועד שנה, החל מ-7.90$. איזו חבילה לטיול כביש, לעיר או למשפחה, ומה עם קנדה ומקסיקו.",
+      "ogTitle": "מספר אמריקאי לטיול בארה״ב, מוכן בנחיתה",
+      "ogDesc": "מסעדות, מלונות וחברות השכרה בארה״ב עובדים עם מספרים אמריקאיים. 8 חבילות עם מספר, גלישה ו-SMS."
+    },
+    "en": {
+      "title": "USA eSIM with a Phone Number: A US Number for Your Trip",
+      "excerpt": "A US number with data, minutes and SMS for your trip, from $7.90 a week. Which plan for a city break, a road trip or a long family visit, and what to do if you cross into Canada or Mexico.",
+      "focusKeyword": "USA eSIM with phone number",
+      "metaTitle": "USA eSIM with Phone Number: US +1 Number from $7.90",
+      "metaDesc": "USA eSIM with a phone number: a US +1 number with data, minutes and SMS, from $7.90 a week. Plans for city breaks, road trips and long family visits.",
+      "ogTitle": "A US Number for Your Trip, Ready When You Land",
+      "ogDesc": "US restaurants, hotels and rental desks text US numbers. 8 plans with a number, data and SMS, from a week to a year."
+    },
+    "ar": {
+      "title": "eSIM أمريكا مع رقم هاتف: رقم أمريكي لرحلتك",
+      "excerpt": "رقم أمريكي مع إنترنت ودقائق ورسائل لرحلتك، من 7.90 دولار للأسبوع. أي باقة للطلاب وزيارة الأهل والعلاج والسياحة، وماذا تفعل إن زرت كندا أو المكسيك.",
+      "focusKeyword": "eSIM أمريكا مع رقم هاتف",
+      "metaTitle": "eSIM أمريكا مع رقم هاتف أمريكي من 7.90 دولار",
+      "metaDesc": "eSIM أمريكا مع رقم هاتف: رقم أمريكي (+1) مع إنترنت ودقائق ورسائل من أسبوع إلى سنة، من 7.90 دولار. باقات للطلاب وزيارة الأهل والسياحة ونصائح لكندا.",
+      "ogTitle": "رقم أمريكي لرحلتك، جاهز عند وصولك",
+      "ogDesc": "المطاعم والفنادق وشركات التأجير في أمريكا تراسل أرقامًا أمريكية. 8 باقات مع رقم وإنترنت ورسائل."
+    },
+    "hi": {
+      "title": "फ़ोन नंबर वाला अमेरिका eSIM: आपकी यात्रा के लिए अमेरिकी नंबर",
+      "excerpt": "यात्रा के लिए डेटा, मिनट और SMS वाला अमेरिकी नंबर, एक हफ़्ते के लिए $7.90 से। बच्चों से मिलने जा रहे माता-पिता, छात्रों और घूमने वालों के लिए कौन सा प्लान, और कनाडा या मैक्सिको जाना हो तो क्या करें।",
+      "focusKeyword": "अमेरिका eSIM फ़ोन नंबर",
+      "metaTitle": "अमेरिका eSIM फ़ोन नंबर के साथ: $7.90 से +1 नंबर",
+      "metaDesc": "अमेरिका eSIM फ़ोन नंबर के साथ: डेटा, मिनट और SMS वाला +1 नंबर, एक हफ़्ते के लिए $7.90 से। माता-पिता, छात्रों और परिवारों के लिए प्लान, और कनाडा के लिए टिप्स।",
+      "ogTitle": "अमेरिका यात्रा के लिए अमेरिकी नंबर, उतरते ही तैयार",
+      "ogDesc": "अमेरिका में रेस्टोरेंट, होटल और रेंटल कंपनियाँ अमेरिकी नंबर पर SMS भेजती हैं। नंबर, डेटा और SMS वाले 8 प्लान।"
+    }
+  }
+}

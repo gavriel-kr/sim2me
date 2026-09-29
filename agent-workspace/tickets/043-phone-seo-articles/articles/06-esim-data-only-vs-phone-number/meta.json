@@ -1,0 +1,42 @@
+{
+  "slug": "esim-data-only-vs-phone-number",
+  "order": 0,
+  "locales": {
+    "he": {
+      "title": "eSIM עם מספר או בלי מספר: מה ההבדל ומה לבחור",
+      "excerpt": "מה אפשר לעשות עם eSIM גלישה בלבד ומה רק עם מספר טלפון, ארבע דוגמאות מטיולים אמיתיים, השוואת מחירים ליפן, והשילוב שנותן גם מספר וגם הרבה גלישה בזול.",
+      "focusKeyword": "eSIM עם מספר או בלי",
+      "metaTitle": "eSIM עם מספר או בלי מספר: מה ההבדל ומה לבחור",
+      "metaDesc": "eSIM עם מספר או בלי? מה אפשר לעשות עם כל אחד, כמה זה עולה בטיול אמיתי, ואיך משלבים מספר טלפון עם eSIM גלישה זול. חמש שאלות שיעזרו לכם להחליט.",
+      "ogTitle": "גלישה בלבד או עם מספר טלפון? כך מחליטים",
+      "ogDesc": "הגלישה זולה, המספר הוא מה שעולה כסף. מתי שווה לקחת מספר, ומתי גלישה בלבד מספיקה."
+    },
+    "en": {
+      "title": "Data-Only eSIM or eSIM with a Phone Number: Which Should You Choose?",
+      "excerpt": "What you can do with a data-only eSIM and what needs a phone number, four real trip examples, a price comparison for Japan, and the combination that gives you a number and plenty of data for less.",
+      "focusKeyword": "eSIM data only vs phone number",
+      "metaTitle": "Data-Only eSIM vs eSIM with a Phone Number",
+      "metaDesc": "Data-only eSIM or eSIM with a phone number? What each can do, real trip costs, and how to pair a number with a cheap data eSIM. Five questions to help you decide.",
+      "ogTitle": "Data Only or a Phone Number? How to Decide",
+      "ogDesc": "Data is cheap; the number is what costs money. When a number is worth it, and when data-only is all you need."
+    },
+    "ar": {
+      "title": "eSIM للإنترنت فقط أم مع رقم هاتف: أيهما تختار؟",
+      "excerpt": "ما الذي يمكنك فعله بشريحة الإنترنت فقط وما يحتاج إلى رقم هاتف، مع أربعة أمثلة من رحلات حقيقية، ومقارنة أسعار، وطريقة الجمع بين الرقم والإنترنت الرخيص.",
+      "focusKeyword": "eSIM بيانات فقط أم مع رقم",
+      "metaTitle": "eSIM للإنترنت فقط أم مع رقم هاتف: أيهما تختار؟",
+      "metaDesc": "eSIM بيانات فقط أم مع رقم هاتف؟ ما يمكن فعله بكل منهما، والتكلفة في رحلة حقيقية، وكيف تجمع الرقم مع شريحة إنترنت رخيصة. خمسة أسئلة تساعدك على القرار.",
+      "ogTitle": "إنترنت فقط أم رقم هاتف؟ هكذا تقرر",
+      "ogDesc": "الإنترنت رخيص والرقم هو ما يكلّف. متى يستحق الرقم ثمنه، ومتى يكفيك الإنترنت فقط."
+    },
+    "hi": {
+      "title": "डेटा-ओनली या फ़ोन नंबर वाला eSIM: कौन सा चुनें?",
+      "excerpt": "डेटा-ओनली eSIM से क्या हो सकता है और किसके लिए नंबर चाहिए, चार असली यात्राओं के उदाहरण, थाईलैंड के लिए कीमतों की तुलना, और कम दाम में नंबर और ज़्यादा डेटा पाने का तरीका।",
+      "focusKeyword": "डेटा-ओनली या नंबर वाला eSIM",
+      "metaTitle": "डेटा-ओनली या नंबर वाला eSIM: कौन सा चुनें?",
+      "metaDesc": "डेटा-ओनली या नंबर वाला eSIM? दोनों से क्या हो सकता है, असली यात्रा में कितना ख़र्च आता है, और नंबर को सस्ते डेटा eSIM के साथ कैसे जोड़ें। पाँच आसान सवाल।",
+      "ogTitle": "सिर्फ़ डेटा या फ़ोन नंबर? ऐसे तय करें",
+      "ogDesc": "डेटा सस्ता है, पैसा नंबर का लगता है। कब नंबर लेना फ़ायदेमंद है और कब सिर्फ़ डेटा काफ़ी है।"
+    }
+  }
+}

@@ -12,33 +12,43 @@ interface ArticleRow {
   titleEn: string;
   titleHe: string;
   titleAr: string;
+  titleHi: string;
   contentEn?: string;
   contentHe?: string;
   contentAr?: string;
+  contentHi?: string;
   excerptEn: string | null;
   excerptHe: string | null;
   excerptAr: string | null;
+  excerptHi: string | null;
   focusKeywordEn: string | null;
   focusKeywordHe: string | null;
   focusKeywordAr: string | null;
+  focusKeywordHi: string | null;
   metaTitleEn: string | null;
   metaTitleHe: string | null;
   metaTitleAr: string | null;
+  metaTitleHi: string | null;
   metaDescEn: string | null;
   metaDescHe: string | null;
   metaDescAr: string | null;
+  metaDescHi: string | null;
   ogTitleEn: string | null;
   ogTitleHe: string | null;
   ogTitleAr: string | null;
+  ogTitleHi: string | null;
   ogDescEn: string | null;
   ogDescHe: string | null;
   ogDescAr: string | null;
+  ogDescHi: string | null;
   canonicalUrlEn: string | null;
   canonicalUrlHe: string | null;
   canonicalUrlAr: string | null;
+  canonicalUrlHi: string | null;
   statusEn: ArticleStatus;
   statusHe: ArticleStatus;
   statusAr: ArticleStatus;
+  statusHi: ArticleStatus;
   featuredImage: string | null;
   articleOrder: number;
   showRelatedArticles: boolean;
@@ -50,22 +60,22 @@ type ArticleForm = Omit<ArticleRow, 'id' | 'createdAt' | 'updatedAt'>;
 
 const BLANK: ArticleForm = {
   slug: '',
-  titleEn: '', titleHe: '', titleAr: '',
-  contentEn: '', contentHe: '', contentAr: '',
-  excerptEn: null, excerptHe: null, excerptAr: null,
-  focusKeywordEn: null, focusKeywordHe: null, focusKeywordAr: null,
-  metaTitleEn: null, metaTitleHe: null, metaTitleAr: null,
-  metaDescEn: null, metaDescHe: null, metaDescAr: null,
-  ogTitleEn: null, ogTitleHe: null, ogTitleAr: null,
-  ogDescEn: null, ogDescHe: null, ogDescAr: null,
-  canonicalUrlEn: null, canonicalUrlHe: null, canonicalUrlAr: null,
-  statusEn: 'DRAFT', statusHe: 'DRAFT', statusAr: 'DRAFT',
+  titleEn: '', titleHe: '', titleAr: '', titleHi: '',
+  contentEn: '', contentHe: '', contentAr: '', contentHi: '',
+  excerptEn: null, excerptHe: null, excerptAr: null, excerptHi: null,
+  focusKeywordEn: null, focusKeywordHe: null, focusKeywordAr: null, focusKeywordHi: null,
+  metaTitleEn: null, metaTitleHe: null, metaTitleAr: null, metaTitleHi: null,
+  metaDescEn: null, metaDescHe: null, metaDescAr: null, metaDescHi: null,
+  ogTitleEn: null, ogTitleHe: null, ogTitleAr: null, ogTitleHi: null,
+  ogDescEn: null, ogDescHe: null, ogDescAr: null, ogDescHi: null,
+  canonicalUrlEn: null, canonicalUrlHe: null, canonicalUrlAr: null, canonicalUrlHi: null,
+  statusEn: 'DRAFT', statusHe: 'DRAFT', statusAr: 'DRAFT', statusHi: 'DRAFT',
   featuredImage: null, articleOrder: 0, showRelatedArticles: true,
 };
 
-const LOCALES = ['en', 'he', 'ar'] as const;
+const LOCALES = ['en', 'he', 'ar', 'hi'] as const;
 type Locale = (typeof LOCALES)[number];
-const LOCALE_LABELS: Record<string, string> = { en: '🇬🇧 EN', he: '🇮🇱 HE', ar: '🇸🇦 AR' };
+const LOCALE_LABELS: Record<string, string> = { en: '🇬🇧 EN', he: '🇮🇱 HE', ar: '🇸🇦 AR', hi: '🇮🇳 HI' };
 
 const SITE_URL = 'https://www.sim2me.net';
 
@@ -107,7 +117,7 @@ function articleUrl(slug: string, locale: string) {
 }
 
 function getDisplayTitle(a: ArticleRow): string {
-  return a.titleEn || a.titleHe || a.titleAr || a.slug;
+  return a.titleEn || a.titleHe || a.titleAr || a.titleHi || a.slug;
 }
 
 // ── Article SERP Preview ──────────────────────────────────────────────────────
@@ -250,6 +260,7 @@ export function ArticlesClient({
   const [contentEn, setContentEn] = useState('');
   const [contentHe, setContentHe] = useState('');
   const [contentAr, setContentAr] = useState('');
+  const [contentHi, setContentHi] = useState('');
   const [saving, setSaving] = useState(false);
   const [localeTab, setLocaleTab] = useState<Locale>('en');
   const [sectionTab, setSectionTab] = useState<'main' | 'content' | 'seo'>('main');
@@ -307,6 +318,7 @@ export function ArticlesClient({
     setContentEn('');
     setContentHe('');
     setContentAr('');
+    setContentHi('');
     setEditing('new');
     setLocaleTab('en');
     setSectionTab('main');
@@ -317,21 +329,22 @@ export function ArticlesClient({
     setSectionTab('main');
     setForm({
       slug: a.slug,
-      titleEn: a.titleEn ?? '', titleHe: a.titleHe ?? '', titleAr: a.titleAr ?? '',
-      contentEn: a.contentEn ?? '', contentHe: a.contentHe ?? '', contentAr: a.contentAr ?? '',
-      excerptEn: a.excerptEn, excerptHe: a.excerptHe, excerptAr: a.excerptAr,
-      focusKeywordEn: a.focusKeywordEn, focusKeywordHe: a.focusKeywordHe, focusKeywordAr: a.focusKeywordAr,
-      metaTitleEn: a.metaTitleEn, metaTitleHe: a.metaTitleHe, metaTitleAr: a.metaTitleAr,
-      metaDescEn: a.metaDescEn, metaDescHe: a.metaDescHe, metaDescAr: a.metaDescAr,
-      ogTitleEn: a.ogTitleEn, ogTitleHe: a.ogTitleHe, ogTitleAr: a.ogTitleAr,
-      ogDescEn: a.ogDescEn, ogDescHe: a.ogDescHe, ogDescAr: a.ogDescAr,
-      canonicalUrlEn: a.canonicalUrlEn, canonicalUrlHe: a.canonicalUrlHe, canonicalUrlAr: a.canonicalUrlAr,
-      statusEn: a.statusEn ?? 'DRAFT', statusHe: a.statusHe ?? 'DRAFT', statusAr: a.statusAr ?? 'DRAFT',
+      titleEn: a.titleEn ?? '', titleHe: a.titleHe ?? '', titleAr: a.titleAr ?? '', titleHi: a.titleHi ?? '',
+      contentEn: a.contentEn ?? '', contentHe: a.contentHe ?? '', contentAr: a.contentAr ?? '', contentHi: a.contentHi ?? '',
+      excerptEn: a.excerptEn, excerptHe: a.excerptHe, excerptAr: a.excerptAr, excerptHi: a.excerptHi,
+      focusKeywordEn: a.focusKeywordEn, focusKeywordHe: a.focusKeywordHe, focusKeywordAr: a.focusKeywordAr, focusKeywordHi: a.focusKeywordHi,
+      metaTitleEn: a.metaTitleEn, metaTitleHe: a.metaTitleHe, metaTitleAr: a.metaTitleAr, metaTitleHi: a.metaTitleHi,
+      metaDescEn: a.metaDescEn, metaDescHe: a.metaDescHe, metaDescAr: a.metaDescAr, metaDescHi: a.metaDescHi,
+      ogTitleEn: a.ogTitleEn, ogTitleHe: a.ogTitleHe, ogTitleAr: a.ogTitleAr, ogTitleHi: a.ogTitleHi,
+      ogDescEn: a.ogDescEn, ogDescHe: a.ogDescHe, ogDescAr: a.ogDescAr, ogDescHi: a.ogDescHi,
+      canonicalUrlEn: a.canonicalUrlEn, canonicalUrlHe: a.canonicalUrlHe, canonicalUrlAr: a.canonicalUrlAr, canonicalUrlHi: a.canonicalUrlHi,
+      statusEn: a.statusEn ?? 'DRAFT', statusHe: a.statusHe ?? 'DRAFT', statusAr: a.statusAr ?? 'DRAFT', statusHi: a.statusHi ?? 'DRAFT',
       featuredImage: a.featuredImage, articleOrder: a.articleOrder, showRelatedArticles: a.showRelatedArticles !== false,
     });
     setContentEn(a.contentEn ?? '');
     setContentHe(a.contentHe ?? '');
     setContentAr(a.contentAr ?? '');
+    setContentHi(a.contentHi ?? '');
     setEditing(a.id);
     fetch(`/api/admin/articles/${a.id}`)
       .then((r) => r.json())
@@ -340,21 +353,22 @@ export function ArticlesClient({
         if (!art) return;
         setForm({
           slug: art.slug,
-          titleEn: art.titleEn ?? '', titleHe: art.titleHe ?? '', titleAr: art.titleAr ?? '',
-          contentEn: art.contentEn ?? '', contentHe: art.contentHe ?? '', contentAr: art.contentAr ?? '',
-          excerptEn: art.excerptEn, excerptHe: art.excerptHe, excerptAr: art.excerptAr,
-          focusKeywordEn: art.focusKeywordEn, focusKeywordHe: art.focusKeywordHe, focusKeywordAr: art.focusKeywordAr,
-          metaTitleEn: art.metaTitleEn, metaTitleHe: art.metaTitleHe, metaTitleAr: art.metaTitleAr,
-          metaDescEn: art.metaDescEn, metaDescHe: art.metaDescHe, metaDescAr: art.metaDescAr,
-          ogTitleEn: art.ogTitleEn, ogTitleHe: art.ogTitleHe, ogTitleAr: art.ogTitleAr,
-          ogDescEn: art.ogDescEn, ogDescHe: art.ogDescHe, ogDescAr: art.ogDescAr,
-          canonicalUrlEn: art.canonicalUrlEn, canonicalUrlHe: art.canonicalUrlHe, canonicalUrlAr: art.canonicalUrlAr,
-          statusEn: art.statusEn ?? 'DRAFT', statusHe: art.statusHe ?? 'DRAFT', statusAr: art.statusAr ?? 'DRAFT',
+          titleEn: art.titleEn ?? '', titleHe: art.titleHe ?? '', titleAr: art.titleAr ?? '', titleHi: art.titleHi ?? '',
+          contentEn: art.contentEn ?? '', contentHe: art.contentHe ?? '', contentAr: art.contentAr ?? '', contentHi: art.contentHi ?? '',
+          excerptEn: art.excerptEn, excerptHe: art.excerptHe, excerptAr: art.excerptAr, excerptHi: art.excerptHi,
+          focusKeywordEn: art.focusKeywordEn, focusKeywordHe: art.focusKeywordHe, focusKeywordAr: art.focusKeywordAr, focusKeywordHi: art.focusKeywordHi,
+          metaTitleEn: art.metaTitleEn, metaTitleHe: art.metaTitleHe, metaTitleAr: art.metaTitleAr, metaTitleHi: art.metaTitleHi,
+          metaDescEn: art.metaDescEn, metaDescHe: art.metaDescHe, metaDescAr: art.metaDescAr, metaDescHi: art.metaDescHi,
+          ogTitleEn: art.ogTitleEn, ogTitleHe: art.ogTitleHe, ogTitleAr: art.ogTitleAr, ogTitleHi: art.ogTitleHi,
+          ogDescEn: art.ogDescEn, ogDescHe: art.ogDescHe, ogDescAr: art.ogDescAr, ogDescHi: art.ogDescHi,
+          canonicalUrlEn: art.canonicalUrlEn, canonicalUrlHe: art.canonicalUrlHe, canonicalUrlAr: art.canonicalUrlAr, canonicalUrlHi: art.canonicalUrlHi,
+          statusEn: art.statusEn ?? 'DRAFT', statusHe: art.statusHe ?? 'DRAFT', statusAr: art.statusAr ?? 'DRAFT', statusHi: art.statusHi ?? 'DRAFT',
           featuredImage: art.featuredImage, articleOrder: art.articleOrder, showRelatedArticles: art.showRelatedArticles !== false,
         });
         setContentEn(art.contentEn ?? '');
         setContentHe(art.contentHe ?? '');
         setContentAr(art.contentAr ?? '');
+        setContentHi(art.contentHi ?? '');
       })
       .catch(() => flash('err', 'Failed to load article'));
   };
@@ -374,6 +388,7 @@ export function ArticlesClient({
         contentEn: contentEn,
         contentHe: contentHe,
         contentAr: contentAr,
+        contentHi: contentHi,
       };
       const res = await fetch(url, {
         method,
@@ -397,7 +412,7 @@ export function ArticlesClient({
     } finally {
       setSaving(false);
     }
-  }, [editing, form, contentEn, contentHe, contentAr]);
+  }, [editing, form, contentEn, contentHe, contentAr, contentHi]);
 
   const deleteArticle = async (id: string, title: string) => {
     if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
@@ -485,6 +500,7 @@ export function ArticlesClient({
         (a.titleEn || '').toLowerCase().includes(searchLower) ||
         (a.titleHe || '').toLowerCase().includes(searchLower) ||
         (a.titleAr || '').toLowerCase().includes(searchLower) ||
+        (a.titleHi || '').toLowerCase().includes(searchLower) ||
         (a.slug || '').toLowerCase().includes(searchLower)
       );
     })
@@ -498,10 +514,10 @@ export function ArticlesClient({
     .filter((a) => {
       if (filterStatus === 'all') return true;
       if (filterStatus === 'has_published') {
-        return a.statusEn === 'PUBLISHED' || a.statusHe === 'PUBLISHED' || a.statusAr === 'PUBLISHED';
+        return a.statusEn === 'PUBLISHED' || a.statusHe === 'PUBLISHED' || a.statusAr === 'PUBLISHED' || a.statusHi === 'PUBLISHED';
       }
       if (filterStatus === 'all_draft') {
-        return a.statusEn === 'DRAFT' && a.statusHe === 'DRAFT' && a.statusAr === 'DRAFT';
+        return a.statusEn === 'DRAFT' && a.statusHe === 'DRAFT' && a.statusAr === 'DRAFT' && a.statusHi === 'DRAFT';
       }
       return true;
     })
@@ -675,6 +691,14 @@ export function ArticlesClient({
                     isRTL={true}
                   />
                 )}
+                {localeTab === 'hi' && (
+                  <RichTextEditor
+                    key={editing ? `hi-${editing}` : 'hi-new'}
+                    value={contentHi}
+                    onChange={setContentHi}
+                    isRTL={false}
+                  />
+                )}
               </div>
             )}
 
@@ -683,7 +707,7 @@ export function ArticlesClient({
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <label className={labelCls}>Focus Keyword ({LOCALE_LABELS[localeTab]})</label>
-                    <button
+                    {localeTab !== 'hi' && <button
                       type="button"
                       onClick={() => {
                         const kw = generateFocusKeyword(getTitle(localeTab), form.slug, localeTab);
@@ -694,7 +718,7 @@ export function ArticlesClient({
                     >
                       <Wand2 className="h-3 w-3" />
                       Auto-fill from title
-                    </button>
+                    </button>}
                   </div>
                   <input
                     className={inputCls}
@@ -704,12 +728,13 @@ export function ArticlesClient({
                     placeholder={
                       localeTab === 'he' ? 'eSIM למאוריטניה'
                       : localeTab === 'ar' ? 'eSIM لموريتانيا'
+                      : localeTab === 'hi' ? 'मॉरिटानिया eSIM'
                       : 'eSIM for Mauritania'
                     }
                   />
                   <p className="mt-1 text-xs text-gray-400">
                     Format: <code className="font-mono">
-                      {localeTab === 'he' ? 'eSIM ל[יעד]' : localeTab === 'ar' ? 'eSIM لـ[وجهة]' : 'eSIM for [Destination]'}
+                      {localeTab === 'he' ? 'eSIM ל[יעד]' : localeTab === 'ar' ? 'eSIM لـ[وجهة]' : localeTab === 'hi' ? '[गंतव्य] eSIM' : 'eSIM for [Destination]'}
                     </code>
                   </p>
                 </div>
@@ -948,16 +973,21 @@ export function ArticlesClient({
                     <th className="px-4 py-3 text-left w-8"></th>
                     <th className="px-4 py-3 text-left">Title</th>
                     <th className="px-4 py-3 text-left hidden md:table-cell">Slug</th>
-                    <th className="px-4 py-3 text-center">EN / HE / AR</th>
+                    <th className="px-4 py-3 text-center">EN / HE / AR / HI</th>
                     <th className="px-4 py-3 text-left hidden lg:table-cell">Links</th>
                     <th className="px-4 py-3 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {displayed.map((a) => {
-                    const enUrl = a.titleEn?.trim() ? `${SITE_URL}/en/articles/${a.slug}` : null;
-                    const heUrl = a.titleHe?.trim() ? `${SITE_URL}/he/articles/${a.slug}` : null;
-                    const arUrl = a.titleAr?.trim() ? `${SITE_URL}/ar/articles/${a.slug}` : null;
+                    // Same site the admin is on (so a local admin opens the local page); a draft opens as
+                    // an admin preview (ticket 043).
+                    const link = (loc: string, title: string | undefined, status: ArticleStatus) =>
+                      title?.trim() ? `/${loc}/articles/${a.slug}${status === 'DRAFT' ? '?preview=1' : ''}` : null;
+                    const enUrl = link('en', a.titleEn, a.statusEn);
+                    const heUrl = link('he', a.titleHe, a.statusHe);
+                    const arUrl = link('ar', a.titleAr, a.statusAr);
+                    const hiUrl = link('hi', a.titleHi, a.statusHi);
                     return (
                       <tr key={a.id} className="hover:bg-gray-50">
                         <td className="px-4 py-3 text-gray-300"><GripVertical className="h-4 w-4" /></td>
@@ -1001,6 +1031,10 @@ export function ArticlesClient({
                               {a.statusAr === 'PUBLISHED' ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
                               AR
                             </span>
+                            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${a.statusHi === 'PUBLISHED' ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>
+                              {a.statusHi === 'PUBLISHED' ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                              HI
+                            </span>
                           </div>
                         </td>
                         <td className="px-4 py-3 hidden lg:table-cell">
@@ -1020,7 +1054,12 @@ export function ArticlesClient({
                                 <ExternalLink className="h-3 w-3" /> AR
                               </a>
                             )}
-                            {!enUrl && !heUrl && !arUrl && <span className="text-xs text-gray-400">—</span>}
+                            {hiUrl && (
+                              <a href={hiUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-emerald-600 hover:bg-emerald-50" title={hiUrl}>
+                                <ExternalLink className="h-3 w-3" /> HI
+                              </a>
+                            )}
+                            {!enUrl && !heUrl && !arUrl && !hiUrl && <span className="text-xs text-gray-400">—</span>}
                           </div>
                         </td>
                         <td className="px-4 py-3 text-right">

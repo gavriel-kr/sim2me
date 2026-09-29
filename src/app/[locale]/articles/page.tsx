@@ -1,7 +1,8 @@
+import { cache } from 'react';
 import { notFound } from 'next/navigation';
 import { setRequestLocale } from 'next-intl/server';
 import { routing } from '@/i18n/routing';
-import { getPublishedArticles, toArticleLocale } from '@/lib/articles';
+import { countPublishedArticles, getArticlesForReader } from '@/lib/articles';
 import { getArticlesDefaultImage } from '@/lib/articles-default-image';
 import { ArticlesIndexClient } from './ArticlesIndexClient';
 import { MainLayout } from '@/components/layout/MainLayout';
@@ -12,45 +13,50 @@ export const dynamic = 'force-dynamic';
 const INDEX_META: Record<string, { title: string; desc: string }> = {
   en: {
     title: 'eSIM Travel Guides | Sim2Me',
-    desc: 'Practical eSIM guides for international travelers. Compare plans, learn setup, and stay connected in 200+ countries.',
+    desc: 'Practical eSIM guides for international travelers: data plans, eSIMs with a phone number, setup and coverage in 200+ countries.',
   },
   he: {
     title: 'מדריכי eSIM לטיול | Sim2Me',
-    desc: 'מדריכים מעשיים ל-eSIM לנסיעות בינלאומיות. השוו תוכניות, למדו התקנה והישארו מחוברים ב-200+ מדינות.',
+    desc: 'מדריכים מעשיים ל-eSIM בחו״ל: חבילות גלישה, eSIM עם מספר טלפון, התקנה וכיסוי ב-200+ מדינות.',
   },
   ar: {
     title: 'أدلة eSIM للسفر | Sim2Me',
-    desc: 'أدلة عملية لشرائح eSIM للمسافرين دوليًا. قارن الخطط وتعلم الإعداد وابق متصلًا في أكثر من 200 دولة.',
+    desc: 'أدلة عملية لشرائح eSIM للمسافرين: باقات الإنترنت، وeSIM مع رقم هاتف، والتثبيت والتغطية في أكثر من 200 دولة.',
   },
   hi: {
-    title: 'eSIM यात्रा गाइड (अंग्रेज़ी में) | Sim2Me',
-    desc: 'अंतरराष्ट्रीय यात्रियों के लिए व्यावहारिक eSIM गाइड, अंग्रेज़ी में। प्लान की तुलना करें, सेटअप सीखें और 200+ देशों में जुड़े रहें।',
+    title: 'eSIM यात्रा गाइड | Sim2Me',
+    desc: 'विदेश यात्रा के लिए eSIM गाइड: डेटा प्लान, फ़ोन नंबर वाला eSIM, सेटअप और 200+ देशों में कवरेज।',
   },
 };
 
 type Props = { params: Promise<{ locale: string }> };
+
+const loadArticles = cache((locale: string) => getArticlesForReader(locale));
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const meta = INDEX_META[locale] || INDEX_META.en;
   const prefix = `/${locale}`;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.sim2me.net';
+  // The Hindi index is worth indexing once it lists Hindi articles; until then it is the English
+  // list in a Hindi shell (ticket 038).
+  const hasHindi = (await countPublishedArticles('hi').catch(() => 0)) > 0;
   return {
-    title: meta.title,
+    // Already ends with the brand; `absolute` stops the layout's "%s | Sim2Me" template adding it twice.
+    title: { absolute: meta.title },
     description: meta.desc,
-    // Hindi has no translated articles, so its index is the English list in a Hindi shell —
-    // useful to a reader, not something to add to the index (ticket 038).
-    robots: locale === 'hi' ? { index: false, follow: true } : undefined,
+    robots: locale === 'hi' && !hasHindi ? { index: false, follow: true } : undefined,
     alternates: {
       canonical: `${siteUrl}${prefix}/articles`,
       languages: {
         en:          `${siteUrl}/en/articles`,
         he:          `${siteUrl}/he/articles`,
         ar:          `${siteUrl}/ar/articles`,
+        ...(hasHindi && { hi: `${siteUrl}/hi/articles` }),
         'x-default': `${siteUrl}/en/articles`,
       },
     },
-    openGraph: { title: meta.title, description: meta.desc },
+    openGraph: { title: meta.title, description: meta.desc, url: `${siteUrl}${prefix}/articles`, type: 'website' },
   };
 }
 
@@ -60,7 +66,7 @@ export default async function ArticlesIndexPage({ params }: Props) {
   setRequestLocale(locale);
 
   const [articles, defaultImage] = await Promise.all([
-    getPublishedArticles(toArticleLocale(locale)),
+    loadArticles(locale),
     getArticlesDefaultImage(),
   ]);
 
@@ -68,7 +74,7 @@ export default async function ArticlesIndexPage({ params }: Props) {
     en: 'eSIM Travel Guides',
     he: 'מדריכי eSIM לטיול',
     ar: 'أدلة eSIM للسفر',
-    hi: 'eSIM यात्रा गाइड (अंग्रेज़ी में)',
+    hi: 'eSIM यात्रा गाइड',
   };
 
   return (

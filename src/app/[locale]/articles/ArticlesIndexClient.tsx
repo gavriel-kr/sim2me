@@ -13,7 +13,7 @@ interface Props {
 }
 
 function formatDate(date: Date, locale: string) {
-  return new Intl.DateTimeFormat(locale === 'he' ? 'he-IL' : locale === 'ar' ? 'ar-AE' : 'en-US', {
+  return new Intl.DateTimeFormat(locale === 'he' ? 'he-IL' : locale === 'ar' ? 'ar-AE' : locale === 'hi' ? 'hi-IN' : 'en-US', {
     year: 'numeric', month: 'long', day: 'numeric',
   }).format(new Date(date));
 }
@@ -41,6 +41,7 @@ export function ArticlesIndexClient({ articles, locale, heading, defaultImage }:
   // Read-more label with correct arrow direction
   const readMore = locale === 'he' ? '← קרא עוד'
     : locale === 'ar' ? '← اقرأ المزيد'
+    : locale === 'hi' ? 'आगे पढ़ें →'
     : 'Read more →';
 
   return (
@@ -52,7 +53,7 @@ export function ArticlesIndexClient({ articles, locale, heading, defaultImage }:
 
       {articles.length === 0 ? (
         <p className={`text-gray-500 ${isRTL ? 'text-right' : ''}`}>
-          {locale === 'he' ? 'אין מאמרים עדיין. חזרו בקרוב.' : locale === 'ar' ? 'لا توجد مقالات بعد. تحقق قريبًا.' : 'No articles published yet. Check back soon.'}
+          {locale === 'he' ? 'אין מאמרים עדיין. חזרו בקרוב.' : locale === 'ar' ? 'لا توجد مقالات بعد. تحقق قريبًا.' : locale === 'hi' ? 'अभी कोई लेख नहीं है। जल्द ही फिर देखें।' : 'No articles published yet. Check back soon.'}
         </p>
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -75,7 +76,8 @@ export function ArticlesIndexClient({ articles, locale, heading, defaultImage }:
                   <CardPlaceholder bgColor={bgColor} />
                 )}
 
-                <div className="flex flex-1 flex-col p-5" dir={isRTL ? 'rtl' : 'ltr'}>
+                {/* On the Hindi index, articles with no Hindi version are listed in English. */}
+                <div className="flex flex-1 flex-col p-5" dir={isRTL ? 'rtl' : 'ltr'} lang={a.locale !== locale ? a.locale : undefined}>
                   <p className="text-xs text-gray-400 mb-2">{formatDate(a.createdAt, locale)}</p>
                   <h2 className="text-base font-bold leading-snug text-gray-900 transition-colors group-hover:text-emerald-700">
                     <Link href={`${prefix}/articles/${a.slug}`}>{a.title}</Link>

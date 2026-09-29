@@ -18,10 +18,19 @@ interface Props {
 }
 
 function formatDate(date: Date, locale: string) {
-  return new Intl.DateTimeFormat(locale === 'he' ? 'he-IL' : locale === 'ar' ? 'ar-AE' : 'en-US', {
+  return new Intl.DateTimeFormat(locale === 'he' ? 'he-IL' : locale === 'ar' ? 'ar-AE' : locale === 'hi' ? 'hi-IN' : 'en-US', {
     year: 'numeric', month: 'long', day: 'numeric',
   }).format(new Date(date));
 }
+
+type Labels = { home: string; guides: string; back: string; related: string; updated: string; prev: string; next: string; readMore: string };
+
+const LABELS: Record<string, Labels> = {
+  en: { home: 'Home', guides: 'Articles', back: 'Back to guides', related: 'More recommended guides for you', updated: 'Updated', prev: 'Previous', next: 'Next', readMore: 'Read more →' },
+  he: { home: 'בית', guides: 'מדריכים', back: 'חזרה למדריכים', related: 'עוד מדריכים מומלצים עבורך', updated: 'עודכן', prev: 'הקודם', next: 'הבא', readMore: '← קרא עוד' },
+  ar: { home: 'الرئيسية', guides: 'أدلة', back: 'العودة إلى الأدلة', related: 'المزيد من الأدلة الموصى بها لك', updated: 'محدّث', prev: 'السابق', next: 'التالي', readMore: '← اقرأ المزيد' },
+  hi: { home: 'होम', guides: 'गाइड', back: 'गाइड पर वापस जाएँ', related: 'आपके लिए और गाइड', updated: 'अपडेट किया गया', prev: 'पिछला', next: 'अगला', readMore: 'आगे पढ़ें →' },
+};
 
 function RelatedCardPlaceholder({ bgColor }: { bgColor?: string }) {
   return (
@@ -40,9 +49,12 @@ export function ArticleDetail({ article, locale, relatedArticles, defaultImage, 
   const prefix = locale === 'en' ? '' : `/${locale}`;
   const isRTL = locale === 'he' || locale === 'ar';
 
-  const breadcrumbLabel = locale === 'he' ? 'מדריכים' : locale === 'ar' ? 'أدلة' : 'Articles';
-  const backToGuidesLabel = locale === 'he' ? 'חזרה למדריכים' : locale === 'ar' ? 'العودة إلى الأدلة' : 'Back to guides';
-  const relatedHeading = locale === 'he' ? 'עוד מדריכים מומלצים עבורך' : locale === 'ar' ? 'المزيد من الأدلة الموصى بها لك' : 'More recommended guides for you';
+  const labels = LABELS[locale] ?? LABELS.en;
+  const breadcrumbLabel = labels.guides;
+  const backToGuidesLabel = labels.back;
+  const relatedHeading = labels.related;
+  // The language the text is written in: English for a Hindi reader of an article with no Hindi version.
+  const contentRTL = article.locale === 'he' || article.locale === 'ar';
   const carouselRef = useRef<HTMLDivElement>(null);
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
@@ -101,7 +113,7 @@ export function ArticleDetail({ article, locale, relatedArticles, defaultImage, 
         {/* Breadcrumb */}
         <nav className={`mb-6 flex items-center gap-2 text-sm text-gray-500 flex-wrap ${isRTL ? 'flex-row-reverse justify-end' : ''}`} aria-label="breadcrumb">
           <Link href={`${prefix}/`} className="hover:text-emerald-600">
-            {locale === 'he' ? 'בית' : locale === 'ar' ? 'الرئيسية' : 'Home'}
+            {labels.home}
           </Link>
           <span>/</span>
           <Link href={`${prefix}/articles`} className="hover:text-emerald-600">{breadcrumbLabel}</Link>
@@ -119,7 +131,7 @@ export function ArticleDetail({ article, locale, relatedArticles, defaultImage, 
           <p className="mt-3 text-sm text-gray-400">
             {formatDate(article.createdAt, locale)}
             {article.updatedAt > article.createdAt && (
-              <> · {locale === 'he' ? 'עודכן' : locale === 'ar' ? 'محدّث' : 'Updated'} {formatDate(article.updatedAt, locale)}</>
+              <> · {labels.updated} {formatDate(article.updatedAt, locale)}</>
             )}
           </p>
 
@@ -127,8 +139,9 @@ export function ArticleDetail({ article, locale, relatedArticles, defaultImage, 
 
         {/* Article body */}
         <div
-          dir={isRTL ? 'rtl' : 'ltr'}
-          className="prose prose-gray max-w-none prose-headings:font-bold prose-a:text-emerald-700 prose-a:no-underline hover:prose-a:underline prose-img:rounded-xl prose-table:text-sm"
+          dir={contentRTL ? 'rtl' : 'ltr'}
+          lang={article.locale}
+          className="article-body max-w-none"
           dangerouslySetInnerHTML={{ __html: article.content }}
         />
 
@@ -145,7 +158,7 @@ export function ArticleDetail({ article, locale, relatedArticles, defaultImage, 
                     type="button"
                     onClick={() => scrollCarousel('prev')}
                     disabled={!canScrollPrev}
-                    aria-label={locale === 'he' ? 'הקודם' : locale === 'ar' ? 'السابق' : 'Previous'}
+                    aria-label={labels.prev}
                     className={`absolute top-1/2 -translate-y-1/2 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white shadow-md transition-opacity hover:bg-gray-50 disabled:opacity-30 disabled:pointer-events-none ${isRTL ? 'right-0 -translate-x-2' : 'left-0 translate-x-2'}`}
                   >
                     <ChevronLeft className="h-5 w-5 text-gray-700" />
@@ -154,7 +167,7 @@ export function ArticleDetail({ article, locale, relatedArticles, defaultImage, 
                     type="button"
                     onClick={() => scrollCarousel('next')}
                     disabled={!canScrollNext}
-                    aria-label={locale === 'he' ? 'הבא' : locale === 'ar' ? 'التالي' : 'Next'}
+                    aria-label={labels.next}
                     className={`absolute top-1/2 -translate-y-1/2 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white shadow-md transition-opacity hover:bg-gray-50 disabled:opacity-30 disabled:pointer-events-none ${isRTL ? 'left-0 translate-x-2' : 'right-0 -translate-x-2'}`}
                   >
                     <ChevronRight className="h-5 w-5 text-gray-700" />
@@ -195,7 +208,7 @@ export function ArticleDetail({ article, locale, relatedArticles, defaultImage, 
                           <p className="mt-1 text-xs text-gray-500 line-clamp-2">{a.excerpt}</p>
                         )}
                         <span className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-emerald-700">
-                          {isRTL ? '← קרא עוד' : locale === 'ar' ? '← اقرأ المزيد' : 'Read more →'}
+                          {labels.readMore}
                         </span>
                       </div>
                     </Link>
